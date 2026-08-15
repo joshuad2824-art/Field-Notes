@@ -1,0 +1,460 @@
+/* The lit page. A cream leaf set into the dark room, and everything on it. */
+
+.desk {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-9) var(--space-8);
+}
+
+.leaf {
+  background: var(--surface-page);
+  color: var(--text-body);
+  width: 100%;
+  max-width: calc(var(--measure-prose) + (var(--page-margin-x) * 2));
+  box-shadow: var(--shadow-lift);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.leaf:focus-within {
+  box-shadow: var(--shadow-lift), 0 0 0 1px rgba(222, 157, 75, 0.18);
+}
+
+/* ── the editor surface ─────────────────────────────────────────────── */
+
+.editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.editor .cm-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: transparent;
+  color: var(--text-body);
+}
+
+.editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+.editor .cm-scroller {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--grid-pitch);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.editor .cm-content {
+  padding: var(--grid-pitch) var(--page-margin-x) var(--space-11);
+  caret-color: var(--caret);
+  background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
+  background-size: var(--grid-pitch) var(--grid-pitch);
+  background-position: var(--page-margin-x) 33px;
+  max-width: calc(var(--measure-prose) + (var(--page-margin-x) * 2));
+}
+
+.editor .cm-line {
+  padding: 0;
+}
+
+.editor .cm-cursor,
+.editor .cm-dropCursor {
+  border-left-color: var(--caret);
+}
+
+.editor .cm-content ::selection,
+.editor .cm-content::selection {
+  background: var(--select-wash);
+}
+
+/* the pen: only the running text changes hand */
+.leaf[data-pen="felt"] .cm-content {
+  font-family: var(--font-pen);
+  font-size: var(--pen-size);
+  background-position: var(--page-margin-x) 35px;
+}
+.leaf[data-pen="felt"] .md-h1 {
+  font-family: var(--font-pen);
+  font-size: 34px;
+}
+.leaf[data-pen="felt"] .md-h2 {
+  font-family: var(--font-pen);
+  font-size: 27px;
+}
+.leaf[data-pen="felt"] .md-quote {
+  font-family: var(--font-pen);
+  font-style: normal;
+  font-size: 23px;
+}
+.leaf[data-pen="felt"] .md-code {
+  font-size: 0.78em;
+}
+
+/* ── blocks — every height a multiple of 28px ───────────────────────── */
+
+.md-h1,
+.md-h2 {
+  font-family: var(--font-editorial);
+  color: var(--text-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.md-h1 {
+  font-size: var(--text-2xl);
+  line-height: 56px;
+}
+.md-h2 {
+  font-size: var(--text-xl);
+  line-height: 56px;
+}
+.md-h3 {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-smallcaps);
+  text-transform: uppercase;
+  color: var(--text-heading);
+  line-height: var(--grid-pitch);
+}
+
+.md-quote {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: var(--text-lg);
+  line-height: var(--grid-pitch);
+  color: var(--text-heading);
+  border-left: 2px solid var(--rule-accent);
+  padding-left: var(--space-6);
+  margin-left: -22px;
+}
+
+/* The marker sits in the page margin the way a drawn bullet does, and the
+   text — first line and wrapped lines alike — keeps one edge. */
+.editor .md-li,
+.editor .md-ol,
+.editor .md-todo {
+  position: relative;
+  padding-left: 1.7em;
+}
+
+.md-marker {
+  position: absolute;
+  left: 0.2em;
+  top: 0;
+  color: var(--list-ink);
+  font-weight: 600;
+}
+.md-num {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+}
+
+.md-box {
+  position: absolute;
+  left: 0.02em;
+  top: 0.32em;
+  width: 1.05em;
+  height: 1.05em;
+  cursor: pointer;
+  color: var(--list-ink);
+}
+.md-box svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.md-box svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.md-box .bx {
+  opacity: 0.72;
+}
+
+.md-rule {
+  line-height: var(--grid-pitch);
+}
+.md-rule-line {
+  display: inline-block;
+  width: 100%;
+  vertical-align: middle;
+  border-top: 1px solid var(--border-hairline);
+}
+
+/* ── inline ─────────────────────────────────────────────────────────── */
+
+.md-strong {
+  font-weight: 600;
+}
+.md-em {
+  font-style: italic;
+}
+.md-strike {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--mark-dim);
+}
+.md-code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--code-well);
+  padding: 0 0.25em;
+}
+.md-tag {
+  color: var(--text-accent);
+  font-weight: 500;
+}
+.md-done {
+  color: var(--text-quiet);
+  text-decoration: line-through;
+  text-decoration-color: var(--mark-dim);
+}
+
+/* the highlighter is pigment, not light: layered angled gradients, uneven
+   radii, multiply on paper and screen on night */
+.md-hl {
+  --hl: var(--hl-brass);
+  color: inherit;
+  background-image:
+    linear-gradient(98deg, transparent 0.4%, var(--hl) 1.8%, var(--hl) 97.6%, transparent 99.4%),
+    linear-gradient(93deg, transparent 3%, var(--hl) 9%, transparent 46%),
+    linear-gradient(266deg, transparent 2%, var(--hl) 7%, transparent 28%);
+  background-repeat: no-repeat;
+  background-size:
+    100% 78%,
+    100% 34%,
+    100% 26%;
+  background-position:
+    0 72%,
+    0 22%,
+    0 96%;
+  border-radius: 0.55em 0.16em 0.48em 0.2em;
+  padding: 0.08em 0.26em;
+  margin: 0 -0.16em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  mix-blend-mode: var(--hl-blend);
+}
+.md-hl-oxblood {
+  --hl: var(--hl-oxblood);
+}
+.md-hl-forest {
+  --hl: var(--hl-forest);
+}
+.md-hl-navy {
+  --hl: var(--hl-navy);
+}
+.md-hl-driftwood {
+  --hl: var(--hl-driftwood);
+}
+.md-hl-brass {
+  --hl: var(--hl-brass);
+}
+
+/* ── the page's own chrome, in the page's own colour ────────────────── */
+
+.tools {
+  flex: 0 0 auto;
+  background: var(--surface-page);
+  border-bottom: 1px solid transparent;
+}
+
+.tools .row {
+  height: var(--bar-height);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 calc(var(--page-margin-x) - 9px);
+}
+.tools .row .grow {
+  flex: 1;
+}
+
+.tools .panel {
+  display: none;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--panel-height);
+  padding: 0 calc(var(--page-margin-x) - 9px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tools .panel::-webkit-scrollbar {
+  display: none;
+}
+.tools .panel.open {
+  display: flex;
+}
+
+.tool {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-quiet);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 9px;
+  border-radius: 3px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color var(--duration-instant) var(--ease-standard),
+    color var(--duration-instant) var(--ease-standard);
+}
+.tool:hover {
+  background: var(--wash-hover);
+  color: var(--text-body);
+}
+.tool.on {
+  background: var(--wash-on);
+  color: var(--text-accent);
+}
+.tool[disabled] {
+  opacity: 0.28;
+  cursor: default;
+}
+.tool[disabled]:hover {
+  background: transparent;
+  color: var(--text-quiet);
+}
+.tool:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface-page), 0 0 0 4px var(--focus-ring);
+}
+.tool.caps {
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-smallcaps);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.tool.serif {
+  font-family: var(--font-editorial);
+  font-size: var(--text-lg);
+}
+.tool.mono {
+  font-family: var(--font-mono);
+}
+.tool b {
+  font-weight: 700;
+}
+.tool i {
+  font-style: italic;
+}
+
+.divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 18px;
+  background: var(--border-hairline);
+  margin: 0 6px;
+}
+
+.sw {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-hairline);
+  padding: 0;
+}
+.sw:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface-page), 0 0 0 4px var(--focus-ring);
+}
+.sw[data-c="oxblood"] {
+  background: var(--oxblood-800);
+}
+.sw[data-c="forest"] {
+  background: var(--forest-800);
+}
+.sw[data-c="navy"] {
+  background: var(--navy-800);
+}
+.sw[data-c="driftwood"] {
+  background: var(--driftwood-700);
+}
+.sw[data-c="brass"] {
+  background: var(--brass-700);
+}
+.sw.none {
+  background: transparent;
+  color: var(--text-quiet);
+  font-family: var(--font-ui);
+  font-size: 11px;
+}
+
+.pagefoot {
+  flex: 0 0 auto;
+  background: var(--surface-page);
+  margin: 0 var(--page-margin-x);
+  padding: var(--space-5) 0 var(--space-7);
+  border-top: 1px solid var(--border-hairline);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-quiet);
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+.pagefoot .grow {
+  flex: 1;
+}
+.pagefoot .foot-tag {
+  color: var(--text-accent);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: var(--tracking-wide);
+}
+
+@media (max-width: 720px) {
+  .desk {
+    padding: 0;
+  }
+  .leaf {
+    max-width: none;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .editor .cm-content {
+    padding: var(--grid-pitch) var(--page-margin-x-sm) var(--space-11);
+    background-position: var(--page-margin-x-sm) 33px;
+  }
+  .leaf[data-pen="felt"] .cm-content {
+    background-position: var(--page-margin-x-sm) 35px;
+  }
+  .pagefoot {
+    margin: 0 var(--page-margin-x-sm);
+  }
+  .md-quote {
+    margin-left: 0;
+  }
+  .tools .row,
+  .tools .panel {
+    padding: 0 calc(var(--page-margin-x-sm) - 9px);
+  }
+}
