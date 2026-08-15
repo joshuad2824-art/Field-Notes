@@ -29,12 +29,14 @@ import {
   wordCount,
 } from '../lib/model'
 import { useSettings } from '../lib/settings'
+import { useKeyboardOpen } from '../lib/viewport'
 import { back, navigate, to } from '../lib/router'
 
 const SAVE_DELAY = 250
 
 export function PageScreen({ id }: { id: string }) {
   const settings = useSettings()
+  const keyboardOpen = useKeyboardOpen()
   const [page, setPage] = useState<Page | null>(null)
   const [missing, setMissing] = useState(false)
   const [body, setBody] = useState('')
@@ -283,17 +285,22 @@ export function PageScreen({ id }: { id: string }) {
             autofocus={isBlank(page.body)}
           />
 
-          <div className="pagefoot">
-            <span>{countLabel(words, 'word')}</span>
-            <span>·</span>
-            <span>{editedStamp(page.updated)}</span>
-            <span className="grow" />
-            {tags.slice(0, 3).map((tag) => (
-              <button key={tag} className="foot-tag" onClick={() => navigate(to.tag(tag))}>
-                #{tag}
-              </button>
-            ))}
-          </div>
+          {/* The foot is for looking at a finished page, not for writing one.
+              While the keyboard is up it gets out of the way and gives its
+              line back to the text. */}
+          {keyboardOpen ? null : (
+            <div className="pagefoot">
+              <span>{countLabel(words, 'word')}</span>
+              <span>·</span>
+              <span>{editedStamp(page.updated)}</span>
+              <span className="grow" />
+              {tags.slice(0, 3).map((tag) => (
+                <button key={tag} className="foot-tag" onClick={() => navigate(to.tag(tag))}>
+                  #{tag}
+                </button>
+              ))}
+            </div>
+          )}
         </article>
       </main>
 

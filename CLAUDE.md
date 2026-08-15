@@ -36,6 +36,7 @@ Do not relitigate these without being asked. Each was argued through.
 9. **Web, not native — provisionally.** All three devices are Apple, so Swift + CloudKit is technically the better answer to the "never sign in" requirement. Web wins on iteration speed, which is what an app whose success is about *feel* actually needs. Revisit at the end of Phase 1, not before.
 10. **Pen and stock are per-page attributes with an app-wide default behind them.** Settings holds the default; a page only stores its own value once it has been given one deliberately, so changing the default moves every page that never disagreed with it. This is still not light/dark mode — the frame stays night either way, and the setting chooses what stock the leaf is cut from.
 11. **The page screen has no banner.** The leaf starts at the top of the screen and its own top margin carries the tools: back, the formatting row, undo/redo, and the ⋯ menu. Pin lives in that menu. The only thing above the page is a thin dark band behind the status bar, which exists so white status text stays legible over a cream leaf.
+12. **While the keyboard is up, nothing on screen but the tools and the text.** The page foot — word count, edited time, tags — is for looking at a finished page, not for writing one, so it gives its line back while you type and returns when the keyboard goes.
 
 ---
 
@@ -119,12 +120,12 @@ convention, it's the whole point, and it should stay true until Phase 2.
 
 Two things are built but unproven, because only daily use proves them:
 
-- **The iOS keyboard.** Everything here was verified in desktop Chromium. The first
-  round on a real phone found that iOS scrolls the whole document when the keyboard
-  opens, dragging the tools off the top of the screen — `overflow: hidden` does not
-  stop it, only a fixed body does. `src/lib/viewport.ts` sizes the app to the visual
-  viewport and pins the body; that fix is written but has only been reasoned about,
-  not watched.
+- **The iOS keyboard.** Two rounds on a real phone found two separate moves: iOS
+  scrolls the document (a fixed body stops that) *and* scrolls the visual viewport
+  (it doesn't). `src/lib/viewport.ts` positions the app at `visualViewport.offsetTop`
+  and sizes it to `visualViewport.height`, so it covers exactly what can be seen.
+  `npm run check` feeds that handler the numbers iOS reports, which proves our
+  reaction; only the phone can prove iOS reports them.
 - **The felt pen** falls back to Caveat everywhere Feltpen isn't installed.
 
 The next move is not a feature. It's the month.

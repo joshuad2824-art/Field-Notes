@@ -185,6 +185,57 @@ ok(
   JSON.stringify(leaf),
 )
 
+/* The keyboard. A real soft keyboard can't be summoned here, so this feeds the
+   handler the numbers iOS reports when one opens: a shorter visual viewport,
+   scrolled down under the layout viewport. It proves our reaction is right; it
+   cannot prove iOS reports what we think, which only the phone can settle. */
+await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+await page.waitForTimeout(500)
+await page.locator('.row-page').first().click()
+await page.waitForTimeout(700)
+
+const toolsResting = await page.locator('.tools .row').boundingBox()
+ok('the foot is there with no keyboard', (await page.locator('.pagefoot').count()) === 1)
+
+const openKeyboard = (height, offsetTop) =>
+  page.evaluate(
+    ([h, t]) => {
+      const vv = window.visualViewport
+      Object.defineProperty(vv, 'height', { configurable: true, get: () => h })
+      Object.defineProperty(vv, 'offsetTop', { configurable: true, get: () => t })
+      vv.dispatchEvent(new Event('resize'))
+    },
+    [height, offsetTop],
+  )
+
+await openKeyboard(420, 96)
+await page.waitForTimeout(300)
+
+const shifted = await page.evaluate(() => {
+  const root = document.getElementById('root').getBoundingClientRect()
+  return { top: root.top, height: Math.round(root.height) }
+})
+ok('the app sizes to the visual viewport', shifted.height === 420, String(shifted.height))
+ok('the app follows the viewport offset', shifted.top === 96, String(shifted.top))
+ok('the foot gets out of the way', (await page.locator('.pagefoot').count()) === 0)
+
+const toolsWithKeyboard = await page.locator('.tools .row').boundingBox()
+ok(
+  'the tools row is still on screen',
+  toolsWithKeyboard.y >= 96 && toolsWithKeyboard.y < 156,
+  `y=${toolsWithKeyboard.y}`,
+)
+
+await openKeyboard(844, 0)
+await page.waitForTimeout(300)
+ok('the foot comes back', (await page.locator('.pagefoot').count()) === 1)
+const toolsReturned = await page.locator('.tools .row').boundingBox()
+ok(
+  'the tools row returns to rest',
+  Math.abs(toolsReturned.y - toolsResting.y) < 1,
+  `${toolsResting.y} → ${toolsReturned.y}`,
+)
+
 if (problems.length) {
   failures += problems.length
   console.log('\n' + problems.join('\n'))
