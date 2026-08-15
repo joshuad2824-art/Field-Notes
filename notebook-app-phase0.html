@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Phase 0.3 — the lit page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..600&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Archivo:wght@400;500;600&family=Courier+Prime:wght@400;700&family=Caveat:wght@400..600&display=swap" rel="stylesheet">
+<style>
+/* ── Timber & Ink tokens ─────────────────────────────────────────────── */
+:root{
+  --teal-950:#001011; --teal-900:#051B1C; --teal-850:#0C2223; --teal-800:#142A2B; --teal-700:#22393A;
+  --teal-300:#9CB1B2; --teal-200:#C1D4D4;
+  --cream-050:#FDFAF3; --cream-100:#f6f3ec; --cream-200:#E9E6DF; --cream-300:#D8D6CF; --cream-500:#A6A39C;
+  --driftwood-800:#2A2622; --driftwood-700:#3A342E; --driftwood-400:#8C8172;
+  --brass-700:#7a6201; --brass-500:#AE9546; --brass-400:#C5AE67; --brass-300:#DAC891;
+  --amber-700:#8F5300; --amber-500:#C6862F; --amber-400:#DE9D4B;
+  --oxblood-800:#530a28; --forest-800:#123737; --navy-800:#082744;
+
+  --font-editorial:"Playfair Display",Georgia,serif;
+  --font-body:"Spectral",Georgia,serif;
+  --font-ui:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --font-mono:"Courier Prime","Courier New",monospace;
+  --font-pen:"Linotype Feltpen","Feltpen Com","Feltpen","Caveat",var(--font-body);
+  --pen-size:21px;
+
+  --text-2xs:11px; --text-xs:12px; --text-sm:14px; --text-base:17px;
+  --text-lg:22px; --text-xl:28px; --text-2xl:36px;
+  --tracking-smallcaps:.14em; --tracking-wide:.06em;
+
+  --space-3:8px; --space-5:16px; --space-6:20px; --space-7:24px; --space-8:32px;
+  --space-9:40px; --space-11:64px;
+  --measure-prose:64ch;
+  --header-height:76px;
+  --bar-height:48px; --panel-height:42px;
+
+  --shadow-lift:0 2px 0 rgba(0,0,0,.40), 0 18px 44px rgba(0,0,0,.56);
+  --wash-lantern:radial-gradient(circle at 50% 0%, rgba(241,186,122,.16) 0%, rgba(198,134,47,.05) 38%, rgba(0,16,17,0) 66%);
+  --vignette:radial-gradient(122% 92% at 50% 42%, rgba(0,16,17,0) 38%, rgba(0,16,17,.58) 100%);
+  --duration-instant:90ms; --ease-standard:cubic-bezier(.32,.08,.24,1);
+  --surface-chrome:var(--driftwood-800);
+  --focus-ring:var(--amber-400);
+
+  --grid-pitch:28px; --leading-page:1.647;
+  --page-margin-x:var(--space-11); --page-margin-x-sm:var(--space-6);
+}
+
+/* ── the leaf: paper stock ───────────────────────────────────────────── */
+.leaf[data-stock="paper"]{
+  --surface-page:var(--cream-100);
+  --text-body:var(--teal-800); --text-heading:var(--teal-900);
+  --text-quiet:var(--cream-500); --text-accent:var(--brass-700);
+  --rule-accent:var(--brass-700);
+  --border-hairline:rgba(20,42,43,.10);
+  --grid-dot:rgba(20,42,43,.10);
+  --caret:var(--amber-700);
+  --mark-dim:rgba(20,42,43,.26);
+  --list-ink:var(--brass-700);
+  --wash-hover:rgba(20,42,43,.06);
+  --wash-on:rgba(20,42,43,.10);
+  --code-well:rgba(20,42,43,.05);
+  --hl-blend:multiply;
+  --hl-oxblood:rgba(83,10,40,.20);
+  --hl-forest:rgba(18,55,55,.20);
+  --hl-navy:rgba(8,39,68,.20);
+  --hl-driftwood:rgba(58,52,46,.20);
+  --hl-brass:rgba(122,98,1,.26);
+}
+/* ── the leaf: night stock — the page itself goes dark ───────────────── */
+.leaf[data-stock="night"]{
+  --surface-page:var(--teal-900);
+  --text-body:var(--cream-200); --text-heading:var(--cream-100);
+  --text-quiet:var(--teal-300); --text-accent:var(--brass-400);
+  --rule-accent:var(--brass-600,#957C2B);
+  --border-hairline:rgba(246,243,236,.10);
+  --grid-dot:rgba(246,243,236,.06);
+  --list-ink:var(--brass-400);
+  --wash-hover:rgba(246,243,236,.07);
+  --wash-on:rgba(246,243,236,.12);
+  --caret:var(--amber-500);
+  --mark-dim:rgba(246,243,236,.24);
+  --code-well:rgba(246,243,236,.06);
+  --hl-blend:screen;
+  --hl-oxblood:rgba(180,102,127,.24);
+  --hl-forest:rgba(111,163,163,.22);
+  --hl-navy:rgba(109,147,190,.22);
+  --hl-driftwood:rgba(169,156,140,.20);
+  --hl-brass:rgba(215,190,106,.24);
+}
+.leaf{--page-grid:radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);}
+
+*{box-sizing:border-box;}
+html,body{height:100%; overflow:hidden;}
+body{
+  margin:0; background:var(--teal-800); color:var(--cream-200);
+  font-family:var(--font-body); -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility; overscroll-behavior:none;
+}
+body::before{content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:var(--wash-lantern),var(--vignette);}
+.app{position:relative; z-index:1; height:100%; display:flex; flex-direction:column;}
+
+/* ── desk + leaf ─────────────────────────────────────────────────────── */
+.desk{flex:1 1 auto; min-height:0; display:flex; justify-content:center;
+  padding:var(--space-9) var(--space-8);}
+.leaf{
+  background:var(--surface-page); color:var(--text-body);
+  width:100%; max-width:calc(var(--measure-prose) + (var(--page-margin-x) * 2));
+  box-shadow:var(--shadow-lift); border-radius:2px;
+  display:flex; flex-direction:column;
+  height:100%; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+}
+.editor{
+  flex:1 1 auto; padding:var(--grid-pitch) var(--page-margin-x) var(--space-9);
+  background-image:var(--page-grid); background-size:var(--grid-pitch) var(--grid-pitch);
+  background-position:var(--page-margin-x) 33px;
+  font-size:var(--text-base); line-height:var(--grid-pitch);
+  outline:none; caret-color:var(--caret);
+}
+.leaf:focus-within{box-shadow:var(--shadow-lift),0 0 0 1px rgba(222,157,75,.18);}
+
+/* the pen */
+.leaf[data-pen="felt"] .editor{font-family:var(--font-pen); font-size:var(--pen-size);
+  background-position:var(--page-margin-x) 35px;}
+.leaf[data-pen="felt"] .h1{font-family:var(--font-pen); font-size:34px;}
+.leaf[data-pen="felt"] .h2{font-family:var(--font-pen); font-size:27px;}
+.leaf[data-pen="felt"] .quote{font-family:var(--font-pen); font-style:normal; font-size:23px;}
+
+/* blocks — all heights multiples of 28px so the dots never drift */
+.blk{margin:0 0 var(--grid-pitch); max-width:var(--measure-prose); text-wrap:pretty;}
+.blk:last-child{margin-bottom:0;}
+.h1,.h2{font-family:var(--font-editorial); color:var(--text-heading); font-weight:600;
+  letter-spacing:-.01em; text-wrap:balance;}
+.h1{font-size:var(--text-2xl); line-height:56px;}
+.h2{font-size:var(--text-xl); line-height:56px;}
+.h3{font-family:var(--font-ui); font-size:var(--text-sm); font-weight:600;
+  letter-spacing:var(--tracking-smallcaps); text-transform:uppercase;
+  color:var(--text-heading); line-height:var(--grid-pitch);}
+.quote{font-family:var(--font-editorial); font-style:italic; font-size:var(--text-lg);
+  line-height:var(--grid-pitch); color:var(--text-heading);
+  border-left:2px solid var(--rule-accent); padding-left:var(--space-6); margin-left:-22px;}
+
+/* lists — the marker is a drawn glyph, the markdown stays in the text */
+.li,.ol,.todo{position:relative; padding-left:1.7em;}
+.li::before{position:absolute; left:.2em; color:var(--list-ink); font-weight:600;}
+.li.dot::before{content:"\2022"; font-size:1.15em; line-height:inherit;}
+.li.dash::before{content:"\2013"; font-size:1.1em;}
+
+/* hand-drawn checkbox */
+.box{position:absolute; left:.02em; top:.32em; width:1.05em; height:1.05em;
+  cursor:pointer; color:var(--list-ink);}
+.box svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible;}
+.box svg path{fill:none; stroke:currentColor; stroke-width:1.5;
+  stroke-linecap:round; stroke-linejoin:round;}
+.box .bx{opacity:.72;}
+.box .ck{color:var(--list-ink);}
+.box .ck path{stroke-width:1.9;}
+.rule{height:var(--grid-pitch); display:flex; align-items:center;}
+.rule::after{content:""; flex:1; border-top:1px solid var(--border-hairline);}
+.rule .mk{display:none;}
+
+strong{font-weight:600;} em{font-style:italic;}
+s{text-decoration-thickness:1px; text-decoration-color:var(--mark-dim);}
+code{font-family:var(--font-mono); font-size:.92em; background:var(--code-well); padding:0 .25em;}
+.leaf[data-pen="felt"] code{font-size:.78em;}
+.tag{color:var(--text-accent); font-weight:500;}
+/* the markdown is in the file, never on the page */
+.mk{font-size:0; letter-spacing:0;}
+.done{color:var(--text-quiet); text-decoration:line-through; text-decoration-color:var(--mark-dim);}
+
+/* ── the highlighter: a hand, not a rectangle ────────────────────────── */
+mark{
+  --hl:var(--hl-brass);
+  color:inherit; background:none;
+  background-image:
+    linear-gradient(98deg, transparent 0.4%, var(--hl) 1.8%, var(--hl) 97.6%, transparent 99.4%),
+    linear-gradient(93deg, transparent 3%, var(--hl) 9%, transparent 46%),
+    linear-gradient(266deg, transparent 2%, var(--hl) 7%, transparent 28%);
+  background-repeat:no-repeat;
+  background-size:100% 78%, 100% 34%, 100% 26%;
+  background-position:0 72%, 0 22%, 0 96%;
+  border-radius:.55em .16em .48em .2em;
+  padding:.08em .26em; margin:0 -.16em;
+  -webkit-box-decoration-break:clone; box-decoration-break:clone;
+  mix-blend-mode:var(--hl-blend);
+}
+mark.oxblood{--hl:var(--hl-oxblood);} mark.forest{--hl:var(--hl-forest);}
+mark.navy{--hl:var(--hl-navy);} mark.driftwood{--hl:var(--hl-driftwood);}
+mark.brass{--hl:var(--hl-brass);}
+
+.pagefoot{
+  flex:0 0 auto; position:sticky; bottom:0; background:var(--surface-page);
+  margin:auto var(--page-margin-x) 0; padding:var(--space-5) 0 var(--space-7);
+  border-top:1px solid var(--border-hairline);
+  font-family:var(--font-mono); font-size:var(--text-xs);
+  letter-spacing:var(--tracking-wide); text-transform:uppercase;
+  color:var(--text-quiet); display:flex; gap:var(--space-5);
+}
+
+/* ── tools: the top margin of the page, in the page's own colour ─────── */
+.tools{position:sticky; top:0; z-index:10;
+  background:var(--surface-page);
+  padding-top:env(safe-area-inset-top);}
+.row{height:var(--bar-height); display:flex; align-items:center; gap:2px;
+  padding:0 calc(var(--page-margin-x) - 9px);}
+.row .grow{flex:1;}
+.panel{display:none; align-items:center; gap:var(--space-3);
+  height:var(--panel-height); padding:0 calc(var(--page-margin-x) - 9px);
+  overflow-x:auto; scrollbar-width:none;}
+.panel::-webkit-scrollbar{display:none;}
+.panel.open{display:flex;}
+
+.tool{flex:0 0 auto; border:none; background:transparent; cursor:pointer;
+  color:var(--text-quiet); font-family:var(--font-ui); font-size:var(--text-sm);
+  font-weight:500; min-width:36px; height:32px; padding:0 9px; border-radius:3px; line-height:1;
+  display:inline-flex; align-items:center; justify-content:center;
+  transition:background-color var(--duration-instant) var(--ease-standard),
+             color var(--duration-instant) var(--ease-standard);}
+.tool:hover{background:var(--wash-hover); color:var(--text-body);}
+.tool.on{background:var(--wash-on); color:var(--text-accent);}
+.tool[disabled]{opacity:.28; cursor:default;}
+.tool[disabled]:hover{background:transparent; color:var(--text-quiet);}
+.tool:focus-visible{outline:none; box-shadow:0 0 0 2px var(--surface-page),0 0 0 4px var(--focus-ring);}
+.tool.caps{font-size:var(--text-2xs); letter-spacing:var(--tracking-smallcaps);
+  text-transform:uppercase; font-weight:600;}
+.tool.serif{font-family:var(--font-editorial); font-size:var(--text-lg);}
+.tool.mono{font-family:var(--font-mono);}
+.tool b{font-weight:700;} .tool i{font-style:italic;}
+.divider{flex:0 0 auto; width:1px; height:18px; background:var(--border-hairline); margin:0 6px;}
+
+.sw{width:22px; height:22px; border-radius:999px; cursor:pointer; flex:0 0 auto;
+  border:1px solid var(--border-hairline); padding:0;}
+.sw:focus-visible{outline:none; box-shadow:0 0 0 2px var(--surface-page),0 0 0 4px var(--focus-ring);}
+.sw[data-c="oxblood"]{background:var(--oxblood-800);}
+.sw[data-c="forest"]{background:var(--forest-800);}
+.sw[data-c="navy"]{background:var(--navy-800);}
+.sw[data-c="driftwood"]{background:var(--driftwood-700);}
+.sw[data-c="brass"]{background:var(--brass-700);}
+.sw.none{background:transparent; color:var(--text-quiet); font-family:var(--font-ui); font-size:11px;}
+
+@media (max-width:720px){
+  .desk{padding:0;}
+  .leaf{max-width:none; box-shadow:none; border-radius:0;}
+  .editor{padding:var(--grid-pitch) var(--page-margin-x-sm) var(--space-9);
+          background-position:var(--page-margin-x-sm) 33px;}
+  .leaf[data-pen="felt"] .editor{background-position:var(--page-margin-x-sm) 35px;}
+  .pagefoot{margin:0 var(--page-margin-x-sm);}
+  .quote{margin-left:0;}
+  .row,.panel{padding:0 calc(var(--page-margin-x-sm) - 9px);}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="desk">
+    <article class="leaf" id="leaf" data-stock="paper" data-pen="ink">
+
+      <div class="tools" id="tools">
+        <div class="row">
+          <button class="tool" data-panel="panel-style" title="Styles">Aa</button>
+          <button class="tool" data-wrap="**" title="Bold  &#8984;B"><b>B</b></button>
+          <button class="tool" data-wrap="*" title="Italic  &#8984;I"><i>I</i></button>
+          <button class="tool" data-panel="panel-hl" title="Highlighter">&#9646;</button>
+          <button class="tool" data-block="- [ ] " title="Checklist">&#9744;</button>
+          <span class="grow"></span>
+          <button class="tool" id="undo" title="Undo  &#8984;Z" disabled>&#8630;</button>
+          <button class="tool" id="redo" title="Redo  &#8984;&#8679;Z" disabled>&#8631;</button>
+        </div>
+        <div class="panel" id="panel-style">
+          <button class="tool serif" data-block="# ">Title</button>
+          <button class="tool serif" data-block="## ">Heading</button>
+          <button class="tool caps" data-block="### ">Subhead</button>
+          <span class="divider"></span>
+          <button class="tool" data-wrap="~~" title="Strikethrough"><s>S</s></button>
+          <button class="tool mono" data-wrap="`" title="Monostyled">``</button>
+          <span class="divider"></span>
+          <button class="tool" data-block="* " title="Bulleted list">&#8226;</button>
+          <button class="tool" data-block="- " title="Dashed list">&#8211;</button>
+          <button class="tool mono" data-block="1. " title="Numbered list">1.</button>
+          <span class="divider"></span>
+          <button class="tool serif" data-block="> " title="Block quote">&ldquo;</button>
+          <span class="divider"></span>
+          <button class="tool caps" id="pen-toggle" title="Switch pen">Ink</button>
+          <button class="tool caps" id="stock-toggle" title="Paper or night">Night</button>
+        </div>
+        <div class="panel" id="panel-hl">
+          <button class="sw" data-c="oxblood" aria-label="Oxblood"></button>
+          <button class="sw" data-c="forest" aria-label="Forest"></button>
+          <button class="sw" data-c="navy" aria-label="Navy"></button>
+          <button class="sw" data-c="driftwood" aria-label="Driftwood"></button>
+          <button class="sw" data-c="brass" aria-label="Brass"></button>
+          <button class="sw none" data-c="off" aria-label="Remove highlight">&times;</button>
+        </div>
+      </div>
+
+      <div class="editor" id="editor" contenteditable="true" spellcheck="true"
+           role="textbox" aria-multiline="true" aria-label="Page"></div>
+      <div class="pagefoot"><span id="stat-words">0 words</span><span>&middot;</span><span id="stat-time">&mdash;</span></div>
+    </article>
+  </main>
+</div>
+
+<script>
+const SEED = `# The first morning
+
+The whole question this page has to answer is a small one: do I want to write here?
+
+* Whether the **dots** sit under the lines or fight them
+* Whether Spectral at seventeen holds a =={brass}long thought==
+- A dashed line, for when a dot is too round
+
+- [ ] Write three real paragraphs
+- [x] Open the page
+
+> Certainly work is not always required of a man. There is such a thing as a sacred idleness, the cultivation of which is now fearfully neglected.
+
+Type over all of this. #field-notes`;
+
+const editor = document.getElementById('editor');
+const leaf = document.getElementById('leaf');
+let doc = SEED, lastColor = 'brass';
+
+/* drawn by hand, not stamped */
+const BOX_SVG = '<svg class="bx" viewBox="0 0 20 20" aria-hidden="true">'
+  + '<path d="M3.6 4.6C7.3 3.8 12.5 4.4 16.5 3.9c.5 3.8.1 8.5.4 12.4-4.2.7-9.4.1-13 .5C3.2 12.7 3.8 8.2 3.6 4.6z"/></svg>';
+const CHECK_SVG = '<svg class="ck" viewBox="0 0 20 20" aria-hidden="true">'
+  + '<path d="M4.6 9.9c1.5 1.5 2.8 3.4 4 5.7C10.9 10.8 13.9 6 17.6 2.3"/></svg>';
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function inline(t){
+  let s = esc(t);
+  s = s.replace(/`([^`]+)`/g,'<span class="mk">`</span><code>$1</code><span class="mk">`</span>');
+  s = s.replace(/==(?:\{(\w+)\})?([^=]+)==/g,(m,c,txt)=>
+     `<span class="mk">==${c?'{'+c+'}':''}</span><mark class="${c||'brass'}">${txt}</mark><span class="mk">==</span>`);
+  s = s.replace(/\*\*([^*]+)\*\*/g,'<span class="mk">**</span><strong>$1</strong><span class="mk">**</span>');
+  s = s.replace(/~~([^~]+)~~/g,'<span class="mk">~~</span><s>$1</s><span class="mk">~~</span>');
+  s = s.replace(/(^|[^*\w])\*([^*\n]+)\*(?!\*)/g,'$1<span class="mk">*</span><em>$2</em><span class="mk">*</span>');
+  s = s.replace(/(^|\s)(#[A-Za-z][\w-]*)/g,'$1<span class="tag">$2</span>');
+  return s;
+}
+
+function renderLine(line, i){
+  if(line === '') return '<div class="blk p"><br></div>';
+  let m;
+  if((m = line.match(/^([-*]\s)(\[[ xX]\])(\s)(.*)$/))){
+    const done = m[2].toLowerCase() === '[x]';
+    return `<div class="blk todo">`
+         + `<span class="mk">${esc(m[1])}</span><span class="mk">${esc(m[2])}</span>`
+         + `<span class="box" data-line="${i}">${BOX_SVG}${done ? CHECK_SVG : ''}</span>`
+         + `<span class="mk">${esc(m[3])}</span>`
+         + `<span class="${done?'done':''}">${inline(m[4])}</span></div>`;
+  }
+  if((m = line.match(/^(#{1,3})(\s)(.*)$/)))
+    return `<div class="blk h${m[1].length}"><span class="mk">${m[1]+m[2]}</span>${inline(m[3])}</div>`;
+  if((m = line.match(/^(>\s?)(.*)$/)))
+    return `<div class="blk quote"><span class="mk">${esc(m[1])}</span>${inline(m[2])}</div>`;
+  if((m = line.match(/^(\d+\.\s)(.*)$/)))
+    return `<div class="blk ol"><span class="mk">${esc(m[1])}</span>${inline(m[2])}</div>`;
+  if((m = line.match(/^([-*])(\s)(.*)$/))){
+    const kind = m[1] === '*' ? 'dot' : 'dash';
+    return `<div class="blk li ${kind}"><span class="mk">${esc(m[1]+m[2])}</span>${inline(m[3])}</div>`;
+  }
+  if(/^-{3,}$/.test(line)) return `<div class="blk rule"><span class="mk">${esc(line)}</span></div>`;
+  return `<div class="blk p">${inline(line)}</div>`;
+}
+
+function render(){ editor.innerHTML = doc.split('\n').map(renderLine).join(''); }
+
+/* ── offsets ─────────────────────────────────────────────────────────── */
+function readDoc(){
+  const lines = [];
+  editor.childNodes.forEach(n=>{
+    if(n.nodeType === 3) lines.push(n.textContent);
+    else if(n.nodeName === 'BR') lines.push('');
+    else lines.push(n.textContent);
+  });
+  return lines.join('\n');
+}
+function offsetOf(container, off){
+  if(container === editor){
+    let pos = 0;
+    for(let i=0;i<off && i<editor.childNodes.length;i++)
+      pos += (editor.childNodes[i].textContent||'').length + 1;
+    return pos;
+  }
+  let pos = 0;
+  for(const b of editor.childNodes){
+    if(b === container || (b.nodeType===1 && b.contains(container))){
+      const r = document.createRange();
+      if(b.nodeType===1) r.selectNodeContents(b); else r.selectNode(b);
+      try{ r.setEnd(container, off); }catch(e){ return pos; }
+      return pos + r.toString().length;
+    }
+    pos += (b.textContent||'').length + 1;
+  }
+  return null;
+}
+function getSel(){
+  const s = window.getSelection();
+  if(!s.rangeCount || !editor.contains(s.anchorNode)) return null;
+  const r = s.getRangeAt(0);
+  const a = offsetOf(r.startContainer, r.startOffset), b = offsetOf(r.endContainer, r.endOffset);
+  if(a==null||b==null) return null;
+  return {start:Math.min(a,b), end:Math.max(a,b)};
+}
+function locate(pos){
+  let rem = pos;
+  for(const b of editor.children){
+    const len = b.textContent.length;
+    if(rem <= len){
+      const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+      let n, seen = 0;
+      while((n = w.nextNode())){
+        if(seen + n.length >= rem) return {node:n, offset:rem-seen};
+        seen += n.length;
+      }
+      return {node:b, offset:0};
+    }
+    rem -= (len + 1);
+  }
+  const last = editor.lastElementChild;
+  return last ? {node:last, offset:last.childNodes.length} : {node:editor, offset:0};
+}
+function setSel(a, b){
+  if(a == null) return;
+  if(b == null) b = a;
+  const p = locate(a), q = locate(b), r = document.createRange();
+  try{
+    r.setStart(p.node, Math.min(p.offset, p.node.length ?? p.node.childNodes.length));
+    r.setEnd(q.node, Math.min(q.offset, q.node.length ?? q.node.childNodes.length));
+  }catch(e){ return; }
+  const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+function commit(nd, a, b){ doc = nd; render(); setSel(a,b); updateFoot(); editor.focus(); snapshot(); }
+
+/* ── history: our own, because re-rendering breaks the browser's ─────── */
+let hist = [], hi = -1, histTimer = null;
+function snapshot(){
+  clearTimeout(histTimer); histTimer = null;
+  const sel = getSel();
+  const entry = {doc, start: sel ? sel.start : doc.length, end: sel ? sel.end : doc.length};
+  if(hi >= 0 && hist[hi].doc === doc){ hist[hi] = entry; return updateHistory(); }
+  hist = hist.slice(0, hi + 1);
+  hist.push(entry); hi = hist.length - 1;
+  if(hist.length > 250){ hist.shift(); hi--; }
+  updateHistory();
+}
+function snapshotSoon(){ clearTimeout(histTimer); histTimer = setTimeout(snapshot, 450); }
+function updateHistory(){
+  document.getElementById('undo').disabled = hi <= 0;
+  document.getElementById('redo').disabled = hi >= hist.length - 1;
+}
+function restore(i){
+  const e = hist[i]; if(!e) return;
+  hi = i; doc = e.doc; render(); setSel(e.start, e.end); updateFoot(); editor.focus(); updateHistory();
+}
+function undo(){ if(histTimer) snapshot(); if(hi > 0) restore(hi - 1); }
+function redo(){ if(hi < hist.length - 1) restore(hi + 1); }
+
+/* ── commands ────────────────────────────────────────────────────────── */
+const BLOCK_RE = /^(#{1,3}\s|>\s?|[-*]\s\[[ xX]\]\s|[-*]\s|\d+\.\s)/;
+function applyBlock(prefix){
+  const sel = getSel(); if(!sel) return;
+  const lines = doc.split('\n');
+  let pos = 0, first = -1, last = -1;
+  lines.forEach((l,i)=>{ const s=pos, e=pos+l.length;
+    if(sel.start<=e && sel.end>=s){ if(first<0) first=i; last=i; } pos = e+1; });
+  if(first < 0) return;
+  let delta = 0, firstDelta = 0;
+  for(let i=first;i<=last;i++){
+    const ex = (lines[i].match(BLOCK_RE)||[''])[0];
+    const bare = lines[i].slice(ex.length);
+    const same = ex === prefix ||
+      (prefix === '1. ' && /^\d+\.\s$/.test(ex)) ||
+      (prefix === '- [ ] ' && /^[-*]\s\[[ xX]\]\s$/.test(ex));
+    const next = same ? bare : (prefix === '1. ' ? (i-first+1)+'. '+bare : prefix + bare);
+    const d = next.length - lines[i].length;
+    if(i === first) firstDelta = d;
+    delta += d; lines[i] = next;
+  }
+  commit(lines.join('\n'), Math.max(0,sel.start+firstDelta), Math.max(0,sel.end+delta));
+}
+function applyWrap(open, close){
+  close = close || open;
+  const sel = getSel(); if(!sel) return;
+  const b = doc.slice(0,sel.start), inner = doc.slice(sel.start,sel.end), a = doc.slice(sel.end);
+  if(b.endsWith(open) && a.startsWith(close))
+    return commit(b.slice(0,-open.length)+inner+a.slice(close.length), sel.start-open.length, sel.end-open.length);
+  if(sel.start === sel.end) return commit(b+open+close+a, sel.start+open.length);
+  commit(b+open+inner+close+a, sel.start+open.length, sel.end+open.length);
+}
+function applyHighlight(color){
+  const sel = getSel(); if(!sel) return;
+  const b = doc.slice(0,sel.start), inner = doc.slice(sel.start,sel.end), a = doc.slice(sel.end);
+  const m = b.match(/==(?:\{\w+\})?$/);
+  if(m && a.startsWith('==')){
+    const head = b.slice(0, b.length - m[0].length);
+    if(color === 'off') return commit(head+inner+a.slice(2), sel.start-m[0].length, sel.end-m[0].length);
+    const open = '=={'+color+'}';
+    return commit(head+open+inner+a, head.length+open.length, head.length+open.length+inner.length);
+  }
+  if(color === 'off' || sel.start === sel.end) return;
+  const open = '=={'+color+'}';
+  commit(b+open+inner+'=='+a, sel.start+open.length, sel.end+open.length);
+}
+
+/* ── foot ────────────────────────────────────────────────────────────── */
+function updateFoot(){
+  const w = doc.trim() ? doc.trim().split(/\s+/).length : 0;
+  document.getElementById('stat-words').textContent = w + (w===1?' word':' words');
+  document.getElementById('stat-time').textContent =
+    'edited ' + new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+}
+
+/* ── input ───────────────────────────────────────────────────────────── */
+editor.addEventListener('input', ()=>{
+  const sel = getSel();
+  doc = readDoc(); render();
+  setSel(sel?sel.start:null, sel?sel.end:null);
+  updateFoot(); snapshotSoon();
+});
+editor.addEventListener('paste', e=>{
+  e.preventDefault();
+  document.execCommand('insertText', false,
+    (e.clipboardData||window.clipboardData).getData('text/plain'));
+});
+editor.addEventListener('click', e=>{
+  const box = e.target.closest('.box'); if(!box) return;
+  const i = +box.dataset.line, lines = doc.split('\n');
+  lines[i] = lines[i].replace(/^([-*]\s)\[([ xX])\]/,(m,p,c)=>p+(c===' '?'[x]':'[ ]'));
+  const pos = lines.slice(0,i).reduce((a,l)=>a+l.length+1,0) + lines[i].length;
+  commit(lines.join('\n'), pos);
+});
+
+/* ── tools ───────────────────────────────────────────────────────────── */
+const tools = document.getElementById('tools');
+tools.addEventListener('mousedown', e=>{ if(e.target.closest('button')) e.preventDefault(); });
+
+function togglePanel(id, btn){
+  const panel = document.getElementById(id), wasOpen = panel.classList.contains('open');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('open'));
+  document.querySelectorAll('[data-panel]').forEach(b=>b.classList.remove('on'));
+  if(!wasOpen){ panel.classList.add('open'); btn.classList.add('on'); }
+  editor.focus();
+}
+
+tools.querySelectorAll('.tool').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    if(btn.id === 'undo') return undo();
+    if(btn.id === 'redo') return redo();
+    if(btn.dataset.panel) return togglePanel(btn.dataset.panel, btn);
+    if(btn.id === 'pen-toggle'){
+      const felt = leaf.dataset.pen === 'felt';
+      leaf.dataset.pen = felt ? 'ink' : 'felt';
+      btn.textContent = felt ? 'Ink' : 'Felt';
+      return editor.focus();
+    }
+    if(btn.id === 'stock-toggle'){
+      const night = leaf.dataset.stock === 'night';
+      leaf.dataset.stock = night ? 'paper' : 'night';
+      btn.textContent = night ? 'Night' : 'Paper';
+      return editor.focus();
+    }
+    if(btn.dataset.block) applyBlock(btn.dataset.block);
+    else if(btn.dataset.wrap) applyWrap(btn.dataset.wrap);
+  });
+});
+tools.querySelectorAll('.sw').forEach(sw=>{
+  sw.addEventListener('click', ()=>{
+    const c = sw.dataset.c;
+    if(c !== 'off') lastColor = c;
+    applyHighlight(c);
+  });
+});
+
+document.addEventListener('keydown', e=>{
+  if(!(e.metaKey || e.ctrlKey)) return;
+  const k = e.key.toLowerCase(), map = {'1':'# ','2':'## ','3':'### '};
+  if(map[k]){ e.preventDefault(); return applyBlock(map[k]); }
+  if(k === 'b'){ e.preventDefault(); return applyWrap('**'); }
+  if(k === 'i'){ e.preventDefault(); return applyWrap('*'); }
+  if(k === 'h' && e.shiftKey){ e.preventDefault(); return applyHighlight(lastColor); }
+  if(k === 'z'){ e.preventDefault(); return e.shiftKey ? redo() : undo(); }
+  if(k === 'y'){ e.preventDefault(); return redo(); }
+});
+
+render(); updateFoot(); snapshot();
+window.addEventListener('load', ()=>editor.focus());
+</script>
+</body>
+</html>
