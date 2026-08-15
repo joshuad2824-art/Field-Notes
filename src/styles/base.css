@@ -1,0 +1,117 @@
+/* The room. Night stock, one lantern, and nothing that moves between the tap
+   and the text. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  background: var(--frame-bg);
+  color: var(--frame-text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* the lantern falling across the top of the room, and the corners going dark */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: var(--wash-lantern), var(--vignette);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* ── scrolling ──────────────────────────────────────────────────────── */
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(246, 243, 236, 0.14) transparent;
+}
+.scroll::-webkit-scrollbar {
+  width: 10px;
+}
+.scroll::-webkit-scrollbar-thumb {
+  background: rgba(246, 243, 236, 0.14);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+/* ── shared atoms ───────────────────────────────────────────────────── */
+.meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--frame-quiet);
+}
+
+.smallcaps {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-smallcaps);
+  text-transform: uppercase;
+}
+
+.ui {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+:where(button, a, input, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--frame-bg), 0 0 0 4px var(--focus-ring);
+}
+
+.empty {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--frame-quiet);
+  padding: var(--space-9) var(--space-6);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
