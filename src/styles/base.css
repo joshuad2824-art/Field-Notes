@@ -41,8 +41,14 @@ body::before {
   background: var(--wash-lantern), var(--vignette);
 }
 
+/* Pinned to the visible region rather than the layout viewport, so the tools
+   row is still at the top when the keyboard has pushed everything around.
+   See lib/viewport.ts. */
 #root {
-  position: relative;
+  position: absolute;
+  top: var(--app-top, 0px);
+  left: 0;
+  right: 0;
   z-index: 1;
   height: var(--app-height, 100%);
 }
