@@ -24,6 +24,25 @@ class FieldNotesDB extends Dexie {
       pages: 'id, notebook, updated, created, pinned, deleted, entryDate',
       meta: 'key',
     })
+
+    /* v2: pen and stock became optional overrides with an app default behind
+       them. Pages carrying the old baked-in defaults give them up, so the
+       default actually governs them; anything deliberately set to felt or
+       night keeps its override. */
+    this.version(2)
+      .stores({
+        pages: 'id, notebook, updated, created, pinned, deleted, entryDate',
+        meta: 'key',
+      })
+      .upgrade((tx) =>
+        tx
+          .table<Page>('pages')
+          .toCollection()
+          .modify((page) => {
+            if (page.pen === 'ink') delete page.pen
+            if (page.stock === 'paper') delete page.stock
+          }),
+      )
   }
 }
 
@@ -130,8 +149,6 @@ export async function createPage(
     created: now,
     updated: now,
     pinned: 0,
-    pen: 'ink',
-    stock: 'paper',
   }
   await db.pages.put(page)
   changed()
@@ -162,6 +179,15 @@ export async function setPen(id: string, pen: Pen): Promise<void> {
 
 export async function setStock(id: string, stock: Stock): Promise<void> {
   await patchPage(id, { stock })
+}
+
+/* Hand the page back to whatever the app default is. */
+export async function clearOverrides(id: string): Promise<void> {
+  const page = await db.pages.get(id)
+  if (!page) return
+  const { pen: _pen, stock: _stock, ...rest } = page
+  await db.pages.put({ ...rest, updated: Date.now() } as Page)
+  changed()
 }
 
 export async function moveTo(id: string, notebook: NotebookId): Promise<void> {

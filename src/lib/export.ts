@@ -27,8 +27,8 @@ function frontmatter(page: Page): string {
   ]
   if (page.entryDate) lines.push(`date: ${page.entryDate}`)
   if (page.pinned) lines.push('pinned: true')
-  if (page.pen !== 'ink') lines.push(`pen: ${page.pen}`)
-  if (page.stock !== 'paper') lines.push(`stock: ${page.stock}`)
+  if (page.pen && page.pen !== 'ink') lines.push(`pen: ${page.pen}`)
+  if (page.stock && page.stock !== 'paper') lines.push(`stock: ${page.stock}`)
   lines.push('---', '')
   return lines.join('\n')
 }

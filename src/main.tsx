@@ -6,6 +6,9 @@ import './styles/frame.css'
 import './styles/leaf.css'
 import { App } from './App'
 import { purgeExpiredTombstones, requestPersistence, seedIfEmpty } from './lib/db'
+import { trackViewport } from './lib/viewport'
+
+trackViewport()
 
 /* Open, and be typing. Nothing below blocks the first paint. */
 createRoot(document.getElementById('root')!).render(

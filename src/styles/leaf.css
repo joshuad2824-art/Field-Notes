@@ -1,5 +1,13 @@
 /* The lit page. A cream leaf set into the dark room, and everything on it. */
 
+/* A thin dark band behind the status bar. The page runs to the top of the
+   screen otherwise, and white status text on a cream leaf is unreadable. */
+.statusband {
+  flex: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--frame-chrome);
+}
+
 .desk {
   flex: 1 1 auto;
   min-height: 0;
@@ -266,8 +274,12 @@
 
 /* ── the page's own chrome, in the page's own colour ────────────────── */
 
+/* The tools never move. They are a flex sibling of the scroller, not part of
+   it, so the row stays put however far down the page goes. */
 .tools {
   flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
   background: var(--surface-page);
   border-bottom: 1px solid transparent;
 }
@@ -340,6 +352,12 @@
   outline: none;
   box-shadow: 0 0 0 2px var(--surface-page), 0 0 0 4px var(--focus-ring);
 }
+.tool.glyph {
+  min-width: 30px;
+  padding: 0 6px;
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+}
 .tool.caps {
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-smallcaps);
@@ -407,7 +425,7 @@
   flex: 0 0 auto;
   background: var(--surface-page);
   margin: 0 var(--page-margin-x);
-  padding: var(--space-5) 0 var(--space-7);
+  padding: var(--space-5) 0 calc(var(--space-7) + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border-hairline);
   font-family: var(--font-mono);
   font-size: var(--text-xs);

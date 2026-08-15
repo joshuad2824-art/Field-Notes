@@ -3,9 +3,11 @@ import { requestPersistence, storageEstimate } from '../lib/db'
 import { exportNotebook, exportShelf } from '../lib/export'
 import { bytes } from '../lib/format'
 import { NOTEBOOKS, type NotebookId } from '../lib/model'
+import { setSettings, useSettings } from '../lib/settings'
 import { back, navigate, to } from '../lib/router'
 
 export function SettingsScreen() {
+  const settings = useSettings()
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [usage, setUsage] = useState<string>('—')
 
@@ -27,6 +29,33 @@ export function SettingsScreen() {
 
       <div className="scroll">
         <div className="panel-card">
+          <h2>Pages</h2>
+          <p>
+            What a new page opens as, and what every page that hasn't been given its own
+            answer follows. Change it here and they all change with it.
+          </p>
+          <div className="actions">
+            <button
+              className={`btn caps${settings.stock === 'night' ? ' on' : ''}`}
+              onClick={() =>
+                setSettings({ stock: settings.stock === 'night' ? 'paper' : 'night' })
+              }
+            >
+              Stock · {settings.stock}
+            </button>
+            <button
+              className={`btn caps${settings.pen === 'felt' ? ' on' : ''}`}
+              onClick={() => setSettings({ pen: settings.pen === 'felt' ? 'ink' : 'felt' })}
+            >
+              Pen · {settings.pen}
+            </button>
+          </div>
+          <div className="specimen" data-stock={settings.stock} data-pen={settings.pen}>
+            <div className="specimen-leaf">
+              <span className="specimen-text">The first morning</span>
+            </div>
+          </div>
+
           <h2>Export</h2>
           <p>
             Storage is markdown, so an export is a copy rather than a conversion. Each page
