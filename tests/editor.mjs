@@ -141,6 +141,50 @@ await page.locator('.well').fill('pigment')
 await page.waitForTimeout(600)
 ok('search finds the new page', (await page.locator('.row-page').count()) >= 1)
 
+/* the page screen is the page — no banner above it */
+await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+await page.waitForTimeout(500)
+await page.locator('.row-page').first().click()
+await page.waitForTimeout(700)
+ok('no banner above the leaf', (await page.locator('.chrome').count()) === 0)
+
+const row = await page.locator('.tools .row').boundingBox()
+await page.locator('.cm-scroller').evaluate((el) => (el.scrollTop = 400))
+await page.waitForTimeout(300)
+const rowAfter = await page.locator('.tools .row').boundingBox()
+ok(
+  'the tools row stays put while the page scrolls',
+  Math.abs(row.y - rowAfter.y) < 1,
+  `${row.y} → ${rowAfter.y}`,
+)
+
+const fit = await page
+  .locator('.tools .row')
+  .evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth }))
+ok('the tools row fits its width', fit.scroll <= fit.client, JSON.stringify(fit))
+
+/* a default is a default: change it and pages that never disagreed follow */
+await page.goto(BASE + '/settings', { waitUntil: 'domcontentloaded' })
+await page.waitForTimeout(400)
+const stockButton = page.locator('.btn', { hasText: 'Stock ·' })
+if ((await stockButton.textContent()).includes('paper')) await stockButton.click()
+const penButton = page.locator('.btn', { hasText: 'Pen ·' })
+if ((await penButton.textContent()).includes('ink')) await penButton.click()
+await page.waitForTimeout(300)
+
+await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+await page.waitForTimeout(400)
+await page.getByText('New page', { exact: true }).click()
+await page.waitForTimeout(700)
+const leaf = await page
+  .locator('.leaf')
+  .evaluate((el) => ({ stock: el.dataset.stock, pen: el.dataset.pen }))
+ok(
+  'a new page follows the default',
+  leaf.stock === 'night' && leaf.pen === 'felt',
+  JSON.stringify(leaf),
+)
+
 if (problems.length) {
   failures += problems.length
   console.log('\n' + problems.join('\n'))

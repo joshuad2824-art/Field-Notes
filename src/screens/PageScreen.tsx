@@ -5,6 +5,7 @@ import { Editor } from '../editor/Editor'
 import { applyBlock, applyHighlight, applyWrap } from '../editor/commands'
 import { Sheet, SheetItem } from '../components/Sheet'
 import {
+  clearOverrides,
   deletePage,
   getPage,
   moveTo,
@@ -20,16 +21,20 @@ import {
   NOTEBOOKS,
   type NotebookId,
   type Page,
+  effectivePen,
+  effectiveStock,
   isBlank,
   notebookOf,
   tagsOf,
   wordCount,
 } from '../lib/model'
+import { useSettings } from '../lib/settings'
 import { back, navigate, to } from '../lib/router'
 
 const SAVE_DELAY = 250
 
 export function PageScreen({ id }: { id: string }) {
+  const settings = useSettings()
   const [page, setPage] = useState<Page | null>(null)
   const [missing, setMissing] = useState(false)
   const [body, setBody] = useState('')
@@ -102,13 +107,13 @@ export function PageScreen({ id }: { id: string }) {
   if (missing) {
     return (
       <div className="app">
-        <header className="chrome">
-          <button className="btn glyph" onClick={() => navigate(to.shelf())} aria-label="Back">
-            ‹
-          </button>
-          <span className="chrome-title">Gone</span>
-        </header>
+        <div className="statusband" />
         <div className="empty">That page isn't here.</div>
+        <div className="bottombar">
+          <button className="primary" onClick={() => navigate(to.shelf())}>
+            The shelf
+          </button>
+        </div>
       </div>
     )
   }
@@ -118,6 +123,9 @@ export function PageScreen({ id }: { id: string }) {
   const book = notebookOf(page.notebook)
   const tags = tagsOf(body)
   const words = wordCount(body)
+  const pen = effectivePen(page, settings.pen)
+  const stock = effectiveStock(page, settings.stock)
+  const follows = page.pen === undefined && page.stock === undefined
   const canUndo = view ? undoDepth(view.state) > 0 : false
   const canRedo = view ? redoDepth(view.state) > 0 : false
 
@@ -132,32 +140,21 @@ export function PageScreen({ id }: { id: string }) {
 
   return (
     <div className="app">
-      <header className="chrome">
-        <button className="btn glyph" onClick={() => back(to.notebook(book.id))} aria-label="Back">
-          ‹
-        </button>
-        <button className="btn caps quiet" onClick={() => navigate(to.notebook(book.id))}>
-          {book.name}
-        </button>
-        <span className="grow" />
-        <button
-          className={`btn caps${page.pinned ? ' on' : ''}`}
-          onClick={() => {
-            void setPinned(page.id, !page.pinned)
-            update({ pinned: page.pinned ? 0 : 1 })
-          }}
-        >
-          {page.pinned ? 'Pinned' : 'Pin'}
-        </button>
-        <button className="btn glyph" onClick={() => setMenu(true)} aria-label="Page options">
-          ⋯
-        </button>
-      </header>
+      <div className="statusband" />
 
       <main className="desk">
-        <article className="leaf" data-stock={page.stock} data-pen={page.pen}>
+        <article className="leaf" data-stock={stock} data-pen={pen}>
+          {/* The page's own top margin carries the tools. There is no banner
+              above it — the leaf starts at the top of the screen. */}
           <div className="tools">
             <div className="row">
+              <button
+                className="tool glyph"
+                onClick={() => back(to.notebook(book.id))}
+                aria-label="Back"
+              >
+                ‹
+              </button>
               <button
                 className={`tool${panel === 'style' ? ' on' : ''}`}
                 onClick={() => togglePanel('style')}
@@ -186,21 +183,18 @@ export function PageScreen({ id }: { id: string }) {
                 ☐
               </button>
               <span className="grow" />
-              <button
-                className="tool"
-                onClick={run(undo)}
-                disabled={!canUndo}
-                title="Undo ⌘Z"
-              >
+              <button className="tool" onClick={run(undo)} disabled={!canUndo} title="Undo ⌘Z">
                 ↶
               </button>
-              <button
-                className="tool"
-                onClick={run(redo)}
-                disabled={!canRedo}
-                title="Redo ⌘⇧Z"
-              >
+              <button className="tool" onClick={run(redo)} disabled={!canRedo} title="Redo ⌘⇧Z">
                 ↷
+              </button>
+              <button
+                className="tool glyph"
+                onClick={() => setMenu(true)}
+                aria-label="Page options"
+              >
+                ⋯
               </button>
             </div>
 
@@ -222,11 +216,19 @@ export function PageScreen({ id }: { id: string }) {
               >
                 <s>S</s>
               </button>
-              <button className="tool mono" onClick={run((v) => applyWrap(v, '`'))} title="Monostyled">
+              <button
+                className="tool mono"
+                onClick={run((v) => applyWrap(v, '`'))}
+                title="Monostyled"
+              >
                 ``
               </button>
               <span className="divider" />
-              <button className="tool" onClick={run((v) => applyBlock(v, '* '))} title="Bulleted list">
+              <button
+                className="tool"
+                onClick={run((v) => applyBlock(v, '* '))}
+                title="Bulleted list"
+              >
                 •
               </button>
               <button className="tool" onClick={run((v) => applyBlock(v, '- '))} title="Dashed list">
@@ -240,7 +242,11 @@ export function PageScreen({ id }: { id: string }) {
                 1.
               </button>
               <span className="divider" />
-              <button className="tool serif" onClick={run((v) => applyBlock(v, '> '))} title="Block quote">
+              <button
+                className="tool serif"
+                onClick={run((v) => applyBlock(v, '> '))}
+                title="Block quote"
+              >
                 “
               </button>
             </div>
@@ -293,6 +299,58 @@ export function PageScreen({ id }: { id: string }) {
 
       {menu ? (
         <Sheet onClose={() => setMenu(false)}>
+          <div className="sheet-label">Page</div>
+          <SheetItem
+            label={page.pinned ? 'Unpin' : 'Pin'}
+            state={page.pinned ? 'pinned' : undefined}
+            onClick={() => {
+              void setPinned(page.id, !page.pinned)
+              update({ pinned: page.pinned ? 0 : 1 })
+            }}
+          />
+          <SheetItem
+            label="Pen"
+            state={follows || page.pen === undefined ? `${pen} · default` : pen}
+            onClick={() => {
+              const next = pen === 'felt' ? 'ink' : 'felt'
+              void setPen(page.id, next)
+              update({ pen: next })
+            }}
+          />
+          <SheetItem
+            label="Stock"
+            state={page.stock === undefined ? `${stock} · default` : stock}
+            onClick={() => {
+              const next = stock === 'night' ? 'paper' : 'night'
+              void setStock(page.id, next)
+              update({ stock: next })
+            }}
+          />
+          {!follows ? (
+            <SheetItem
+              label="Follow defaults"
+              onClick={() => {
+                void clearOverrides(page.id)
+                setPage((current) =>
+                  current ? { ...current, pen: undefined, stock: undefined } : current,
+                )
+              }}
+            />
+          ) : null}
+          <div className="sheet-item">
+            <span className="grow">Entry date</span>
+            <input
+              type="date"
+              value={page.entryDate ?? ''}
+              onChange={(e) => {
+                const value = e.target.value || undefined
+                void patchPage(page.id, { entryDate: value })
+                update({ entryDate: value })
+              }}
+            />
+          </div>
+
+          <div className="sheet-rule" />
           <div className="sheet-label">Notebook</div>
           {NOTEBOOKS.map((b) => (
             <SheetItem
@@ -306,39 +364,6 @@ export function PageScreen({ id }: { id: string }) {
               }}
             />
           ))}
-
-          <div className="sheet-rule" />
-          <div className="sheet-label">Page</div>
-          <SheetItem
-            label="Pen"
-            state={page.pen === 'felt' ? 'felt' : 'ink'}
-            onClick={() => {
-              const next = page.pen === 'felt' ? 'ink' : 'felt'
-              void setPen(page.id, next)
-              update({ pen: next })
-            }}
-          />
-          <SheetItem
-            label="Stock"
-            state={page.stock === 'night' ? 'night' : 'paper'}
-            onClick={() => {
-              const next = page.stock === 'night' ? 'paper' : 'night'
-              void setStock(page.id, next)
-              update({ stock: next })
-            }}
-          />
-          <div className="sheet-item">
-            <span className="grow">Entry date</span>
-            <input
-              type="date"
-              value={page.entryDate ?? ''}
-              onChange={(e) => {
-                const value = e.target.value || undefined
-                void patchPage(page.id, { entryDate: value })
-                update({ entryDate: value })
-              }}
-            />
-          </div>
 
           <div className="sheet-rule" />
           <SheetItem

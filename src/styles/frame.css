@@ -481,3 +481,29 @@ mark.hit {
 .actions .btn {
   border: 1px solid var(--frame-hairline);
 }
+
+/* A scrap of the page itself, so the default is a thing you look at rather
+   than two words you have to imagine. */
+.specimen {
+  margin-top: var(--space-5);
+  max-width: 340px;
+}
+.specimen-leaf {
+  background: var(--surface-page);
+  border-radius: 2px;
+  box-shadow: var(--shadow-cover);
+  padding: var(--space-5) var(--space-6);
+  background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
+  background-size: var(--grid-pitch) var(--grid-pitch);
+  background-position: var(--space-6) 5px;
+}
+.specimen-text {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--grid-pitch);
+  color: var(--text-body);
+}
+.specimen[data-pen="felt"] .specimen-text {
+  font-family: var(--font-pen);
+  font-size: var(--pen-size);
+}

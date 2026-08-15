@@ -34,6 +34,8 @@ Do not relitigate these without being asked. Each was argued through.
 7. **No handwriting / Pencil canvas.** Closed deliberately; removed the project's largest engineering risk.
 8. **Solo use.** No sharing, no collaboration, no permissions. Conflicts are only ever between his own three devices.
 9. **Web, not native — provisionally.** All three devices are Apple, so Swift + CloudKit is technically the better answer to the "never sign in" requirement. Web wins on iteration speed, which is what an app whose success is about *feel* actually needs. Revisit at the end of Phase 1, not before.
+10. **Pen and stock are per-page attributes with an app-wide default behind them.** Settings holds the default; a page only stores its own value once it has been given one deliberately, so changing the default moves every page that never disagreed with it. This is still not light/dark mode — the frame stays night either way, and the setting chooses what stock the leaf is cut from.
+11. **The page screen has no banner.** The leaf starts at the top of the screen and its own top margin carries the tools: back, the formatting row, undo/redo, and the ⋯ menu. Pin lives in that menu. The only thing above the page is a thin dark band behind the status bar, which exists so white status text stays legible over a cream leaf.
 
 ---
 
@@ -104,7 +106,7 @@ Scheduled export is the highest-value safety feature in the project. The realist
 - **Export writes a small YAML frontmatter block** — notebook, created, updated, and any entry date, pin, pen or stock. Storage is still plain markdown; this is the one thing added on the way out, because a filename can't carry a created date and losing it would be worse. If it turns out to be clutter in another editor, drop it and accept the loss.
 - **The manifest says "Field Notes"** because a PWA needs *some* name on a home screen. That's a placeholder standing in for the undecided one, not a decision.
 - **Linotype Feltpen is commercially licensed.** The stack names it first with Caveat behind it, so it renders where he's installed it locally. If the felt page becomes daily, buy the webfont license and self-host.
-- **The iOS keyboard accessory bar** cannot be removed from a web app. It's the strongest concrete argument for the native path and should be weighed at the end of Phase 1.
+- **The iOS keyboard accessory bar** — the up/down arrows and the Done tick — cannot be removed from a web app. It's the strongest concrete argument for the native path and should be weighed at the end of Phase 1. It's also the reason the formatting row sits at the top of the page rather than docked above the keyboard: two bars stacked on the keyboard would be worse than one bar at the top. If the accessory bar ever goes, the strip should move down.
 
 ---
 
@@ -117,9 +119,12 @@ convention, it's the whole point, and it should stay true until Phase 2.
 
 Two things are built but unproven, because only daily use proves them:
 
-- **The iOS keyboard.** Everything here was verified in desktop Chromium. The docked
-  formatting strip above the keyboard, `interactive-widget=resizes-content`, and the
-  accessory bar are the parts most likely to be wrong on a real phone.
+- **The iOS keyboard.** Everything here was verified in desktop Chromium. The first
+  round on a real phone found that iOS scrolls the whole document when the keyboard
+  opens, dragging the tools off the top of the screen — `overflow: hidden` does not
+  stop it, only a fixed body does. `src/lib/viewport.ts` sizes the app to the visual
+  viewport and pins the body; that fix is written but has only been reasoned about,
+  not watched.
 - **The felt pen** falls back to Caveat everywhere Feltpen isn't installed.
 
 The next move is not a feature. It's the month.

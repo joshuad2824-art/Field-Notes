@@ -13,9 +13,20 @@ export interface Page {
   updated: number
   pinned: 0 | 1 // indexed, so a number rather than a bool
   entryDate?: string // YYYY-MM-DD — the day this page is "about"
-  pen: Pen
-  stock: Stock
+  pen?: Pen // unset means "follow the default"
+  stock?: Stock // likewise
   deleted?: number // tombstone timestamp, never a hard delete
+}
+
+/* Pen and stock are per-page attributes with an app-wide default behind them.
+   A page only stores a value once it has been given one deliberately, so
+   changing the default moves every page that never disagreed with it. */
+export function effectivePen(page: Pick<Page, 'pen'>, fallback: Pen): Pen {
+  return page.pen ?? fallback
+}
+
+export function effectiveStock(page: Pick<Page, 'stock'>, fallback: Stock): Stock {
+  return page.stock ?? fallback
 }
 
 export interface Notebook {
