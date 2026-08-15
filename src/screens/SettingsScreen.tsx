@@ -31,8 +31,8 @@ export function SettingsScreen() {
         <div className="panel-card">
           <h2>Pages</h2>
           <p>
-            What a new page opens as, and what every page that hasn't been given its own
-            answer follows. Change it here and they all change with it.
+            What a new page opens as, and what every page that hasn't been given its own answer
+            follows. Change it here and they all change with it.
           </p>
           <div className="actions">
             <button
@@ -94,8 +94,8 @@ export function SettingsScreen() {
             </button>
           </div>
           <p className="meta" style={{ marginTop: 16 }}>
-            {persisted === null ? 'checking' : persisted ? 'persistent' : 'best effort'} · {usage}{' '}
-            used
+            {persisted === null ? 'checking' : persisted ? 'persistent' : 'best effort'} ·{' '}
+            {usage} used
           </p>
 
           <h2>Phase</h2>

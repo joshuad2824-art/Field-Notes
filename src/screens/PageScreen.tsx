@@ -4,6 +4,7 @@ import type { EditorView } from '@codemirror/view'
 import { Editor } from '../editor/Editor'
 import { applyBlock, applyHighlight, applyWrap } from '../editor/commands'
 import { Sheet, SheetItem } from '../components/Sheet'
+import { Shell } from '../components/Shell'
 import {
   clearOverrides,
   deletePage,
@@ -144,165 +145,198 @@ export function PageScreen({ id }: { id: string }) {
     <div className="app">
       <div className="statusband" />
 
-      <main className="desk">
-        <article className="leaf" data-stock={stock} data-pen={pen}>
-          {/* The page's own top margin carries the tools. There is no banner
+      <Shell notebook={book.id} activeId={page.id}>
+        {(toggle) => (
+          <>
+            <main className="desk">
+              <article className="leaf" data-stock={stock} data-pen={pen}>
+                {/* The page's own top margin carries the tools. There is no banner
               above it — the leaf starts at the top of the screen. */}
-          <div className="tools">
-            <div className="row">
-              <button
-                className="tool glyph"
-                onClick={() => back(to.notebook(book.id))}
-                aria-label="Back"
-              >
-                ‹
-              </button>
-              <button
-                className={`tool${panel === 'style' ? ' on' : ''}`}
-                onClick={() => togglePanel('style')}
-                title="Styles"
-              >
-                Aa
-              </button>
-              <button className="tool" onClick={run((v) => applyWrap(v, '**'))} title="Bold ⌘B">
-                <b>B</b>
-              </button>
-              <button className="tool" onClick={run((v) => applyWrap(v, '*'))} title="Italic ⌘I">
-                <i>I</i>
-              </button>
-              <button
-                className={`tool${panel === 'hl' ? ' on' : ''}`}
-                onClick={() => togglePanel('hl')}
-                title="Highlighter"
-              >
-                ▮
-              </button>
-              <button
-                className="tool"
-                onClick={run((v) => applyBlock(v, '- [ ] '))}
-                title="Checklist"
-              >
-                ☐
-              </button>
-              <span className="grow" />
-              <button className="tool" onClick={run(undo)} disabled={!canUndo} title="Undo ⌘Z">
-                ↶
-              </button>
-              <button className="tool" onClick={run(redo)} disabled={!canRedo} title="Redo ⌘⇧Z">
-                ↷
-              </button>
-              <button
-                className="tool glyph"
-                onClick={() => setMenu(true)}
-                aria-label="Page options"
-              >
-                ⋯
-              </button>
-            </div>
+                <div className="tools">
+                  <div className="row">
+                    {toggle}
+                    <button
+                      className="tool glyph"
+                      onClick={() => back(to.notebook(book.id))}
+                      aria-label="Back"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      className={`tool${panel === 'style' ? ' on' : ''}`}
+                      onClick={() => togglePanel('style')}
+                      title="Styles"
+                    >
+                      Aa
+                    </button>
+                    <button
+                      className="tool"
+                      onClick={run((v) => applyWrap(v, '**'))}
+                      title="Bold ⌘B"
+                    >
+                      <b>B</b>
+                    </button>
+                    <button
+                      className="tool"
+                      onClick={run((v) => applyWrap(v, '*'))}
+                      title="Italic ⌘I"
+                    >
+                      <i>I</i>
+                    </button>
+                    <button
+                      className={`tool${panel === 'hl' ? ' on' : ''}`}
+                      onClick={() => togglePanel('hl')}
+                      title="Highlighter"
+                    >
+                      ▮
+                    </button>
+                    <button
+                      className="tool"
+                      onClick={run((v) => applyBlock(v, '- [ ] '))}
+                      title="Checklist"
+                    >
+                      ☐
+                    </button>
+                    <span className="grow" />
+                    <button
+                      className="tool"
+                      onClick={run(undo)}
+                      disabled={!canUndo}
+                      title="Undo ⌘Z"
+                    >
+                      ↶
+                    </button>
+                    <button
+                      className="tool"
+                      onClick={run(redo)}
+                      disabled={!canRedo}
+                      title="Redo ⌘⇧Z"
+                    >
+                      ↷
+                    </button>
+                    <button
+                      className="tool glyph"
+                      onClick={() => setMenu(true)}
+                      aria-label="Page options"
+                    >
+                      ⋯
+                    </button>
+                  </div>
 
-            <div className={`panel${panel === 'style' ? ' open' : ''}`}>
-              <button className="tool serif" onClick={run((v) => applyBlock(v, '# '))}>
-                Title
-              </button>
-              <button className="tool serif" onClick={run((v) => applyBlock(v, '## '))}>
-                Heading
-              </button>
-              <button className="tool caps" onClick={run((v) => applyBlock(v, '### '))}>
-                Subhead
-              </button>
-              <span className="divider" />
-              <button
-                className="tool"
-                onClick={run((v) => applyWrap(v, '~~'))}
-                title="Strikethrough"
-              >
-                <s>S</s>
-              </button>
-              <button
-                className="tool mono"
-                onClick={run((v) => applyWrap(v, '`'))}
-                title="Monostyled"
-              >
-                ``
-              </button>
-              <span className="divider" />
-              <button
-                className="tool"
-                onClick={run((v) => applyBlock(v, '* '))}
-                title="Bulleted list"
-              >
-                •
-              </button>
-              <button className="tool" onClick={run((v) => applyBlock(v, '- '))} title="Dashed list">
-                –
-              </button>
-              <button
-                className="tool mono"
-                onClick={run((v) => applyBlock(v, '1. '))}
-                title="Numbered list"
-              >
-                1.
-              </button>
-              <span className="divider" />
-              <button
-                className="tool serif"
-                onClick={run((v) => applyBlock(v, '> '))}
-                title="Block quote"
-              >
-                “
-              </button>
-            </div>
+                  <div className={`panel${panel === 'style' ? ' open' : ''}`}>
+                    <button className="tool serif" onClick={run((v) => applyBlock(v, '# '))}>
+                      Title
+                    </button>
+                    <button className="tool serif" onClick={run((v) => applyBlock(v, '## '))}>
+                      Heading
+                    </button>
+                    <button className="tool caps" onClick={run((v) => applyBlock(v, '### '))}>
+                      Subhead
+                    </button>
+                    <span className="divider" />
+                    <button
+                      className="tool"
+                      onClick={run((v) => applyWrap(v, '~~'))}
+                      title="Strikethrough"
+                    >
+                      <s>S</s>
+                    </button>
+                    <button
+                      className="tool mono"
+                      onClick={run((v) => applyWrap(v, '`'))}
+                      title="Monostyled"
+                    >
+                      ``
+                    </button>
+                    <span className="divider" />
+                    <button
+                      className="tool"
+                      onClick={run((v) => applyBlock(v, '* '))}
+                      title="Bulleted list"
+                    >
+                      •
+                    </button>
+                    <button
+                      className="tool"
+                      onClick={run((v) => applyBlock(v, '- '))}
+                      title="Dashed list"
+                    >
+                      –
+                    </button>
+                    <button
+                      className="tool mono"
+                      onClick={run((v) => applyBlock(v, '1. '))}
+                      title="Numbered list"
+                    >
+                      1.
+                    </button>
+                    <span className="divider" />
+                    <button
+                      className="tool serif"
+                      onClick={run((v) => applyBlock(v, '> '))}
+                      title="Block quote"
+                    >
+                      “
+                    </button>
+                  </div>
 
-            <div className={`panel${panel === 'hl' ? ' open' : ''}`}>
-              {['oxblood', 'forest', 'navy', 'driftwood', 'brass'].map((c) => (
-                <button
-                  key={c}
-                  className="sw"
-                  data-c={c}
-                  aria-label={c}
-                  onClick={() => {
-                    color.current = c
-                    if (view) applyHighlight(view, c)
-                  }}
+                  <div className={`panel${panel === 'hl' ? ' open' : ''}`}>
+                    {['oxblood', 'forest', 'navy', 'driftwood', 'brass'].map((c) => (
+                      <button
+                        key={c}
+                        className="sw"
+                        data-c={c}
+                        aria-label={c}
+                        onClick={() => {
+                          color.current = c
+                          if (view) applyHighlight(view, c)
+                        }}
+                      />
+                    ))}
+                    <button
+                      className="sw none"
+                      aria-label="Remove highlight"
+                      onClick={run((v) => applyHighlight(v, 'off'))}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+
+                <Editor
+                  key={page.id}
+                  initialBody={page.body}
+                  onChange={onChange}
+                  onView={setView}
+                  highlightColor={() => color.current}
+                  autofocus={isBlank(page.body)}
                 />
-              ))}
-              <button
-                className="sw none"
-                aria-label="Remove highlight"
-                onClick={run((v) => applyHighlight(v, 'off'))}
-              >
-                ×
-              </button>
-            </div>
-          </div>
 
-          <Editor
-            key={page.id}
-            initialBody={page.body}
-            onChange={onChange}
-            onView={setView}
-            highlightColor={() => color.current}
-            autofocus={isBlank(page.body)}
-          />
-
-          {/* The foot is for looking at a finished page, not for writing one.
+                {/* The foot is for looking at a finished page, not for writing one.
               While the keyboard is up it gets out of the way and gives its
               line back to the text. */}
-          {keyboardOpen ? null : (
-            <div className="pagefoot">
-              <span>{countLabel(words, 'word')}</span>
-              <span>·</span>
-              <span>{editedStamp(page.updated)}</span>
-              <span className="grow" />
-              {tags.slice(0, 3).map((tag) => (
-                <button key={tag} className="foot-tag" onClick={() => navigate(to.tag(tag))}>
-                  #{tag}
-                </button>
-              ))}
-            </div>
-          )}
-        </article>
-      </main>
+                {keyboardOpen ? null : (
+                  <div className="pagefoot">
+                    <span>{countLabel(words, 'word')}</span>
+                    <span>·</span>
+                    <span>{editedStamp(page.updated)}</span>
+                    <span className="grow" />
+                    {tags.slice(0, 3).map((tag) => (
+                      <button
+                        key={tag}
+                        className="foot-tag"
+                        onClick={() => navigate(to.tag(tag))}
+                      >
+                        #{tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </article>
+            </main>
+          </>
+        )}
+      </Shell>
 
       {menu ? (
         <Sheet onClose={() => setMenu(false)}>

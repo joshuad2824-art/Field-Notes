@@ -80,7 +80,10 @@ export async function exportNotebook(notebook: NotebookId): Promise<number> {
   }
   const book = notebookOf(notebook)
   const zip = zipSync({ [slug(book.name)]: folder } as Tree, { level: 6 })
-  download(new Blob([zip as BlobPart], { type: 'application/zip' }), `${slug(book.name)}-${isoDay()}.zip`)
+  download(
+    new Blob([zip as BlobPart], { type: 'application/zip' }),
+    `${slug(book.name)}-${isoDay()}.zip`,
+  )
   return pages.length
 }
 
@@ -96,7 +99,10 @@ export async function exportShelf(): Promise<number> {
     if (Object.keys(folder).length) tree[slug(book.name)] = folder
   }
   const zip = zipSync(tree, { level: 6 })
-  download(new Blob([zip as BlobPart], { type: 'application/zip' }), `field-notes-${isoDay()}.zip`)
+  download(
+    new Blob([zip as BlobPart], { type: 'application/zip' }),
+    `field-notes-${isoDay()}.zip`,
+  )
   return pages.length
 }
 

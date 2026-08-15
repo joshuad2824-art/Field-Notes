@@ -16,6 +16,27 @@
   padding: var(--space-9) var(--space-8);
 }
 
+/* The room with nothing on the desk yet. */
+.desk-bare {
+  align-items: center;
+  justify-content: center;
+}
+
+/* On a large monitor the leaf doesn't stretch — the measure is the measure —
+   but the page it's printed on gets a more generous margin, and the dark room
+   around it grows. */
+@media (min-width: 1500px) {
+  .desk {
+    padding: var(--space-10) var(--space-9);
+    --page-margin-x: 88px;
+  }
+}
+@media (min-width: 1900px) {
+  .desk {
+    --page-margin-x: 104px;
+  }
+}
+
 .leaf {
   background: var(--surface-page);
   color: var(--text-body);
@@ -31,7 +52,9 @@
 }
 
 .leaf:focus-within {
-  box-shadow: var(--shadow-lift), 0 0 0 1px rgba(222, 157, 75, 0.18);
+  box-shadow:
+    var(--shadow-lift),
+    0 0 0 1px rgba(222, 157, 75, 0.18);
 }
 
 /* ── the editor surface ─────────────────────────────────────────────── */
@@ -85,25 +108,25 @@
 }
 
 /* the pen: only the running text changes hand */
-.leaf[data-pen="felt"] .cm-content {
+.leaf[data-pen='felt'] .cm-content {
   font-family: var(--font-pen);
   font-size: var(--pen-size);
   background-position: var(--page-margin-x) 35px;
 }
-.leaf[data-pen="felt"] .md-h1 {
+.leaf[data-pen='felt'] .md-h1 {
   font-family: var(--font-pen);
   font-size: 34px;
 }
-.leaf[data-pen="felt"] .md-h2 {
+.leaf[data-pen='felt'] .md-h2 {
   font-family: var(--font-pen);
   font-size: 27px;
 }
-.leaf[data-pen="felt"] .md-quote {
+.leaf[data-pen='felt'] .md-quote {
   font-family: var(--font-pen);
   font-style: normal;
   font-size: 23px;
 }
-.leaf[data-pen="felt"] .md-code {
+.leaf[data-pen='felt'] .md-code {
   font-size: 0.78em;
 }
 
@@ -237,7 +260,13 @@
   --hl: var(--hl-brass);
   color: inherit;
   background-image:
-    linear-gradient(98deg, transparent 0.4%, var(--hl) 1.8%, var(--hl) 97.6%, transparent 99.4%),
+    linear-gradient(
+      98deg,
+      transparent 0.4%,
+      var(--hl) 1.8%,
+      var(--hl) 97.6%,
+      transparent 99.4%
+    ),
     linear-gradient(93deg, transparent 3%, var(--hl) 9%, transparent 46%),
     linear-gradient(266deg, transparent 2%, var(--hl) 7%, transparent 28%);
   background-repeat: no-repeat;
@@ -316,7 +345,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  color: var(--text-quiet);
+  color: var(--text-quiet, var(--frame-quiet));
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-weight: 500;
@@ -333,12 +362,12 @@
     color var(--duration-instant) var(--ease-standard);
 }
 .tool:hover {
-  background: var(--wash-hover);
-  color: var(--text-body);
+  background: var(--wash-hover, var(--frame-hover));
+  color: var(--text-body, var(--frame-heading));
 }
 .tool.on {
-  background: var(--wash-on);
-  color: var(--text-accent);
+  background: var(--wash-on, var(--frame-on));
+  color: var(--text-accent, var(--frame-accent));
 }
 .tool[disabled] {
   opacity: 0.28;
@@ -350,7 +379,9 @@
 }
 .tool:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--surface-page), 0 0 0 4px var(--focus-ring);
+  box-shadow:
+    0 0 0 2px var(--surface-page, var(--frame-bg)),
+    0 0 0 4px var(--focus-ring);
 }
 .tool.glyph {
   min-width: 30px;
@@ -397,21 +428,23 @@
 }
 .sw:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--surface-page), 0 0 0 4px var(--focus-ring);
+  box-shadow:
+    0 0 0 2px var(--surface-page),
+    0 0 0 4px var(--focus-ring);
 }
-.sw[data-c="oxblood"] {
+.sw[data-c='oxblood'] {
   background: var(--oxblood-800);
 }
-.sw[data-c="forest"] {
+.sw[data-c='forest'] {
   background: var(--forest-800);
 }
-.sw[data-c="navy"] {
+.sw[data-c='navy'] {
   background: var(--navy-800);
 }
-.sw[data-c="driftwood"] {
+.sw[data-c='driftwood'] {
   background: var(--driftwood-700);
 }
-.sw[data-c="brass"] {
+.sw[data-c='brass'] {
   background: var(--brass-700);
 }
 .sw.none {
@@ -462,7 +495,7 @@
     padding: var(--grid-pitch) var(--page-margin-x-sm) var(--space-11);
     background-position: var(--page-margin-x-sm) 33px;
   }
-  .leaf[data-pen="felt"] .cm-content {
+  .leaf[data-pen='felt'] .cm-content {
     background-position: var(--page-margin-x-sm) 35px;
   }
   .pagefoot {

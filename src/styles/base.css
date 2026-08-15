@@ -33,7 +33,7 @@ body {
 
 /* the lantern falling across the top of the room, and the corners going dark */
 body::before {
-  content: "";
+  content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -109,7 +109,9 @@ button {
 
 :where(button, a, input, [tabindex]):focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--frame-bg), 0 0 0 4px var(--focus-ring);
+  box-shadow:
+    0 0 0 2px var(--frame-bg),
+    0 0 0 4px var(--focus-ring);
 }
 
 .empty {
