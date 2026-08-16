@@ -115,6 +115,112 @@ function pair(
   }
 }
 
+/* ── what a cell holds ───────────────────────────────────────────────────
+   Markdown, the same as everything else on the page. But a cell is a
+   contenteditable and the browser owns editing inside it, so the markdown is
+   drawn as HTML going in and read back off the DOM coming out. That way ⌘B in
+   a cell is the browser's own bold, and the file still gets `**`. */
+
+const HL_COLORS = new Set(['oxblood', 'forest', 'navy', 'driftwood', 'brass'])
+
+export function cellToHtml(text: string): string {
+  let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  /* Code is literal by definition, so it's set aside before anything else
+     runs and put back at the end. */
+  const stash: string[] = []
+  s = s.replace(/`([^`]+)`/g, (_, t) => {
+    stash.push(`<code>${t}</code>`)
+    return `\u0000${stash.length - 1}\u0000`
+  })
+
+  s = s.replace(/==(?:\{(\w+)\})?([^=]+)==/g, (_, c, t) => {
+    const color = c && HL_COLORS.has(c) ? c : 'brass'
+    return `<span class="md-hl md-hl-${color}">${t}</span>`
+  })
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  s = s.replace(/~~([^~]+)~~/g, '<s>$1</s>')
+  s = s.replace(/(^|[^*\w])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => stash[Number(i)])
+}
+
+export function htmlToCell(node: Node): string {
+  let out = ''
+  for (const child of node.childNodes) {
+    if (child.nodeType === Node.TEXT_NODE) {
+      out += child.textContent ?? ''
+      continue
+    }
+    if (!(child instanceof HTMLElement)) continue
+    if (child.tagName === 'BR') {
+      /* A cell is one line — the file has no way to say otherwise. */
+      out += ' '
+      continue
+    }
+    const inner = htmlToCell(child)
+    if (!inner) continue
+    const tag = child.tagName
+    if (tag === 'STRONG' || tag === 'B') out += `**${inner}**`
+    else if (tag === 'EM' || tag === 'I') out += `*${inner}*`
+    else if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') out += `~~${inner}~~`
+    else if (tag === 'CODE') out += `\`${inner}\``
+    else if (child.classList.contains('md-hl')) {
+      const color =
+        [...child.classList].find((c) => c.startsWith('md-hl-'))?.slice(6) ?? 'brass'
+      out += `=={${color}}${inner}==`
+    } else out += inner
+  }
+  return out.replace(/\s+/g, ' ')
+}
+
+/* The cell the caret is in, if it is in one. The tray asks this before it
+   reaches for CodeMirror, because inside a table the browser is the editor. */
+export function focusedCell(): HTMLElement | null {
+  const el = document.activeElement
+  if (el instanceof HTMLElement && el.tagName === 'TD' && el.isContentEditable) return el
+  return null
+}
+
+/* Marks inside a cell. Bold, italic and strike are the browser's own; code and
+   the highlighter have no command of their own and get wrapped by hand. */
+export function markInCell(mark: 'bold' | 'italic' | 'strike' | 'code' | string): boolean {
+  const cell = focusedCell()
+  if (!cell) return false
+
+  if (mark === 'bold' || mark === 'italic') {
+    document.execCommand(mark)
+    return true
+  }
+  if (mark === 'strike') {
+    document.execCommand('strikeThrough')
+    return true
+  }
+
+  const selection = window.getSelection()
+  const text = selection?.toString() ?? ''
+  if (!text) return true
+
+  const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  if (mark === 'code') {
+    document.execCommand('insertHTML', false, `<code>${safe}</code>`)
+    return true
+  }
+  const color = HL_COLORS.has(mark) ? mark : 'brass'
+  document.execCommand('insertHTML', false, `<span class="md-hl md-hl-${color}">${safe}</span>`)
+  return true
+}
+
+export function capsInCell(): boolean {
+  const cell = focusedCell()
+  if (!cell) return false
+  const selection = window.getSelection()
+  const text = selection?.toString() ?? ''
+  if (!text) return true
+  document.execCommand('insertText', false, text.toUpperCase())
+  return true
+}
+
 /* ── the widget ─────────────────────────────────────────────────────── */
 
 interface Live {
@@ -216,7 +322,7 @@ function commitCells(host: Host, view: EditorView) {
     const cells: Cell[] = []
     for (const td of tr.querySelectorAll('td')) {
       cells.push({
-        text: (td.textContent ?? '').replace(/\s+/g, ' ').trim(),
+        text: htmlToCell(td).trim(),
         span: Number(td.getAttribute('colspan') ?? 1),
       })
     }
@@ -268,7 +374,7 @@ function render(host: Host, view: EditorView) {
       td.dataset.cell = String(c)
       /* Never write over the cell being typed in — that is what would move
          the caret to the front of the word. */
-      if (td !== active && td.textContent !== cell.text) td.textContent = cell.text
+      if (td !== active && htmlToCell(td) !== cell.text) td.innerHTML = cellToHtml(cell.text)
     })
   })
 
@@ -282,6 +388,17 @@ function cellHandlers(td: HTMLElement, host: Host, view: EditorView) {
   td.addEventListener('input', () => commitCells(host, view))
   td.addEventListener('blur', () => commitCells(host, view))
   td.addEventListener('keydown', (event) => {
+    /* Inside a cell the browser is the editor, so the marks are its own. */
+    if (event.metaKey || event.ctrlKey) {
+      const key = event.key.toLowerCase()
+      const mark = key === 'b' ? 'bold' : key === 'i' ? 'italic' : null
+      if (mark) {
+        event.preventDefault()
+        markInCell(mark)
+        commitCells(host, view)
+        return
+      }
+    }
     /* Enter would put a line break inside the cell, which the file has no way
        to say. It moves down a row instead, the way a spreadsheet does. */
     if (event.key === 'Enter') {
@@ -362,8 +479,14 @@ function drawRules(host: Host) {
   }
 }
 
-/* A grip on every seam in the head row. Dragging one moves the boundary
-   between two columns and leaves the table the width it was. */
+/* A grip on every seam between columns. Dragging one moves the boundary and
+   leaves the table the width it was.
+
+   The seams are worked out from the column widths, never from the cells of
+   the head row. Reading them off the head meant that merging anything up
+   there swallowed the seams underneath it — and merging the whole head row,
+   which is exactly what a title across the top is, left no grips at all and
+   the columns simply stopped being resizable. */
 function layHandles(host: Host, view: EditorView) {
   const holder = host.querySelector('.md-table-handles') as HTMLElement | null
   const table = host.querySelector('table')
@@ -375,22 +498,45 @@ function layHandles(host: Host, view: EditorView) {
   const columns = live.table.widths.length
   holder.replaceChildren()
 
-  const box = table.getBoundingClientRect()
-  let column = 0
+  const at = (widths: number[], seam: number) => {
+    let acc = 0
+    for (let i = 0; i <= seam; i++) acc += widths[i]
+    return (acc / 100) * table.offsetWidth
+  }
 
-  for (const td of head.querySelectorAll('td')) {
-    column += Number(td.getAttribute('colspan') ?? 1)
-    if (column >= columns) break
-    const seam = column - 1
+  /* Does this row have a real cell boundary at this seam? A merged cell runs
+     straight through one. */
+  const breaksAt = (tr: HTMLTableRowElement, seam: number) => {
+    let column = 0
+    for (const td of tr.querySelectorAll('td')) {
+      column += Number(td.getAttribute('colspan') ?? 1)
+      if (column === seam + 1) return true
+      if (column > seam + 1) return false
+    }
+    return false
+  }
+
+  const rows = [...host.querySelectorAll('tr')] as HTMLTableRowElement[]
+  const top = table.getBoundingClientRect().top
+
+  for (let seam = 0; seam < columns - 1; seam++) {
+    /* A grip has to sit on a boundary that is actually drawn, or it lies over
+       the middle of a merged cell and swallows the clicks meant for it — which
+       is exactly what happens to a title merged across the head row. So it
+       hangs on the first row that still breaks here, head or not, and a seam
+       no row breaks at simply has no grip. */
+    const row = rows.find((tr) => breaksAt(tr, seam))
+    if (!row) continue
 
     const grip = document.createElement('div')
     grip.className = 'md-table-grip'
-    grip.style.left = `${td.getBoundingClientRect().right - box.left}px`
-    /* Only as deep as the head row. Running the grip the whole height of the
+    grip.style.left = `${at(live.table.widths, seam)}px`
+    /* Only as deep as its own row. Running the grip the whole height of the
        table put an invisible strip over every cell it passed, and a click
        near a column edge started a drag instead of putting the caret in the
        cell — which looks exactly like the cell being dead. */
-    grip.style.height = `${(head as HTMLElement).offsetHeight}px`
+    grip.style.top = `${row.getBoundingClientRect().top - top}px`
+    grip.style.height = `${row.getBoundingClientRect().height}px`
     grip.setAttribute('role', 'separator')
     grip.setAttribute('aria-label', 'Column width')
 
@@ -418,7 +564,7 @@ function layHandles(host: Host, view: EditorView) {
           const col = colgroup?.children[i]
           if (col instanceof HTMLElement) col.style.width = `${w}%`
         })
-        grip.style.left = `${td.getBoundingClientRect().right - table.getBoundingClientRect().left}px`
+        grip.style.left = `${at(next, seam)}px`
         drawRules(host)
       }
 
