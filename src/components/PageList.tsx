@@ -10,8 +10,10 @@ interface Props {
   notebook: string
   activeId?: string
   compact: boolean
-  showRailButton: boolean
-  onOpenRail: () => void
+  /* Whether the notebooks column is docked beside us — the mark in the head
+     is what folds and unfolds it. */
+  railShown: boolean
+  onToggleRail: () => void
   onNewPage: () => void
   onPick?: () => void
 }
@@ -39,8 +41,8 @@ export function PageList({
   notebook,
   activeId,
   compact,
-  showRailButton,
-  onOpenRail,
+  railShown,
+  onToggleRail,
   onNewPage,
   onPick,
 }: Props) {
@@ -73,7 +75,7 @@ export function PageList({
             {month} {year}
           </span>
           <span className="grow" />
-          <button className="mark-button" onClick={onOpenRail} aria-label="Notebooks">
+          <button className="mark-button" onClick={onToggleRail} aria-label="Notebooks">
             ☰
           </button>
         </div>
@@ -81,11 +83,16 @@ export function PageList({
 
       <div className="list-head">
         <div className="list-head-row">
-          {showRailButton && !compact ? (
-            <button className="mark-button tight" onClick={onOpenRail} aria-label="Notebooks">
+          {compact ? null : (
+            <button
+              className={`mark-button tight${railShown ? ' on' : ''}`}
+              onClick={onToggleRail}
+              aria-label={railShown ? 'Hide the notebooks' : 'Show the notebooks'}
+              title="Notebooks — ⌘⇧\"
+            >
               ☰
             </button>
-          ) : null}
+          )}
           <span className="book-dot" style={{ background: book.color }} />
           <span className="list-title">{book.name}</span>
           <span className="grow" />
@@ -135,17 +142,16 @@ export function PageList({
         )}
       </div>
 
-      {compact ? (
-        <div className="list-foot">
-          <button className="link-signage" onClick={() => navigate(to.search())}>
-            Search
-          </button>
-          <span className="grow" />
-          <button className="plate-button tight" onClick={onNewPage}>
-            New page
-          </button>
-        </div>
-      ) : null}
+      {/* New page belongs under the pages it makes, at every width. */}
+      <div className="list-foot">
+        <button className="link-signage" onClick={() => navigate(to.search())}>
+          Search
+        </button>
+        <span className="grow" />
+        <button className="plate-button tight" onClick={onNewPage} title="⌘⇧N">
+          New page
+        </button>
+      </div>
     </div>
   )
 }

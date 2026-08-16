@@ -97,6 +97,13 @@
   --sidebar-width: 264px;
   --list-width: 372px;
 
+  /* The notches and the home indicator, given names. Nothing reads
+     env(safe-area-inset-*) directly any more: a test can set these and see
+     what an iPad sees, which is the only way these edges ever get checked
+     without holding the device. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
   /* ── surfaces and light ───────────────────────────────────────────── */
   --shadow-lift: 0 2px 0 rgba(0, 0, 0, 0.4), 0 18px 44px rgba(0, 0, 0, 0.56);
   --shadow-cover: 0 1px 0 rgba(0, 0, 0, 0.5), 0 10px 24px rgba(0, 0, 0, 0.42);

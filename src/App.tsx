@@ -27,10 +27,12 @@ export function App() {
         e.preventDefault()
         navigate(to.search())
       }
+      /* Each column folds on its own: ⌘\ the list, ⌘⇧\ the notebooks.
+         Read at press time rather than from the closure. */
       if (key === '\\') {
         e.preventDefault()
-        /* Read at press time rather than from the closure. */
-        setSettings({ sidebar: !getSettings().sidebar })
+        if (e.shiftKey) setSettings({ rail: !getSettings().rail })
+        else setSettings({ list: !getSettings().list })
       }
       if (key === 'n' && e.shiftKey) {
         e.preventDefault()

@@ -35,12 +35,14 @@ Do not relitigate these without being asked. Each was argued through.
 8. **Solo use.** No sharing, no collaboration, no permissions. Conflicts are only ever between his own three devices.
 9. **Web, not native — provisionally.** All three devices are Apple, so Swift + CloudKit is technically the better answer to the "never sign in" requirement. Web wins on iteration speed, which is what an app whose success is about *feel* actually needs. Revisit at the end of Phase 1, not before.
 10. **Pen and stock are per-page attributes with an app-wide default behind them.** Settings holds the default; a page only stores its own value once it has been given one deliberately, so changing the default moves every page that never disagreed with it. This is still not light/dark mode — the frame stays night either way, and the setting chooses what stock the leaf is cut from.
-11. **The page screen has no banner.** The leaf starts at the top of the screen and its own top margin carries the tools: back, the formatting row, undo/redo, and the ⋯ menu. Pin lives in that menu. The only thing above the page is a thin dark band behind the status bar, which exists so white status text stays legible over a cream leaf.
+11. **The page screen has no banner.** The leaf starts at the top of the screen and its own top margin carries the tools: back, the formatting row, undo/redo, and the ⋯ menu. Pin lives in that menu. The only thing above the page is a thin band behind the status bar, which exists so white status text stays legible over a cream leaf. It is the frame's own teal and it is the *whole* standoff — where the desk would otherwise add its own margin above the leaf, that margin is reduced by whatever the band already gave, so a device with an inset gets one band and not two stacked.
 12. **While the keyboard is up, nothing on screen but the tools and the text.** The page foot — word count, edited time, tags — is for looking at a finished page, not for writing one, so it gives its line back while you type and returns when the keyboard goes.
-13. **Three widths, three columns.** Past 1120px the app is a rail (264px), a page list (372px) and the desk; the columns can be put away together with ⌘\ and the choice is remembered. Below 1120 nothing is docked — the list is the whole window, a page replaces it, and the rail slides over as a drawer that starts closed. Crossing the boundary reconciles the flag.
+13. **Three widths, three columns.** Past 1120px the app is a rail (264px), a page list (372px) and the desk. **Each column folds on its own** and both choices are remembered: the `☰` on the desk takes the list (⌘\), the `‹` in the rail's wordmark row folds the rail, and the `☰` in the list head brings the rail back (⌘⇧\). Every column carries the control for the one beside it, so no state is a dead end. Below 1120 nothing is docked — the list is the whole window, a page replaces it, and the rail slides over as a drawer that starts closed. Crossing the boundary reconciles the drawer.
 14. **The date is the masthead.** There is no chrome bar anywhere. The rail opens with the wordmark, the day numeral in Playfair at 76px, and a week strip with a brass dot under any day that has pages. The shelf screen and the four cover cards are retired.
 15. **The leaf fills the desk.** `max-width: none`; what's capped is the *measure*, fluid up to 900px, so the text widens with the window but a 27" monitor can't produce a 200-character line. Under 1120px the page is edge to edge — no desk, no shadow, no radius.
 16. **The toolbar at rest is three marks, not eleven.** `☰`, `Aa`, `⋯`, with `Saved` between them. Everything that shapes the page lives in the tray behind `Aa`.
+17. **New page belongs to the list, not the rail.** The button sits at the foot of the column showing the pages it will join, at every width. The rail's foot is Trash and Settings — the app's two back rooms and nothing else.
+18. **Nothing reads `env(safe-area-inset-*)` directly.** `--safe-top` and `--safe-bottom` in `tokens.css` are the only two places it appears. A desktop browser always reports zero for both, so the notch and the home indicator are invisible to us unless we can set them — and `npm run check` sets them to what an iPad reports and asserts on the bands that come out.
 
 ---
 
@@ -136,8 +138,9 @@ desktop layouts. Nothing in `src/` imports anything that talks to a network — 
 isn't a convention, it's the whole point, and it should stay true until Phase 2.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 48 assertions covering the editor, the grid, the keyboard, the three
-widths, and the notebook manager.
+rotted: 74 assertions covering the editor, the grid, the keyboard, the three
+widths, the folding columns, the safe-area bands, the notebook manager and
+pictures.
 
 Two things are built but unproven, because only daily use proves them:
 

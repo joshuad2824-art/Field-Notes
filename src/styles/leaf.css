@@ -1,11 +1,13 @@
 /* The lit page. A cream leaf set into the dark room, and everything on it. */
 
-/* A thin dark band behind the status bar. The page runs to the top of the
-   screen otherwise, and white status text on a cream leaf is unreadable. */
+/* A thin band behind the status bar. The page runs to the top of the screen
+   otherwise, and white status text on a cream leaf is unreadable. It is the
+   frame's own teal, so on a tablet it reads as one band with the desk above
+   the leaf rather than a brown stripe and then a teal one. */
 .statusband {
   flex: 0 0 auto;
-  height: env(safe-area-inset-top, 0px);
-  background: var(--frame-chrome);
+  height: var(--safe-top);
+  background: var(--frame-bg);
 }
 
 .desk {
@@ -14,11 +16,13 @@
   min-height: 0;
   display: flex;
   justify-content: center;
-  padding: 20px 20px 0;
+  /* The status band already stands the leaf off the top of the screen, so
+     take what it gives rather than stacking a second gap on top of it. */
+  padding: max(0px, 20px - var(--safe-top)) 20px 0;
 }
 @media (min-width: 1500px) {
   .desk {
-    padding: 28px 28px 0;
+    padding: max(0px, 28px - var(--safe-top)) 28px 0;
     --page-margin-x: 80px;
   }
 }
@@ -32,8 +36,14 @@
 
 /* The room with nothing on the desk yet. */
 .desk-bare {
+  position: relative;
   align-items: center;
   justify-content: center;
+}
+.desk-marks {
+  position: absolute;
+  top: 8px;
+  left: 8px;
 }
 
 .leaf {
@@ -534,7 +544,7 @@
   width: 100%;
   max-width: min(100%, var(--measure-max));
   margin: 0 var(--page-margin-x);
-  padding: 14px 0 calc(20px + env(safe-area-inset-bottom, 0px));
+  padding: 14px 0 calc(20px + var(--safe-bottom));
   border-top: 1px solid var(--border-hairline);
   font-family: var(--font-mono);
   font-size: var(--text-xs);

@@ -18,11 +18,13 @@ interface Props {
 
 /* Three columns: the rail, the list, and the desk.
 
-   Past 1120px all three are on screen and the rail starts open. Below that the
-   app navigates screen by screen — the list is the whole window, a page takes
-   the whole window, and the rail slides over as a drawer that starts closed.
-   Crossing the boundary reconciles the flag, because a drawer that survived a
-   resize into the docked layout would be a second, invisible state. */
+   Past 1120px all three are on screen and both columns start open. Each folds
+   on its own: the mark on the desk folds the list, the mark in the list head
+   folds the rail, and the rail can fold itself. Below 1120 the app navigates
+   screen by screen — the list is the whole window, a page takes the whole
+   window, and the rail slides over as a drawer that starts closed. Crossing
+   the boundary reconciles the drawer, because one that survived a resize into
+   the docked layout would be a second, invisible state. */
 export function Shell({ notebook, activeId, children }: Props) {
   const available = useMediaQuery(SIDEBAR_AVAILABLE)
   const docked = useMediaQuery(SIDEBAR_DOCKED)
@@ -37,15 +39,15 @@ export function Shell({ notebook, activeId, children }: Props) {
   }, [docked])
 
   const compact = !docked
-  const columnsOn = settings.sidebar
-  const railDocked = docked && columnsOn
-  const listDocked = docked && columnsOn
+  const railDocked = docked && settings.rail
+  const listDocked = docked && settings.list
   const railOver = !docked && railDrawer
 
   /* Below the boundary the leaf replaces the list rather than joining it. */
   const showList = compact ? !activeId : listDocked
   const showLeaf = compact ? !!activeId : true
-  const hidden = docked && !columnsOn
+  /* Nothing to the left saying where we are, so the leaf says it itself. */
+  const hidden = docked && !listDocked && !railDocked
 
   const pickNotebook = (id: string) => {
     setSettings({ notebook: id })
@@ -61,12 +63,12 @@ export function Shell({ notebook, activeId, children }: Props) {
 
   const toggle = (
     <button
-      className={`mark-button${!hidden && available ? ' on' : ''}`}
+      className={`mark-button${listDocked && available ? ' on' : ''}`}
       onClick={() => {
         if (compact) navigate(to.notebook(notebook))
-        else setSettings({ sidebar: !columnsOn })
+        else setSettings({ list: !settings.list })
       }}
-      aria-label={compact ? 'The list' : hidden ? 'Show the columns' : 'Hide the columns'}
+      aria-label={compact ? 'The list' : listDocked ? 'Hide the list' : 'Show the list'}
       title="The list — ⌘\"
     >
       ☰
@@ -85,7 +87,7 @@ export function Shell({ notebook, activeId, children }: Props) {
             activeId={notebook}
             onPick={pickNotebook}
             onManage={() => setManage(true)}
-            onNewPage={newPage}
+            onFold={() => (docked ? setSettings({ rail: false }) : setRailDrawer(false))}
           />
         </div>
       ) : null}
@@ -95,8 +97,10 @@ export function Shell({ notebook, activeId, children }: Props) {
           notebook={notebook}
           activeId={activeId}
           compact={compact}
-          showRailButton={!docked || !columnsOn}
-          onOpenRail={() => (docked ? setSettings({ sidebar: true }) : setRailDrawer(true))}
+          railShown={railDocked}
+          onToggleRail={() =>
+            docked ? setSettings({ rail: !settings.rail }) : setRailDrawer(true)
+          }
           onNewPage={newPage}
         />
       ) : null}

@@ -226,6 +226,11 @@ await atWidth(1440, 900, async (view) => {
   ok('the list is 372 wide', Math.round(list.width) === 372, String(list.width))
   ok('the date is the masthead', (await view.locator('.rail-numeral').count()) === 1)
   ok('today is lit in the week strip', (await view.locator('.rail-today').count()) === 1)
+  /* Folding on an empty desk must not be a one-way door. */
+  ok(
+    'the bare desk carries the mark too',
+    (await view.locator('.desk-marks .mark-button').count()) === 1,
+  )
 
   await view.locator('.list-row').first().click()
   await view.waitForTimeout(700)
@@ -234,16 +239,75 @@ await atWidth(1440, 900, async (view) => {
   const leaf = await view.locator('.leaf').boundingBox()
   ok('the leaf fills the desk', leaf.width > 700, `${Math.round(leaf.width)}px`)
 
+  /* Each column folds on its own. The mark on the desk takes the list; the
+     rail folds itself; the mark in the list head brings the rail back. */
   await view.locator('.tools .row .mark-button').first().click()
   await view.waitForTimeout(300)
   ok(
-    'the columns can be put away',
-    (await view.locator('.rail').count()) === 0 && (await view.locator('.listcol').count()) === 0,
+    'the desk mark folds the list alone',
+    (await view.locator('.listcol').count()) === 0 && (await view.locator('.rail').count()) === 1,
   )
+
+  await view.locator('.rail-wordmark .mark-button').click()
+  await view.waitForTimeout(300)
+  ok('the rail folds itself', (await view.locator('.rail').count()) === 0)
   ok('a breadcrumb takes their place', (await view.locator('.breadcrumb').count()) === 1)
+
   await view.locator('.tools .row .mark-button').first().click()
   await view.waitForTimeout(300)
-  ok('and they come back', (await view.locator('.rail').count()) === 1)
+  ok(
+    'the list comes back without the rail',
+    (await view.locator('.listcol').count()) === 1 && (await view.locator('.rail').count()) === 0,
+  )
+
+  await view.locator('.list-head .mark-button').click()
+  await view.waitForTimeout(300)
+  ok('and the list head brings the rail back', (await view.locator('.rail').count()) === 1)
+
+  ok(
+    'New page sits under the pages, not the notebooks',
+    (await view.locator('.list-foot .plate-button').count()) === 1 &&
+      (await view.locator('.rail .plate-button').count()) === 0,
+  )
+})
+
+/* ── the edges of the screen ────────────────────────────────────────── */
+
+/* An iPad reports insets a desktop browser never does, and the bands they
+   produce are invisible to us otherwise. Nothing reads env(safe-area-inset-*)
+   directly, so setting the two tokens is setting what the device reports. */
+await atWidth(1194, 834, async (view) => {
+  await view.addStyleTag({ content: ':root { --safe-top: 24px; --safe-bottom: 20px; }' })
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(700)
+
+  const band = await view.locator('.statusband').evaluate((el) => ({
+    height: el.getBoundingClientRect().height,
+    background: getComputedStyle(el).backgroundColor,
+  }))
+  ok('the status band stands off the inset', Math.round(band.height) === 24, `${band.height}px`)
+  ok(
+    'and it is the frame teal, not driftwood',
+    band.background === 'rgb(20, 42, 43)',
+    band.background,
+  )
+
+  const leafTop = await view.locator('.leaf').evaluate((el) => el.getBoundingClientRect().top)
+  ok('the leaf starts right under it — one band, not two', Math.round(leafTop) === 24, `${leafTop}px`)
+
+  const brown = await view.evaluate(() =>
+    [...document.querySelectorAll('*')].filter(
+      (el) => getComputedStyle(el).backgroundColor === 'rgb(42, 38, 34)',
+    ).length,
+  )
+  ok('no driftwood band anywhere on a page', brown === 0, `${brown} found`)
+
+  const foot = await view.locator('.pagefoot-measure').evaluate((el) => ({
+    pad: getComputedStyle(el).paddingBottom,
+    bottom: Math.round(window.innerHeight - el.getBoundingClientRect().bottom),
+  }))
+  ok('the page foot clears the home indicator', foot.pad === '40px', foot.pad)
+  ok('and the leaf runs to the bottom edge', foot.bottom === 0, `${foot.bottom}px short`)
 })
 
 await atWidth(1920, 1080, async (view) => {
