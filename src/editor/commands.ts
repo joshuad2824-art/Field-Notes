@@ -153,19 +153,62 @@ export function applyHighlight(view: EditorView, color: string): boolean {
     return true
   }
 
-  if (color === 'off' || range.empty) {
+  if (color === 'off') {
     view.focus()
     return false
   }
 
-  const next = `=={${color}}`
-  view.dispatch({
-    changes: [
-      { from: range.from, insert: next },
-      { from: range.to, insert: '==' },
-    ],
-    selection: { anchor: range.from + next.length, head: range.to + next.length },
-  })
+  /* Nothing selected: take the word under the caret, the same as a mark. */
+  const word = range.empty ? wordAt(state, range.head) : null
+  if (range.empty && !word) {
+    view.focus()
+    return false
+  }
+  const wanted = word ?? range
+
+  /* A highlight never spans a line break. The grammar reads one line at a
+     time, so an opening `=={brass}` on one line and its `==` on the next can
+     never be hidden — which is exactly how four characters of markdown end up
+     showing on the page. A selection across three lines becomes three
+     highlights, one per line, each closed where it started. */
+  const opener = `=={${color}}`
+  const first = state.doc.lineAt(wanted.from)
+  const last = state.doc.lineAt(wanted.to)
+  const changes: ChangeSpec[] = []
+
+  for (let i = first.number; i <= last.number; i++) {
+    const line = state.doc.line(i)
+    let from = Math.max(wanted.from, line.from)
+    let to = Math.min(wanted.to, line.to)
+    /* Pull in off the whitespace at each end — a highlight around a trailing
+       space reads as a smudge past the end of the word. */
+    while (from < to && /\s/.test(state.sliceDoc(from, from + 1))) from++
+    while (to > from && /\s/.test(state.sliceDoc(to - 1, to))) to--
+    if (to <= from) continue
+    /* `[^=]+` is what hides it, so a segment already carrying an `=` can't be
+       wrapped without showing the markers. */
+    if (state.sliceDoc(from, to).includes('=')) continue
+    changes.push({ from, insert: opener })
+    changes.push({ from: to, insert: '==' })
+  }
+
+  if (!changes.length) {
+    view.focus()
+    return false
+  }
+
+  const probe = state.update({ changes })
+  view.dispatch(
+    state.update({
+      changes,
+      selection: word
+        ? { anchor: probe.changes.mapPos(wanted.to, -1) }
+        : {
+            anchor: probe.changes.mapPos(wanted.from, 1),
+            head: probe.changes.mapPos(wanted.to, -1),
+          },
+    }),
+  )
   view.focus()
   return true
 }

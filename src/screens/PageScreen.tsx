@@ -171,6 +171,11 @@ export function PageScreen({ id }: { id: string }) {
                   <span className="saved">Saved</span>
                   <button
                     className={`mark-button wide${tray ? ' on' : ''}`}
+                    /* Opening the tray must not take the focus off what the
+                       tray is about to shape. CodeMirror keeps its selection
+                       in state and survives a blur; a contenteditable table
+                       cell does not, and loses the selection being marked. */
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => setTray((open) => !open)}
                     aria-label="Style"
                   >

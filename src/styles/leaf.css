@@ -900,12 +900,12 @@
 .leaf[data-stock='night'] .md-table td:focus {
   background: rgba(246, 243, 236, 0.06);
 }
+/* The head row reads as a head by weight and colour, not by being shouted.
+   Forcing uppercase meant a header could only ever be all caps however it was
+   typed — and there is now an All caps mark for when that is what's wanted. */
 .md-table .md-table-head td {
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-smallcaps);
-  text-transform: uppercase;
-  color: var(--text-quiet);
+  font-weight: 600;
+  color: var(--text-heading);
 }
 
 .leaf[data-pen='felt'] .md-table td {
@@ -957,9 +957,8 @@
 }
 .md-table-grip {
   position: absolute;
-  top: 0;
-  width: 15px;
-  margin-left: -7px;
+  width: 11px;
+  margin-left: -5px;
   cursor: col-resize;
   pointer-events: auto;
   touch-action: none;
@@ -967,7 +966,7 @@
 .md-table-grip::after {
   content: '';
   position: absolute;
-  left: 6px;
+  left: 4px;
   top: 0;
   bottom: 0;
   width: 3px;

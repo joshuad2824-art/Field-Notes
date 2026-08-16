@@ -7,7 +7,7 @@ import {
   applyWrap,
   insertPicture,
 } from '../editor/commands'
-import { insertTable } from '../editor/table'
+import { insertTable, markInCell } from '../editor/table'
 import { addImage, isImage } from '../lib/images'
 import { PLACEMENTS, imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
 
@@ -43,11 +43,11 @@ const BLOCKS: { mark: string; prefix: string; label: string; cls?: string }[] = 
   { mark: '“', prefix: '> ', label: 'Quote', cls: 'serif' },
 ]
 
-const MARKS: { mark: string; open: string; label: string; cls: string }[] = [
-  { mark: 'B', open: '**', label: 'Bold — ⌘B', cls: 'bold' },
-  { mark: 'I', open: '*', label: 'Italic — ⌘I', cls: 'italic' },
-  { mark: 'S', open: '~~', label: 'Strike', cls: 'strike' },
-  { mark: 'code', open: '`', label: 'Code', cls: 'mono' },
+const MARKS: { mark: string; open: string; label: string; cls: string; cell: string }[] = [
+  { mark: 'B', open: '**', label: 'Bold — ⌘B', cls: 'bold', cell: 'bold' },
+  { mark: 'I', open: '*', label: 'Italic — ⌘I', cls: 'italic', cell: 'italic' },
+  { mark: 'S', open: '~~', label: 'Strike', cls: 'strike', cell: 'strike' },
+  { mark: 'code', open: '`', label: 'Code', cls: 'mono', cell: 'code' },
 ]
 
 const HIGHLIGHTS: { name: string; color: string }[] = [
@@ -139,11 +139,16 @@ export function StyleTray({
       <div className="tray-rule" />
 
       <div className="tray-marks">
-        {MARKS.map(({ mark, open, label, cls }) => (
+        {MARKS.map(({ mark, open, label, cls, cell }) => (
           <button
             key={label}
             className={`tray-mark ${cls}`}
-            onClick={run((v) => applyWrap(v, open))}
+            /* Pressing a mark must not take the focus off what it is marking —
+               a blurred cell has no selection left to bold. */
+            onMouseDown={(e) => e.preventDefault()}
+            /* Inside a table the browser is the editor, so a mark goes to the
+               cell rather than to CodeMirror. */
+            onClick={run((v) => markInCell(cell) || applyWrap(v, open))}
             aria-label={label}
             title={label}
           >
@@ -159,8 +164,10 @@ export function StyleTray({
             className={`sw${name === highlight ? ' on' : ''}`}
             style={{ background: color }}
             aria-label={name}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               onHighlight(name)
+              if (markInCell(name)) return
               if (view) applyHighlight(view, name)
             }}
           />

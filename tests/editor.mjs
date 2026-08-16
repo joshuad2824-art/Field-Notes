@@ -978,6 +978,127 @@ await atWidth(1440, 900, async (view) => {
   )
 })
 
+/* ── what daily use turned up ───────────────────────────────────────── */
+
+/* All four of these were found by writing in the app, not by reading it. */
+await atWidth(1440, 900, async (view) => {
+  const stored = () =>
+    view.evaluate(async () => {
+      const request = indexedDB.open('field-notes')
+      const db = await new Promise((r) => {
+        request.onsuccess = () => r(request.result)
+      })
+      const rows = await new Promise((r) => {
+        const q = db.transaction('pages').objectStore('pages').getAll()
+        q.onsuccess = () => r(q.result)
+      })
+      return rows.sort((a, b) => b.updated - a.updated)[0]?.body ?? ''
+    })
+
+  await view.locator('.plate-button', { hasText: 'New page' }).click()
+  await view.waitForTimeout(600)
+  await view.locator('.cm-content').click()
+
+  /* A highlight never spans a line break. The grammar reads one line at a
+     time, so an opening on one line and its close on the next can never be
+     hidden — which is how four characters of markdown end up on the page. */
+  await view.keyboard.type('Additional notes here', { delay: 5 })
+  await view.keyboard.press('Enter')
+  await view.keyboard.type('and a second line', { delay: 5 })
+  await view.keyboard.press('Control+Home')
+  await view.keyboard.down('Shift')
+  await view.keyboard.press('Control+End')
+  await view.keyboard.up('Shift')
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+  await view.locator('.tray .sw[aria-label="brass"]').click()
+  await view.waitForTimeout(400)
+
+  ok(
+    'a highlight across lines becomes one per line',
+    (await view.locator('.md-hl-brass').count()) === 2,
+  )
+  ok(
+    'and never shows its markers',
+    !(await view.locator('.cm-content').evaluate((el) => el.textContent)).includes('='),
+    await view.locator('.cm-content').evaluate((el) => el.textContent),
+  )
+  ok(
+    'each one closes on the line it opened',
+    (await stored()).split('\n').every((l) => !l.trim() || /^=\{?|=={\w+}.*==$/.test(l.trim())),
+    JSON.stringify(await stored()),
+  )
+
+  /* a table with its head row merged into a title */
+  await view.locator('.cm-content').click()
+  await view.keyboard.press('Control+End')
+  await view.keyboard.press('Enter')
+  await view.locator('.tray-row', { hasText: 'Table' }).click()
+  await view.waitForTimeout(500)
+
+  const cells = view.locator('.md-table td')
+  await cells.nth(0).click()
+  await view.keyboard.type('Blog posts', { delay: 5 })
+  await view.waitForTimeout(250)
+  ok(
+    'the head row is not forced to all caps',
+    (await cells.nth(0).evaluate((el) => getComputedStyle(el).textTransform)) === 'none',
+  )
+
+  await view.locator('.md-table-control[aria-label="Join this cell to the one on its right"]').click()
+  await view.waitForTimeout(300)
+  await view.locator('.md-table td').nth(0).click()
+  await view.locator('.md-table-control[aria-label="Join this cell to the one on its right"]').click()
+  await view.waitForTimeout(400)
+  ok(
+    'a title can be merged clean across the head row',
+    (await view.locator('.md-table tr').first().locator('td').count()) === 1,
+  )
+
+  /* the grips hang on a row that still breaks at the seam, so merging the
+     head row doesn't take the columns' widths away with it */
+  ok(
+    'the columns still have their grips',
+    (await view.locator('.md-table-grip').count()) === 2,
+    String(await view.locator('.md-table-grip').count()),
+  )
+
+  const firstBody = view.locator('.md-table tr').nth(1).locator('td').first()
+  const was = await firstBody.evaluate((el) => el.getBoundingClientRect().width)
+  const grip = await view.locator('.md-table-grip').first().boundingBox()
+  await view.mouse.move(grip.x + grip.width / 2, grip.y + 10)
+  await view.mouse.down()
+  await view.mouse.move(grip.x + grip.width / 2 + 130, grip.y + 10, { steps: 8 })
+  await view.mouse.up()
+  await view.waitForTimeout(500)
+  const now = await firstBody.evaluate((el) => el.getBoundingClientRect().width)
+  ok(
+    'and can still be dragged with the head merged',
+    now > was + 40,
+    `${Math.round(was)} → ${Math.round(now)}`,
+  )
+
+  /* text in a cell takes marks, and the file gets markdown for them */
+  await firstBody.click()
+  await view.keyboard.type('white oak', { delay: 5 })
+  await view.waitForTimeout(200)
+  await view.keyboard.down('Shift')
+  for (let i = 0; i < 3; i++) await view.keyboard.press('ArrowLeft')
+  await view.keyboard.up('Shift')
+  await view.locator('.tray-mark[aria-label^="Bold"]').click()
+  await view.waitForTimeout(500)
+  ok(
+    'a cell can be given a mark',
+    (await firstBody.evaluate((el) => el.innerHTML)).toLowerCase().includes('<b>'),
+    await firstBody.evaluate((el) => el.innerHTML),
+  )
+  ok(
+    'and the file gets markdown for it',
+    (await stored()).includes('**oak**'),
+    (await stored()).split('\n').find((l) => l.includes('oak')),
+  )
+})
+
 /* ── the calendar ───────────────────────────────────────────────────── */
 
 /* The week strip became a month. The marks say two different things and a day
