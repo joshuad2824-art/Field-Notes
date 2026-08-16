@@ -1,6 +1,12 @@
 import { useRef } from 'react'
 import type { EditorView } from '@codemirror/view'
-import { applyBlock, applyHighlight, applyWrap, insertPicture } from '../editor/commands'
+import {
+  applyBlock,
+  applyHighlight,
+  applyIndent,
+  applyWrap,
+  insertPicture,
+} from '../editor/commands'
 import { addImage, isImage } from '../lib/images'
 import { PLACEMENTS, imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
 
@@ -105,6 +111,28 @@ export function StyleTray({
             {mark}
           </button>
         ))}
+      </div>
+
+      <div className="tray-row tray-row-sub">
+        <span className="tray-row-name">Indent</span>
+        <span className="tray-steps">
+          <button
+            className="tray-step"
+            onClick={run((v) => applyIndent(v, -1))}
+            aria-label="Less indent — ⇧⇥"
+            title="Less indent — ⇧⇥"
+          >
+            ⇤
+          </button>
+          <button
+            className="tray-step"
+            onClick={run((v) => applyIndent(v, 1))}
+            aria-label="More indent — ⇥"
+            title="More indent — ⇥"
+          >
+            ⇥
+          </button>
+        </span>
       </div>
 
       <div className="tray-rule" />

@@ -133,10 +133,27 @@ export function imageIdsIn(body: string): string[] {
    Title and tags are derived, never stored. The body is the single source
    of truth and there is no metadata to drift out of sync with it. */
 
+/* ── indent ────────────────────────────────────────────────────────────
+   Leading spaces, two to a level, which is what a nested markdown list already
+   is — so it exports as real nesting rather than a private convention. Four
+   levels is as far as it goes; past that the measure has nothing left to
+   give. */
+
+export const INDENT_UNIT = '  '
+export const MAX_INDENT = 4
+
+export function depthOf(text: string): number {
+  const lead = text.match(/^ +/)?.[0].length ?? 0
+  return Math.min(MAX_INDENT, Math.floor(lead / INDENT_UNIT.length))
+}
+
 const BLOCK_PREFIX = /^(#{1,3}\s+|>\s?|[-*]\s\[[ xX]\]\s|[-*]\s|\d+\.\s)/
 
 export function stripMarkers(line: string): string {
   return line
+    /* The indent goes before the prefix does, or an indented list item keeps
+       its dash in the title. */
+    .replace(/^ +/, '')
     .replace(BLOCK_PREFIX, '')
     /* A picture reads as its caption, or as nothing. */
     .replace(/!\[([^\]]*)\]\([^)]*\)(?:\{[^}]*\})?/g, '$1')

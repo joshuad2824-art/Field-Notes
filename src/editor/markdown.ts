@@ -4,6 +4,7 @@ import {
   PICTURE_DRAG,
   type Placement,
   defaultSize,
+  depthOf,
   readPlacement,
   stepSize,
 } from '../lib/model'
@@ -460,12 +461,30 @@ function decorateInline(b: Build, base: number, text: string) {
 function decorateLine(b: Build, from: number, text: string) {
   let m: RegExpMatchArray | null
 
+  /* A line decoration has to sit at the start of its line, but the content
+     offset moves past the indent. Keeping the two apart is load-bearing:
+     hanging a line class off the moved offset drops it silently, and an
+     indented bullet stops being a bullet at all. */
+  const lineAt = from
+
+  /* The spaces that carry the indent are syntax like any other marker: hidden,
+     atomic, and re-said as space on the page. Everything below then works on
+     the line as though it started at the margin. */
+  const lead = text.match(/^ +/)?.[0]
+  const depth = lead ? depthOf(text) : 0
+  if (lead && depth > 0) {
+    b.marks.push(lineDeco(`md-line md-in-${depth}`).range(lineAt))
+    block(b, from, from + lead.length)
+    from += lead.length
+    text = text.slice(lead.length)
+  }
+
   if ((m = text.match(RE.todo))) {
     const [, lead, box, gap, rest] = m
     const done = box.toLowerCase() === '[x]'
     const boxFrom = from + lead.length
     const boxTo = boxFrom + box.length
-    b.marks.push(lineDeco('md-line md-todo').range(from))
+    b.marks.push(lineDeco('md-line md-todo').range(lineAt))
     block(b, from, boxFrom)
     const widget = Decoration.replace({
       widget: new CheckboxWidget(boxFrom, boxTo, done),
@@ -479,7 +498,7 @@ function decorateLine(b: Build, from: number, text: string) {
 
   if ((m = text.match(RE.heading))) {
     const [, hashes, gap, rest] = m
-    b.marks.push(lineDeco(`md-line md-h${hashes.length}`).range(from))
+    b.marks.push(lineDeco(`md-line md-h${hashes.length}`).range(lineAt))
     block(b, from, from + hashes.length + gap.length)
     decorateInline(b, from + hashes.length + gap.length, rest)
     return
@@ -487,21 +506,21 @@ function decorateLine(b: Build, from: number, text: string) {
 
   if ((m = text.match(RE.quote))) {
     const [, lead, rest] = m
-    b.marks.push(lineDeco('md-line md-quote').range(from))
+    b.marks.push(lineDeco('md-line md-quote').range(lineAt))
     block(b, from, from + lead.length)
     decorateInline(b, from + lead.length, rest)
     return
   }
 
   if (RE.rule.test(text)) {
-    b.marks.push(lineDeco('md-line md-rule').range(from))
+    b.marks.push(lineDeco('md-line md-rule').range(lineAt))
     block(b, from, from + text.length, Decoration.replace({ widget: new RuleWidget() }))
     return
   }
 
   if ((m = text.match(RE.ordered))) {
     const [, lead, rest] = m
-    b.marks.push(lineDeco('md-line md-ol').range(from))
+    b.marks.push(lineDeco('md-line md-ol').range(lineAt))
     block(
       b,
       from,
@@ -515,7 +534,7 @@ function decorateLine(b: Build, from: number, text: string) {
   if ((m = text.match(RE.bullet))) {
     const [, sign, gap, rest] = m
     const dot = sign === '*'
-    b.marks.push(lineDeco(`md-line md-li ${dot ? 'md-dot' : 'md-dash'}`).range(from))
+    b.marks.push(lineDeco(`md-line md-li ${dot ? 'md-dot' : 'md-dash'}`).range(lineAt))
     block(
       b,
       from,
@@ -528,7 +547,7 @@ function decorateLine(b: Build, from: number, text: string) {
     return
   }
 
-  b.marks.push(lineDeco('md-line md-p').range(from))
+  b.marks.push(lineDeco('md-line md-p').range(lineAt))
   decorateInline(b, from, text)
 }
 

@@ -1,12 +1,30 @@
 import type { ChangeSpec, EditorState } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { type Placement, defaultSize, imageMarkdown, readPlacement } from '../lib/model'
+import {
+  INDENT_UNIT,
+  MAX_INDENT,
+  type Placement,
+  defaultSize,
+  imageMarkdown,
+  readPlacement,
+} from '../lib/model'
 
 /* The bar writes markdown. Tapping Heading inserts "## "; the person who wants
    the fast path types the characters; the file on disk is identical either
    way. */
 
 const BLOCK_RE = /^(#{1,3}\s+|>\s?|[-*]\s\[[ xX]\]\s|[-*]\s|\d+\.\s)/
+
+/* A line is indent, then a block prefix, then the writing. Everything that
+   reshapes a line has to read it in that order, or the first indented list
+   item stops behaving like a list item at all. */
+export function leadOf(text: string): string {
+  return text.match(/^ */)?.[0] ?? ''
+}
+
+export function prefixOf(text: string): string {
+  return text.slice(leadOf(text).length).match(BLOCK_RE)?.[0] ?? ''
+}
 
 export function applyBlock(view: EditorView, prefix: string): boolean {
   const { state } = view
@@ -18,13 +36,15 @@ export function applyBlock(view: EditorView, prefix: string): boolean {
 
   for (let i = first; i <= last; i++) {
     const line = state.doc.line(i)
-    const existing = line.text.match(BLOCK_RE)?.[0] ?? ''
+    const lead = leadOf(line.text)
+    const existing = prefixOf(line.text)
     const same =
       existing === prefix ||
       (prefix === '1. ' && /^\d+\.\s$/.test(existing)) ||
       (prefix === '- [ ] ' && /^[-*]\s\[[ xX]\]\s$/.test(existing))
     const insert = same ? '' : prefix === '1. ' ? `${n++}. ` : prefix
-    changes.push({ from: line.from, to: line.from + existing.length, insert })
+    const at = line.from + lead.length
+    changes.push({ from: at, to: at + existing.length, insert })
   }
 
   const probe = state.update({ changes })
@@ -150,18 +170,31 @@ export function applyHighlight(view: EditorView, color: string): boolean {
   return true
 }
 
-/* Enter inside a list carries the list on; Enter on an empty item ends it. */
+/* Enter inside a list carries the list on, indent and all; Enter on an empty
+   item steps it back out a level, and ends it once there's nowhere left to
+   step back to. */
 export function continueList(view: EditorView): boolean {
   const { state } = view
   const range = state.selection.main
   if (!range.empty) return false
 
   const line = state.doc.lineAt(range.head)
-  const prefix = line.text.match(BLOCK_RE)?.[0]
+  const lead = leadOf(line.text)
+  const prefix = prefixOf(line.text)
   if (!prefix || /^#{1,3}\s+$/.test(prefix)) return false
-  if (range.head < line.from + prefix.length) return false
+  if (range.head < line.from + lead.length + prefix.length) return false
 
-  if (line.text.trimEnd() === prefix.trimEnd()) {
+  if (line.text.trimEnd() === (lead + prefix).trimEnd()) {
+    /* An empty item that is indented gives up a level first — the way out of
+       a nested list is the same key that got you into it. */
+    if (lead.length >= INDENT_UNIT.length) {
+      const shorter = lead.slice(INDENT_UNIT.length)
+      view.dispatch({
+        changes: { from: line.from, to: line.to, insert: shorter + prefix },
+        selection: { anchor: line.from + shorter.length + prefix.length },
+      })
+      return true
+    }
     view.dispatch({
       changes: { from: line.from, to: line.to, insert: '' },
       selection: { anchor: line.from },
@@ -172,12 +205,92 @@ export function continueList(view: EditorView): boolean {
   let next = prefix.replace(/\[[xX]\]/, '[ ]')
   const numbered = prefix.match(/^(\d+)\.\s$/)
   if (numbered) next = `${Number(numbered[1]) + 1}. `
+  next = lead + next
 
   view.dispatch({
     changes: { from: range.head, to: range.to, insert: '\n' + next },
     selection: { anchor: range.head + 1 + next.length },
     scrollIntoView: true,
   })
+  return true
+}
+
+/* Step the lines under the selection in or out one level. The indent is plain
+   leading spaces, so this is nothing more exotic than adding or taking away
+   two of them — but an ordered item has to be renumbered when it moves, or a
+   list nested under another one carries its old number down with it. */
+export function applyIndent(view: EditorView, direction: 1 | -1): boolean {
+  const { state } = view
+  const range = state.selection.main
+  const first = state.doc.lineAt(range.from).number
+  const last = state.doc.lineAt(range.to).number
+  const changes: ChangeSpec[] = []
+
+  /* The last ordered item we renumbered, so a block moving together stays in
+     sequence with itself. */
+  let numberedAt = -1
+  let numberedDepth = -1
+  let numberedValue = 0
+  let touched = false
+
+  for (let i = first; i <= last; i++) {
+    const line = state.doc.line(i)
+    if (!line.text.trim()) continue
+
+    const lead = leadOf(line.text)
+    const was = Math.floor(lead.length / INDENT_UNIT.length)
+    const depth = Math.min(MAX_INDENT, Math.max(0, was + direction))
+    if (depth !== was) touched = true
+
+    const prefix = prefixOf(line.text)
+    const numbered = /^\d+\.\s$/.test(prefix)
+    let rest = line.text.slice(lead.length)
+
+    if (numbered) {
+      /* Carry on from the item above when there is one at this depth —
+         whether we just renumbered it ourselves or it was already sitting
+         there — and start again at one when there isn't. */
+      let n = 1
+      if (numberedAt === i - 1 && numberedDepth === depth) {
+        n = numberedValue + 1
+      } else if (i > 1) {
+        const above = state.doc.line(i - 1)
+        const aboveLead = leadOf(above.text)
+        const aboveDepth = Math.floor(aboveLead.length / INDENT_UNIT.length)
+        const aboveNumber = above.text.slice(aboveLead.length).match(/^(\d+)\.\s/)
+        const aboveMoved = above.number >= first && above.number <= last
+        if (!aboveMoved && aboveDepth === depth && aboveNumber) n = Number(aboveNumber[1]) + 1
+      }
+      numberedAt = i
+      numberedDepth = depth
+      numberedValue = n
+      rest = `${n}. ` + rest.slice(prefix.length)
+    }
+
+    changes.push({
+      from: line.from,
+      to: line.from + line.text.length,
+      insert: INDENT_UNIT.repeat(depth) + rest,
+    })
+  }
+
+  if (!touched) {
+    view.focus()
+    return false
+  }
+
+  const probe = state.update({ changes })
+  view.dispatch(
+    state.update({
+      changes,
+      selection: {
+        anchor: probe.changes.mapPos(range.anchor, 1),
+        head: probe.changes.mapPos(range.head, 1),
+      },
+      scrollIntoView: true,
+    }),
+  )
+  view.focus()
   return true
 }
 
