@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..600&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Archivo:wght@400;500;600&family=Oswald:wght@300;400;500;600&family=Courier+Prime:wght@400;700&family=Grape+Nuts&family=Caveat:wght@400..600&family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/timber-ink-design-system-53a1360a-e1b6-43b5-9ab2-ad386de11414/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/timber-ink-design-system-53a1360a-e1b6-43b5-9ab2-ad386de11414/tokens/colors.css">
+<script src="_ds/timber-ink-design-system-53a1360a-e1b6-43b5-9ab2-ad386de11414/_ds_bundle.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; background: #142a2b; }
+  a { color: #c5ae67; text-decoration: none; }
+  a:hover { color: #dac891; }
+  ::selection { background: rgba(222,157,75,0.2); }
+  input::placeholder { color: #22393a; }
+  /* Scrollbars can't be set inline — these are src/styles/base.css's .scroll rules. */
+  [data-scroll] { scrollbar-width: thin; scrollbar-color: rgba(246,243,236,0.14) transparent; }
+  [data-scroll]::-webkit-scrollbar { width: 10px; }
+  [data-scroll]::-webkit-scrollbar-thumb { background: rgba(246,243,236,0.14); border-radius: 99px; border: 3px solid transparent; background-clip: content-box; }
+  [data-scroll]::-webkit-scrollbar-track { background: transparent; }
+</style>
+</helmet>
+
+<div style="position:relative; height:100vh; width:100%; background:#142a2b; color:#e9e6df; display:flex; overflow:hidden;">
+  <div style="position:absolute; inset:0; pointer-events:none; z-index:4; background:radial-gradient(circle at 50% 0%, rgba(241,186,122,0.14) 0%, rgba(198,134,47,0.04) 38%, rgba(0,16,17,0) 66%), radial-gradient(122% 92% at 50% 42%, rgba(0,16,17,0) 40%, rgba(0,16,17,0.5) 100%);"></div>
+
+  <sc-if value="{{ railScrim }}" hint-placeholder-val="{{ false }}">
+    <div onMouseDown="{{ closeRail }}" style="position:absolute; inset:0; z-index:5; background:rgba(0,16,17,0.5);"></div>
+  </sc-if>
+
+  <sc-if value="{{ railVisible }}" hint-placeholder-val="{{ true }}">
+    <aside style="position:{{ railPos }}; left:0; top:0; bottom:0; z-index:{{ railZ }}; box-shadow:{{ railShadow }}; flex:0 0 264px; width:264px; display:flex; flex-direction:column; background:#051b1c; border-right:1px solid rgba(246,243,236,0.06);">
+      <div style="padding:22px 20px 16px; border-bottom:1px solid rgba(246,243,236,0.06);">
+        <img src="assets/logo-wordmark-reverse.png" alt="Timber &amp; Ink" style="display:block; height:19px; width:auto; opacity:0.82;">
+      </div>
+
+      <div style="padding:24px 20px 20px;">
+        <div style="font-family:'Oswald',sans-serif; font-size:12px; font-weight:500; letter-spacing:0.16em; text-transform:uppercase; color:#9cb1b2;">Saturday</div>
+        <div style="display:flex; align-items:flex-end; gap:10px; margin-top:2px;">
+          <div style="font-family:'Playfair Display',serif; font-size:76px; font-weight:700; line-height:0.86; color:#f6f3ec; letter-spacing:-0.02em;">15</div>
+          <div style="font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:0.16em; text-transform:uppercase; color:#c5ae67; padding-bottom:8px;">August<br>2026</div>
+        </div>
+        <sc-if value="{{ ambient }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; margin-top:14px;">{{ weather }}</div>
+        </sc-if>
+      </div>
+
+      <div style="padding:0 14px 18px;">
+        <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:2px;">
+          <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">S</div>
+          <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">M</div>
+          <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">T</div>
+          <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">W</div>
+          <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">T</div>
+          <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">F</div>
+          <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">S</div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:2px; margin-top:8px;">
+          <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">9</span><span style="width:3px; height:3px; border-radius:99px; background:rgba(197,174,103,0.5);"></span></div>
+          <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">10</span><span style="width:3px; height:3px;"></span></div>
+          <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">11</span><span style="width:3px; height:3px; border-radius:99px; background:rgba(197,174,103,0.5);"></span></div>
+          <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">12</span><span style="width:3px; height:3px;"></span></div>
+          <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">13</span><span style="width:3px; height:3px; border-radius:99px; background:rgba(197,174,103,0.5);"></span></div>
+          <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">14</span><span style="width:3px; height:3px;"></span></div>
+          <div style="height:30px; display:flex; align-items:center; justify-content:center;">
+            <span style="width:28px; height:28px; border-radius:99px; background:#c6862f; box-shadow:0 0 18px rgba(222,157,75,0.45); display:flex; align-items:center; justify-content:center; font-family:'Courier Prime',monospace; font-size:12px; font-weight:700; color:#142a2b;">15</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:1px; background:rgba(246,243,236,0.06); margin:0 20px;"></div>
+
+      <div data-scroll="true" style="flex:1 1 auto; min-height:0; overflow-y:auto; padding:18px 12px 12px;">
+        <div style="display:flex; align-items:baseline; padding:0 8px 10px;">
+          <span style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2;">Notebooks</span>
+          <span style="flex:1;"></span>
+          <button onClick="{{ openManage }}" style="border:none; background:transparent; cursor:pointer; font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#c5ae67; padding:0;" style-hover="color:#dac891;">Manage</button>
+        </div>
+
+        <sc-for list="{{ rows }}" as="book" hint-placeholder-count="4">
+          <div onClick="{{ book.onPick }}" style="position:relative; display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:3px; cursor:pointer; background:{{ book.rowBg }};" style-hover="background:rgba(246,243,236,0.07);">
+            <span style="position:absolute; left:0; top:8px; bottom:8px; width:2px; background:{{ book.markBg }};"></span>
+            <span style="width:9px; height:9px; border-radius:99px; flex:0 0 auto; border:1px solid rgba(246,243,236,0.3); background:{{ book.color }};"></span>
+            <span style="flex:1; font-family:'Spectral',serif; font-size:16px; color:{{ book.nameColor }};">{{ book.name }}</span>
+            <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">{{ book.countLabel }}</span>
+          </div>
+        </sc-for>
+
+        <div onClick="{{ openManage }}" style="display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:3px; cursor:pointer; color:#9cb1b2;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">
+          <span style="width:9px; height:9px; border-radius:99px; border:1px dashed rgba(246,243,236,0.35); flex:0 0 auto;"></span>
+          <span style="flex:1; font-family:'Spectral',serif; font-size:16px; font-style:italic;">Add a notebook</span>
+        </div>
+      </div>
+
+      <div style="flex:0 0 auto; padding:16px 20px 20px; border-top:1px solid rgba(246,243,236,0.06); display:flex; flex-direction:column; gap:10px;">
+        <button onClick="{{ newPage }}" style="width:100%; height:44px; border:none; background:#f6f3ec; color:#142a2b; font-family:'Archivo',sans-serif; font-size:14px; font-weight:600; border-radius:3px; cursor:pointer; box-shadow:3px 3px 0 rgba(0,16,17,0.7); transition:transform 90ms cubic-bezier(0.32,0.08,0.24,1);" style-hover="transform:translate(-1px,-1px); background:#fdfaf3;" style-active="transform:translate(0,0); box-shadow:inset 0 2px 4px rgba(0,16,17,0.35);">New page</button>
+        <div style="display:flex; align-items:center; justify-content:space-between; font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(156,177,178,0.7);">
+          <span>⌘⇧N</span>
+          <span style="cursor:pointer;">Settings</span>
+        </div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <sc-if value="{{ listVisible }}" hint-placeholder-val="{{ true }}">
+    <div style="position:relative; z-index:1; flex:{{ listFlex }}; width:{{ listWidth }}; min-width:0; display:flex; flex-direction:column; background:#0c2223; border-right:1px solid rgba(246,243,236,0.06);">
+
+      <sc-if value="{{ compact }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:0 0 auto; padding:18px 20px 10px;">
+          <div style="display:flex; align-items:flex-end; gap:12px;">
+            <div style="font-family:'Playfair Display',serif; font-size:64px; font-weight:700; line-height:0.86; color:#f6f3ec; letter-spacing:-0.02em;">15</div>
+            <div style="font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#c5ae67; padding-bottom:8px;">Saturday<br>August 2026</div>
+            <span style="flex:1;"></span>
+            <button onClick="{{ openRail }}" style="border:none; background:transparent; cursor:pointer; color:#9cb1b2; font-family:'Spectral',serif; font-size:20px; padding:6px 8px; border-radius:3px;">☰</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="flex:0 0 auto; padding:18px 20px 14px; display:flex; flex-direction:column; gap:14px; border-bottom:1px solid rgba(246,243,236,0.06);">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <sc-if value="{{ showRailBtn }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ openRail }}" title="Notebooks" style="border:none; background:transparent; cursor:pointer; color:#9cb1b2; font-family:'Spectral',serif; font-size:20px; min-width:30px; height:30px; border-radius:3px; margin-left:-6px;" style-hover="background:rgba(246,243,236,0.07); color:#f6f3ec;">☰</button>
+          </sc-if>
+          <span style="width:9px; height:9px; border-radius:99px; border:1px solid rgba(246,243,236,0.35); background:{{ activeColor }};"></span>
+          <span style="font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:#f6f3ec;">{{ activeName }}</span>
+          <span style="flex:1;"></span>
+          <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2;">{{ activeCount }}</span>
+        </div>
+        <input placeholder="Search this notebook" style="width:100%; background:#001011; border:1px solid rgba(0,0,0,0.4); box-shadow:inset 0 1px 2px rgba(0,0,0,0.5); border-radius:3px; color:#e9e6df; font-family:'Spectral',serif; font-size:15px; padding:8px 14px; height:36px;">
+      </div>
+
+      <div data-scroll="true" style="flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px 10px 20px;">
+        <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:14px 10px 6px;">Pinned</div>
+        <div onClick="{{ openPage }}" style="padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+          <div style="display:flex; align-items:baseline; gap:8px;">
+            <span style="color:#c5ae67; font-size:11px;">●</span>
+            <span style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">The standing list</span>
+          </div>
+          <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">4 Aug · 212 words</div>
+        </div>
+
+        <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:18px 10px 6px;">Today</div>
+        <div onClick="{{ openPage }}" style="position:relative; padding:12px 10px; border-radius:3px; background:rgba(246,243,236,0.12); cursor:pointer;">
+          <span style="position:absolute; left:0; top:8px; bottom:8px; width:2px; background:#c5ae67;"></span>
+          <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">The first morning</div>
+          <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">The whole question this page has to answer is a small one…</div>
+          <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">9:07 PM · 98 words</div>
+        </div>
+        <div onClick="{{ openPage }}" style="padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+          <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">Rain on the tin roof</div>
+          <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Woke at four to the sound and stayed up for it…</div>
+          <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">6:22 AM · 143 words</div>
+        </div>
+
+        <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:18px 10px 6px;">This week</div>
+        <div onClick="{{ openPage }}" style="padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+          <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">Sharpening the block plane</div>
+          <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Thirty degrees, then a stroke on the strop…</div>
+          <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">13 Aug · 306 words</div>
+        </div>
+        <div onClick="{{ openPage }}" style="padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+          <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">Notes toward Sunday</div>
+          <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Start with the small thing, not the large one…</div>
+          <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">11 Aug · 188 words</div>
+        </div>
+        <div onClick="{{ openPage }}" style="padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+          <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">What the ward taught me about queues</div>
+          <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Nobody minds waiting; everybody minds not knowing…</div>
+          <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">10 Aug · 421 words</div>
+        </div>
+      </div>
+
+      <sc-if value="{{ compact }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:12px 20px 22px; background:rgba(5,27,28,0.92); border-top:1px solid rgba(246,243,236,0.08);">
+          <span style="font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#9cb1b2;">Search</span>
+          <span style="flex:1;"></span>
+          <button onClick="{{ newPage }}" style="height:44px; padding:0 22px; border:none; background:#f6f3ec; color:#142a2b; font-family:'Archivo',sans-serif; font-size:14px; font-weight:600; border-radius:3px; box-shadow:3px 3px 0 rgba(0,16,17,0.7);">New page</button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ leafVisible }}" hint-placeholder-val="{{ true }}">
+    <main style="position:relative; z-index:1; flex:1 1 auto; min-width:0; display:flex; justify-content:center; padding:{{ deskPad }};">
+      <article style="position:relative; background:#051b1c; color:#e9e6df; width:100%; max-width:{{ leafMax }}; box-shadow:{{ leafShadow }}; border-radius:{{ leafRadius }}; display:flex; flex-direction:column; height:100%; min-height:0; overflow:hidden;">
+        <div style="flex:0 0 auto; height:44px; display:flex; align-items:center; gap:6px; padding:0 {{ toolPad }};">
+          <button onClick="{{ toggleChrome }}" title="The list — ⌘\" style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.75); font-family:'Spectral',serif; font-size:20px; min-width:32px; height:30px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">☰</button>
+          <sc-if value="{{ chromeHidden }}" hint-placeholder-val="{{ false }}">
+            <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(156,177,178,0.5);">{{ activeName }} · saturday 15 august</span>
+          </sc-if>
+          <span style="flex:1;"></span>
+          <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(156,177,178,0.55); margin-right:10px;">Saved</span>
+          <button onClick="{{ toggleTray }}" style="border:none; background:{{ trayBg }}; cursor:pointer; color:{{ trayFg }}; font-family:'Archivo',sans-serif; font-size:14px; min-width:34px; height:30px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07);">Aa</button>
+          <button style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.75); font-family:'Spectral',serif; font-size:20px; min-width:30px; height:30px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">⋯</button>
+        </div>
+
+        <div data-scroll="true" style="flex:1 1 auto; min-height:0; overflow-y:auto;">
+          <div style="width:100%; max-width:{{ contentBox }}; margin:0 auto; padding:22px {{ pageMargin }} 48px; font-family:{{ penFamily }}; font-size:{{ penSize }}; line-height:28px; color:#e9e6df; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:{{ pageMargin }} 29px;">
+            <div style="font-family:{{ penFamily }}; font-size:{{ penTitle }}; line-height:56px; color:#f6f3ec; letter-spacing:-0.01em;">The first morning</div>
+            <div style="float:{{ plateFloat }}; width:{{ plateWidth }}; max-width:{{ plateMax }}; margin:{{ plateMargin }};">
+              <image-slot id="fn-page-plate" shape="rounded" radius="3" style="display:block; width:100%; height:196px; border:1px solid rgba(246,243,236,0.12); box-shadow:0 1px 0 rgba(0,0,0,0.5), 0 12px 28px rgba(0,0,0,0.48); transition:transform 90ms cubic-bezier(0.32,0.08,0.24,1), box-shadow 240ms cubic-bezier(0.32,0.08,0.24,1);" style-hover="transform:translateY(-2px); box-shadow:0 2px 0 rgba(0,0,0,0.5), 0 18px 44px rgba(0,0,0,0.56);" placeholder="Drop a photograph"></image-slot>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; padding-top:8px; border-top:1px solid rgba(246,243,236,0.1); margin-top:8px;">The bench, 6:40 a.m.</div>
+            </div>
+            <div>The whole question this page has to answer is a small one: do I want to write here? The text runs around whatever I set into the margin, and closes back over it when the picture ends.</div>
+            <div style="height:28px;"></div>
+            <div style="position:relative; padding-left:1.7em;">
+              <span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;">
+                <svg viewBox="0 0 20 20" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible; opacity:0.75;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </span>Write three real paragraphs</div>
+            <div style="position:relative; padding-left:1.7em;">
+              <span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;">
+                <svg viewBox="0 0 20 20" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </span><span style="color:#9cb1b2; text-decoration:line-through; text-decoration-color:rgba(246,243,236,0.24);">Open the page</span></div>
+            <div style="height:28px;"></div>
+            <div>Whether Spectral at seventeen holds a <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%), linear-gradient(266deg, transparent 2%, rgba(215,190,106,0.24) 7%, transparent 28%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%, 100% 26%; background-position:0 72%, 0 22%, 0 96%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span></div>
+            <div style="height:28px;"></div>
+            <div style="font-family:{{ penFamily }}; font-size:{{ penQuote }}; line-height:28px; color:#f6f3ec; border-left:2px solid #957c2b; padding-left:20px; margin-left:-22px;">Certainly work is not always required of a man. There is such a thing as a sacred idleness, the cultivation of which is now fearfully neglected.</div>
+            <div style="height:28px; clear:both;"></div>
+            <div style="margin:0 0 12px;">
+              <image-slot id="fn-page-figure" shape="rounded" radius="3" style="display:block; width:100%; height:280px; border:1px solid rgba(246,243,236,0.12); box-shadow:0 1px 0 rgba(0,0,0,0.5), 0 14px 32px rgba(0,0,0,0.5); transition:transform 90ms cubic-bezier(0.32,0.08,0.24,1), box-shadow 240ms cubic-bezier(0.32,0.08,0.24,1);" style-hover="transform:translateY(-2px); box-shadow:0 2px 0 rgba(0,0,0,0.5), 0 20px 48px rgba(0,0,0,0.58);" placeholder="Drop a wider one — it takes the full measure"></image-slot>
+              <div style="display:flex; gap:12px; font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; padding-top:8px; border-top:1px solid rgba(246,243,236,0.1); margin-top:8px;">
+                <span>Shellac, second coat</span>
+                <span style="flex:1;"></span>
+                <span>15 Aug</span>
+              </div>
+            </div>
+            <div style="height:28px;"></div>
+            <div>Type over all of this. <span style="color:#c5ae67;">#field-notes</span></div>
+          </div>
+        </div>
+
+        <div style="flex:0 0 auto; display:flex; justify-content:center;">
+          <div style="width:100%; max-width:{{ footMax }}; margin:0 {{ pageMargin }}; padding:14px 0 20px; border-top:1px solid rgba(246,243,236,0.1); font-family:'Courier Prime',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; display:flex; align-items:center; gap:16px;">
+            <sc-if value="{{ compact }}" hint-placeholder-val="{{ false }}">
+              <span onClick="{{ backToList }}" style="cursor:pointer; color:#c5ae67;">‹ list</span>
+            </sc-if>
+            <span>98 words</span>
+            <span>·</span>
+            <span>edited 9:07 PM</span>
+            <span style="flex:1;"></span>
+            <span style="color:#c5ae67;">#field-notes</span>
+          </div>
+        </div>
+
+        <sc-if value="{{ tray }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; z-index:5; right:20px; top:48px; width:236px; background:#0c2223; border:1px solid rgba(246,243,236,0.1); border-radius:4px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56); padding:10px 0;">
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:8px 16px 10px;">Style</div>
+            <div style="display:flex; gap:6px; padding:0 12px 10px;">
+              <span style="flex:1; text-align:center; font-family:'Playfair Display',serif; font-size:18px; color:#e9e6df; padding:6px 0; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">Title</span>
+              <span style="flex:1; text-align:center; font-family:'Playfair Display',serif; font-size:16px; color:#e9e6df; padding:6px 0; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">Heading</span>
+              <span style="flex:1; text-align:center; font-family:'Archivo',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#e9e6df; padding:9px 0; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">Sub</span>
+            </div>
+            <div style="height:1px; background:rgba(246,243,236,0.06); margin:2px 12px 10px;"></div>
+            <div style="display:flex; gap:8px; padding:0 16px 12px; align-items:center;">
+              <span style="width:22px; height:22px; border-radius:99px; background:#530a28; border:1px solid rgba(246,243,236,0.14); cursor:pointer;"></span>
+              <span style="width:22px; height:22px; border-radius:99px; background:#123737; border:1px solid rgba(246,243,236,0.14); cursor:pointer;"></span>
+              <span style="width:22px; height:22px; border-radius:99px; background:#082744; border:1px solid rgba(246,243,236,0.14); cursor:pointer;"></span>
+              <span style="width:22px; height:22px; border-radius:99px; background:#3a342e; border:1px solid rgba(246,243,236,0.14); cursor:pointer;"></span>
+              <span style="width:22px; height:22px; border-radius:99px; background:#7a6201; border:2px solid #c5ae67; cursor:pointer;"></span>
+              <span style="flex:1;"></span>
+              <span onClick="{{ toggleTray }}" style="font-family:'Courier Prime',monospace; font-size:13px; color:#9cb1b2; cursor:pointer;">×</span>
+            </div>
+            <div style="height:1px; background:rgba(246,243,236,0.06); margin:2px 12px 8px;"></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 16px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <span style="font-family:'Archivo',sans-serif; font-size:13px; color:#e9e6df;">Picture</span>
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2;">In the margin ▾</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 16px;">
+              <span style="font-family:'Archivo',sans-serif; font-size:13px; color:#e9e6df;">Pen</span>
+              <span style="font-family:{{ penFamily }}; font-size:18px; color:#c5ae67;">{{ penName }}</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 16px;">
+              <span style="font-family:'Archivo',sans-serif; font-size:13px; color:#e9e6df;">Stock</span>
+              <span style="font-family:'Courier Prime',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#c5ae67;">Night</span>
+            </div>
+          </div>
+        </sc-if>
+      </article>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ manage }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; inset:0; z-index:6; background:rgba(0,16,17,0.62); display:flex; align-items:center; justify-content:center; padding:20px;">
+      <div data-scroll="true" style="width:100%; max-width:468px; background:#051b1c; border:1px solid rgba(246,243,236,0.1); border-radius:5px; box-shadow:0 2px 0 rgba(0,0,0,0.5), 0 22px 52px rgba(0,0,0,0.6); padding:8px 0 16px; max-height:88vh; overflow-y:auto;">
+        <div style="display:flex; align-items:center; padding:16px 20px 10px;">
+          <span style="font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:#f6f3ec;">Notebooks</span>
+          <span style="flex:1;"></span>
+          <button onClick="{{ closeManage }}" style="border:none; background:transparent; cursor:pointer; font-family:'Courier Prime',monospace; font-size:16px; color:#9cb1b2; padding:4px 8px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#f6f3ec;">×</button>
+        </div>
+
+        <div style="padding:0 12px;">
+          <sc-for list="{{ manageRows }}" as="book" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 8px; border-bottom:1px solid rgba(246,243,236,0.06);">
+              <span style="width:10px; height:10px; border-radius:99px; border:1px solid rgba(246,243,236,0.3); flex:0 0 auto; background:{{ book.color }};"></span>
+              <span style="flex:1; font-family:'Spectral',serif; font-size:16px; color:#e9e6df;">{{ book.name }}</span>
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172;">{{ book.countLabel }}</span>
+              <button onClick="{{ book.onDelete }}" title="Delete" style="border:none; background:transparent; cursor:pointer; font-family:'Courier Prime',monospace; font-size:15px; color:#8c8172; padding:2px 8px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#d98a9f;">×</button>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ confirming }}" hint-placeholder-val="{{ false }}">
+          <div style="margin:14px 12px 4px; padding:14px 16px; background:#0c2223; border:1px solid rgba(217,138,159,0.35); border-radius:3px;">
+            <div style="font-family:'Spectral',serif; font-size:16px; color:#f6f3ec;">Delete {{ doomedName }}?</div>
+            <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2; margin-top:4px;">{{ doomedLine }}</div>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+              <button onClick="{{ confirmDelete }}" style="height:36px; padding:0 16px; border:1px solid rgba(217,138,159,0.45); background:transparent; color:#d98a9f; font-family:'Archivo',sans-serif; font-size:13px; font-weight:600; border-radius:3px; cursor:pointer;" style-hover="background:rgba(217,138,159,0.1);">Delete it</button>
+              <button onClick="{{ cancelDelete }}" style="height:36px; padding:0 16px; border:1px solid rgba(246,243,236,0.14); background:transparent; color:#e9e6df; font-family:'Archivo',sans-serif; font-size:13px; font-weight:600; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">Keep it</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="height:1px; background:rgba(246,243,236,0.06); margin:14px 12px;"></div>
+
+        <div style="padding:0 20px;">
+          <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding-bottom:10px;">Add one</div>
+          <input value="{{ newName }}" onChange="{{ onName }}" placeholder="What should I call it?" style="width:100%; background:#001011; border:1px solid rgba(0,0,0,0.4); box-shadow:inset 0 1px 2px rgba(0,0,0,0.5); border-radius:3px; color:#e9e6df; font-family:'Spectral',serif; font-size:16px; padding:9px 14px; height:38px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-top:14px;">
+            <sc-for list="{{ swatches }}" as="sw" hint-placeholder-count="6">
+              <button onClick="{{ sw.onPick }}" style="width:26px; height:26px; border-radius:2px; cursor:pointer; padding:0; background:{{ sw.color }}; border:{{ sw.ring }};"></button>
+            </sc-for>
+            <span style="flex:1;"></span>
+            <button onClick="{{ addBook }}" style="height:38px; padding:0 18px; border:none; font-family:'Archivo',sans-serif; font-size:13px; font-weight:600; border-radius:3px; cursor:pointer; box-shadow:3px 3px 0 rgba(0,16,17,0.7); background:{{ addBg }}; color:{{ addFg }};">Add notebook</button>
+          </div>
+          <div style="font-family:'Spectral',serif; font-size:13px; line-height:20px; color:#9cb1b2; margin-top:14px; font-style:italic;">Covers come from the palette, so a new notebook still looks like it belongs on the shelf.</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;pen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;grape&quot;,&quot;caveat&quot;,&quot;klee&quot;],&quot;default&quot;:&quot;grape&quot;,&quot;tsType&quot;:&quot;'grape' | 'caveat' | 'klee'&quot;,&quot;section&quot;:&quot;The page&quot;},&quot;ambient&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;The rail&quot;},&quot;weather&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Tulsa · 88° · clear&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;The rail&quot;}}">
+const PENS = {
+  grape: { family: "'Grape Nuts', cursive", size: 20, title: 30, quote: 22, name: 'fine pen' },
+  caveat: { family: "'Caveat', cursive", size: 21, title: 34, quote: 23, name: 'felt' },
+  klee: { family: "'Klee One', cursive", size: 18, title: 28, quote: 20, name: 'nib' },
+}
+
+class Component extends DCLogic {
+  state = {
+    w: typeof window === 'undefined' ? 1440 : window.innerWidth,
+    /* Docked past 1120px the rail is a column and starts open; below that it's
+       a drawer over the desk, and a drawer nobody opened should be closed. */
+    railOpen: typeof window === 'undefined' ? true : window.innerWidth >= 1120,
+    listOpen: true,
+    screen: 'list',
+    tray: false,
+    manage: false,
+    confirm: null,
+    newName: '',
+    newColor: '#24332A',
+    activeId: 'fn',
+    books: [
+      { id: 'fn', name: 'Field Notes', color: '#082744', count: 12 },
+      { id: 'ws', name: 'The Workshop', color: '#3a342e', count: 4 },
+      { id: 'ht', name: 'The Hearth', color: '#530a28', count: 7 },
+      { id: 'ch', name: 'Church', color: '#123737', count: 9 },
+    ],
+  }
+
+  componentDidMount() {
+    /* Crossing the docked boundary reconciles the flag — a drawer that survived
+       a resize into the docked layout would be a second, invisible state. */
+    this.onResize = () =>
+      this.setState((v) => {
+        const w = window.innerWidth
+        const wasDocked = v.w >= 1120
+        const isDocked = w >= 1120
+        if (wasDocked === isDocked) return { w }
+        return { w, railOpen: isDocked }
+      })
+    window.addEventListener('resize', this.onResize)
+    this.onKey = (e) => {
+      if (!(e.metaKey || e.ctrlKey)) return
+      if (e.key === '\\') {
+        e.preventDefault()
+        const hide = this.state.railOpen || this.state.listOpen
+        this.setState({ railOpen: !hide, listOpen: !hide })
+      }
+    }
+    window.addEventListener('keydown', this.onKey)
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize)
+    window.removeEventListener('keydown', this.onKey)
+  }
+
+  renderVals() {
+    const s = this.state
+    const p = this.props
+    const isPhone = s.w < 820
+    const isDocked = s.w >= 1120
+    const pen = PENS[p.pen || 'grape'] || PENS.grape
+    const wide = s.w >= 1500
+    /* Under 1120 the page is the screen — no desk, no margin, no shadow. */
+    const isCompact = s.w < 1120
+    const marginPx = isCompact ? 24 : wide ? 80 : 56
+    const margin = marginPx + 'px'
+    /* Fluid measure: the text wraps to whatever room it has and widens with the
+       window, up to a ceiling so a 27" monitor doesn't produce 200-character
+       lines. Below the ceiling it is simply 100%. */
+    const measure = 900
+
+    const covers = ['#082744', '#3a342e', '#530a28', '#123737', '#24332A', '#1B261F']
+    const active = s.books.find((b) => b.id === s.activeId) || s.books[0] || null
+    const doomed = s.books.find((b) => b.id === s.confirm) || null
+
+    const rows = s.books.map((b) => ({
+      ...b,
+      rowBg: b.id === s.activeId ? 'rgba(246,243,236,0.12)' : 'transparent',
+      markBg: b.id === s.activeId ? '#c5ae67' : 'transparent',
+      nameColor: b.id === s.activeId ? '#f6f3ec' : '#e9e6df',
+      countLabel: String(b.count),
+      onPick: () => this.setState({ activeId: b.id, screen: 'list' }),
+      onDelete: () => this.setState({ confirm: b.id }),
+    }))
+
+    /* Three widths, as the app already describes them: the phone navigates
+       screen by screen, the tablet slides the rail over the desk, the desktop
+       docks everything. */
+    /* Below 1120 the app navigates screen by screen — the note gets the whole
+       window, the way Shell.tsx has it: nothing is docked down here. */
+    const railVisible = s.railOpen
+    const listVisible = isCompact ? s.screen === 'list' : s.listOpen
+    const leafVisible = isCompact ? s.screen === 'page' : true
+
+    return {
+      isPhone,
+      compact: isCompact,
+      ambient: p.ambient !== false,
+      weather: p.weather || 'Tulsa · 88° · clear',
+      penFamily: pen.family,
+      penSize: pen.size + 'px',
+      penTitle: pen.title + 'px',
+      penQuote: pen.quote + 'px',
+      penName: pen.name,
+
+      railVisible,
+      railPos: isDocked ? 'relative' : 'absolute',
+      railZ: isDocked ? 1 : 6,
+      railShadow: isDocked ? 'none' : '0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56)',
+      railScrim: !isDocked && s.railOpen,
+      listVisible,
+      listFlex: isCompact ? '1 1 auto' : '0 0 372px',
+      listWidth: isCompact ? '100%' : '372px',
+      leafVisible,
+      leafMax: 'none',
+      leafShadow: isCompact ? 'none' : '0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56)',
+      leafRadius: isCompact ? '0' : '3px 3px 0 0',
+      deskPad: isCompact ? '0' : wide ? '28px 28px 0' : '20px 20px 0',
+      toolPad: isCompact ? '14px' : '38px',
+      pageMargin: margin,
+      /* A picture only sits beside text where both can have room; on a phone it
+         takes the measure and the writing runs above and below it. */
+      plateFloat: isPhone ? 'none' : 'right',
+      plateWidth: isPhone ? '100%' : '44%',
+      plateMax: isPhone ? 'none' : '340px',
+      plateMargin: isPhone ? '6px 0 12px' : '6px 0 12px 24px',
+      contentBox: 'min(100%, ' + (measure + 2 * marginPx) + 'px)',
+      footMax: 'min(100%, ' + measure + 'px)',
+      chromeHidden: !isPhone && !s.railOpen && !s.listOpen,
+      tray: s.tray,
+      trayBg: s.tray ? 'rgba(246,243,236,0.12)' : 'transparent',
+      trayFg: s.tray ? '#c5ae67' : 'rgba(156,177,178,0.75)',
+
+      manage: s.manage,
+      confirming: !!doomed,
+      doomedName: doomed ? doomed.name : '',
+      doomedLine: doomed
+        ? 'Its ' + doomed.count + (doomed.count === 1 ? ' page goes' : ' pages go') + ' to the trash for thirty days.'
+        : '',
+      rows,
+      manageRows: rows,
+      activeName: active ? active.name : 'Nothing here yet',
+      activeColor: active ? active.color : 'transparent',
+      activeCount: active ? active.count + (active.count === 1 ? ' page' : ' pages') : '—',
+      swatches: covers.map((c) => ({
+        color: c,
+        ring: c === s.newColor ? '2px solid #c5ae67' : '1px solid rgba(246,243,236,0.14)',
+        onPick: () => this.setState({ newColor: c }),
+      })),
+      newName: s.newName,
+      addBg: s.newName.trim() ? '#f6f3ec' : 'rgba(246,243,236,0.09)',
+      addFg: s.newName.trim() ? '#142a2b' : '#748b8c',
+
+      showRailBtn: !isDocked,
+      toggleChrome: () => {
+        if (isCompact) return this.setState({ screen: 'list' })
+        const hide = this.state.railOpen || this.state.listOpen
+        this.setState({ railOpen: !hide, listOpen: !hide })
+      },
+      openRail: () => this.setState({ railOpen: true }),
+      closeRail: () => this.setState({ railOpen: false }),
+      toggleTray: () => this.setState((v) => ({ tray: !v.tray })),
+      openPage: () => this.setState({ screen: 'page', railOpen: isDocked }),
+      backToList: () => this.setState({ screen: 'list' }),
+      newPage: () => this.setState({ screen: 'page', railOpen: isDocked, listOpen: true }),
+      openManage: () => this.setState({ manage: true, confirm: null }),
+      closeManage: () => this.setState({ manage: false, confirm: null, newName: '' }),
+      cancelDelete: () => this.setState({ confirm: null }),
+      confirmDelete: () =>
+        this.setState((v) => {
+          const books = v.books.filter((b) => b.id !== v.confirm)
+          return {
+            books,
+            confirm: null,
+            activeId: v.activeId === v.confirm ? (books[0] ? books[0].id : '') : v.activeId,
+          }
+        }),
+      onName: (e) => this.setState({ newName: e.target.value }),
+      addBook: () => {
+        const name = this.state.newName.trim()
+        if (!name) return
+        const id = 'b' + Date.now()
+        this.setState((v) => ({
+          books: [...v.books, { id, name, color: v.newColor, count: 0 }],
+          newName: '',
+          activeId: id,
+        }))
+      },
+    }
+  }
+}
+</script>
+</body>
+</html>

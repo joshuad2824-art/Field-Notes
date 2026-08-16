@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..600&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Archivo:wght@400;500;600&family=Oswald:wght@300;400;500;600&family=Courier+Prime:wght@400;700&family=Caveat:wght@400..600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght@0,300..700;1,300..600&family=Klee+One:wght@400;600&family=Grape+Nuts&family=Playpen+Sans:wght@300..700&family=Architects+Daughter&family=Patrick+Hand&family=Kalam:wght@300;400;700&family=Just+Another+Hand&family=Caveat+Brush&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/timber-ink-design-system-53a1360a-e1b6-43b5-9ab2-ad386de11414/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/timber-ink-design-system-53a1360a-e1b6-43b5-9ab2-ad386de11414/tokens/colors.css">
+<script src="_ds/timber-ink-design-system-53a1360a-e1b6-43b5-9ab2-ad386de11414/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #001011; }
+  a { color: #c5ae67; text-decoration: none; }
+  a:hover { color: #dac891; }
+</style>
+</helmet>
+
+<section style="display:flex; flex-direction:column; gap:32px; padding:56px 64px 96px; background:#001011;">
+
+  <div style="display:flex; flex-direction:column; gap:10px; max-width:860px;">
+    <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2;">Turn 3 · the pen</div>
+    <h1 style="margin:0; font-family:'Playfair Display',serif; font-size:38px; font-weight:700; color:#f6f3ec; letter-spacing:-0.01em;">Nine hands, none of them script</h1>
+    <p style="margin:0; font-family:'Spectral',serif; font-size:17px; line-height:28px; color:#c1d4d4; text-wrap:pretty;">Every one of these is printed handwriting — letters that stand apart — so nothing turns into looping cursive. Same three lines, same dark teal leaf, same dot grid, each set at the size that keeps the 28px line rhythm the app is built on. Caveat is first so you can see what you'd be giving up.</p>
+    <p style="margin:0; font-family:'Spectral',serif; font-size:15px; line-height:24px; color:#9cb1b2; text-wrap:pretty;">Worth saying: <span style="font-family:'Courier Prime',monospace; font-size:13px; color:#c5ae67;">--font-pen</span> already asks for Linotype Feltpen first and only falls back to Caveat — so if you license that one, the app picks it up with no change. Everything below is a free stand-in for it.</p>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:28px;">
+
+    <div id="3a" style="width:452px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">3a</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#f6f3ec;">Caveat · today's pen</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">21px</span>
+      </div>
+      <div style="background:#051b1c; border-radius:2px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 14px 34px rgba(0,0,0,0.5); padding:20px 28px 26px; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:28px 25px; font-family:'Caveat',cursive; font-size:21px; line-height:28px; color:#e9e6df;">
+        <div style="font-family:'Caveat',cursive; font-size:32px; line-height:56px; font-weight:600; color:#f6f3ec;">The first morning</div>
+        <div>Do I want to write here? The dots say maybe.</div>
+        <div style="height:28px;"></div>
+        <div style="position:relative; padding-left:1.7em;"><span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;"><svg viewBox="0 0 20 20" style="position:absolute; inset:0; width:100%; height:100%;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round"></path></svg></span>Sharpen the plane, then write it down</div>
+        <div>A <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%; background-position:0 72%, 0 22%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span> held at seventeen.</div>
+      </div>
+      <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2;">Slanted felt-tip, small x-height, cheerful. The slant is what makes it read young.</div>
+    </div>
+
+    <div id="3b" style="width:452px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">3b</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#f6f3ec;">Klee One · fountain nib</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">18px</span>
+      </div>
+      <div style="background:#051b1c; border-radius:2px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 14px 34px rgba(0,0,0,0.5); padding:20px 28px 26px; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:28px 25px; font-family:'Klee One',cursive; font-size:18px; line-height:28px; color:#e9e6df;">
+        <div style="font-family:'Klee One',cursive; font-size:28px; line-height:56px; font-weight:600; color:#f6f3ec;">The first morning</div>
+        <div>Do I want to write here? The dots say maybe.</div>
+        <div style="height:28px;"></div>
+        <div style="position:relative; padding-left:1.7em;"><span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;"><svg viewBox="0 0 20 20" style="position:absolute; inset:0; width:100%; height:100%;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round"></path></svg></span>Sharpen the plane, then write it down</div>
+        <div>A <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%; background-position:0 72%, 0 22%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span> held at seventeen.</div>
+      </div>
+      <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2;">Upright pen with real stroke contrast — the closest thing here to a fountain nib, and the most grown-up of the nine. Holds long paragraphs without going twee.</div>
+    </div>
+
+    <div id="3c" style="width:452px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">3c</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#f6f3ec;">Shantell Sans · marker</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">18px</span>
+      </div>
+      <div style="background:#051b1c; border-radius:2px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 14px 34px rgba(0,0,0,0.5); padding:20px 28px 26px; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:28px 25px; font-family:'Shantell Sans',cursive; font-size:18px; line-height:28px; color:#e9e6df;">
+        <div style="font-family:'Shantell Sans',cursive; font-size:27px; line-height:56px; font-weight:600; color:#f6f3ec;">The first morning</div>
+        <div>Do I want to write here? The dots say maybe.</div>
+        <div style="height:28px;"></div>
+        <div style="position:relative; padding-left:1.7em;"><span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;"><svg viewBox="0 0 20 20" style="position:absolute; inset:0; width:100%; height:100%;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round"></path></svg></span>Sharpen the plane, then write it down</div>
+        <div>A <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%; background-position:0 72%, 0 22%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span> held at seventeen.</div>
+      </div>
+      <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2;">Chisel-tip marker, upright, big x-height — the most legible of the nine and a real type family underneath, so bold and italic are drawn rather than faked.</div>
+    </div>
+
+    <div id="3d" style="width:452px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">3d</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#f6f3ec;">Grape Nuts · fine pen</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">20px</span>
+      </div>
+      <div style="background:#051b1c; border-radius:2px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 14px 34px rgba(0,0,0,0.5); padding:20px 28px 26px; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:28px 25px; font-family:'Grape Nuts',cursive; font-size:20px; line-height:28px; color:#e9e6df;">
+        <div style="font-family:'Grape Nuts',cursive; font-size:30px; line-height:56px; color:#f6f3ec;">The first morning</div>
+        <div>Do I want to write here? The dots say maybe.</div>
+        <div style="height:28px;"></div>
+        <div style="position:relative; padding-left:1.7em;"><span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;"><svg viewBox="0 0 20 20" style="position:absolute; inset:0; width:100%; height:100%;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round"></path></svg></span>Sharpen the plane, then write it down</div>
+        <div>A <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%; background-position:0 72%, 0 22%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span> held at seventeen.</div>
+      </div>
+      <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2;">A fine ballpoint or fountain pen moving quickly. Airy and personal — thin strokes on a dark page are the thing to watch.</div>
+    </div>
+
+    <div id="3e" style="width:452px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">3e</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#f6f3ec;">Kalam · brush pen</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">18px</span>
+      </div>
+      <div style="background:#051b1c; border-radius:2px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 14px 34px rgba(0,0,0,0.5); padding:20px 28px 26px; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:28px 25px; font-family:'Kalam',cursive; font-size:18px; line-height:28px; color:#e9e6df;">
+        <div style="font-family:'Kalam',cursive; font-size:27px; line-height:56px; font-weight:700; color:#f6f3ec;">The first morning</div>
+        <div>Do I want to write here? The dots say maybe.</div>
+        <div style="height:28px;"></div>
+        <div style="position:relative; padding-left:1.7em;"><span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;"><svg viewBox="0 0 20 20" style="position:absolute; inset:0; width:100%; height:100%;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round"></path></svg></span>Sharpen the plane, then write it down</div>
+        <div>A <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%; background-position:0 72%, 0 22%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span> held at seventeen.</div>
+      </div>
+      <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2;">Ink pools where the brush turns, which is the most "wet ink" of the set. Three weights, so bold has somewhere to go.</div>
+    </div>
+
+    <div id="3f" style="width:452px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">3f</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#f6f3ec;">Patrick Hand · ballpoint</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">19px</span>
+      </div>
+      <div style="background:#051b1c; border-radius:2px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 14px 34px rgba(0,0,0,0.5); padding:20px 28px 26px; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:28px 25px; font-family:'Patrick Hand',cursive; font-size:19px; line-height:28px; color:#e9e6df;">
+        <div style="font-family:'Patrick Hand',cursive; font-size:29px; line-height:56px; color:#f6f3ec;">The first morning</div>
+        <div>Do I want to write here? The dots say maybe.</div>
+        <div style="height:28px;"></div>
+        <div style="position:relative; padding-left:1.7em;"><span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;"><svg viewBox="0 0 20 20" style="position:absolute; inset:0; width:100%; height:100%;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round"></path></svg></span>Sharpen the plane, then write it down</div>
+        <div>A <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%; background-position:0 72%, 0 22%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span> held at seventeen.</div>
+      </div>
+      <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2;">Even-pressure ballpoint, quiet and steady. The safest pick if you want handwriting you stop noticing after a paragraph.</div>
+    </div>
+
+    <div id="3g" style="width:452px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">3g</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#f6f3ec;">Architects Daughter · technical</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">18px</span>
+      </div>
+      <div style="background:#051b1c; border-radius:2px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 14px 34px rgba(0,0,0,0.5); padding:20px 28px 26px; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:28px 25px; font-family:'Architects Daughter',cursive; font-size:18px; line-height:28px; color:#e9e6df;">
+        <div style="font-family:'Architects Daughter',cursive; font-size:26px; line-height:56px; color:#f6f3ec;">The first morning</div>
+        <div>Do I want to write here? The dots say maybe.</div>
+        <div style="height:28px;"></div>
+        <div style="position:relative; padding-left:1.7em;"><span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;"><svg viewBox="0 0 20 20" style="position:absolute; inset:0; width:100%; height:100%;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round"></path></svg></span>Sharpen the plane, then write it down</div>
+        <div>A <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%; background-position:0 72%, 0 22%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span> held at seventeen.</div>
+      </div>
+      <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2;">Drafting-pen printing, wide and deliberate. Suits lists and margins better than long prose — it takes a lot of horizontal room.</div>
+    </div>
+
+    <div id="3h" style="width:452px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">3h</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#f6f3ec;">Playpen Sans · soft felt</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">17px</span>
+      </div>
+      <div style="background:#051b1c; border-radius:2px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 14px 34px rgba(0,0,0,0.5); padding:20px 28px 26px; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:28px 25px; font-family:'Playpen Sans',cursive; font-size:17px; line-height:28px; color:#e9e6df;">
+        <div style="font-family:'Playpen Sans',cursive; font-size:25px; line-height:56px; font-weight:600; color:#f6f3ec;">The first morning</div>
+        <div>Do I want to write here? The dots say maybe.</div>
+        <div style="height:28px;"></div>
+        <div style="position:relative; padding-left:1.7em;"><span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;"><svg viewBox="0 0 20 20" style="position:absolute; inset:0; width:100%; height:100%;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round"></path></svg></span>Sharpen the plane, then write it down</div>
+        <div>A <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%; background-position:0 72%, 0 22%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span> held at seventeen.</div>
+      </div>
+      <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2;">Rounded felt tip, upright, seven weights. Friendly — arguably too friendly for a page about a hospital shift.</div>
+    </div>
+
+    <div id="3i" style="width:452px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">3i</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#f6f3ec;">Caveat Brush · heavier cut</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">20px</span>
+      </div>
+      <div style="background:#051b1c; border-radius:2px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 14px 34px rgba(0,0,0,0.5); padding:20px 28px 26px; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:28px 25px; font-family:'Caveat Brush',cursive; font-size:20px; line-height:28px; color:#e9e6df;">
+        <div style="font-family:'Caveat Brush',cursive; font-size:30px; line-height:56px; color:#f6f3ec;">The first morning</div>
+        <div>Do I want to write here? The dots say maybe.</div>
+        <div style="height:28px;"></div>
+        <div style="position:relative; padding-left:1.7em;"><span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;"><svg viewBox="0 0 20 20" style="position:absolute; inset:0; width:100%; height:100%;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round"></path></svg></span>Sharpen the plane, then write it down</div>
+        <div>A <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%; background-position:0 72%, 0 22%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span> held at seventeen.</div>
+      </div>
+      <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2;">Caveat's own brush cut — same hand, more ink on the dark page. Worth a look if you like today's pen but want it to carry more weight.</div>
+    </div>
+
+  </div>
+
+  <div style="max-width:860px; font-family:'Spectral',serif; font-size:15px; line-height:24px; color:#9cb1b2; text-wrap:pretty;">If it were mine: <a href="#3b">3b</a> Klee One for the fountain-pen feel you asked about, <a href="#3c">3c</a> Shantell Sans if legibility wins, and <a href="#3i">3i</a> Caveat Brush as the low-risk upgrade to what's already there. Each one needs its own <span style="font-family:'Courier Prime',monospace; font-size:13px; color:#c5ae67;">--pen-size</span> — the numbers above the specimens — so the writing keeps landing on the 28px grid. Say which and I'll set the pen in 2a so you can read a whole screen in it.</div>
+</section>
+
+<section style="display:flex; flex-direction:column; gap:32px; padding:56px 64px 96px; background:#001011;">
+
+  <div style="display:flex; flex-direction:column; gap:10px; max-width:820px;">
+    <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2;">Turn 2 · 1a, made real</div>
+    <h1 style="margin:0; font-family:'Playfair Display',serif; font-size:38px; font-weight:700; color:#f6f3ec; letter-spacing:-0.01em;">Hide the sidebar, and own the notebooks</h1>
+    <p style="margin:0; font-family:'Spectral',serif; font-size:17px; line-height:28px; color:#c1d4d4; text-wrap:pretty;">This one works — click it. <span style="font-family:'Courier Prime',monospace; font-size:15px; color:#c5ae67;">☰</span> in the page's own toolbar clears both columns away and leaves the leaf alone on the dark desk; click it again and they come back. Nothing is hard-coded any more: add a notebook, name it, give it a cover, delete any of them — including Field Notes.</p>
+  </div>
+
+  <div id="2a" style="display:flex; flex-direction:column; gap:12px;">
+    <div style="display:flex; align-items:baseline; gap:12px;">
+      <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">2a</span>
+      <span style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#f6f3ec;">Interactive · MacBook 1440 × 900</span>
+      <span style="font-family:'Spectral',serif; font-size:14px; color:#9cb1b2;">try ☰, and "Manage" in the rail</span>
+    </div>
+
+    <div data-screen-label="2a Home" style="position:relative; width:1440px; height:900px; background:#142a2b; color:#e9e6df; display:flex; overflow:hidden; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56); border-radius:3px;">
+      <div style="position:absolute; inset:0; pointer-events:none; z-index:3; background:radial-gradient(circle at 50% 0%, rgba(241,186,122,0.14) 0%, rgba(198,134,47,0.04) 38%, rgba(0,16,17,0) 66%), radial-gradient(122% 92% at 50% 42%, rgba(0,16,17,0) 40%, rgba(0,16,17,0.5) 100%);"></div>
+
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}">
+        <aside style="position:relative; z-index:1; flex:0 0 264px; width:264px; display:flex; flex-direction:column; background:#051b1c; border-right:1px solid rgba(246,243,236,0.06);">
+          <div style="padding:22px 20px 16px; border-bottom:1px solid rgba(246,243,236,0.06);">
+            <img src="assets/logo-wordmark-reverse.png" alt="Timber &amp; Ink" style="display:block; height:19px; width:auto; opacity:0.82;">
+          </div>
+
+          <div style="padding:24px 20px 20px;">
+            <div style="font-family:'Oswald',sans-serif; font-size:12px; font-weight:500; letter-spacing:0.16em; text-transform:uppercase; color:#9cb1b2;">Saturday</div>
+            <div style="display:flex; align-items:flex-end; gap:10px; margin-top:2px;">
+              <div style="font-family:'Playfair Display',serif; font-size:76px; font-weight:700; line-height:0.86; color:#f6f3ec; letter-spacing:-0.02em;">15</div>
+              <div style="font-family:'Oswald',sans-serif; font-size:14px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:#c5ae67; padding-bottom:8px;">August<br>2026</div>
+            </div>
+            <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; margin-top:14px;">Tulsa · 88° · clear</div>
+          </div>
+
+          <div style="padding:0 14px 18px;">
+            <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:2px;">
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">S</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">M</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">T</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">W</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">T</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">F</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">S</div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:2px; margin-top:8px;">
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">9</span><span style="width:3px; height:3px; border-radius:99px; background:rgba(197,174,103,0.5);"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">10</span><span style="width:3px; height:3px; border-radius:99px;"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">11</span><span style="width:3px; height:3px; border-radius:99px; background:rgba(197,174,103,0.5);"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">12</span><span style="width:3px; height:3px; border-radius:99px;"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">13</span><span style="width:3px; height:3px; border-radius:99px; background:rgba(197,174,103,0.5);"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">14</span><span style="width:3px; height:3px; border-radius:99px;"></span></div>
+              <div style="height:30px; display:flex; align-items:center; justify-content:center;">
+                <span style="width:28px; height:28px; border-radius:99px; background:#c6862f; box-shadow:0 0 18px rgba(222,157,75,0.45); display:flex; align-items:center; justify-content:center; font-family:'Courier Prime',monospace; font-size:12px; font-weight:700; color:#142a2b;">15</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:1px; background:rgba(246,243,236,0.06); margin:0 20px;"></div>
+
+          <div style="flex:1 1 auto; min-height:0; overflow-y:auto; padding:18px 12px 12px;">
+            <div style="display:flex; align-items:baseline; padding:0 8px 10px;">
+              <span style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2;">Notebooks</span>
+              <span style="flex:1;"></span>
+              <button onClick="{{ openManage }}" style="border:none; background:transparent; cursor:pointer; font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#c5ae67; padding:0;" style-hover="color:#dac891;">Manage</button>
+            </div>
+
+            <sc-for list="{{ rows }}" as="book" hint-placeholder-count="4">
+              <div onClick="{{ book.onPick }}" style="position:relative; display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:3px; cursor:pointer; background:{{ book.rowBg }};" style-hover="background:rgba(246,243,236,0.07);">
+                <span style="position:absolute; left:0; top:8px; bottom:8px; width:2px; background:{{ book.markBg }};"></span>
+                <span style="width:9px; height:9px; border-radius:99px; flex:0 0 auto; border:1px solid rgba(246,243,236,0.3); background:{{ book.color }};"></span>
+                <span style="flex:1; font-family:'Spectral',serif; font-size:16px; color:{{ book.nameColor }};">{{ book.name }}</span>
+                <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">{{ book.countLabel }}</span>
+              </div>
+            </sc-for>
+
+            <div onClick="{{ openManage }}" style="display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:3px; cursor:pointer; color:#9cb1b2;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">
+              <span style="width:9px; height:9px; border-radius:99px; border:1px dashed rgba(246,243,236,0.35); flex:0 0 auto;"></span>
+              <span style="flex:1; font-family:'Spectral',serif; font-size:16px; font-style:italic;">Add a notebook</span>
+            </div>
+          </div>
+
+          <div style="flex:0 0 auto; padding:16px 20px 20px; border-top:1px solid rgba(246,243,236,0.06); display:flex; flex-direction:column; gap:10px;">
+            <button style="width:100%; height:44px; border:none; background:#f6f3ec; color:#142a2b; font-family:'Archivo',sans-serif; font-size:14px; font-weight:600; border-radius:3px; cursor:pointer; box-shadow:3px 3px 0 rgba(0,16,17,0.7);" style-hover="transform:translate(-1px,-1px); background:#fdfaf3;">New page</button>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(156,177,178,0.7);">
+              <span>⌘⇧N</span>
+              <span style="cursor:pointer;">Settings</span>
+            </div>
+          </div>
+        </aside>
+      </sc-if>
+
+      <sc-if value="{{ listOpen }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative; z-index:1; flex:0 0 372px; width:372px; display:flex; flex-direction:column; background:#0c2223; border-right:1px solid rgba(246,243,236,0.06);">
+          <div style="flex:0 0 auto; padding:18px 20px 14px; display:flex; flex-direction:column; gap:14px; border-bottom:1px solid rgba(246,243,236,0.06);">
+            <div style="display:flex; align-items:baseline; gap:10px;">
+              <span style="width:9px; height:9px; border-radius:99px; border:1px solid rgba(246,243,236,0.35); background:{{ activeColor }};"></span>
+              <span style="font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:#f6f3ec;">{{ activeName }}</span>
+              <span style="flex:1;"></span>
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2;">{{ activeCount }}</span>
+            </div>
+            <input placeholder="Search this notebook" style="width:100%; background:#001011; border:1px solid rgba(0,0,0,0.4); box-shadow:inset 0 1px 2px rgba(0,0,0,0.5); border-radius:3px; color:#e9e6df; font-family:'Spectral',serif; font-size:15px; padding:8px 14px; height:36px;">
+          </div>
+
+          <div style="flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px 10px 20px;">
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:14px 10px 6px;">Pinned</div>
+            <div style="padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <div style="display:flex; align-items:baseline; gap:8px;">
+                <span style="color:#c5ae67; font-size:11px;">●</span>
+                <span style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">The standing list</span>
+              </div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">4 Aug · 212 words</div>
+            </div>
+
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:18px 10px 6px;">Today</div>
+            <div style="position:relative; padding:12px 10px; border-radius:3px; background:rgba(246,243,236,0.12); cursor:pointer;">
+              <span style="position:absolute; left:0; top:8px; bottom:8px; width:2px; background:#c5ae67;"></span>
+              <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">The first morning</div>
+              <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">The whole question this page has to answer is a small one…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">9:07 PM · 98 words</div>
+            </div>
+            <div style="padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">Rain on the tin roof</div>
+              <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Woke at four to the sound and stayed up for it…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">6:22 AM · 143 words</div>
+            </div>
+
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:18px 10px 6px;">This week</div>
+            <div style="padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">Sharpening the block plane</div>
+              <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Thirty degrees, then a stroke on the strop…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">13 Aug · 306 words</div>
+            </div>
+            <div style="padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">Notes toward Sunday</div>
+              <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Start with the small thing, not the large one…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">11 Aug · 188 words</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <main style="position:relative; z-index:1; flex:1 1 auto; min-width:0; display:flex; justify-content:center; padding:40px 32px 0;">
+        <article style="position:relative; background:#051b1c; color:#e9e6df; width:100%; max-width:673px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56); border-radius:2px 2px 0 0; display:flex; flex-direction:column; height:100%; overflow:hidden;">
+          <div style="flex:0 0 auto; height:44px; display:flex; align-items:center; gap:6px; padding:0 46px;">
+            <button onClick="{{ toggleChrome }}" title="The list — ⌘\" style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.75); font-family:'Spectral',serif; font-size:20px; min-width:32px; height:30px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">☰</button>
+            <sc-if value="{{ chromeHidden }}" hint-placeholder-val="{{ false }}">
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(156,177,178,0.5);">{{ activeName }} · saturday 15 august</span>
+            </sc-if>
+            <span style="flex:1;"></span>
+            <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(156,177,178,0.55); margin-right:10px;">Saved</span>
+            <button style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.75); font-family:'Archivo',sans-serif; font-size:14px; min-width:34px; height:30px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">Aa</button>
+            <button style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.75); font-family:'Spectral',serif; font-size:20px; min-width:30px; height:30px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">⋯</button>
+          </div>
+
+          <div style="flex:1 1 auto; min-height:0; overflow:hidden;">
+            <div style="padding:22px 56px 40px; font-family:'Caveat',cursive; font-size:21px; line-height:28px; color:#e9e6df; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:56px 29px;">
+              <div style="font-family:'Caveat',cursive; font-size:34px; line-height:56px; font-weight:600; letter-spacing:-0.01em; color:#f6f3ec;">The first morning</div>
+              <div>The whole question this page has to answer is a small one: do I want to write here?</div>
+              <div style="height:28px;"></div>
+              <div style="position:relative; padding-left:1.7em;">
+                <span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;">
+                  <svg viewBox="0 0 20 20" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible; opacity:0.75;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </span>Write three real paragraphs</div>
+              <div style="position:relative; padding-left:1.7em;">
+                <span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;">
+                  <svg viewBox="0 0 20 20" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </span><span style="color:#9cb1b2; text-decoration:line-through; text-decoration-color:rgba(246,243,236,0.24);">Open the page</span></div>
+              <div style="height:28px;"></div>
+              <div>Whether Spectral at seventeen holds a <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%), linear-gradient(266deg, transparent 2%, rgba(215,190,106,0.24) 7%, transparent 28%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%, 100% 26%; background-position:0 72%, 0 22%, 0 96%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span></div>
+              <div style="height:28px;"></div>
+              <div style="font-family:'Caveat',cursive; font-size:23px; line-height:28px; color:#f6f3ec; border-left:2px solid #957c2b; padding-left:20px; margin-left:-22px;">Certainly work is not always required of a man. There is such a thing as a sacred idleness.</div>
+              <div style="height:28px;"></div>
+              <div>Type over all of this. <span style="color:#c5ae67; font-weight:500;">#field-notes</span></div>
+            </div>
+          </div>
+
+          <div style="flex:0 0 auto; margin:0 56px; padding:14px 0 20px; border-top:1px solid rgba(246,243,236,0.1); font-family:'Courier Prime',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; display:flex; align-items:center; gap:16px;">
+            <span>98 words</span>
+            <span>·</span>
+            <span>edited 9:07 PM</span>
+            <span style="flex:1;"></span>
+            <span style="color:#c5ae67;">#field-notes</span>
+          </div>
+        </article>
+      </main>
+
+      <sc-if value="{{ manage }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; z-index:6; background:rgba(0,16,17,0.62); display:flex; align-items:center; justify-content:center;">
+          <div style="width:468px; background:#051b1c; border:1px solid rgba(246,243,236,0.1); border-radius:5px; box-shadow:0 2px 0 rgba(0,0,0,0.5), 0 22px 52px rgba(0,0,0,0.6); padding:8px 0 16px;">
+            <div style="display:flex; align-items:center; padding:16px 20px 10px;">
+              <span style="font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:#f6f3ec;">Notebooks</span>
+              <span style="flex:1;"></span>
+              <button onClick="{{ closeManage }}" style="border:none; background:transparent; cursor:pointer; font-family:'Courier Prime',monospace; font-size:16px; color:#9cb1b2; padding:4px 8px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#f6f3ec;">×</button>
+            </div>
+
+            <div style="padding:0 12px;">
+              <sc-for list="{{ manageRows }}" as="book" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:12px; padding:11px 8px; border-bottom:1px solid rgba(246,243,236,0.06);">
+                  <span style="width:10px; height:10px; border-radius:99px; border:1px solid rgba(246,243,236,0.3); flex:0 0 auto; background:{{ book.color }};"></span>
+                  <span style="flex:1; font-family:'Spectral',serif; font-size:16px; color:#e9e6df;">{{ book.name }}</span>
+                  <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172;">{{ book.countLabel }}</span>
+                  <button onClick="{{ book.onDelete }}" title="Delete" style="border:none; background:transparent; cursor:pointer; font-family:'Courier Prime',monospace; font-size:15px; color:#8c8172; padding:2px 8px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#d98a9f;">×</button>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ confirming }}" hint-placeholder-val="{{ false }}">
+              <div style="margin:14px 12px 4px; padding:14px 16px; background:#0c2223; border:1px solid rgba(217,138,159,0.35); border-radius:3px;">
+                <div style="font-family:'Spectral',serif; font-size:16px; color:#f6f3ec;">Delete {{ doomedName }}?</div>
+                <div style="font-family:'Spectral',serif; font-size:14px; line-height:22px; color:#9cb1b2; margin-top:4px;">{{ doomedLine }}</div>
+                <div style="display:flex; gap:10px; margin-top:14px;">
+                  <button onClick="{{ confirmDelete }}" style="height:36px; padding:0 16px; border:1px solid rgba(217,138,159,0.45); background:transparent; color:#d98a9f; font-family:'Archivo',sans-serif; font-size:13px; font-weight:600; border-radius:3px; cursor:pointer;" style-hover="background:rgba(217,138,159,0.1);">Delete it</button>
+                  <button onClick="{{ cancelDelete }}" style="height:36px; padding:0 16px; border:1px solid rgba(246,243,236,0.14); background:transparent; color:#e9e6df; font-family:'Archivo',sans-serif; font-size:13px; font-weight:600; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">Keep it</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="height:1px; background:rgba(246,243,236,0.06); margin:14px 12px;"></div>
+
+            <div style="padding:0 20px;">
+              <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding-bottom:10px;">Add one</div>
+              <input value="{{ newName }}" onChange="{{ onName }}" placeholder="What should I call it?" style="width:100%; background:#001011; border:1px solid rgba(0,0,0,0.4); box-shadow:inset 0 1px 2px rgba(0,0,0,0.5); border-radius:3px; color:#e9e6df; font-family:'Spectral',serif; font-size:16px; padding:9px 14px; height:38px;">
+              <div style="display:flex; align-items:center; gap:10px; margin-top:14px;">
+                <sc-for list="{{ swatches }}" as="sw" hint-placeholder-count="6">
+                  <button onClick="{{ sw.onPick }}" style="width:26px; height:26px; border-radius:2px; cursor:pointer; padding:0; background:{{ sw.color }}; border:{{ sw.ring }};"></button>
+                </sc-for>
+                <span style="flex:1;"></span>
+                <button onClick="{{ addBook }}" style="height:38px; padding:0 18px; border:none; font-family:'Archivo',sans-serif; font-size:13px; font-weight:600; border-radius:3px; cursor:pointer; box-shadow:3px 3px 0 rgba(0,16,17,0.7); background:{{ addBg }}; color:{{ addFg }};">Add notebook</button>
+              </div>
+              <div style="font-family:'Spectral',serif; font-size:13px; line-height:20px; color:#9cb1b2; margin-top:14px; font-style:italic;">Covers come from the palette, so a new notebook still looks like it belongs on the shelf.</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="max-width:1440px; font-family:'Spectral',serif; font-size:15px; line-height:24px; color:#9cb1b2; text-wrap:pretty;">☰ clears the rail and the list together — the leaf keeps its measure and centers on the dark desk, which is what the room is for. Manage adds, deletes and colors notebooks; deleting one says what happens to its pages rather than asking you to trust it, and the trash keeps them thirty days, the same as a page.</div>
+  </div>
+</section>
+
+<section style="display:flex; flex-direction:column; gap:32px; padding:56px 64px 120px; background:#001011;">
+
+  <div style="display:flex; flex-direction:column; gap:10px; max-width:820px;">
+    <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2;">Turn 1 · home restructure</div>
+    <h1 style="margin:0; font-family:'Playfair Display',serif; font-size:38px; font-weight:700; color:#f6f3ec; letter-spacing:-0.01em;">Two homes, and the page at rest</h1>
+    <p style="margin:0; font-family:'Spectral',serif; font-size:17px; line-height:28px; color:#c1d4d4; text-wrap:pretty;">The handwriting, the hand-drawn highlighter, the dark teal page and the dot grid all stay exactly as they are — none of that is in question. What changes is everything around them: the brown bar is gone, the date does the work of a header, and the big monitor gets filled by a third column instead of a stretched button. Nothing here has been pushed anywhere.</p>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px;">
+      <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; border:1px solid rgba(246,243,236,0.14); padding:5px 10px; border-radius:2px;">1a · today, docked</span>
+      <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; border:1px solid rgba(246,243,236,0.14); padding:5px 10px; border-radius:2px;">1b · the shelf, re-cut</span>
+      <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; border:1px solid rgba(246,243,236,0.14); padding:5px 10px; border-radius:2px;">1c · iphone</span>
+      <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; border:1px solid rgba(246,243,236,0.14); padding:5px 10px; border-radius:2px;">1d · ipad, page at rest</span>
+    </div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:64px; align-items:flex-start;">
+
+    <!-- ─────────────────────────  1a  ───────────────────────── -->
+    <div id="1a" style="display:flex; flex-direction:column; gap:12px;">
+      <div style="display:flex; align-items:baseline; gap:12px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">1a</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#f6f3ec;">Today, docked · MacBook 1440 × 900</span>
+        <span style="font-family:'Spectral',serif; font-size:14px; color:#9cb1b2;">date rail · notebook dots · list · leaf</span>
+      </div>
+
+      <div data-screen-label="1a Home" style="position:relative; width:1440px; height:900px; background:#142a2b; color:#e9e6df; display:flex; overflow:hidden; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56); border-radius:3px;">
+        <div style="position:absolute; inset:0; pointer-events:none; z-index:3; background:radial-gradient(circle at 50% 0%, rgba(241,186,122,0.14) 0%, rgba(198,134,47,0.04) 38%, rgba(0,16,17,0) 66%), radial-gradient(122% 92% at 50% 42%, rgba(0,16,17,0) 40%, rgba(0,16,17,0.5) 100%);"></div>
+
+        <!-- rail -->
+        <aside style="position:relative; z-index:1; flex:0 0 264px; width:264px; display:flex; flex-direction:column; background:#051b1c; border-right:1px solid rgba(246,243,236,0.06);">
+          <div style="padding:22px 20px 16px; border-bottom:1px solid rgba(246,243,236,0.06);">
+            <img src="assets/logo-wordmark-reverse.png" alt="Timber &amp; Ink" style="display:block; height:19px; width:auto; opacity:0.82;">
+          </div>
+
+          <div style="padding:24px 20px 20px;">
+            <div style="font-family:'Oswald',sans-serif; font-size:12px; font-weight:500; letter-spacing:0.16em; text-transform:uppercase; color:#9cb1b2;">Saturday</div>
+            <div style="display:flex; align-items:flex-end; gap:10px; margin-top:2px;">
+              <div style="font-family:'Playfair Display',serif; font-size:76px; font-weight:700; line-height:0.86; color:#f6f3ec; letter-spacing:-0.02em;">15</div>
+              <div style="font-family:'Oswald',sans-serif; font-size:14px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:#c5ae67; padding-bottom:8px;">August<br>2026</div>
+            </div>
+            <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; margin-top:14px;">Tulsa · 88° · clear</div>
+          </div>
+
+          <div style="padding:0 14px 18px;">
+            <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:2px;">
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; font-weight:400; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">S</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; font-weight:400; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">M</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; font-weight:400; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">T</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; font-weight:400; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">W</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; font-weight:400; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">T</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; font-weight:400; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">F</div>
+              <div style="text-align:center; font-family:'Oswald',sans-serif; font-size:10px; font-weight:400; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">S</div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:2px; margin-top:8px;">
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">9</span><span style="width:3px; height:3px; border-radius:99px; background:rgba(197,174,103,0.5);"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">10</span><span style="width:3px; height:3px; border-radius:99px; background:transparent;"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">11</span><span style="width:3px; height:3px; border-radius:99px; background:rgba(197,174,103,0.5);"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">12</span><span style="width:3px; height:3px; border-radius:99px; background:transparent;"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">13</span><span style="width:3px; height:3px; border-radius:99px; background:rgba(197,174,103,0.5);"></span></div>
+              <div style="height:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><span style="font-family:'Courier Prime',monospace; font-size:12px; color:#9cb1b2;">14</span><span style="width:3px; height:3px; border-radius:99px; background:transparent;"></span></div>
+              <div style="height:30px; display:flex; align-items:center; justify-content:center;">
+                <span style="width:28px; height:28px; border-radius:99px; background:#c6862f; box-shadow:0 0 18px rgba(222,157,75,0.45); display:flex; align-items:center; justify-content:center; font-family:'Courier Prime',monospace; font-size:12px; font-weight:700; color:#142a2b;">15</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:1px; background:rgba(246,243,236,0.06); margin:0 20px;"></div>
+
+          <div style="flex:1 1 auto; min-height:0; overflow-y:auto; padding:18px 12px 12px;">
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:0 8px 10px;">Notebooks</div>
+
+            <div style="position:relative; display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:3px; background:rgba(246,243,236,0.12); cursor:pointer;">
+              <span style="position:absolute; left:0; top:8px; bottom:8px; width:2px; background:#c5ae67;"></span>
+              <span style="width:9px; height:9px; border-radius:99px; background:#082744; border:1px solid rgba(246,243,236,0.35); flex:0 0 auto;"></span>
+              <span style="flex:1; font-family:'Spectral',serif; font-size:16px; color:#f6f3ec;">Field Notes</span>
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">12</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <span style="width:9px; height:9px; border-radius:99px; background:#3a342e; border:1px solid rgba(246,243,236,0.28); flex:0 0 auto;"></span>
+              <span style="flex:1; font-family:'Spectral',serif; font-size:16px; color:#e9e6df;">The Workshop</span>
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">4</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <span style="width:9px; height:9px; border-radius:99px; background:#530a28; border:1px solid rgba(246,243,236,0.28); flex:0 0 auto;"></span>
+              <span style="flex:1; font-family:'Spectral',serif; font-size:16px; color:#e9e6df;">The Hearth</span>
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">7</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <span style="width:9px; height:9px; border-radius:99px; background:#123737; border:1px solid rgba(246,243,236,0.28); flex:0 0 auto;"></span>
+              <span style="flex:1; font-family:'Spectral',serif; font-size:16px; color:#e9e6df;">Church</span>
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; color:#9cb1b2;">9</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:3px; cursor:pointer; color:#9cb1b2;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">
+              <span style="width:9px; height:9px; border-radius:99px; border:1px dashed rgba(246,243,236,0.35); flex:0 0 auto;"></span>
+              <span style="flex:1; font-family:'Spectral',serif; font-size:16px; font-style:italic;">Add a notebook</span>
+            </div>
+          </div>
+
+          <div style="flex:0 0 auto; padding:16px 20px 20px; border-top:1px solid rgba(246,243,236,0.06); display:flex; flex-direction:column; gap:10px;">
+            <button style="width:100%; height:44px; border:none; background:#f6f3ec; color:#142a2b; font-family:'Archivo',sans-serif; font-size:14px; font-weight:600; border-radius:3px; cursor:pointer; box-shadow:3px 3px 0 rgba(0,16,17,0.7); transition:transform 90ms cubic-bezier(0.32,0.08,0.24,1);" style-hover="transform:translate(-1px,-1px); background:#fdfaf3;" style-active="transform:translate(0,0); box-shadow:inset 0 2px 4px rgba(0,16,17,0.35);">New page</button>
+            <div style="display:flex; align-items:center; justify-content:space-between; font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(156,177,178,0.7);">
+              <span>⌘⇧N</span>
+              <span style="cursor:pointer;">Settings</span>
+            </div>
+          </div>
+        </aside>
+
+        <!-- list -->
+        <div style="position:relative; z-index:1; flex:0 0 372px; width:372px; display:flex; flex-direction:column; background:#0c2223; border-right:1px solid rgba(246,243,236,0.06);">
+          <div style="flex:0 0 auto; padding:18px 20px 14px; display:flex; flex-direction:column; gap:14px; border-bottom:1px solid rgba(246,243,236,0.06);">
+            <div style="display:flex; align-items:baseline; gap:10px;">
+              <span style="width:9px; height:9px; border-radius:99px; background:#082744; border:1px solid rgba(246,243,236,0.35);"></span>
+              <span style="font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:#f6f3ec;">Field Notes</span>
+              <span style="flex:1;"></span>
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2;">12 pages</span>
+            </div>
+            <input placeholder="Search this notebook" style="width:100%; background:#001011; border:1px solid rgba(0,0,0,0.4); box-shadow:inset 0 1px 2px rgba(0,0,0,0.5); border-radius:3px; color:#e9e6df; font-family:'Spectral',serif; font-size:15px; padding:8px 14px; height:36px;">
+          </div>
+
+          <div style="flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px 10px 20px;">
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:14px 10px 6px;">Pinned</div>
+            <div style="position:relative; padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <div style="display:flex; align-items:baseline; gap:8px;">
+                <span style="color:#c5ae67; font-size:11px;">●</span>
+                <span style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">The standing list</span>
+              </div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">4 Aug · 212 words</div>
+            </div>
+
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:18px 10px 6px;">Today</div>
+            <div style="position:relative; padding:12px 10px; border-radius:3px; background:rgba(246,243,236,0.12); cursor:pointer;">
+              <span style="position:absolute; left:0; top:8px; bottom:8px; width:2px; background:#c5ae67;"></span>
+              <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">The first morning</div>
+              <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">The whole question this page has to answer is a small one…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">9:07 PM · 98 words</div>
+            </div>
+            <div style="position:relative; padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">Rain on the tin roof</div>
+              <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Woke at four to the sound and stayed up for it…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">6:22 AM · 143 words</div>
+            </div>
+
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:18px 10px 6px;">This week</div>
+            <div style="position:relative; padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">Sharpening the block plane</div>
+              <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Thirty degrees, then a stroke on the strop…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">13 Aug · 306 words</div>
+            </div>
+            <div style="position:relative; padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">Notes toward Sunday</div>
+              <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Start with the small thing, not the large one…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">11 Aug · 188 words</div>
+            </div>
+            <div style="position:relative; padding:12px 10px; border-radius:3px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.07);">
+              <div style="font-family:'Spectral',serif; font-size:16px; font-weight:500; color:#f6f3ec;">What the ward taught me about queues</div>
+              <div style="font-family:'Spectral',serif; font-size:13px; color:#9cb1b2; line-height:20px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Nobody minds waiting; everybody minds not knowing…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:6px;">10 Aug · 421 words</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- desk -->
+        <main style="position:relative; z-index:1; flex:1 1 auto; min-width:0; display:flex; justify-content:center; padding:40px 32px 0;">
+          <article style="position:relative; background:#051b1c; color:#e9e6df; width:100%; max-width:673px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56); border-radius:2px 2px 0 0; display:flex; flex-direction:column; height:100%; overflow:hidden;">
+            <div style="flex:0 0 auto; height:44px; display:flex; align-items:center; gap:2px; padding:0 46px;">
+              <span style="flex:1;"></span>
+              <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(156,177,178,0.55); margin-right:10px;">Saved</span>
+              <button style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.75); font-family:'Archivo',sans-serif; font-size:14px; min-width:34px; height:30px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">Aa</button>
+              <button style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.75); font-family:'Spectral',serif; font-size:20px; min-width:30px; height:30px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">⋯</button>
+            </div>
+
+            <div style="flex:1 1 auto; min-height:0; overflow:hidden;">
+              <div style="padding:22px 56px 40px; font-family:'Caveat',cursive; font-size:21px; line-height:28px; color:#e9e6df; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:56px 29px;">
+                <div style="font-family:'Caveat',cursive; font-size:34px; line-height:56px; font-weight:600; letter-spacing:-0.01em; color:#f6f3ec;">The first morning</div>
+                <div>The whole question this page has to answer is a small one: do I want to write here?</div>
+                <div style="height:28px;"></div>
+                <div style="position:relative; padding-left:1.7em;">
+                  <span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;">
+                    <svg viewBox="0 0 20 20" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible; opacity:0.75;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  </span>Write three real paragraphs</div>
+                <div style="position:relative; padding-left:1.7em;">
+                  <span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;">
+                    <svg viewBox="0 0 20 20" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  </span><span style="color:#9cb1b2; text-decoration:line-through; text-decoration-color:rgba(246,243,236,0.24);">Open the page</span></div>
+                <div style="height:28px;"></div>
+                <div>Whether Spectral at seventeen holds a <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%), linear-gradient(266deg, transparent 2%, rgba(215,190,106,0.24) 7%, transparent 28%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%, 100% 26%; background-position:0 72%, 0 22%, 0 96%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">long thought</span></div>
+                <div style="height:28px;"></div>
+                <div style="font-family:'Caveat',cursive; font-size:23px; line-height:28px; color:#f6f3ec; border-left:2px solid #957c2b; padding-left:20px; margin-left:-22px;">Certainly work is not always required of a man. There is such a thing as a sacred idleness.</div>
+                <div style="height:28px;"></div>
+                <div>Type over all of this. <span style="color:#c5ae67; font-weight:500;">#field-notes</span></div>
+              </div>
+            </div>
+
+            <div style="flex:0 0 auto; margin:0 56px; padding:14px 0 20px; border-top:1px solid rgba(246,243,236,0.1); font-family:'Courier Prime',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; display:flex; align-items:center; gap:16px;">
+              <span>98 words</span>
+              <span>·</span>
+              <span>edited 9:07 PM</span>
+              <span style="flex:1;"></span>
+              <span style="color:#c5ae67;">#field-notes</span>
+            </div>
+          </article>
+        </main>
+      </div>
+
+      <div style="max-width:1440px; font-family:'Spectral',serif; font-size:15px; line-height:24px; color:#9cb1b2; text-wrap:pretty;">The brown bar is gone; the date is the masthead. Today is the one lit thing on the screen — amber, once. Notebook dots replace the four covers as navigation, and adding a notebook is a row rather than a code change. The toolbar at rest is two quiet marks; the styles and highlighter slide out from <span style="font-family:'Courier Prime',monospace; font-size:13px; color:#c5ae67;">Aa</span> when you want them.</div>
+    </div>
+
+    <!-- ─────────────────────────  1b  ───────────────────────── -->
+    <div id="1b" style="display:flex; flex-direction:column; gap:12px;">
+      <div style="display:flex; align-items:baseline; gap:12px;">
+        <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">1b</span>
+        <span style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#f6f3ec;">The shelf, re-cut · MacBook 1440 × 900</span>
+        <span style="font-family:'Spectral',serif; font-size:14px; color:#9cb1b2;">full-bleed wash · month rail · covers that stack</span>
+      </div>
+
+      <div data-screen-label="1b Shelf" style="position:relative; width:1440px; height:900px; background:linear-gradient(158deg, #0d3559 0%, #051a2d 62%, #021018 100%); color:#e9e6df; display:flex; overflow:hidden; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56); border-radius:3px;">
+        <div style="position:absolute; inset:0; pointer-events:none; z-index:3; background:radial-gradient(122% 92% at 50% 38%, rgba(0,16,17,0) 34%, rgba(0,16,17,0.62) 100%);"></div>
+
+        <!-- month rail -->
+        <div style="position:relative; z-index:2; flex:0 0 92px; width:92px; display:flex; flex-direction:column; align-items:center; padding:22px 0 18px; background:rgba(0,16,17,0.34); border-right:1px solid rgba(246,243,236,0.08);">
+          <div style="font-family:'Courier Prime',monospace; font-size:12px; letter-spacing:0.1em; color:#c5ae67;">2026</div>
+          <div style="width:22px; height:1px; background:rgba(197,174,103,0.4); margin:12px 0 16px;"></div>
+          <div style="display:flex; flex-direction:column; gap:11px; align-items:center; font-family:'Oswald',sans-serif; font-size:12px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase;">
+            <span style="color:rgba(246,243,236,0.3);">Jan</span>
+            <span style="color:rgba(246,243,236,0.3);">Feb</span>
+            <span style="color:rgba(246,243,236,0.3);">Mar</span>
+            <span style="color:rgba(246,243,236,0.3);">Apr</span>
+            <span style="color:rgba(246,243,236,0.3);">May</span>
+            <span style="color:rgba(246,243,236,0.3);">Jun</span>
+            <span style="color:rgba(246,243,236,0.45);">Jul</span>
+            <span style="color:#f6f3ec; border-bottom:2px solid #c5ae67; padding-bottom:3px;">Aug</span>
+            <span style="color:rgba(246,243,236,0.3);">Sep</span>
+            <span style="color:rgba(246,243,236,0.3);">Oct</span>
+            <span style="color:rgba(246,243,236,0.3);">Nov</span>
+            <span style="color:rgba(246,243,236,0.3);">Dec</span>
+          </div>
+          <span style="flex:1;"></span>
+          <img src="assets/mark-ampersand.png" alt="" style="width:22px; height:auto; opacity:0.5;">
+        </div>
+
+        <div style="position:relative; z-index:2; flex:1 1 auto; min-width:0; display:flex; flex-direction:column;">
+          <div style="flex:0 0 auto; display:flex; align-items:center; gap:22px; padding:26px 40px 0;">
+            <span style="flex:1;"></span>
+            <span style="font-family:'Oswald',sans-serif; font-size:12px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:rgba(246,243,236,0.6); cursor:pointer;" style-hover="color:#f6f3ec;">Search</span>
+            <span style="font-family:'Oswald',sans-serif; font-size:12px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:rgba(246,243,236,0.6); cursor:pointer;" style-hover="color:#f6f3ec;">Settings</span>
+          </div>
+
+          <div style="flex:0 0 auto; padding:18px 40px 0; display:flex; align-items:flex-end; gap:24px;">
+            <div style="font-family:'Playfair Display',serif; font-size:132px; font-weight:700; line-height:0.82; color:#f6f3ec; letter-spacing:-0.03em;">15</div>
+            <div style="display:flex; flex-direction:column; gap:8px; padding-bottom:14px;">
+              <div style="font-family:'Oswald',sans-serif; font-size:16px; font-weight:400; letter-spacing:0.18em; text-transform:uppercase; color:#f6f3ec;">Saturday, August</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(246,243,236,0.6);">Tulsa · 88° · clear · sundown 8:11</div>
+            </div>
+            <span style="flex:1;"></span>
+            <div style="display:flex; align-items:center; gap:10px; padding-bottom:18px;">
+              <span style="width:8px; height:8px; border-radius:99px; background:#c6862f; box-shadow:0 0 14px rgba(222,157,75,0.5);"></span>
+              <span style="font-family:'Courier Prime',monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#de9d4b;">3 pages today</span>
+            </div>
+          </div>
+
+          <!-- covers that stack -->
+          <div style="flex:1 1 auto; min-height:0; display:flex; align-items:center; padding:0 40px;">
+            <div style="display:flex; align-items:center; gap:0; height:340px;">
+              <div style="position:relative; width:216px; height:288px; border-radius:2px 4px 4px 2px; background:#3a342e; box-shadow:0 1px 0 rgba(0,0,0,0.5), 0 10px 24px rgba(0,0,0,0.42); display:flex; flex-direction:column; justify-content:center; align-items:center; opacity:0.42; transform:translateX(28px) scale(0.94); cursor:pointer;">
+                <span style="font-family:'Oswald',sans-serif; font-size:13px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:#c5ae67; border-top:1px solid rgba(197,174,103,0.3); border-bottom:1px solid rgba(197,174,103,0.3); padding:7px 10px;">The Workshop</span>
+                <span style="position:absolute; inset:0; border:1px solid rgba(246,243,236,0.12); border-left-width:3px; border-radius:inherit;"></span>
+              </div>
+
+              <div style="position:relative; width:270px; height:340px; border-radius:2px 5px 5px 2px; background:#082744; box-shadow:0 2px 0 rgba(0,0,0,0.5), 0 22px 48px rgba(0,0,0,0.55); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:2; cursor:pointer;">
+                <span style="position:absolute; left:0; top:0; bottom:0; width:14px; background:linear-gradient(90deg, rgba(0,16,17,0.55), rgba(0,16,17,0)); border-radius:2px 0 0 2px;"></span>
+                <span style="position:absolute; right:-3px; top:8px; bottom:8px; width:3px; background:linear-gradient(90deg, #d8d6cf, #a6a39c); border-radius:0 2px 2px 0;"></span>
+                <span style="font-family:'Oswald',sans-serif; font-size:15px; font-weight:400; letter-spacing:0.18em; text-transform:uppercase; color:#dac891; border-top:1px solid rgba(197,174,103,0.36); border-bottom:1px solid rgba(197,174,103,0.36); padding:9px 14px; text-shadow:0 1px 0 rgba(0,0,0,0.55);">Field Notes</span>
+                <span style="position:absolute; bottom:16px; left:0; right:0; text-align:center; font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(246,243,236,0.4);">12 pages · 3 today</span>
+                <span style="position:absolute; inset:0; border:1px solid rgba(246,243,236,0.16); border-left-width:3px; border-radius:inherit; pointer-events:none;"></span>
+              </div>
+
+              <div style="position:relative; width:216px; height:288px; border-radius:2px 4px 4px 2px; background:#530a28; box-shadow:0 1px 0 rgba(0,0,0,0.5), 0 10px 24px rgba(0,0,0,0.42); display:flex; flex-direction:column; justify-content:center; align-items:center; opacity:0.5; transform:translateX(-28px) scale(0.94); cursor:pointer;">
+                <span style="font-family:'Oswald',sans-serif; font-size:13px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:#c5ae67; border-top:1px solid rgba(197,174,103,0.3); border-bottom:1px solid rgba(197,174,103,0.3); padding:7px 10px;">The Hearth</span>
+                <span style="position:absolute; inset:0; border:1px solid rgba(246,243,236,0.12); border-left-width:3px; border-radius:inherit;"></span>
+              </div>
+
+              <div style="position:relative; width:200px; height:266px; border-radius:2px 4px 4px 2px; background:#123737; box-shadow:0 1px 0 rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.4); display:flex; flex-direction:column; justify-content:center; align-items:center; opacity:0.3; transform:translateX(-72px) scale(0.9); cursor:pointer;">
+                <span style="font-family:'Oswald',sans-serif; font-size:13px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:#c5ae67; border-top:1px solid rgba(197,174,103,0.28); border-bottom:1px solid rgba(197,174,103,0.28); padding:7px 10px;">Church</span>
+                <span style="position:absolute; inset:0; border:1px solid rgba(246,243,236,0.1); border-left-width:3px; border-radius:inherit;"></span>
+              </div>
+
+              <div style="width:88px; display:flex; justify-content:center; transform:translateX(-72px);">
+                <span style="font-family:'Oswald',sans-serif; font-size:12px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:rgba(246,243,236,0.4); cursor:pointer;" style-hover="color:#f6f3ec;">Add</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- today's pages on the wash -->
+          <div style="flex:0 0 auto; padding:0 40px 30px;">
+            <div style="display:flex; align-items:center; gap:14px; padding-bottom:6px;">
+              <span style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:rgba(246,243,236,0.62);">Field Notes · today</span>
+              <span style="flex:1; height:1px; background:rgba(246,243,236,0.14);"></span>
+              <button style="height:36px; padding:0 18px; border:none; background:#f6f3ec; color:#142a2b; font-family:'Archivo',sans-serif; font-size:13px; font-weight:600; border-radius:3px; cursor:pointer; box-shadow:3px 3px 0 rgba(0,16,17,0.7);" style-hover="transform:translate(-1px,-1px); background:#fdfaf3;">New page</button>
+            </div>
+            <div style="display:flex; flex-direction:column;">
+              <div style="display:flex; align-items:baseline; gap:16px; padding:13px 4px; border-bottom:1px solid rgba(246,243,236,0.08); cursor:pointer;" style-hover="background:rgba(246,243,236,0.05);">
+                <span style="font-family:'Spectral',serif; font-size:17px; font-weight:500; color:#f6f3ec; flex:0 0 auto;">The first morning</span>
+                <span style="font-family:'Spectral',serif; font-size:14px; color:rgba(246,243,236,0.55); flex:1 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">The whole question this page has to answer is a small one…</span>
+                <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(246,243,236,0.5); flex:0 0 auto;">9:07 PM</span>
+              </div>
+              <div style="display:flex; align-items:baseline; gap:16px; padding:13px 4px; border-bottom:1px solid rgba(246,243,236,0.08); cursor:pointer;" style-hover="background:rgba(246,243,236,0.05);">
+                <span style="font-family:'Spectral',serif; font-size:17px; font-weight:500; color:#f6f3ec; flex:0 0 auto;">Rain on the tin roof</span>
+                <span style="font-family:'Spectral',serif; font-size:14px; color:rgba(246,243,236,0.55); flex:1 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Woke at four to the sound and stayed up for it…</span>
+                <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(246,243,236,0.5); flex:0 0 auto;">6:22 AM</span>
+              </div>
+              <div style="display:flex; align-items:baseline; gap:16px; padding:13px 4px; cursor:pointer;" style-hover="background:rgba(246,243,236,0.05);">
+                <span style="font-family:'Spectral',serif; font-size:17px; font-weight:500; color:#f6f3ec; flex:0 0 auto;">A list for the hardware store</span>
+                <span style="font-family:'Spectral',serif; font-size:14px; color:rgba(246,243,236,0.55); flex:1 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Hinges, 3/4 dowel, a quart of shellac…</span>
+                <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(246,243,236,0.5); flex:0 0 auto;">7:40 AM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="max-width:1440px; font-family:'Spectral',serif; font-size:15px; line-height:24px; color:#9cb1b2; text-wrap:pretty;">The whole screen takes the colour of the notebook you're in — navy here, oxblood in The Hearth — so the app changes rooms rather than changing widgets. Covers gain a spine and a page edge and stack like books on a table; the month rail gives the date dimension somewhere permanent to live. Two words of chrome, top right.</div>
+    </div>
+
+    <!-- ─────────────────────────  1c + 1d  ───────────────────────── -->
+    <div style="display:flex; gap:64px; align-items:flex-start; flex-wrap:wrap;">
+
+      <div id="1c" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:baseline; gap:12px;">
+          <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">1c</span>
+          <span style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#f6f3ec;">iPhone 393 × 852</span>
+        </div>
+
+        <div data-screen-label="1c iPhone" style="position:relative; width:393px; height:852px; background:#142a2b; color:#e9e6df; display:flex; flex-direction:column; overflow:hidden; border-radius:12px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56);">
+          <div style="position:absolute; inset:0; pointer-events:none; z-index:3; background:radial-gradient(circle at 50% 0%, rgba(241,186,122,0.14) 0%, rgba(198,134,47,0.04) 40%, rgba(0,16,17,0) 68%), radial-gradient(120% 90% at 50% 44%, rgba(0,16,17,0) 42%, rgba(0,16,17,0.5) 100%);"></div>
+
+          <div style="position:relative; z-index:1; flex:0 0 auto; height:52px; display:flex; align-items:flex-end; justify-content:space-between; padding:0 20px 4px;">
+            <span style="font-family:'Courier Prime',monospace; font-size:12px; letter-spacing:0.06em; color:#f6f3ec;">9:41</span>
+            <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:rgba(246,243,236,0.5);">▮▮▮</span>
+          </div>
+
+          <div style="position:relative; z-index:1; padding:14px 20px 0;">
+            <div style="font-family:'Oswald',sans-serif; font-size:12px; font-weight:500; letter-spacing:0.16em; text-transform:uppercase; color:#9cb1b2;">Saturday</div>
+            <div style="display:flex; align-items:flex-end; gap:12px; margin-top:2px;">
+              <div style="font-family:'Playfair Display',serif; font-size:72px; font-weight:700; line-height:0.86; color:#f6f3ec; letter-spacing:-0.02em;">15</div>
+              <div style="font-family:'Oswald',sans-serif; font-size:13px; font-weight:400; letter-spacing:0.16em; text-transform:uppercase; color:#c5ae67; padding-bottom:8px;">August<br>2026</div>
+              <span style="flex:1;"></span>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; padding-bottom:10px; text-align:right;">88°<br>clear</div>
+            </div>
+          </div>
+
+          <div style="position:relative; z-index:1; padding:18px 12px 14px;">
+            <div style="display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:2px;">
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px;"><span style="font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">S</span><span style="font-family:'Courier Prime',monospace; font-size:13px; color:#9cb1b2;">9</span></div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px;"><span style="font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">M</span><span style="font-family:'Courier Prime',monospace; font-size:13px; color:#9cb1b2;">10</span></div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px;"><span style="font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">T</span><span style="font-family:'Courier Prime',monospace; font-size:13px; color:#9cb1b2;">11</span></div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px;"><span style="font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">W</span><span style="font-family:'Courier Prime',monospace; font-size:13px; color:#9cb1b2;">12</span></div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px;"><span style="font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">T</span><span style="font-family:'Courier Prime',monospace; font-size:13px; color:#9cb1b2;">13</span></div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px;"><span style="font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">F</span><span style="font-family:'Courier Prime',monospace; font-size:13px; color:#9cb1b2;">14</span></div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:6px;"><span style="font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.14em; color:rgba(156,177,178,0.7);">S</span><span style="width:26px; height:26px; border-radius:99px; background:#c6862f; box-shadow:0 0 16px rgba(222,157,75,0.45); display:flex; align-items:center; justify-content:center; font-family:'Courier Prime',monospace; font-size:12px; font-weight:700; color:#142a2b;">15</span></div>
+            </div>
+          </div>
+
+          <div style="position:relative; z-index:1; display:flex; gap:8px; padding:6px 20px 16px; overflow:hidden;">
+            <span style="display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:3px; background:rgba(246,243,236,0.12); font-family:'Spectral',serif; font-size:14px; color:#f6f3ec; white-space:nowrap;"><span style="width:8px; height:8px; border-radius:99px; background:#082744; border:1px solid rgba(246,243,236,0.4);"></span>Field Notes</span>
+            <span style="display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:3px; border:1px solid rgba(246,243,236,0.1); font-family:'Spectral',serif; font-size:14px; color:#c1d4d4; white-space:nowrap;"><span style="width:8px; height:8px; border-radius:99px; background:#3a342e; border:1px solid rgba(246,243,236,0.28);"></span>Workshop</span>
+            <span style="display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:3px; border:1px solid rgba(246,243,236,0.1); font-family:'Spectral',serif; font-size:14px; color:#c1d4d4; white-space:nowrap;"><span style="width:8px; height:8px; border-radius:99px; background:#530a28; border:1px solid rgba(246,243,236,0.28);"></span>Hearth</span>
+          </div>
+
+          <div style="position:relative; z-index:1; flex:1 1 auto; min-height:0; overflow:hidden; padding:0 12px;">
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:6px 8px 8px;">Today</div>
+            <div style="padding:12px 8px; border-radius:3px; background:rgba(246,243,236,0.06);">
+              <div style="font-family:'Spectral',serif; font-size:17px; font-weight:500; color:#f6f3ec;">The first morning</div>
+              <div style="font-family:'Spectral',serif; font-size:14px; color:#9cb1b2; line-height:21px; margin-top:2px;">The whole question this page has to answer is a small one: do I want to write here?</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:8px;">9:07 PM · 98 words</div>
+            </div>
+            <div style="padding:12px 8px; border-radius:3px;">
+              <div style="font-family:'Spectral',serif; font-size:17px; font-weight:500; color:#f6f3ec;">Rain on the tin roof</div>
+              <div style="font-family:'Spectral',serif; font-size:14px; color:#9cb1b2; line-height:21px; margin-top:2px;">Woke at four to the sound and stayed up for it…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:8px;">6:22 AM · 143 words</div>
+            </div>
+            <div style="height:1px; background:rgba(246,243,236,0.06); margin:6px 8px;"></div>
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:10px 8px 8px;">Yesterday</div>
+            <div style="padding:12px 8px; border-radius:3px;">
+              <div style="font-family:'Spectral',serif; font-size:17px; font-weight:500; color:#f6f3ec;">Sharpening the block plane</div>
+              <div style="font-family:'Spectral',serif; font-size:14px; color:#9cb1b2; line-height:21px; margin-top:2px;">Thirty degrees, then a stroke on the strop…</div>
+              <div style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#8c8172; margin-top:8px;">13 Aug · 306 words</div>
+            </div>
+          </div>
+
+          <div style="position:relative; z-index:4; flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:12px 20px 26px; background:rgba(5,27,28,0.92); border-top:1px solid rgba(246,243,236,0.08);">
+            <span style="font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#9cb1b2;">Search</span>
+            <span style="flex:1;"></span>
+            <button style="height:44px; padding:0 22px; border:none; background:#f6f3ec; color:#142a2b; font-family:'Archivo',sans-serif; font-size:14px; font-weight:600; border-radius:3px; box-shadow:3px 3px 0 rgba(0,16,17,0.7);">New page</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="1d" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:baseline; gap:12px;">
+          <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; color:#142a2b; background:#c5ae67; padding:3px 8px; border-radius:2px;">1d</span>
+          <span style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#f6f3ec;">iPad 1024 × 768 · the page at rest</span>
+        </div>
+
+        <div data-screen-label="1d iPad" style="position:relative; width:1024px; height:768px; background:#142a2b; color:#e9e6df; display:flex; overflow:hidden; border-radius:8px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56);">
+          <div style="position:absolute; inset:0; pointer-events:none; z-index:3; background:radial-gradient(circle at 50% 0%, rgba(241,186,122,0.12) 0%, rgba(198,134,47,0.04) 40%, rgba(0,16,17,0) 68%), radial-gradient(120% 92% at 50% 42%, rgba(0,16,17,0) 40%, rgba(0,16,17,0.52) 100%);"></div>
+
+          <main style="position:relative; z-index:1; flex:1 1 auto; display:flex; justify-content:center; padding:44px 40px 0;">
+            <article style="position:relative; background:#051b1c; width:100%; max-width:700px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56); border-radius:2px 2px 0 0; display:flex; flex-direction:column; height:100%; overflow:hidden;">
+              <div style="flex:0 0 auto; height:48px; display:flex; align-items:center; padding:0 46px;">
+                <button style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.7); font-family:'Spectral',serif; font-size:20px; min-width:32px; height:32px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">☰</button>
+                <span style="flex:1;"></span>
+                <span style="font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(156,177,178,0.5); margin-right:12px;">Saturday 15 August</span>
+                <button style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.7); font-family:'Archivo',sans-serif; font-size:14px; min-width:34px; height:32px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">Aa</button>
+                <button style="border:none; background:transparent; cursor:pointer; color:rgba(156,177,178,0.7); font-family:'Spectral',serif; font-size:20px; min-width:30px; height:32px; border-radius:3px;" style-hover="background:rgba(246,243,236,0.07); color:#e9e6df;">⋯</button>
+              </div>
+
+              <div style="flex:1 1 auto; min-height:0; overflow:hidden;">
+                <div style="padding:24px 64px 40px; font-family:'Caveat',cursive; font-size:22px; line-height:28px; color:#e9e6df; background-image:radial-gradient(circle at 1px 1px, rgba(246,243,236,0.06) 1px, transparent 0); background-size:28px 28px; background-position:64px 31px;">
+                  <div style="font-family:'Caveat',cursive; font-size:36px; line-height:56px; font-weight:600; letter-spacing:-0.01em; color:#f6f3ec;">Notes toward Sunday</div>
+                  <div>Start with the small thing, not the large one — the lamp, not the lighthouse.</div>
+                  <div style="height:28px;"></div>
+                  <div style="position:relative; padding-left:1.7em;">
+                    <span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;">
+                      <svg viewBox="0 0 20 20" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="currentColor" fill-opacity="0.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6" fill="none" stroke="#051b1c" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    </span><span style="color:#9cb1b2; text-decoration:line-through; text-decoration-color:rgba(246,243,236,0.24);">Read it aloud once</span></div>
+                  <div style="position:relative; padding-left:1.7em;">
+                    <span style="position:absolute; left:0.02em; top:0.3em; width:1.1em; height:1.1em; color:#c5ae67;">
+                      <svg viewBox="0 0 20 20" aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible; opacity:0.75;"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    </span>Cut the second paragraph</div>
+                  <div style="height:28px;"></div>
+                  <div>The part worth keeping is the <span style="background-image:linear-gradient(98deg, transparent 0.4%, rgba(215,190,106,0.24) 1.8%, rgba(215,190,106,0.24) 97.6%, transparent 99.4%), linear-gradient(93deg, transparent 3%, rgba(215,190,106,0.24) 9%, transparent 46%), linear-gradient(266deg, transparent 2%, rgba(215,190,106,0.24) 7%, transparent 28%); background-repeat:no-repeat; background-size:100% 78%, 100% 34%, 100% 26%; background-position:0 72%, 0 22%, 0 96%; border-radius:0.55em 0.16em 0.48em 0.2em; padding:0.08em 0.26em; margin:0 -0.16em; mix-blend-mode:screen;">ordinary attention</span> — the rest is scaffolding.</div>
+                  <div style="height:28px;"></div>
+                  <div style="font-family:'Caveat',cursive; font-size:24px; line-height:28px; color:#f6f3ec; border-left:2px solid #957c2b; padding-left:20px; margin-left:-22px;">Maybe end on the walk home, and let the last line be short.</div>
+                </div>
+              </div>
+
+              <div style="flex:0 0 auto; margin:0 64px; padding:14px 0 20px; border-top:1px solid rgba(246,243,236,0.1); font-family:'Courier Prime',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:#9cb1b2; display:flex; align-items:center; gap:16px;">
+                <span>188 words</span>
+                <span>·</span>
+                <span>edited 4:38 PM</span>
+                <span style="flex:1;"></span>
+                <span style="color:#c5ae67;">#church</span>
+              </div>
+            </article>
+          </main>
+
+          <!-- the styles tray, shown for reference: it slides out of Aa -->
+          <div style="position:absolute; z-index:4; right:40px; top:96px; width:236px; background:#0c2223; border:1px solid rgba(246,243,236,0.1); border-radius:4px; box-shadow:0 2px 0 rgba(0,0,0,0.4), 0 18px 44px rgba(0,0,0,0.56); padding:10px 0;">
+            <div style="font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#9cb1b2; padding:8px 16px 10px;">Style</div>
+            <div style="display:flex; gap:6px; padding:0 12px 10px;">
+              <span style="flex:1; text-align:center; font-family:'Playfair Display',serif; font-size:18px; color:#e9e6df; padding:6px 0; border-radius:3px; background:rgba(246,243,236,0.07);">Title</span>
+              <span style="flex:1; text-align:center; font-family:'Playfair Display',serif; font-size:16px; color:#e9e6df; padding:6px 0; border-radius:3px;">Heading</span>
+              <span style="flex:1; text-align:center; font-family:'Archivo',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#e9e6df; padding:9px 0; border-radius:3px;">Sub</span>
+            </div>
+            <div style="height:1px; background:rgba(246,243,236,0.06); margin:2px 12px 10px;"></div>
+            <div style="display:flex; gap:8px; padding:0 16px 12px; align-items:center;">
+              <span style="width:22px; height:22px; border-radius:99px; background:#530a28; border:1px solid rgba(246,243,236,0.14);"></span>
+              <span style="width:22px; height:22px; border-radius:99px; background:#123737; border:1px solid rgba(246,243,236,0.14);"></span>
+              <span style="width:22px; height:22px; border-radius:99px; background:#082744; border:1px solid rgba(246,243,236,0.14);"></span>
+              <span style="width:22px; height:22px; border-radius:99px; background:#3a342e; border:1px solid rgba(246,243,236,0.14);"></span>
+              <span style="width:22px; height:22px; border-radius:99px; background:#7a6201; border:2px solid #c5ae67;"></span>
+              <span style="flex:1;"></span>
+              <span style="font-family:'Courier Prime',monospace; font-size:13px; color:#9cb1b2;">×</span>
+            </div>
+            <div style="height:1px; background:rgba(246,243,236,0.06); margin:2px 12px 8px;"></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 16px;">
+              <span style="font-family:'Archivo',sans-serif; font-size:13px; color:#e9e6df;">Pen</span>
+              <span style="font-family:'Caveat',cursive; font-size:18px; color:#c5ae67;">felt</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 16px;">
+              <span style="font-family:'Archivo',sans-serif; font-size:13px; color:#e9e6df;">Stock</span>
+              <span style="font-family:'Courier Prime',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#c5ae67;">Night</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="max-width:1024px; font-family:'Spectral',serif; font-size:15px; line-height:24px; color:#9cb1b2; text-wrap:pretty;">Eleven buttons at rest become three: the list, <span style="font-family:'Courier Prime',monospace; font-size:13px; color:#c5ae67;">Aa</span>, and <span style="font-family:'Courier Prime',monospace; font-size:13px; color:#c5ae67;">⋯</span> — with the day's date sitting quietly in the top margin like a stamp. Everything else lives in the tray that opens from Aa, shown here open. Checkboxes become hand-drawn circles that fill brass when you tick them.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">class Component extends DCLogic {
+  state = {
+    railOpen: true,
+    listOpen: true,
+    manage: false,
+    confirm: null,
+    newName: '',
+    newColor: '#24332A',
+    activeId: 'fn',
+    books: [
+      { id: 'fn', name: 'Field Notes', color: '#082744', count: 12 },
+      { id: 'ws', name: 'The Workshop', color: '#3a342e', count: 4 },
+      { id: 'ht', name: 'The Hearth', color: '#530a28', count: 7 },
+      { id: 'ch', name: 'Church', color: '#123737', count: 9 },
+    ],
+  }
+
+  renderVals() {
+    const s = this.state
+    const covers = ['#082744', '#3a342e', '#530a28', '#123737', '#24332A', '#1B261F']
+    const active = s.books.find((b) => b.id === s.activeId) || s.books[0] || null
+    const doomed = s.books.find((b) => b.id === s.confirm) || null
+
+    const rows = s.books.map((b) => ({
+      ...b,
+      rowBg: b.id === s.activeId ? 'rgba(246,243,236,0.12)' : 'transparent',
+      markBg: b.id === s.activeId ? '#c5ae67' : 'transparent',
+      nameColor: b.id === s.activeId ? '#f6f3ec' : '#e9e6df',
+      countLabel: b.count === 1 ? '1' : String(b.count),
+      onPick: () => this.setState({ activeId: b.id }),
+      onDelete: () => this.setState({ confirm: b.id }),
+    }))
+
+    return {
+      railOpen: s.railOpen,
+      listOpen: s.listOpen,
+      chromeShown: s.railOpen || s.listOpen,
+      chromeHidden: !(s.railOpen || s.listOpen),
+      manage: s.manage,
+      confirming: !!doomed,
+      doomedName: doomed ? doomed.name : '',
+      doomedLine: doomed
+        ? 'Its ' + doomed.count + (doomed.count === 1 ? ' page goes' : ' pages go') + ' to the trash for thirty days.'
+        : '',
+      rows,
+      manageRows: rows,
+      activeName: active ? active.name : 'Field Notes',
+      activeColor: active ? active.color : '#082744',
+      activeCount: active ? active.count + (active.count === 1 ? ' page' : ' pages') : '—',
+      swatches: covers.map((c) => ({
+        color: c,
+        ring: c === s.newColor ? '2px solid #c5ae67' : '1px solid rgba(246,243,236,0.14)',
+        onPick: () => this.setState({ newColor: c }),
+      })),
+      newName: s.newName,
+      canAdd: s.newName.trim().length > 0,
+      addBg: s.newName.trim() ? '#f6f3ec' : 'rgba(246,243,236,0.09)',
+      addFg: s.newName.trim() ? '#142a2b' : '#748b8c',
+
+      toggleChrome: () => {
+        const hide = this.state.railOpen || this.state.listOpen
+        this.setState({ railOpen: !hide, listOpen: !hide })
+      },
+      toggleList: () => this.setState((p) => ({ listOpen: !p.listOpen })),
+      toggleRail: () => this.setState((p) => ({ railOpen: !p.railOpen })),
+      pick: (id) => this.setState({ activeId: id }),
+      openManage: () => this.setState({ manage: true, confirm: null }),
+      closeManage: () => this.setState({ manage: false, confirm: null, newName: '' }),
+      askDelete: (id) => this.setState({ confirm: id }),
+      cancelDelete: () => this.setState({ confirm: null }),
+      confirmDelete: () =>
+        this.setState((p) => {
+          const books = p.books.filter((b) => b.id !== p.confirm)
+          return {
+            books,
+            confirm: null,
+            activeId: p.activeId === p.confirm ? (books[0] ? books[0].id : '') : p.activeId,
+          }
+        }),
+      onName: (e) => this.setState({ newName: e.target.value }),
+      pickColor: (c) => this.setState({ newColor: c }),
+      addBook: () => {
+        const name = this.state.newName.trim()
+        if (!name) return
+        const id = 'b' + Date.now()
+        this.setState((p) => ({
+          books: [...p.books, { id, name, color: p.newColor, count: 0 }],
+          newName: '',
+          activeId: id,
+        }))
+      },
+    }
+  }
+}</script>
+</body>
+</html>
