@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import type { EditorView } from '@codemirror/view'
-import { applyBlock, applyHighlight, insertPicture } from '../editor/commands'
+import { applyBlock, applyHighlight, applyWrap, insertPicture } from '../editor/commands'
 import { addImage, isImage } from '../lib/images'
 import { PLACEMENTS, imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
 
@@ -24,6 +24,24 @@ interface Props {
   onStock: () => void
   onClose: () => void
 }
+
+/* The blocks a line can be turned into, and the marks a word can be given.
+   The glyphs are the ones the page itself draws — a round box, because that is
+   what the checkbox is — so the button looks like its result. */
+const BLOCKS: { mark: string; prefix: string; label: string; cls?: string }[] = [
+  { mark: '•', prefix: '* ', label: 'Bullet' },
+  { mark: '–', prefix: '- ', label: 'Dash' },
+  { mark: '1.', prefix: '1. ', label: 'Numbers', cls: 'mono' },
+  { mark: '○', prefix: '- [ ] ', label: 'Checkbox', cls: 'ring' },
+  { mark: '“', prefix: '> ', label: 'Quote', cls: 'serif' },
+]
+
+const MARKS: { mark: string; open: string; label: string; cls: string }[] = [
+  { mark: 'B', open: '**', label: 'Bold — ⌘B', cls: 'bold' },
+  { mark: 'I', open: '*', label: 'Italic — ⌘I', cls: 'italic' },
+  { mark: 'S', open: '~~', label: 'Strike', cls: 'strike' },
+  { mark: 'code', open: '`', label: 'Code', cls: 'mono' },
+]
 
 const HIGHLIGHTS: { name: string; color: string }[] = [
   { name: 'oxblood', color: '#530a28' },
@@ -75,7 +93,35 @@ export function StyleTray({
         </button>
       </div>
 
+      <div className="tray-blocks">
+        {BLOCKS.map(({ mark, prefix, label, cls }) => (
+          <button
+            key={label}
+            className={`tray-block${cls ? ' ' + cls : ''}`}
+            onClick={run((v) => applyBlock(v, prefix))}
+            aria-label={label}
+            title={label}
+          >
+            {mark}
+          </button>
+        ))}
+      </div>
+
       <div className="tray-rule" />
+
+      <div className="tray-marks">
+        {MARKS.map(({ mark, open, label, cls }) => (
+          <button
+            key={label}
+            className={`tray-mark ${cls}`}
+            onClick={run((v) => applyWrap(v, open))}
+            aria-label={label}
+            title={label}
+          >
+            {mark}
+          </button>
+        ))}
+      </div>
 
       <div className="tray-swatches">
         {HIGHLIGHTS.map(({ name, color }) => (

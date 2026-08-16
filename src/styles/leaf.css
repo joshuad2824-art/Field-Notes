@@ -448,6 +448,61 @@
   text-transform: uppercase;
   padding: 9px 0;
 }
+/* The blocks a line becomes, and the marks a word takes. Same button as the
+   styles above them — the row reads as one strip, not as a second toolbar. */
+.tray-blocks,
+.tray-marks {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 10px;
+}
+.tray-block,
+.tray-mark {
+  flex: 1;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: var(--frame-text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 16px;
+  padding: 9px 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.tray-block:hover,
+.tray-mark:hover {
+  background: var(--frame-hover);
+}
+.tray-block.mono,
+.tray-mark.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+/* The box on the page is a drawn circle, so the button is one too — it wants
+   a little more size than a letter to read as the same thing. */
+.tray-block.ring {
+  font-size: 17px;
+}
+/* Playfair hangs its quote high in the em box; drop it back onto the line the
+   others sit on. */
+.tray-block.serif {
+  font-family: var(--font-editorial);
+  font-size: 21px;
+  transform: translateY(3px);
+}
+.tray-mark.bold {
+  font-weight: 700;
+}
+.tray-mark.italic {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 16px;
+}
+.tray-mark.strike {
+  text-decoration: line-through;
+}
+
 .tray-rule {
   height: 1px;
   background: var(--frame-hairline-soft);

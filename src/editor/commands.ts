@@ -1,4 +1,4 @@
-import type { ChangeSpec } from '@codemirror/state'
+import type { ChangeSpec, EditorState } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { type Placement, defaultSize, imageMarkdown, readPlacement } from '../lib/model'
 
@@ -42,9 +42,36 @@ export function applyBlock(view: EditorView, prefix: string): boolean {
   return true
 }
 
+/* The word the caret is sitting in. Nothing is ever selected when a mark is
+   tapped on a phone, so the mark has to find something to take hold of. */
+const WORD = /[\w'’-]/
+
+function wordAt(state: EditorState, pos: number): { from: number; to: number } | null {
+  const line = state.doc.lineAt(pos)
+  const text = line.text
+  let from = pos - line.from
+  let to = from
+  while (from > 0 && WORD.test(text[from - 1])) from--
+  while (to < text.length && WORD.test(text[to])) to++
+  if (to === from) return null
+  return { from: line.from + from, to: line.from + to }
+}
+
 export function applyWrap(view: EditorView, open: string, close = open): boolean {
   const { state } = view
-  const range = state.selection.main
+  const selection = state.selection.main
+
+  /* With nothing selected, take the word under the caret. If there is no word
+     there we do nothing at all rather than leave an empty pair of markers
+     behind — those have no content to wrap, so the grammar can't hide them and
+     the syntax would show. */
+  const expanded = selection.empty ? wordAt(state, selection.head) : null
+  if (selection.empty && !expanded) {
+    view.focus()
+    return false
+  }
+  const range = expanded ?? selection
+
   const before = state.sliceDoc(Math.max(0, range.from - open.length), range.from)
   const after = state.sliceDoc(range.to, Math.min(state.doc.length, range.to + close.length))
 
@@ -54,16 +81,9 @@ export function applyWrap(view: EditorView, open: string, close = open): boolean
         { from: range.from - open.length, to: range.from, insert: '' },
         { from: range.to, to: range.to + close.length, insert: '' },
       ],
-      selection: { anchor: range.from - open.length, head: range.to - open.length },
-    })
-    view.focus()
-    return true
-  }
-
-  if (range.empty) {
-    view.dispatch({
-      changes: { from: range.from, insert: open + close },
-      selection: { anchor: range.from + open.length },
+      selection: expanded
+        ? { anchor: range.to - open.length }
+        : { anchor: range.from - open.length, head: range.to - open.length },
     })
     view.focus()
     return true
@@ -74,7 +94,11 @@ export function applyWrap(view: EditorView, open: string, close = open): boolean
       { from: range.from, insert: open },
       { from: range.to, insert: close },
     ],
-    selection: { anchor: range.from + open.length, head: range.to + open.length },
+    /* A word we found ourselves leaves the caret after it, ready to carry on
+       typing; a selection the person made stays selected. */
+    selection: expanded
+      ? { anchor: range.to + open.length }
+      : { anchor: range.from + open.length, head: range.to + open.length },
   })
   view.focus()
   return true

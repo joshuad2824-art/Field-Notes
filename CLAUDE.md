@@ -121,7 +121,7 @@ What was Phase 3 gets picked over rather than built wholesale:
 - **Export writes a small YAML frontmatter block** — notebook, created, updated, and any entry date, pin, pen or stock. Storage is still plain markdown; this is the one thing added on the way out, because a filename can't carry a created date and losing it would be worse. If it turns out to be clutter in another editor, drop it and accept the loss.
 - **The manifest says "Field Notes"** because a PWA needs *some* name on a home screen. That's a placeholder standing in for the undecided one, not a decision.
 - **The felt pen is Grape Nuts now**, with Linotype Feltpen still named first for the machines where it's installed and Caveat behind it. 20px against Spectral's 17; the 28px line box is unchanged.
-- **Bold, italic, strike, code, lists and quote are keyboard-only on touch.** The design reduced the toolbar to three marks and the tray carries Title/Heading/Sub, the highlighters, picture, pen and stock — nothing else. On a desktop the shortcuts cover it; on a phone the only way to bold a word is to type the asterisks. Worth watching during the month, and cheap to reverse by adding a row to the tray.
+- **A mark with no word under the caret does nothing.** The tray now carries the blocks and the inline marks, so bolding a word on a phone is a tap rather than two asterisks typed by hand. Tapping **B** with nothing selected takes the word the caret is in; tapping it on an empty line is a no-op, deliberately. An empty pair of markers has no content between it, the grammar's `[^*]+` can't hide it, and four asterisks sitting on the page would break the rule that the syntax is never shown. Doing nothing is the smaller failure.
 - **Pictures are markdown.** `![caption](images/<id>.<ext>){left|right|full 44}` — the placement says which side the writing runs down and the number is percent of the measure. The bytes live in Dexie beside the page and the export writes them at exactly that path, so the link resolves in any other editor. Floats wrap because CodeMirror's lines are ordinary sibling blocks; if that ever stops being true, the margin plate becomes a full-measure one.
 - **A picture with transparency loses its frame.** Whether a plate gets a border and a shadow is worked out from the file when it arrives — an SVG, or a bitmap with real alpha, is drawn bare. It is not guessed from the extension, because a cut-out PNG looks exactly as wrong in a box as an SVG does.
 - **`ignoreEvent` on the picture widget must stay `true`.** Letting CodeMirror see `mousedown` inside the plate makes it start a text selection, which stops the browser ever beginning the native drag. That regression is invisible in the UI and only shows up as "dragging does nothing".
@@ -138,9 +138,9 @@ desktop layouts. Nothing in `src/` imports anything that talks to a network — 
 isn't a convention, it's the whole point, and it should stay true until Phase 2.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 74 assertions covering the editor, the grid, the keyboard, the three
-widths, the folding columns, the safe-area bands, the notebook manager and
-pictures.
+rotted: 88 assertions covering the editor, the grid, the keyboard, the three
+widths, the folding columns, the safe-area bands, the notebook manager, pictures
+and the tray.
 
 Two things are built but unproven, because only daily use proves them:
 
