@@ -9,12 +9,12 @@ interface Props {
   activeId: string
   onPick: (id: string) => void
   onManage: () => void
-  onNewPage: () => void
+  onFold: () => void
 }
 
 /* The date is the masthead. There is no chrome bar above it — the rail is the
    top-left of the app. */
-export function Rail({ activeId, onPick, onManage, onNewPage }: Props) {
+export function Rail({ activeId, onPick, onManage, onFold }: Props) {
   const books = useNotebooks()
   const counts = useLive<Record<string, number>>(notebookCounts, [], {})
   const pages = useLive<Page[]>(() => livePages(), [], [])
@@ -27,6 +27,17 @@ export function Rail({ activeId, onPick, onManage, onNewPage }: Props) {
     <aside className="rail">
       <div className="rail-wordmark">
         <img src="/logo-wordmark-reverse.png" alt="Timber &amp; Ink" />
+        <span className="grow" />
+        {/* The rail folds itself, so it can be put away with the list
+            already gone. */}
+        <button
+          className="mark-button tight"
+          onClick={onFold}
+          aria-label="Hide the notebooks"
+          title="Notebooks — ⌘⇧\"
+        >
+          ‹
+        </button>
       </div>
 
       <div className="rail-date">
@@ -101,11 +112,10 @@ export function Rail({ activeId, onPick, onManage, onNewPage }: Props) {
       </div>
 
       <div className="rail-foot">
-        <button className="plate-button" onClick={onNewPage}>
-          New page
-        </button>
         <div className="rail-foot-line">
-          <span>⌘⇧N</span>
+          <button className="link-quiet" onClick={() => navigate(to.trash())}>
+            Trash
+          </button>
           <button className="link-quiet" onClick={() => navigate(to.settings())}>
             Settings
           </button>

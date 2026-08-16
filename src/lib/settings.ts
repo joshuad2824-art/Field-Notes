@@ -9,9 +9,12 @@ import type { Pen, Stock } from './model'
 export interface Settings {
   pen: Pen
   stock: Stock
-  /* Whether the docked sidebar is showing. Only consulted where there's room
-     to dock one; on a tablet the sidebar is a tap away, not a preference. */
-  sidebar: boolean
+  /* The two docked columns, each folded on its own — notebooks, and the pages
+     in one. Only consulted where there's room to dock them; below 1120 the
+     list is the whole window and the rail is a drawer, so neither is a
+     preference there. */
+  rail: boolean
+  list: boolean
   /* The notebook the app opens into. */
   notebook: string
 }
@@ -20,7 +23,8 @@ const KEY = 'field-notes.settings'
 const FALLBACK: Settings = {
   pen: 'ink',
   stock: 'paper',
-  sidebar: true,
+  rail: true,
+  list: true,
   notebook: 'field-notes',
 }
 
@@ -31,11 +35,14 @@ function read(): Settings {
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return FALLBACK
-    const parsed = JSON.parse(raw) as Partial<Settings>
+    const parsed = JSON.parse(raw) as Partial<Settings> & { sidebar?: boolean }
+    /* The two columns were one flag until they learned to fold separately. */
+    const both = parsed.sidebar !== false
     return {
       pen: parsed.pen === 'felt' ? 'felt' : 'ink',
       stock: parsed.stock === 'night' ? 'night' : 'paper',
-      sidebar: parsed.sidebar !== false,
+      rail: parsed.rail ?? both,
+      list: parsed.list ?? both,
       notebook: typeof parsed.notebook === 'string' ? parsed.notebook : FALLBACK.notebook,
     }
   } catch {

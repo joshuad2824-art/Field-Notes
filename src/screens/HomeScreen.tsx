@@ -11,9 +11,12 @@ export function HomeScreen({ notebook }: { notebook: string }) {
     <div className="app">
       <div className="statusband" />
       <Shell notebook={notebook}>
-        {() =>
+        {({ toggle }) =>
           docked ? (
             <main className="desk desk-bare" key="desk">
+              {/* The same mark as on a leaf, so folding the list here is
+                  never a one-way door. */}
+              <div className="desk-marks">{toggle}</div>
               <p className="empty">Pick a page.</p>
             </main>
           ) : null
