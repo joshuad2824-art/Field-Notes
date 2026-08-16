@@ -2,21 +2,15 @@ import { useRef } from 'react'
 import type { EditorView } from '@codemirror/view'
 import {
   applyBlock,
+  applyCaps,
   applyHighlight,
   applyIndent,
   applyWrap,
   insertPicture,
 } from '../editor/commands'
-import { insertTable, markInCell } from '../editor/table'
+import { capsInCell, insertTable, markInCell } from '../editor/table'
 import { addImage, isImage } from '../lib/images'
-import { PLACEMENTS, imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
-
-const PLACE_MARKS: Record<Placement, string> = { left: '◧', full: '▬', right: '◨' }
-const PLACE_LABELS: Record<Placement, string> = {
-  left: 'Writing on the right',
-  full: 'Full measure',
-  right: 'Writing on the left',
-}
+import { imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
 
 interface Props {
   view: EditorView | null
@@ -25,10 +19,11 @@ interface Props {
   stock: Stock
   placement: Placement
   highlight: string
-  onPlacement: (next: Placement) => void
+  zoom: number
   onHighlight: (color: string) => void
   onPen: () => void
   onStock: () => void
+  onZoom: (direction: 1 | -1) => void
   onClose: () => void
 }
 
@@ -58,8 +53,12 @@ const HIGHLIGHTS: { name: string; color: string }[] = [
   { name: 'brass', color: '#7a6201' },
 ]
 
-/* One tray instead of two rows of buttons. The toolbar at rest is three
-   marks; everything that shapes the page lives behind Aa. */
+/* One strip, not a box.
+
+   It opens along the top of the leaf rather than dropping a tall rectangle
+   over the writing, so the page being shaped stays in view while it is
+   shaped. Past the width it has, the strip scrolls sideways rather than
+   wrapping into the second row it was trying not to be. */
 export function StyleTray({
   view,
   pageId,
@@ -67,10 +66,11 @@ export function StyleTray({
   stock,
   placement,
   highlight,
-  onPlacement,
+  zoom,
   onHighlight,
   onPen,
   onStock,
+  onZoom,
   onClose,
 }: Props) {
   const picker = useRef<HTMLInputElement>(null)
@@ -79,6 +79,11 @@ export function StyleTray({
     if (view) fn(view)
   }
 
+  /* Pressing anything in the strip must not take the focus off what it is
+     about to shape — CodeMirror keeps its selection in state and survives a
+     blur, but a contenteditable table cell does not. */
+  const hold = (e: { preventDefault: () => void }) => e.preventDefault()
+
   const choose = async (file: File | undefined) => {
     if (!view || !isImage(file) || !file) return
     const record = await addImage(pageId, file)
@@ -86,39 +91,50 @@ export function StyleTray({
   }
 
   return (
-    <div className="tray" role="dialog" aria-label="Style">
-      <div className="section-label tray-label">Style</div>
-      <div className="tray-styles">
-        <button className="tray-style serif lg" onClick={run((v) => applyBlock(v, '# '))}>
-          Title
-        </button>
-        <button className="tray-style serif" onClick={run((v) => applyBlock(v, '## '))}>
-          Heading
-        </button>
-        <button className="tray-style caps" onClick={run((v) => applyBlock(v, '### '))}>
-          Sub
-        </button>
-      </div>
-
-      <div className="tray-blocks">
-        {BLOCKS.map(({ mark, prefix, label, cls }) => (
+    <div className="tray" role="toolbar" aria-label="Style">
+      <div className="tray-strip">
+        <div className="tray-group">
           <button
-            key={label}
-            className={`tray-block${cls ? ' ' + cls : ''}`}
-            onClick={run((v) => applyBlock(v, prefix))}
-            aria-label={label}
-            title={label}
+            className="tray-style serif lg"
+            onMouseDown={hold}
+            onClick={run((v) => applyBlock(v, '# '))}
           >
-            {mark}
+            Title
           </button>
-        ))}
-      </div>
-
-      <div className="tray-row tray-row-sub">
-        <span className="tray-row-name">Indent</span>
-        <span className="tray-steps">
           <button
-            className="tray-step"
+            className="tray-style serif"
+            onMouseDown={hold}
+            onClick={run((v) => applyBlock(v, '## '))}
+          >
+            Heading
+          </button>
+          <button
+            className="tray-style caps"
+            onMouseDown={hold}
+            onClick={run((v) => applyBlock(v, '### '))}
+          >
+            Sub
+          </button>
+        </div>
+
+        <span className="tray-divider" />
+
+        <div className="tray-group">
+          {BLOCKS.map(({ mark, prefix, label, cls }) => (
+            <button
+              key={label}
+              className={`tray-block${cls ? ' ' + cls : ''}`}
+              onMouseDown={hold}
+              onClick={run((v) => applyBlock(v, prefix))}
+              aria-label={label}
+              title={label}
+            >
+              {mark}
+            </button>
+          ))}
+          <button
+            className="tray-block"
+            onMouseDown={hold}
             onClick={run((v) => applyIndent(v, -1))}
             aria-label="Less indent — ⇧⇥"
             title="Less indent — ⇧⇥"
@@ -126,89 +142,135 @@ export function StyleTray({
             ⇤
           </button>
           <button
-            className="tray-step"
+            className="tray-block"
+            onMouseDown={hold}
             onClick={run((v) => applyIndent(v, 1))}
             aria-label="More indent — ⇥"
             title="More indent — ⇥"
           >
             ⇥
           </button>
-        </span>
-      </div>
+        </div>
 
-      <div className="tray-rule" />
+        <span className="tray-divider" />
 
-      <div className="tray-marks">
-        {MARKS.map(({ mark, open, label, cls, cell }) => (
+        <div className="tray-group">
+          {MARKS.map(({ mark, open, label, cls, cell }) => (
+            <button
+              key={label}
+              className={`tray-mark ${cls}`}
+              onMouseDown={hold}
+              /* Inside a table the browser is the editor, so a mark goes to
+                 the cell rather than to CodeMirror. */
+              onClick={run((v) => markInCell(cell) || applyWrap(v, open))}
+              aria-label={label}
+              title={label}
+            >
+              {mark}
+            </button>
+          ))}
           <button
-            key={label}
-            className={`tray-mark ${cls}`}
-            /* Pressing a mark must not take the focus off what it is marking —
-               a blurred cell has no selection left to bold. */
-            onMouseDown={(e) => e.preventDefault()}
-            /* Inside a table the browser is the editor, so a mark goes to the
-               cell rather than to CodeMirror. */
-            onClick={run((v) => markInCell(cell) || applyWrap(v, open))}
-            aria-label={label}
-            title={label}
+            className="tray-mark shout"
+            onMouseDown={hold}
+            onClick={run((v) => capsInCell() || applyCaps(v))}
+            aria-label="All caps"
+            title="All caps"
           >
-            {mark}
+            AA
           </button>
-        ))}
-      </div>
+        </div>
 
-      <div className="tray-swatches">
-        {HIGHLIGHTS.map(({ name, color }) => (
+        <span className="tray-divider" />
+
+        <div className="tray-group">
+          {HIGHLIGHTS.map(({ name, color }) => (
+            <button
+              key={name}
+              className={`sw${name === highlight ? ' on' : ''}`}
+              style={{ background: color }}
+              aria-label={name}
+              onMouseDown={hold}
+              onClick={() => {
+                onHighlight(name)
+                if (markInCell(name)) return
+                if (view) applyHighlight(view, name)
+              }}
+            />
+          ))}
           <button
-            key={name}
-            className={`sw${name === highlight ? ' on' : ''}`}
-            style={{ background: color }}
-            aria-label={name}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => {
-              onHighlight(name)
-              if (markInCell(name)) return
-              if (view) applyHighlight(view, name)
-            }}
-          />
-        ))}
+            className="tray-clear"
+            onMouseDown={hold}
+            onClick={run((v) => applyHighlight(v, 'off'))}
+            aria-label="Remove highlight"
+            title="Remove highlight"
+          >
+            ×
+          </button>
+        </div>
+
+        <span className="tray-divider" />
+
+        <div className="tray-group">
+          <button className="tray-word" onMouseDown={hold} onClick={run(insertTable)}>
+            Table
+          </button>
+          <button
+            className="tray-word"
+            onMouseDown={hold}
+            onClick={() => picker.current?.click()}
+          >
+            Picture
+          </button>
+        </div>
+
+        <span className="tray-divider" />
+
+        <div className="tray-group">
+          <button
+            className={`tray-word${pen === 'felt' ? ' pen' : ''}`}
+            onMouseDown={hold}
+            onClick={onPen}
+            title="Pen"
+          >
+            {pen === 'felt' ? 'fine pen' : 'ink'}
+          </button>
+          <button className="tray-word mono" onMouseDown={hold} onClick={onStock} title="Stock">
+            {stock}
+          </button>
+        </div>
+
+        <span className="tray-divider" />
+
+        {/* For standing a page on a big screen in front of a room. */}
+        <div className="tray-group">
+          <button
+            className="tray-step"
+            onMouseDown={hold}
+            onClick={() => onZoom(-1)}
+            aria-label="Smaller"
+            title="Smaller"
+          >
+            −
+          </button>
+          <span className="tray-zoom">{Math.round(zoom * 100)}%</span>
+          <button
+            className="tray-step"
+            onMouseDown={hold}
+            onClick={() => onZoom(1)}
+            aria-label="Larger"
+            title="Larger"
+          >
+            +
+          </button>
+        </div>
+
         <span className="grow" />
-        <button
-          className="tray-clear"
-          onClick={run((v) => applyHighlight(v, 'off'))}
-          aria-label="Remove highlight"
-        >
+
+        <button className="tray-close" onMouseDown={hold} onClick={onClose} aria-label="Close">
           ×
         </button>
       </div>
 
-      <div className="tray-rule" />
-
-      <button className="tray-row" onClick={run(insertTable)}>
-        <span className="tray-row-name">Table</span>
-        <span className="tray-row-state">Add one</span>
-      </button>
-
-      <button className="tray-row" onClick={() => picker.current?.click()}>
-        <span className="tray-row-name">Picture</span>
-        <span className="tray-row-state">Add one</span>
-      </button>
-      <div className="tray-row tray-row-sub">
-        <span className="tray-row-name">Sits</span>
-        <span className="tray-places">
-          {PLACEMENTS.map((option) => (
-            <button
-              key={option}
-              className={`tray-place${option === placement ? ' on' : ''}`}
-              onClick={() => onPlacement(option)}
-              aria-label={PLACE_LABELS[option]}
-              title={PLACE_LABELS[option]}
-            >
-              {PLACE_MARKS[option]}
-            </button>
-          ))}
-        </span>
-      </div>
       <input
         ref={picker}
         type="file"
@@ -219,22 +281,6 @@ export function StyleTray({
           e.target.value = ''
         }}
       />
-
-      <button className="tray-row" onClick={onPen}>
-        <span className="tray-row-name">Pen</span>
-        <span className={`tray-row-state${pen === 'felt' ? ' pen' : ''}`}>
-          {pen === 'felt' ? 'fine pen' : 'ink'}
-        </span>
-      </button>
-
-      <button className="tray-row" onClick={onStock}>
-        <span className="tray-row-name">Stock</span>
-        <span className="tray-row-state mono">{stock}</span>
-      </button>
-
-      <button className="tray-close" onClick={onClose} aria-label="Close">
-        ×
-      </button>
     </div>
   )
 }

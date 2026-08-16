@@ -17,7 +17,19 @@ export interface Settings {
   list: boolean
   /* The notebook the app opens into. */
   notebook: string
+  /* How large the writing is drawn. Not a browser zoom and not a preference
+     about eyesight — it is for standing a page on a big screen in front of a
+     room. The type and the 28px grid scale together, so the dots stay under
+     the lines at every step. */
+  zoom: number
 }
+
+/* Quarters, and nothing between them — because 28 × the zoom has to come out
+   a whole number of pixels. At 1.3 the line box is 36.4px, the browser rounds
+   it to 36, and the dot grid walks out from under the writing a third of a
+   pixel a line. These five give 28, 35, 42, 49 and 56, and every heading at
+   twice that. */
+export const ZOOMS = [1, 1.25, 1.5, 1.75, 2] as const
 
 const KEY = 'field-notes.settings'
 const FALLBACK: Settings = {
@@ -26,6 +38,7 @@ const FALLBACK: Settings = {
   rail: true,
   list: true,
   notebook: 'field-notes',
+  zoom: 1,
 }
 
 let current: Settings = read()
@@ -44,6 +57,7 @@ function read(): Settings {
       rail: parsed.rail ?? both,
       list: parsed.list ?? both,
       notebook: typeof parsed.notebook === 'string' ? parsed.notebook : FALLBACK.notebook,
+      zoom: ZOOMS.includes(parsed.zoom as (typeof ZOOMS)[number]) ? (parsed.zoom as number) : 1,
     }
   } catch {
     return FALLBACK
@@ -71,4 +85,11 @@ function subscribe(fn: () => void) {
 
 export function useSettings(): Settings {
   return useSyncExternalStore(subscribe, getSettings, getSettings)
+}
+
+/* One step in or out, stopping at the ends rather than wrapping round. */
+export function stepZoom(current: number, direction: 1 | -1): number {
+  const at = ZOOMS.indexOf(current as (typeof ZOOMS)[number])
+  const from = at === -1 ? 0 : at
+  return ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, from + direction))]
 }

@@ -416,3 +416,40 @@ export function pictureSizeAt(view: EditorView, from: number, to: number): numbe
   if (!parts) return 44
   return parts[5] ? Number(parts[5]) : defaultSize(readPlacement(parts[4]))
 }
+
+/* All caps is a change to the text, not a mark laid over it — there is no
+   markdown for "shouted", and inventing one would be a private convention in
+   a file meant to open anywhere. So the letters themselves change, and undo
+   is what takes it back.
+
+   It toggles: something already all caps comes back down, which is the only
+   way back other than undo once the caret has moved on. */
+export function applyCaps(view: EditorView): boolean {
+  const { state } = view
+  const selection = state.selection.main
+  const expanded = selection.empty ? wordAt(state, selection.head) : null
+  if (selection.empty && !expanded) {
+    view.focus()
+    return false
+  }
+  const range = expanded ?? selection
+
+  const was = state.sliceDoc(range.from, range.to)
+  if (!was.trim()) {
+    view.focus()
+    return false
+  }
+  const shouted = was === was.toUpperCase() && was !== was.toLowerCase()
+  const next = shouted ? was.toLowerCase() : was.toUpperCase()
+  if (next === was) {
+    view.focus()
+    return false
+  }
+
+  view.dispatch({
+    changes: { from: range.from, to: range.to, insert: next },
+    selection: expanded ? { anchor: range.to } : { anchor: range.from, head: range.to },
+  })
+  view.focus()
+  return true
+}

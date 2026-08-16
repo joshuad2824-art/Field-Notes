@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { EditorView } from '@codemirror/view'
+import { redo, undo } from '@codemirror/commands'
 import { Editor } from '../editor/Editor'
 import { insertPicture } from '../editor/commands'
 import { Sheet, SheetItem } from '../components/Sheet'
@@ -32,7 +33,7 @@ import {
   wordCount,
 } from '../lib/model'
 import { notebookForPage, useNotebooks } from '../lib/notebooks'
-import { useSettings } from '../lib/settings'
+import { getSettings, setSettings, stepZoom, useSettings } from '../lib/settings'
 import { useKeyboardOpen } from '../lib/viewport'
 import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { back, navigate, to } from '../lib/router'
@@ -51,7 +52,9 @@ export function PageScreen({ id }: { id: string }) {
   const [view, setView] = useState<EditorView | null>(null)
   const [tray, setTray] = useState(false)
   const [menu, setMenu] = useState(false)
-  const [placement, setPlacement] = useState<Placement>('right')
+  /* Where a newly dropped or inserted picture sits. The plate carries its own
+     controls once it is on the page, so this is only ever the starting side. */
+  const [placement] = useState<Placement>('right')
 
   const color = useRef('brass')
   const bodyRef = useRef('')
@@ -157,7 +160,12 @@ export function PageScreen({ id }: { id: string }) {
       <Shell notebook={book.id} activeId={page.id}>
         {({ toggle, hidden }) => (
           <main className="desk" key="desk">
-            <article className="leaf" data-stock={stock} data-pen={pen}>
+            <article
+              className="leaf"
+              data-stock={stock}
+              data-pen={pen}
+              style={{ '--zoom': settings.zoom } as CSSProperties}
+            >
               {/* Three marks at rest, not eleven. */}
               <div className="tools">
                 <div className="row">
@@ -169,6 +177,26 @@ export function PageScreen({ id }: { id: string }) {
                   ) : null}
                   <span className="grow" />
                   <span className="saved">Saved</span>
+                  {/* Undo and redo are the editor's own; they sit with Aa
+                      rather than with the navigation on the left. */}
+                  <button
+                    className="mark-button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => view && undo(view)}
+                    aria-label="Undo — ⌘Z"
+                    title="Undo — ⌘Z"
+                  >
+                    ↶
+                  </button>
+                  <button
+                    className="mark-button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => view && redo(view)}
+                    aria-label="Redo — ⌘⇧Z"
+                    title="Redo — ⌘⇧Z"
+                  >
+                    ↷
+                  </button>
                   <button
                     className={`mark-button wide${tray ? ' on' : ''}`}
                     /* Opening the tray must not take the focus off what the
@@ -190,6 +218,25 @@ export function PageScreen({ id }: { id: string }) {
                   </button>
                 </div>
               </div>
+
+              {tray ? (
+                <StyleTray
+                  view={view}
+                  pageId={page.id}
+                  pen={pen}
+                  stock={stock}
+                  placement={placement}
+                  highlight={color.current}
+                  zoom={settings.zoom}
+                  onHighlight={(next) => (color.current = next)}
+                  onPen={togglePen}
+                  onStock={toggleStock}
+                  onZoom={(direction) =>
+                    setSettings({ zoom: stepZoom(getSettings().zoom, direction) })
+                  }
+                  onClose={() => setTray(false)}
+                />
+              ) : null}
 
               <Editor
                 key={page.id}
@@ -229,21 +276,6 @@ export function PageScreen({ id }: { id: string }) {
                 </div>
               )}
 
-              {tray ? (
-                <StyleTray
-                  view={view}
-                  pageId={page.id}
-                  pen={pen}
-                  stock={stock}
-                  placement={placement}
-                  highlight={color.current}
-                  onPlacement={setPlacement}
-                  onHighlight={(next) => (color.current = next)}
-                  onPen={togglePen}
-                  onStock={toggleStock}
-                  onClose={() => setTray(false)}
-                />
-              ) : null}
             </article>
           </main>
         )}
