@@ -576,36 +576,39 @@
 
 /* ── pictures on the page ───────────────────────────────────────────── */
 
-/* A plate in the margin: the writing runs around it and closes back over it
-   when the picture ends. */
+/* A plate in the margin: the writing runs down the other side and closes back
+   over it when the picture ends. Width is set per picture, in the markdown. */
 .md-plate {
+  position: relative;
   display: block;
+  width: var(--plate-width, 44%);
+  margin: 6px 0 12px;
+}
+.md-plate-right {
   float: right;
-  width: 44%;
-  max-width: 340px;
-  margin: 6px 0 12px 24px;
+  margin-left: 24px;
+}
+.md-plate-left {
+  float: left;
+  margin-right: 24px;
 }
 .md-plate-full {
   float: none;
   clear: both;
-  width: 100%;
-  max-width: none;
   margin: 6px 0 12px;
 }
+
 /* On a phone a picture takes the measure and the writing runs above and
-   below it. */
+   below it — there isn't room for a column beside it. */
 @media (max-width: 819px) {
-  .md-plate-margin {
+  .md-plate-left,
+  .md-plate-right {
     float: none;
     width: 100%;
-    max-width: none;
     margin: 6px 0 12px;
   }
 }
 
-/* The whole picture, never a crop of it — the plate takes whatever shape the
-   photograph is. That costs the 28px grid under the picture itself; the
-   writing above and below still sits on it. */
 .md-plate-image {
   display: block;
   width: 100%;
@@ -630,19 +633,25 @@
   box-shadow: var(--shadow-lift);
 }
 
-/* A vector has its own edges. No plate, no frame, no ground behind it. */
-.md-plate-vector .md-plate-image {
+/* A cut-out — an SVG, or anything with real transparency — is the graphic and
+   nothing else. No plate, no frame, no ground behind it. */
+.md-plate-cutout .md-plate-image,
+.md-plate-cutout .md-plate-image:hover {
   border: none;
   border-radius: 0;
   background: none;
   box-shadow: none;
 }
-.md-plate-vector .md-plate-image:hover {
-  box-shadow: none;
-}
-.md-plate-vector .md-plate-caption {
+.md-plate-cutout .md-plate-caption {
   border-top: none;
   padding-top: 0;
+}
+
+/* Held down on a touch screen, ready to be put somewhere else. */
+.md-plate.lifted .md-plate-image {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: var(--shadow-lift);
+  opacity: 0.9;
 }
 
 .md-plate-caption {
@@ -658,9 +667,104 @@
   line-height: 20px;
 }
 
-/* Held down on a touch screen, ready to be put somewhere else. */
-.md-plate.lifted .md-plate-image {
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: var(--shadow-lift);
-  opacity: 0.9;
+/* ── the plate's own controls ───────────────────────────────────────── */
+
+.plate-controls {
+  display: none;
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px;
+  border-radius: 4px;
+  background: rgba(5, 27, 28, 0.92);
+  border: 1px solid rgba(246, 243, 236, 0.14);
+  box-shadow: var(--shadow-print);
+  white-space: nowrap;
+  z-index: 2;
+}
+.md-plate.active .plate-controls {
+  display: flex;
+}
+
+.plate-control {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: rgba(233, 230, 223, 0.85);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1;
+  min-width: 24px;
+  height: 22px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.plate-control:hover {
+  background: rgba(246, 243, 236, 0.12);
+  color: var(--cream-100);
+}
+.plate-control.on {
+  color: var(--brass-400);
+  background: rgba(246, 243, 236, 0.12);
+}
+.plate-control-gap {
+  width: 1px;
+  height: 14px;
+  background: rgba(246, 243, 236, 0.16);
+  margin: 0 4px;
+}
+.plate-size {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--tracking-wide);
+  color: var(--teal-300);
+  min-width: 30px;
+  text-align: center;
+}
+
+/* ── where it will land ─────────────────────────────────────────────── */
+
+.cm-drop-marker {
+  position: absolute;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--caret);
+  box-shadow: 0 0 10px rgba(222, 157, 75, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+.cm-drop-marker.on {
+  opacity: 1;
+}
+
+/* ── the tray's placement marks ─────────────────────────────────────── */
+
+.tray-places {
+  display: inline-flex;
+  gap: 2px;
+}
+.tray-place {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--teal-300);
+  font-family: var(--font-body);
+  font-size: 14px;
+  min-width: 26px;
+  height: 24px;
+  border-radius: 3px;
+}
+.tray-place:hover {
+  background: var(--frame-hover);
+  color: var(--cream-200);
+}
+.tray-place.on {
+  color: var(--brass-400);
+  background: var(--frame-on);
 }

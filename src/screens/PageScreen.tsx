@@ -50,7 +50,7 @@ export function PageScreen({ id }: { id: string }) {
   const [view, setView] = useState<EditorView | null>(null)
   const [tray, setTray] = useState(false)
   const [menu, setMenu] = useState(false)
-  const [placement, setPlacement] = useState<Placement>('margin')
+  const [placement, setPlacement] = useState<Placement>('right')
 
   const color = useRef('brass')
   const bodyRef = useRef('')

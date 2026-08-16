@@ -6,6 +6,11 @@ import { type PageImage, imageIdsIn } from './model'
    `images/<id>.<ext>` on export are the same string. */
 
 const urls = new Map<string, string>()
+const cutouts = new Map<string, boolean>()
+
+export function cachedCutout(id: string): boolean | undefined {
+  return cutouts.get(id)
+}
 
 function uuid(): string {
   if (crypto.randomUUID) return crypto.randomUUID().replace(/-/g, '').slice(0, 12)
@@ -29,6 +34,34 @@ export function isImage(file: File | null | undefined): boolean {
   return !!file && file.type.startsWith('image/')
 }
 
+/* A picture that was cut out — an SVG, or a bitmap with real transparency —
+   gets no frame and no plate. A photograph does. Worked out once, when the
+   file arrives, rather than guessed from the extension. */
+export async function isCutout(file: Blob): Promise<boolean> {
+  if (file.type === 'image/svg+xml') return true
+  if (file.type === 'image/jpeg' || file.type === 'image/jpg') return false
+
+  try {
+    const bitmap = await createImageBitmap(file)
+    const w = Math.max(1, Math.min(bitmap.width, 64))
+    const h = Math.max(1, Math.min(bitmap.height, 64))
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return false
+    ctx.drawImage(bitmap, 0, 0, w, h)
+    bitmap.close?.()
+    const { data } = ctx.getImageData(0, 0, w, h)
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 250) return true
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
 export async function addImage(page: string, file: File): Promise<PageImage> {
   const record: PageImage = {
     id: uuid(),
@@ -36,9 +69,11 @@ export async function addImage(page: string, file: File): Promise<PageImage> {
     blob: file,
     type: file.type,
     ext: extensionFor(file.type),
+    cutout: await isCutout(file),
     added: Date.now(),
   }
   await db.images.put(record)
+  cutouts.set(record.id, record.cutout ?? false)
   changed()
   return record
 }
@@ -54,9 +89,17 @@ export async function imageUrl(id: string): Promise<string | null> {
   if (known) return known
   const record = await db.images.get(id)
   if (!record) return null
+  cutouts.set(id, record.cutout ?? false)
   const url = URL.createObjectURL(record.blob)
   urls.set(id, url)
   return url
+}
+
+/* The url and whether it needs a frame, in one await. */
+export async function imageMeta(id: string): Promise<{ url: string; cutout: boolean } | null> {
+  const url = await imageUrl(id)
+  if (!url) return null
+  return { url, cutout: cutouts.get(id) ?? false }
 }
 
 export function cachedImageUrl(id: string): string | null {

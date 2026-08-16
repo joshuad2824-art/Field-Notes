@@ -2,7 +2,14 @@ import { useRef } from 'react'
 import type { EditorView } from '@codemirror/view'
 import { applyBlock, applyHighlight, insertPicture } from '../editor/commands'
 import { addImage, isImage } from '../lib/images'
-import { imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
+import { PLACEMENTS, imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
+
+const PLACE_MARKS: Record<Placement, string> = { left: '◧', full: '▬', right: '◨' }
+const PLACE_LABELS: Record<Placement, string> = {
+  left: 'Writing on the right',
+  full: 'Full measure',
+  right: 'Writing on the left',
+}
 
 interface Props {
   view: EditorView | null
@@ -97,17 +104,24 @@ export function StyleTray({
 
       <button className="tray-row" onClick={() => picker.current?.click()}>
         <span className="tray-row-name">Picture</span>
-        <span className="tray-row-state">
-          {placement === 'full' ? 'Full measure' : 'In the margin'} ▾
+        <span className="tray-row-state">Add one</span>
+      </button>
+      <div className="tray-row tray-row-sub">
+        <span className="tray-row-name">Sits</span>
+        <span className="tray-places">
+          {PLACEMENTS.map((option) => (
+            <button
+              key={option}
+              className={`tray-place${option === placement ? ' on' : ''}`}
+              onClick={() => onPlacement(option)}
+              aria-label={PLACE_LABELS[option]}
+              title={PLACE_LABELS[option]}
+            >
+              {PLACE_MARKS[option]}
+            </button>
+          ))}
         </span>
-      </button>
-      <button
-        className="tray-row tray-row-sub"
-        onClick={() => onPlacement(placement === 'full' ? 'margin' : 'full')}
-      >
-        <span className="tray-row-name">Placement</span>
-        <span className="tray-row-state">{placement === 'full' ? 'Margin' : 'Full'}</span>
-      </button>
+      </div>
       <input
         ref={picker}
         type="file"
