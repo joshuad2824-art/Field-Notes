@@ -3,7 +3,8 @@ import { EditorState } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { liveMarkdown } from './markdown'
-import { applyBlock, applyHighlight, applyWrap, continueList } from './commands'
+import { applyBlock, applyHighlight, applyWrap, continueList, movePicture } from './commands'
+import { PICTURE_DRAG } from '../lib/model'
 
 interface Props {
   initialBody: string
@@ -59,7 +60,22 @@ export function Editor({
             if (update.docChanged) latest.current.onChange(update.state.doc.toString())
           }),
           EditorView.domEventHandlers({
-            drop(event) {
+            drop(event, view) {
+              /* A picture being moved within the page. */
+              const moved = event.dataTransfer?.getData(PICTURE_DRAG)
+              if (moved) {
+                event.preventDefault()
+                const at = view.posAtCoords({ x: event.clientX, y: event.clientY })
+                if (at == null) return true
+                try {
+                  const { from, to } = JSON.parse(moved) as { from: number; to: number }
+                  movePicture(view, from, to, at)
+                } catch {
+                  /* a payload we didn't write */
+                }
+                return true
+              }
+
               const file = event.dataTransfer?.files?.[0]
               if (!file || !file.type.startsWith('image/')) return false
               event.preventDefault()
@@ -67,7 +83,10 @@ export function Editor({
               return true
             },
             dragover(event) {
-              if (event.dataTransfer?.types?.includes('Files')) event.preventDefault()
+              const types = event.dataTransfer?.types
+              if (types?.includes('Files') || types?.includes(PICTURE_DRAG)) {
+                event.preventDefault()
+              }
               return false
             },
           }),

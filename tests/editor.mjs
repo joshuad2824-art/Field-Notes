@@ -311,6 +311,130 @@ await atWidth(1440, 900, async (view) => {
   ok('and then removes it', (await view.locator('.book-row').count()) === before)
 })
 
+/* ── pictures ───────────────────────────────────────────────────────── */
+
+/* A valid 60×120 PNG and a bare SVG, written out rather than committed. */
+async function fixtures() {
+  const { writeFileSync } = await import('node:fs')
+  const { join } = await import('node:path')
+  const { tmpdir } = await import('node:os')
+  const { deflateSync, crc32 } = await import('node:zlib')
+
+  const w = 60
+  const h = 120
+  const raw = Buffer.concat(
+    Array.from({ length: h }, () => Buffer.concat([Buffer.from([0]), Buffer.alloc(w * 3, 200)])),
+  )
+  const chunk = (type, data) => {
+    const body = Buffer.concat([Buffer.from(type), data])
+    const len = Buffer.alloc(4)
+    len.writeUInt32BE(data.length)
+    const crc = Buffer.alloc(4)
+    crc.writeUInt32BE(crc32(body) >>> 0)
+    return Buffer.concat([len, body, crc])
+  }
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(w, 0)
+  ihdr.writeUInt32BE(h, 4)
+  ihdr[8] = 8
+  ihdr[9] = 2
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ])
+
+  const pngPath = join(tmpdir(), 'field-notes-tall.png')
+  const svgPath = join(tmpdir(), 'field-notes-mark.svg')
+  writeFileSync(pngPath, png)
+  writeFileSync(
+    svgPath,
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60" width="100" height="60">' +
+      '<circle cx="50" cy="30" r="24" fill="#c5ae67"/></svg>',
+  )
+  return { pngPath, svgPath }
+}
+
+const { pngPath, svgPath } = await fixtures()
+
+await atWidth(1440, 950, async (view) => {
+  await view.getByText('New page', { exact: true }).first().click()
+  await view.waitForTimeout(700)
+  await view.locator('.cm-content').click()
+  await view.keyboard.type('One')
+  await view.keyboard.press('Enter')
+  await view.keyboard.type('Two')
+  await view.keyboard.press('Enter')
+  await view.keyboard.type('Three')
+  await view.waitForTimeout(300)
+
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+  await view.locator('.tray input[type=file]').setInputFiles(pngPath)
+  await view.waitForTimeout(1000)
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+
+  const shape = await view.locator('.md-plate-image').evaluate((el) => {
+    const r = el.getBoundingClientRect()
+    return { drawn: r.height / r.width, natural: el.naturalHeight / el.naturalWidth }
+  })
+  ok(
+    'a picture is shown whole, never cropped',
+    Math.abs(shape.drawn - shape.natural) < 0.02,
+    `${shape.drawn.toFixed(2)} vs ${shape.natural.toFixed(2)}`,
+  )
+
+  /* dragging it moves the node in the document */
+  const before = await view.locator('.cm-line').allTextContents()
+  const plate = await view.locator('.md-plate-image').boundingBox()
+  const firstLine = await view.locator('.cm-line').first().boundingBox()
+  await view.locator('.md-plate-image').hover()
+  await view.mouse.down()
+  await view.mouse.move(firstLine.x + 20, firstLine.y + 4, { steps: 12 })
+  await view.mouse.up()
+  await view.waitForTimeout(600)
+  const moved = await view.locator('.md-plate-image').boundingBox()
+  ok(
+    'dragging moves it in the page',
+    moved.y < plate.y &&
+      JSON.stringify(before) !== JSON.stringify(await view.locator('.cm-line').allTextContents()),
+    `${Math.round(plate.y)} → ${Math.round(moved.y)}`,
+  )
+
+  /* a vector is the graphic and nothing else */
+  await view.locator('.cm-content').click()
+  await view.keyboard.press('Control+End')
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+  await view.locator('.tray input[type=file]').setInputFiles(svgPath)
+  await view.waitForTimeout(1000)
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+
+  const vector = await view.locator('.md-plate-vector .md-plate-image').evaluate((el) => {
+    const s = getComputedStyle(el)
+    return { border: s.borderTopWidth, radius: s.borderTopLeftRadius, shadow: s.boxShadow }
+  })
+  ok(
+    'a vector carries no frame, corner or shadow',
+    vector.border === '0px' && vector.radius === '0px' && vector.shadow === 'none',
+    JSON.stringify(vector),
+  )
+
+  /* the quote stands off its rule */
+  await view.locator('.cm-content').click()
+  await view.keyboard.press('Control+End')
+  await view.keyboard.press('Enter')
+  await view.keyboard.type('> a quoted line')
+  await view.waitForTimeout(400)
+  const pad = await view
+    .locator('.md-quote')
+    .evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft))
+  ok('the quote text stands off the brass rule', pad >= 28, `${pad}px`)
+})
+
 if (problems.length) {
   failures += problems.length
   console.log('\n' + problems.join('\n'))

@@ -174,3 +174,33 @@ export function insertPicture(view: EditorView, markdown: string): boolean {
   view.focus()
   return true
 }
+
+/* Move a picture to wherever it was dropped. The page is a markdown string, so
+   "anywhere" means anywhere in the writing — the node lifts out of the line it
+   was on and lands as its own line where the cursor would have gone. */
+export function movePicture(view: EditorView, from: number, to: number, at: number): boolean {
+  const { state } = view
+  if (from < 0 || to > state.doc.length || from >= to) return false
+
+  const markdown = state.sliceDoc(from, to)
+  const source = state.doc.lineAt(from)
+  const target = state.doc.lineAt(at)
+  if (target.number === source.number) return false
+
+  /* If the picture had a line to itself, take the line; otherwise just the
+     node, so surrounding prose closes up. */
+  const alone = source.text.trim() === markdown.trim()
+  const cutFrom = alone ? source.from : from
+  const cutTo = alone ? Math.min(state.doc.length, source.to + 1) : to
+
+  const landing = target.from
+  if (landing > cutFrom && landing < cutTo) return false
+
+  const changes = [
+    { from: cutFrom, to: cutTo, insert: '' },
+    { from: landing, to: landing, insert: `${markdown}\n` },
+  ].sort((a, b) => a.from - b.from)
+
+  view.dispatch({ changes, scrollIntoView: true })
+  return true
+}

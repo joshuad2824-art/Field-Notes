@@ -1,6 +1,7 @@
 import { RangeSet, type Extension, type Range } from '@codemirror/state'
-import { IMAGE_RE, type Placement } from '../lib/model'
+import { IMAGE_RE, PICTURE_DRAG, type Placement } from '../lib/model'
 import { cachedImageUrl, imageUrl } from '../lib/images'
+import { movePicture } from './commands'
 import {
   Decoration,
   type DecorationSet,
@@ -113,6 +114,9 @@ class PictureWidget extends WidgetType {
     readonly id: string,
     readonly caption: string,
     readonly placement: Placement,
+    readonly ext: string,
+    readonly from: number,
+    readonly to: number,
   ) {
     super()
   }
@@ -121,19 +125,72 @@ class PictureWidget extends WidgetType {
     return (
       other.id === this.id &&
       other.caption === this.caption &&
-      other.placement === this.placement
+      other.placement === this.placement &&
+      other.from === this.from
     )
   }
 
-  toDOM() {
+  toDOM(view: EditorView) {
     const figure = document.createElement('span')
-    figure.className = `md-plate md-plate-${this.placement}`
+    const vector = this.ext.toLowerCase() === 'svg'
+    figure.className =
+      `md-plate md-plate-${this.placement}` + (vector ? ' md-plate-vector' : '')
     figure.contentEditable = 'false'
 
     const img = document.createElement('img')
     img.className = 'md-plate-image'
     img.alt = this.caption
-    img.draggable = false
+    /* Pick the picture up and put it somewhere else in the page. */
+    img.draggable = true
+    img.addEventListener('dragstart', (event) => {
+      event.dataTransfer?.setData(
+        PICTURE_DRAG,
+        JSON.stringify({ from: this.from, to: this.to }),
+      )
+      if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+    })
+
+    /* iOS never fires dragstart, so touch gets its own lift: press and hold,
+       then move. Without this the picture can only be moved on a desktop. */
+    let hold: number | undefined
+    let lifted = false
+
+    const drop = (x: number, y: number) => {
+      const at = view.posAtCoords({ x, y })
+      if (at != null) movePicture(view, this.from, this.to, at)
+    }
+    const release = () => {
+      clearTimeout(hold)
+      figure.classList.remove('lifted')
+      lifted = false
+    }
+
+    img.addEventListener(
+      'touchstart',
+      () => {
+        hold = window.setTimeout(() => {
+          lifted = true
+          figure.classList.add('lifted')
+        }, 350)
+      },
+      { passive: true },
+    )
+    img.addEventListener(
+      'touchmove',
+      (event) => {
+        if (!lifted) return release()
+        event.preventDefault()
+      },
+      { passive: false },
+    )
+    img.addEventListener('touchend', (event) => {
+      const wasLifted = lifted
+      const touch = event.changedTouches[0]
+      release()
+      if (wasLifted && touch) drop(touch.clientX, touch.clientY)
+    })
+    img.addEventListener('touchcancel', release)
+
     const known = cachedImageUrl(this.id)
     if (known) img.src = known
     else void imageUrl(this.id).then((url) => url && (img.src = url))
@@ -148,8 +205,9 @@ class PictureWidget extends WidgetType {
     return figure
   }
 
-  ignoreEvent() {
-    return true
+  ignoreEvent(event: Event) {
+    /* Let a drag or a lift through; swallow everything else. */
+    return !event.type.startsWith('drag') && !event.type.startsWith('touch')
   }
 }
 
@@ -232,7 +290,9 @@ function decorateInline(b: Build, base: number, text: string) {
       b,
       from,
       to,
-      Decoration.replace({ widget: new PictureWidget(m[2], m[1], placement) }),
+      Decoration.replace({
+        widget: new PictureWidget(m[2], m[1], placement, m[3], from, to),
+      }),
     )
   }
 
