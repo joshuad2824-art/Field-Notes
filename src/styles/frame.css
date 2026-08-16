@@ -158,6 +158,11 @@
   color: var(--teal-300);
 }
 .rail-datum {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
   display: flex;
   align-items: flex-end;
   gap: 10px;
@@ -180,58 +185,81 @@
   padding-bottom: 8px;
 }
 
-.rail-week {
+/* ── the month ────────────────────────────────────────────────────────
+   One grid at two sizes. The marks say two different things and a day can
+   carry both: an unfilled ring means something was written that day, and the
+   one filled brass dot is today. */
+
+.rail-month {
   padding: 0 14px 18px;
 }
-.rail-week-row {
+
+.cal-week,
+.cal-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 2px;
 }
-.rail-week-days {
-  margin-top: 8px;
-}
-.rail-week-letter {
+.cal-letter {
   text-align: center;
   font-family: var(--font-signage);
   font-size: 10px;
   letter-spacing: 0.14em;
   color: rgba(156, 177, 178, 0.7);
+  padding-bottom: 6px;
 }
-.rail-day {
-  height: 30px;
+.cal-day {
+  border: none;
+  background: transparent;
+  padding: 0;
+  height: var(--cal-cell, 28px);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  cursor: pointer;
 }
-.rail-day-number {
+.cal-day-n {
+  width: var(--cal-mark, 24px);
+  height: var(--cal-mark, 24px);
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--teal-300);
 }
-.rail-day-dot {
-  width: 3px;
-  height: 3px;
-  border-radius: 99px;
+.cal-day.outside .cal-day-n {
+  color: rgba(156, 177, 178, 0.3);
 }
-.rail-day-dot.on {
-  background: rgba(197, 174, 103, 0.5);
+.cal-day:hover .cal-day-n {
+  background: var(--frame-hover);
 }
-.rail-today {
-  width: 28px;
-  height: 28px;
-  border-radius: 99px;
+
+/* a day with pages */
+.cal-day.written .cal-day-n {
+  box-shadow: inset 0 0 0 1px var(--brass-500);
+  color: var(--cream-200);
+}
+.cal-day.outside.written .cal-day-n {
+  box-shadow: inset 0 0 0 1px rgba(174, 149, 70, 0.35);
+}
+
+/* today, and the only thing on this grid that glows */
+.cal-day.today .cal-day-n {
   background: var(--amber-500);
   box-shadow: 0 0 18px rgba(222, 157, 75, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  font-weight: 700;
   color: var(--teal-800);
+  font-weight: 700;
+}
+.cal-day.today.written .cal-day-n {
+  box-shadow:
+    0 0 18px rgba(222, 157, 75, 0.45),
+    inset 0 0 0 1px var(--brass-300);
+}
+
+.cal-day.on .cal-day-n {
+  outline: 1px solid var(--cream-300);
+  outline-offset: 2px;
 }
 
 .rail-rule {
@@ -1069,4 +1097,88 @@ mark.hit {
 .specimen[data-pen='felt'] .specimen-text {
   font-family: var(--font-pen);
   font-size: var(--pen-size);
+}
+
+/* ── the month, whole ───────────────────────────────────────────────────
+   No chrome bar — the date is the masthead here as much as it is in the rail,
+   so the month name is the heading and the marks step it. */
+
+.calendar-screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 0 var(--safe-bottom);
+}
+/* Everything on this screen keeps one column, so the grid, the month name and
+   the pages under them all start on the same edge. */
+.calendar-body {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.calendar-masthead {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 20px 0;
+}
+.calendar-masthead .grow {
+  flex: 1;
+}
+/* `.rows` centres itself at 760px, which would put the pages out of step with
+   the grid above them. In here the column has already been set. */
+.calendar-body .rows {
+  max-width: none;
+  margin: 0;
+  padding: 0 8px var(--space-5);
+}
+.calendar-datum {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 20px 18px;
+}
+.calendar-name {
+  font-family: var(--font-editorial);
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--cream-100);
+}
+.calendar-year {
+  font-family: var(--font-signage);
+  font-size: var(--text-sm);
+  letter-spacing: 0.16em;
+  color: var(--brass-400);
+}
+.calendar-grid {
+  padding: 0 12px 20px;
+  max-width: 560px;
+  --cal-cell: 44px;
+  --cal-mark: 34px;
+}
+.calendar-count {
+  padding: 0 20px 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--frame-quiet);
+}
+.calendar-day {
+  padding-bottom: 8px;
+}
+.calendar-day-label {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 20px 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--brass-400);
 }

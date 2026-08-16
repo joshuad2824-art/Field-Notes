@@ -9,6 +9,8 @@ export type Route =
   | { name: 'page'; id: string }
   | { name: 'search' }
   | { name: 'tag'; tag: string }
+  | { name: 'day'; iso: string }
+  | { name: 'calendar'; month?: string }
   | { name: 'trash' }
   | { name: 'settings' }
 
@@ -47,6 +49,8 @@ export function parse(path: string): Route {
   if (parts[0] === 'n' && parts[1]) return { name: 'notebook', notebook: parts[1] }
   if (parts[0] === 'p' && parts[1]) return { name: 'page', id: parts[1] }
   if (parts[0] === 'tag' && parts[1]) return { name: 'tag', tag: parts[1] }
+  if (parts[0] === 'day' && parts[1]) return { name: 'day', iso: parts[1] }
+  if (parts[0] === 'calendar') return { name: 'calendar', month: parts[1] }
   if (parts[0] === 'search') return { name: 'search' }
   if (parts[0] === 'trash') return { name: 'trash' }
   if (parts[0] === 'settings') return { name: 'settings' }
@@ -63,6 +67,8 @@ export const to = {
   notebook: (id: string) => `/n/${id}`,
   page: (id: string) => `/p/${id}`,
   tag: (tag: string) => `/tag/${encodeURIComponent(tag)}`,
+  day: (iso: string) => `/day/${iso}`,
+  calendar: (month?: string) => (month ? `/calendar/${month}` : '/calendar'),
   search: () => '/search',
   trash: () => '/trash',
   settings: () => '/settings',

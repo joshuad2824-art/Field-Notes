@@ -9,6 +9,8 @@ import { SearchScreen } from './screens/SearchScreen'
 import { TagScreen } from './screens/TagScreen'
 import { TrashScreen } from './screens/TrashScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
+import { CalendarScreen } from './screens/CalendarScreen'
+import { DayScreen } from './screens/DayScreen'
 
 export function App() {
   const route = useRoute()
@@ -53,6 +55,10 @@ export function App() {
       return <SearchScreen />
     case 'tag':
       return <TagScreen tag={route.tag} />
+    case 'day':
+      return <DayScreen key={route.iso} iso={route.iso} />
+    case 'calendar':
+      return <CalendarScreen key={route.month ?? 'now'} month={route.month} />
     case 'trash':
       return <TrashScreen />
     case 'settings':
