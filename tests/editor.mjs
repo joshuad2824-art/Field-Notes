@@ -793,6 +793,190 @@ await atWidth(1440, 950, async (view) => {
   ok('the quote text stands off the brass rule', pad >= 28, `${pad}px`)
 })
 
+/* ── tables ─────────────────────────────────────────────────────────── */
+
+/* The one block that isn't decorated text. Widths, per-row merges and a cell
+   that wraps are all things a row of independent lines cannot do, so the
+   whole table is a widget — and everything below is what that widget has to
+   get right for the file to stay plain markdown. */
+await atWidth(1440, 900, async (view) => {
+  const stored = () =>
+    view.evaluate(async () => {
+      const request = indexedDB.open('field-notes')
+      const db = await new Promise((r) => {
+        request.onsuccess = () => r(request.result)
+      })
+      const rows = await new Promise((r) => {
+        const q = db.transaction('pages').objectStore('pages').getAll()
+        q.onsuccess = () => r(q.result)
+      })
+      return rows.sort((a, b) => b.updated - a.updated)[0]?.body ?? ''
+    })
+
+  await view.locator('.plate-button', { hasText: 'New page' }).click()
+  await view.waitForTimeout(600)
+  await view.locator('.cm-content').click()
+  await view.keyboard.type('# Stock', { delay: 6 })
+  await view.keyboard.press('Enter')
+
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+  await view.locator('.tray-row', { hasText: 'Table' }).click()
+  await view.waitForTimeout(500)
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+
+  ok('the tray puts a table on the page', (await view.locator('.md-table').count()) === 1)
+  ok('it starts three by three', (await view.locator('.md-table td').count()) === 9)
+
+  const cells = view.locator('.md-table td')
+  await cells.nth(0).click()
+  await view.keyboard.type('Item', { delay: 6 })
+  await cells.nth(3).click()
+  await view.keyboard.type('White oak, eight quarter, kiln dried and stickered', { delay: 3 })
+  await cells.nth(4).click()
+  await view.keyboard.type('40', { delay: 6 })
+  await view.waitForTimeout(500)
+
+  ok(
+    'typing in a cell writes markdown, not a document',
+    (await stored()).includes('| White oak, eight quarter, kiln dried and stickered | 40 |'),
+    (await stored()).split('\n')[3],
+  )
+
+  /* the reason it can't be decorated text */
+  const heights = await view
+    .locator('.md-table tr')
+    .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)))
+  ok('a cell wraps and takes its row with it', heights[1] === 56, JSON.stringify(heights))
+  ok(
+    'and every row is still a multiple of 28',
+    heights.every((h) => h % 28 === 0),
+    JSON.stringify(heights),
+  )
+
+  /* the rules are drawn over the table, so they cost no height */
+  ok('the rules are drawn, not bordered', (await view.locator('.md-table-rules path').count()) > 6)
+  ok(
+    'the table itself carries no border',
+    (await view
+      .locator('.md-table table')
+      .evaluate((el) => getComputedStyle(el).borderTopWidth)) === '0px',
+  )
+
+  /* rows and columns */
+  await cells.nth(3).click()
+  await view.locator('.md-table-control[aria-label="Add a row"]').click()
+  await view.waitForTimeout(400)
+  ok('a row can be added', (await view.locator('.md-table tr').count()) === 4)
+
+  await view.locator('.md-table td').nth(3).click()
+  await view.locator('.md-table-control[aria-label="Add a column"]').click()
+  await view.waitForTimeout(400)
+  ok('a column can be added', (await view.locator('.md-table tr').first().locator('td').count()) === 4)
+
+  await view.locator('.md-table td').nth(4).click()
+  await view.locator('.md-table-control[aria-label="Remove this column"]').click()
+  await view.waitForTimeout(400)
+  ok(
+    'and taken away again',
+    (await view.locator('.md-table tr').first().locator('td').count()) === 3,
+  )
+
+  /* merging is per row — that is the whole point of it */
+  await view.locator('.md-table td').nth(4).click()
+  await view.locator('.md-table-control[aria-label="Join this cell to the one on its right"]').click()
+  await view.waitForTimeout(400)
+  const spans = await view
+    .locator('.md-table tr')
+    .nth(1)
+    .locator('td')
+    .evaluateAll((els) => els.map((el) => Number(el.getAttribute('colspan'))))
+  ok('a cell joins the one beside it', spans.includes(2), JSON.stringify(spans))
+  ok('the merge is a mark in the file', (await stored()).includes('<'), 'no marker found')
+  ok(
+    'and only that row is merged',
+    (await view.locator('.md-table tr').first().locator('td').count()) === 3,
+  )
+
+  await view.locator('.md-table-control[aria-label="Give the merged column back"]').click()
+  await view.waitForTimeout(400)
+  ok(
+    'and it can be given back',
+    (await view.locator('.md-table tr').nth(1).locator('td').count()) === 3,
+  )
+
+  /* widths ride in the delimiter row, which is still valid GFM */
+  const before = await view
+    .locator('.md-table td')
+    .first()
+    .evaluate((el) => el.getBoundingClientRect().width)
+  const grip = view.locator('.md-table-grip').first()
+  const box = await grip.boundingBox()
+  await view.mouse.move(box.x + box.width / 2, box.y + 20)
+  await view.mouse.down()
+  await view.mouse.move(box.x + box.width / 2 + 120, box.y + 20, { steps: 8 })
+  await view.mouse.up()
+  await view.waitForTimeout(500)
+  const after = await view
+    .locator('.md-table td')
+    .first()
+    .evaluate((el) => el.getBoundingClientRect().width)
+  ok('a column can be dragged wider', after > before + 40, `${Math.round(before)} → ${Math.round(after)}`)
+
+  const delimiter = (await stored()).split('\n').find((l) => /^\|\s*-/.test(l)) ?? ''
+  const runs = delimiter.match(/-+/g) ?? []
+  ok(
+    'the width is dashes in the delimiter row',
+    runs.length === 3 && runs[0].length > runs[1].length,
+    delimiter,
+  )
+  ok(
+    'which is still a valid GFM delimiter',
+    /^\|(?:\s*:?-+:?\s*\|)+$/.test(delimiter.trim()),
+    delimiter,
+  )
+
+  /* the file is the storage format, so it has to come back */
+  const wanted = await stored()
+  await view.reload({ waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(900)
+  ok('the table survived a reload', (await stored()) === wanted)
+  ok('and drew itself again', (await view.locator('.md-table').count()) === 1)
+
+  /* a table is structure, not prose */
+  const title = await view.locator('.list-row-title').first().textContent()
+  ok('a table never becomes the page title', !title?.includes('|'), title)
+
+  /* the felt pen draws its rules by hand. Both hands are in the SVG and the
+     pen chooses, so the switch needs nothing to redraw */
+  const ink = view.locator('.md-table-rules .md-hand-ink').first()
+  const felt = view.locator('.md-table-rules .md-hand-felt').first()
+  ok('the ink rule is a straight line', !(await ink.getAttribute('d')).includes('Q'))
+  ok('the felt rule wanders', (await felt.getAttribute('d')).includes('Q'))
+  /* a rule is a line with no height, which Playwright counts as invisible —
+     so ask the style, not the box */
+  const shown = (mark) =>
+    view
+      .locator(`.md-table-rules .md-hand-${mark}`)
+      .first()
+      .evaluate((el) => getComputedStyle(el).display !== 'none')
+
+  ok('and only one hand shows at a time', (await shown('ink')) && !(await shown('felt')))
+
+  const wandering = await felt.getAttribute('d')
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+  await view.locator('.tray-row', { hasText: 'Pen' }).click()
+  await view.waitForTimeout(500)
+  ok('the felt pen takes the rules over', await shown('felt'))
+  ok('and the ink hand goes', !(await shown('ink')))
+  ok(
+    'the wander is seeded, so it never shivers as you type',
+    (await felt.getAttribute('d')) === wandering,
+  )
+})
+
 if (problems.length) {
   failures += problems.length
   console.log('\n' + problems.join('\n'))

@@ -7,6 +7,7 @@ import {
   applyWrap,
   insertPicture,
 } from '../editor/commands'
+import { insertTable } from '../editor/table'
 import { addImage, isImage } from '../lib/images'
 import { PLACEMENTS, imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
 
@@ -175,6 +176,11 @@ export function StyleTray({
       </div>
 
       <div className="tray-rule" />
+
+      <button className="tray-row" onClick={run(insertTable)}>
+        <span className="tray-row-name">Table</span>
+        <span className="tray-row-state">Add one</span>
+      </button>
 
       <button className="tray-row" onClick={() => picker.current?.click()}>
         <span className="tray-row-name">Picture</span>

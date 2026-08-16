@@ -165,8 +165,16 @@ export function stripMarkers(line: string): string {
     .trim()
 }
 
+/* A table's rows are structure, not prose. They're skipped when a page is
+   being read for a title, a snippet or a word count, so a page that opens
+   with a table isn't called "| Item | Qty |". */
+export function isTableLine(line: string): boolean {
+  return /^\s*\|.*\|\s*$/.test(line)
+}
+
 export function titleOf(body: string): string {
   for (const line of body.split('\n')) {
+    if (isTableLine(line)) continue
     const text = stripMarkers(line)
     if (text) return text.length > 90 ? text.slice(0, 89).trimEnd() + '…' : text
   }
@@ -178,6 +186,7 @@ export function snippetOf(body: string): string {
   let seenTitle = false
   const parts: string[] = []
   for (const line of lines) {
+    if (isTableLine(line)) continue
     const text = stripMarkers(line)
     if (!text) continue
     if (!seenTitle) {
@@ -203,8 +212,17 @@ export function tagsOf(body: string): string[] {
   return [...seen.values()]
 }
 
+/* What's in a table's cells is writing and counts; its pipes, its dashes and
+   its merge marks are structure and don't. */
+const DELIMITER_ROW = /^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/
+
 export function wordCount(body: string): number {
-  const t = body.trim()
+  const t = body
+    .split('\n')
+    .filter((line) => !DELIMITER_ROW.test(line))
+    .map((line) => (isTableLine(line) ? line.replace(/\|/g, ' ').replace(/(^|\s)<(?=\s|$)/g, ' ') : line))
+    .join('\n')
+    .trim()
   return t ? t.split(/\s+/).length : 0
 }
 

@@ -1,4 +1,4 @@
-import { RangeSet, type Extension, type Range } from '@codemirror/state'
+import { RangeSet, StateField, type Extension, type Range, type Text } from '@codemirror/state'
 import {
   IMAGE_RE,
   PICTURE_DRAG,
@@ -9,6 +9,7 @@ import {
   stepSize,
 } from '../lib/model'
 import { cachedCutout, cachedImageUrl, imageMeta } from '../lib/images'
+import { tableDecoration, tableRunAt } from './table'
 import { movePicture, repicture } from './commands'
 import { hideDropMarker, showDropMarker } from './dropmarker'
 import {
@@ -555,6 +556,16 @@ function build(view: EditorView): { decorations: DecorationSet; atomic: RangeSet
   const b: Build = { marks: [], atoms: [], blocked: [] }
   const doc = view.state.doc
   for (let i = 1; i <= doc.lines; i++) {
+    /* A table is the one block that isn't a line — it's a run of them, and it
+       stands in for the lot as a single widget. That widget is a *block*
+       decoration, which CodeMirror will only take from a state field, so it
+       is built in `tableField` below. All this loop does is keep its hands
+       off the lines the table has already claimed. */
+    const run = tableRunAt(doc, i)
+    if (run) {
+      i = run.lastLine
+      continue
+    }
     const line = doc.line(i)
     decorateLine(b, line.from, line.text)
   }
@@ -590,6 +601,31 @@ const livePlugin = ViewPlugin.fromClass(
   },
 )
 
+/* Tables live in a state field rather than the view plugin, because a block
+   decoration can only come from one. It carries its own atomic ranges too, so
+   the caret steps over a whole table in one move instead of wandering into
+   the pipes behind it. */
+function buildTables(doc: Text): DecorationSet {
+  const ranges: Range<Decoration>[] = []
+  for (let i = 1; i <= doc.lines; i++) {
+    const run = tableRunAt(doc, i)
+    if (!run) continue
+    const deco = tableDecoration(run)
+    if (deco) ranges.push(deco.range(run.from, run.to))
+    i = run.lastLine
+  }
+  return Decoration.set(ranges, true)
+}
+
+const tableField = StateField.define<DecorationSet>({
+  create: (state) => buildTables(state.doc),
+  update: (deco, tr) => (tr.docChanged ? buildTables(tr.state.doc) : deco),
+  provide: (field) => [
+    EditorView.decorations.from(field),
+    EditorView.atomicRanges.of((view) => view.state.field(field)),
+  ],
+})
+
 export function liveMarkdown(): Extension {
-  return [livePlugin, EditorView.lineWrapping]
+  return [tableField, livePlugin, EditorView.lineWrapping]
 }
