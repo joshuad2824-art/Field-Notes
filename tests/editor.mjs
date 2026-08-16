@@ -196,6 +196,64 @@ ok(
   JSON.stringify(await lastLine()),
 )
 
+/* indent is leading spaces, hidden like every other marker and said again as
+   space on the page */
+await page.keyboard.press('Control+End')
+await page.keyboard.press('Enter')
+await page.keyboard.press('Enter')
+await type('* one')
+await page.keyboard.press('Enter')
+await type('nested')
+
+/* the line box doesn't move — its padding does, so the wrapped lines keep the
+   same edge as the first one */
+const padOf = () =>
+  page
+    .locator('.cm-line')
+    .last()
+    .evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft))
+
+const flat = await padOf()
+await page.keyboard.press('Tab')
+await page.waitForTimeout(250)
+const stepped = await padOf()
+ok('Tab steps the line in', stepped > flat, `${flat} → ${stepped}`)
+ok(
+  'and the spaces never show',
+  (await lastLine()) === '•nested',
+  JSON.stringify(await lastLine()),
+)
+ok('the bullet moves in with it', (await page.locator('.md-in-1').count()) === 1)
+
+await page.keyboard.press('Shift+Tab')
+await page.waitForTimeout(250)
+ok('Shift-Tab steps it back out', (await padOf()) === flat, String(await padOf()))
+
+/* four levels and no further — past that the measure has nothing left */
+for (let i = 0; i < 7; i++) {
+  await page.keyboard.press('Tab')
+  await page.waitForTimeout(80)
+}
+ok('indent stops at four levels', (await page.locator('.md-in-4').count()) === 1)
+
+/* an empty item gives up a level before it gives up the list */
+await page.keyboard.press('Control+End')
+await page.keyboard.press('Enter')
+const deep = await page.locator('.md-in-4').count()
+await page.keyboard.press('Enter')
+await page.waitForTimeout(250)
+ok('Enter on an empty item steps back out', (await page.locator('.md-in-4').count()) < deep + 1)
+
+/* the grid survives it — indent is horizontal and must stay that way */
+const indentedHeights = await page
+  .locator('.cm-line')
+  .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)))
+ok(
+  'indented blocks are still multiples of 28',
+  indentedHeights.filter((h) => h % 28 !== 0).length === 0,
+  `off: ${indentedHeights.filter((h) => h % 28 !== 0).join(', ')}`,
+)
+
 /* a page can be started without leaving the one in hand — below 1120 the list
    and its New page button aren't on screen at all */
 await page.locator('.mark-button[aria-label="Style"]').click()

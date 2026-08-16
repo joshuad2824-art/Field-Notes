@@ -113,8 +113,11 @@
   background-position: var(--page-margin-x) 29px;
 }
 
+/* The indent lives on the base line rule, not further down — every block below
+   sets its own padding-left, and a later rule of equal weight would silently
+   take theirs away. */
 .editor .cm-line {
-  padding: 0;
+  padding: 0 0 0 var(--indent, 0px);
 }
 
 .editor .cm-cursor,
@@ -188,7 +191,26 @@
   color: var(--text-heading);
   border-left: 2px solid var(--rule-accent);
   padding-left: 30px;
-  margin-left: -32px;
+  margin-left: calc(-32px + var(--indent, 0px));
+}
+
+/* ── indent ───────────────────────────────────────────────────────────
+   The leading spaces are hidden like any other marker and said again here as
+   space. Every block that already sets its own padding adds this on rather
+   than replacing it, and anything hanging in the margin — a bullet, a box —
+   hangs off the indent instead of off the page edge. */
+
+.editor .md-in-1 {
+  --indent: 1.7em;
+}
+.editor .md-in-2 {
+  --indent: 3.4em;
+}
+.editor .md-in-3 {
+  --indent: 5.1em;
+}
+.editor .md-in-4 {
+  --indent: 6.8em;
 }
 
 /* The marker sits in the page margin the way a drawn bullet does, and the
@@ -197,12 +219,12 @@
 .editor .md-ol,
 .editor .md-todo {
   position: relative;
-  padding-left: 1.7em;
+  padding-left: calc(1.7em + var(--indent, 0px));
 }
 
 .md-marker {
   position: absolute;
-  left: 0.2em;
+  left: calc(0.2em + var(--indent, 0px));
   top: 0;
   color: var(--list-ink);
   font-weight: 600;
@@ -214,7 +236,7 @@
 
 .md-box {
   position: absolute;
-  left: 0.02em;
+  left: calc(0.02em + var(--indent, 0px));
   top: 0.32em;
   width: 1.05em;
   height: 1.05em;
@@ -810,11 +832,13 @@
 
 /* ── the tray's placement marks ─────────────────────────────────────── */
 
-.tray-places {
+.tray-places,
+.tray-steps {
   display: inline-flex;
   gap: 2px;
 }
-.tray-place {
+.tray-place,
+.tray-step {
   border: none;
   background: transparent;
   cursor: pointer;
@@ -825,7 +849,8 @@
   height: 24px;
   border-radius: 3px;
 }
-.tray-place:hover {
+.tray-place:hover,
+.tray-step:hover {
   background: var(--frame-hover);
   color: var(--cream-200);
 }

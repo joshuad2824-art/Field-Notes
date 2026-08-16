@@ -3,7 +3,14 @@ import { EditorState } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { liveMarkdown } from './markdown'
-import { applyBlock, applyHighlight, applyWrap, continueList, movePicture } from './commands'
+import {
+  applyBlock,
+  applyHighlight,
+  applyIndent,
+  applyWrap,
+  continueList,
+  movePicture,
+} from './commands'
 import { PICTURE_DRAG } from '../lib/model'
 import { hideDropMarker, showDropMarker } from './dropmarker'
 
@@ -39,6 +46,35 @@ export function Editor({
           history(),
           keymap.of([
             { key: 'Enter', run: continueList },
+            /* Tab belongs to the page while the page has the caret. Escape
+               hands it back, so the editor is still something a keyboard can
+               get out of.
+
+               Both always report handled, even at the ends of the range —
+               letting Tab fall through at the fourth level would send the
+               focus out of the editor mid-sentence, which is a far stranger
+               thing for a key to do than nothing. */
+            {
+              key: 'Tab',
+              run: (v) => {
+                applyIndent(v, 1)
+                return true
+              },
+            },
+            {
+              key: 'Shift-Tab',
+              run: (v) => {
+                applyIndent(v, -1)
+                return true
+              },
+            },
+            {
+              key: 'Escape',
+              run: (v) => {
+                v.contentDOM.blur()
+                return true
+              },
+            },
             { key: 'Mod-1', run: (v) => applyBlock(v, '# ') },
             { key: 'Mod-2', run: (v) => applyBlock(v, '## ') },
             { key: 'Mod-3', run: (v) => applyBlock(v, '### ') },
