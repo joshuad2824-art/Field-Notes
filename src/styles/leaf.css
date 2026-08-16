@@ -858,3 +858,153 @@
   color: var(--brass-400);
   background: var(--frame-on);
 }
+
+/* ── the table ──────────────────────────────────────────────────────────
+   The rules are drawn over the table, never set as borders. A border takes up
+   height, and one pixel between every row would walk the whole table off the
+   28px grid — and the felt pen wants a line that wanders, which no border can
+   do. So the table itself is borderless and an SVG lies over it. */
+
+.md-table {
+  position: relative;
+  margin: 0 0 28px;
+}
+.md-table-frame {
+  position: relative;
+}
+.md-table table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: none;
+}
+.md-table td {
+  border: none;
+  padding: 0 10px;
+  vertical-align: top;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  /* Every cell is a whole number of 28px lines, so a wrapped cell grows the
+     row by exactly one line and the grid stays under the text. */
+  line-height: var(--grid-pitch);
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+  outline: none;
+}
+/* The cell being written in is marked, but quietly — the selection wash is far
+   too loud for something that sits there the whole time you type, and one
+   amber element per view is already spoken for by the caret. */
+.md-table td:focus {
+  background: rgba(20, 42, 43, 0.045);
+}
+.leaf[data-stock='night'] .md-table td:focus {
+  background: rgba(246, 243, 236, 0.06);
+}
+.md-table .md-table-head td {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-smallcaps);
+  text-transform: uppercase;
+  color: var(--text-quiet);
+}
+
+.leaf[data-pen='felt'] .md-table td {
+  font-family: var(--font-pen);
+  font-size: var(--pen-size);
+}
+
+.md-table-rules {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.md-table-rules path {
+  fill: none;
+  stroke: var(--rule-quiet, rgba(20, 42, 43, 0.28));
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+.md-table-rules .md-rule-edge,
+.md-table-rules .md-rule-head {
+  stroke: var(--rule-firm, rgba(20, 42, 43, 0.5));
+}
+.leaf[data-stock='night'] .md-table-rules path {
+  stroke: rgba(246, 243, 236, 0.22);
+}
+.leaf[data-stock='night'] .md-table-rules .md-rule-edge,
+.leaf[data-stock='night'] .md-table-rules .md-rule-head {
+  stroke: rgba(246, 243, 236, 0.42);
+}
+/* Both hands are in the SVG and the pen chooses between them, so switching is
+   instant and needs nothing to redraw. */
+.md-table-rules .md-hand-felt {
+  display: none;
+}
+.leaf[data-pen='felt'] .md-table-rules .md-hand-ink {
+  display: none;
+}
+.leaf[data-pen='felt'] .md-table-rules .md-hand-felt {
+  display: inline;
+  /* A drawn line is never quite one pixel wide. */
+  stroke-width: 1.4;
+}
+
+.md-table-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.md-table-grip {
+  position: absolute;
+  top: 0;
+  width: 15px;
+  margin-left: -7px;
+  cursor: col-resize;
+  pointer-events: auto;
+  touch-action: none;
+}
+.md-table-grip::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--brass-400);
+  opacity: 0;
+  transition: opacity var(--duration-instant, 90ms) linear;
+}
+.md-table.active .md-table-grip:hover::after {
+  opacity: 0.6;
+}
+
+.md-table-controls {
+  display: none;
+  gap: 2px;
+  align-items: center;
+  padding-top: 6px;
+}
+.md-table.active .md-table-controls {
+  display: flex;
+}
+.md-table-control {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  padding: 4px 7px;
+  border-radius: 3px;
+}
+.md-table-control:hover {
+  background: var(--select-wash);
+  color: var(--text-body);
+}
+.md-table-control-gap {
+  width: 12px;
+}
