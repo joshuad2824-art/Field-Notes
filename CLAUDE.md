@@ -150,6 +150,13 @@ Two things are built but unproven, because only daily use proves them:
   and sizes it to `visualViewport.height`, so it covers exactly what can be seen.
   `npm run check` feeds that handler the numbers iOS reports, which proves our
   reaction; only the phone can prove iOS reports them.
+  **Only while a keyboard is up.** Installed on iPadOS the visual viewport stops
+  short of the home indicator and the window doesn't, so sizing to it left a
+  21px strip of frame — lantern wash and all — showing under the app. An iPhone
+  never does this, which is why it took a tablet to find. With no keyboard an
+  installed app takes the whole window; in a browser it keeps ducking, because
+  there a short viewport is Safari's toolbar and running under it would bury
+  the foot of the list.
 - **The felt pen** falls back to Caveat everywhere Feltpen isn't installed.
 
 The next move is not a feature. It's the month.

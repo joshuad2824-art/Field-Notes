@@ -202,6 +202,66 @@ ok(
 
 await ctx.close()
 
+/* ── the home indicator ─────────────────────────────────────────────── */
+
+/* Installed on iPadOS, visualViewport.height stops short of the home
+   indicator while window.innerHeight does not, so an app sized to the visual
+   viewport leaves a strip of the frame showing under it. Chromium never
+   reports that, so we tell it to: standalone, and 21px short with no
+   keyboard. As with the keyboard tests, this proves our reaction — only the
+   device proves iPadOS reports it. */
+{
+  const inset = await browser.newContext({ viewport: { width: 834, height: 1112 } })
+  await inset.addInitScript(() => {
+    const real = window.matchMedia.bind(window)
+    window.matchMedia = (q) =>
+      q === '(display-mode: standalone)'
+        ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} }
+        : real(q)
+    Object.defineProperty(window.visualViewport, 'height', {
+      configurable: true,
+      get: () => window.innerHeight - 21,
+    })
+  })
+  const view = await inset.newPage()
+  view.on('pageerror', (e) => problems.push('home indicator: ' + e.message))
+  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(700)
+
+  const covered = await view.evaluate(() => {
+    const box = document.getElementById('root').getBoundingClientRect()
+    return {
+      short: Math.round(window.innerHeight - box.bottom),
+      height: Math.round(box.height),
+    }
+  })
+  ok(
+    'an installed app runs to the bottom of the window',
+    covered.short === 0,
+    `${covered.short}px of frame showing under it`,
+  )
+  ok('and is the full window tall', covered.height === 1112, String(covered.height))
+
+  /* The keyboard still wins — that is what the visual viewport is for. */
+  await view.evaluate(() => {
+    const vv = window.visualViewport
+    Object.defineProperty(vv, 'height', { configurable: true, get: () => 500 })
+    Object.defineProperty(vv, 'offsetTop', { configurable: true, get: () => 60 })
+    vv.dispatchEvent(new Event('resize'))
+  })
+  await view.waitForTimeout(300)
+  const ducked = await view.evaluate(() => {
+    const box = document.getElementById('root').getBoundingClientRect()
+    return { top: Math.round(box.top), height: Math.round(box.height) }
+  })
+  ok(
+    'and it still ducks the keyboard',
+    ducked.height === 500 && ducked.top === 60,
+    JSON.stringify(ducked),
+  )
+  await inset.close()
+}
+
 /* ── three widths ───────────────────────────────────────────────────── */
 
 async function atWidth(width, height, run) {
