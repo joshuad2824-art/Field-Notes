@@ -1,7 +1,15 @@
 import { RangeSet, type Extension, type Range } from '@codemirror/state'
-import { IMAGE_RE, PICTURE_DRAG, type Placement } from '../lib/model'
-import { cachedImageUrl, imageUrl } from '../lib/images'
-import { movePicture } from './commands'
+import {
+  IMAGE_RE,
+  PICTURE_DRAG,
+  type Placement,
+  defaultSize,
+  readPlacement,
+  stepSize,
+} from '../lib/model'
+import { cachedCutout, cachedImageUrl, imageMeta } from '../lib/images'
+import { movePicture, repicture } from './commands'
+import { hideDropMarker, showDropMarker } from './dropmarker'
 import {
   Decoration,
   type DecorationSet,
@@ -107,13 +115,24 @@ class GlyphWidget extends WidgetType {
   }
 }
 
-/* A picture on the page. The markdown carries the path it will have on export
-   and where it sits; the bytes come out of Dexie. */
+/* A picture on the page. The markdown carries the path it will have on export,
+   which side the writing runs down and how wide it sits; the bytes come out of
+   Dexie. */
+
+/* Which plate is showing its controls. Kept outside the widget so it survives
+   the rebuild that every edit causes. */
+let activePicture: string | null = null
+
+export function clearActivePicture(): void {
+  activePicture = null
+}
+
 class PictureWidget extends WidgetType {
   constructor(
     readonly id: string,
     readonly caption: string,
     readonly placement: Placement,
+    readonly size: number,
     readonly ext: string,
     readonly from: number,
     readonly to: number,
@@ -126,22 +145,37 @@ class PictureWidget extends WidgetType {
       other.id === this.id &&
       other.caption === this.caption &&
       other.placement === this.placement &&
+      other.size === this.size &&
       other.from === this.from
     )
   }
 
   toDOM(view: EditorView) {
     const figure = document.createElement('span')
-    const vector = this.ext.toLowerCase() === 'svg'
-    figure.className =
-      `md-plate md-plate-${this.placement}` + (vector ? ' md-plate-vector' : '')
+    figure.className = `md-plate md-plate-${this.placement}`
+    figure.style.setProperty('--plate-width', `${this.size}%`)
     figure.contentEditable = 'false'
+    if (activePicture === this.id) figure.classList.add('active')
 
     const img = document.createElement('img')
     img.className = 'md-plate-image'
     img.alt = this.caption
-    /* Pick the picture up and put it somewhere else in the page. */
     img.draggable = true
+
+    /* A cut-out — an SVG or anything with transparency — is the graphic and
+       nothing else. A photograph gets the plate. */
+    const known = cachedImageUrl(this.id)
+    const knownCutout = cachedCutout(this.id)
+    if (known) img.src = known
+    if (knownCutout) figure.classList.add('md-plate-cutout')
+    if (!known || knownCutout === undefined) {
+      void imageMeta(this.id).then((meta) => {
+        if (!meta) return
+        img.src = meta.url
+        figure.classList.toggle('md-plate-cutout', meta.cutout)
+      })
+    }
+
     img.addEventListener('dragstart', (event) => {
       event.dataTransfer?.setData(
         PICTURE_DRAG,
@@ -150,19 +184,23 @@ class PictureWidget extends WidgetType {
       if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
     })
 
+    /* Tap or click shows the controls. */
+    img.addEventListener('click', (event) => {
+      event.preventDefault()
+      activePicture = activePicture === this.id ? null : this.id
+      figure.classList.toggle('active', activePicture === this.id)
+    })
+
     /* iOS never fires dragstart, so touch gets its own lift: press and hold,
-       then move. Without this the picture can only be moved on a desktop. */
+       then move. The marker follows the finger so you can see where it lands. */
     let hold: number | undefined
     let lifted = false
 
-    const drop = (x: number, y: number) => {
-      const at = view.posAtCoords({ x, y })
-      if (at != null) movePicture(view, this.from, this.to, at)
-    }
     const release = () => {
       clearTimeout(hold)
       figure.classList.remove('lifted')
       lifted = false
+      hideDropMarker(view)
     }
 
     img.addEventListener(
@@ -178,8 +216,15 @@ class PictureWidget extends WidgetType {
     img.addEventListener(
       'touchmove',
       (event) => {
-        if (!lifted) return release()
+        if (!lifted) {
+          clearTimeout(hold)
+          return
+        }
         event.preventDefault()
+        const touch = event.touches[0]
+        if (!touch) return
+        const at = view.posAtCoords({ x: touch.clientX, y: touch.clientY })
+        if (at != null) showDropMarker(view, view.state.doc.lineAt(at).from)
       },
       { passive: false },
     )
@@ -187,13 +232,12 @@ class PictureWidget extends WidgetType {
       const wasLifted = lifted
       const touch = event.changedTouches[0]
       release()
-      if (wasLifted && touch) drop(touch.clientX, touch.clientY)
+      if (!wasLifted || !touch) return
+      const at = view.posAtCoords({ x: touch.clientX, y: touch.clientY })
+      if (at != null) movePicture(view, this.from, this.to, at)
     })
     img.addEventListener('touchcancel', release)
 
-    const known = cachedImageUrl(this.id)
-    if (known) img.src = known
-    else void imageUrl(this.id).then((url) => url && (img.src = url))
     figure.appendChild(img)
 
     if (this.caption) {
@@ -202,12 +246,71 @@ class PictureWidget extends WidgetType {
       caption.textContent = this.caption
       figure.appendChild(caption)
     }
+
+    /* The controls: which side the writing runs down, and how wide. */
+    const bar = document.createElement('span')
+    bar.className = 'plate-controls'
+
+    const control = (label: string, title: string, run: () => void, on = false) => {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'plate-control' + (on ? ' on' : '')
+      button.textContent = label
+      button.title = title
+      button.setAttribute('aria-label', title)
+      button.addEventListener('mousedown', (e) => e.preventDefault())
+      button.addEventListener('click', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        run()
+      })
+      bar.appendChild(button)
+    }
+
+    control(
+      '◧',
+      'Writing on the right',
+      () => repicture(view, this.from, this.to, { placement: 'left' }),
+      this.placement === 'left',
+    )
+    control(
+      '▬',
+      'Full measure',
+      () => repicture(view, this.from, this.to, { placement: 'full' }),
+      this.placement === 'full',
+    )
+    control(
+      '◨',
+      'Writing on the left',
+      () => repicture(view, this.from, this.to, { placement: 'right' }),
+      this.placement === 'right',
+    )
+
+    const gap = document.createElement('span')
+    gap.className = 'plate-control-gap'
+    bar.appendChild(gap)
+
+    control('−', 'Smaller', () =>
+      repicture(view, this.from, this.to, { size: stepSize(this.size, -1) }),
+    )
+    const readout = document.createElement('span')
+    readout.className = 'plate-size'
+    readout.textContent = `${Math.round(this.size)}%`
+    bar.appendChild(readout)
+    control('+', 'Larger', () =>
+      repicture(view, this.from, this.to, { size: stepSize(this.size, 1) }),
+    )
+
+    figure.appendChild(bar)
     return figure
   }
 
-  ignoreEvent(event: Event) {
-    /* Let a drag or a lift through; swallow everything else. */
-    return !event.type.startsWith('drag') && !event.type.startsWith('touch')
+  ignoreEvent() {
+    /* Everything inside the plate is the plate's: the native drag the browser
+       starts on the image, the press-and-hold, and the controls. Letting
+       CodeMirror see mousedown here makes it start a text selection instead,
+       which stops the drag from ever beginning. */
+    return true
   }
 }
 
@@ -285,13 +388,14 @@ function decorateInline(b: Build, base: number, text: string) {
     const to = from + m[0].length
     if (!free(from, to)) continue
     local.push([from, to])
-    const placement: Placement = m[4] === 'full' ? 'full' : 'margin'
+    const placement = readPlacement(m[4])
+    const size = m[5] ? Number(m[5]) : defaultSize(placement)
     block(
       b,
       from,
       to,
       Decoration.replace({
-        widget: new PictureWidget(m[2], m[1], placement, m[3], from, to),
+        widget: new PictureWidget(m[2], m[1], placement, size, m[3], from, to),
       }),
     )
   }

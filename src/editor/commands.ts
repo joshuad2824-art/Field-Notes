@@ -1,5 +1,6 @@
 import type { ChangeSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { type Placement, defaultSize, imageMarkdown, readPlacement } from '../lib/model'
 
 /* The bar writes markdown. Tapping Heading inserts "## "; the person who wants
    the fast path types the characters; the file on disk is identical either
@@ -203,4 +204,35 @@ export function movePicture(view: EditorView, from: number, to: number, at: numb
 
   view.dispatch({ changes, scrollIntoView: true })
   return true
+}
+
+/* Change how a picture sits without disturbing anything around it. */
+const NODE_RE =
+  /^!\[([^\]]*)\]\(images\/([\w-]+)\.(\w+)\)(?:\{(left|right|margin|full)(?:\s+(\d{1,3}))?\})?$/
+
+export function repicture(
+  view: EditorView,
+  from: number,
+  to: number,
+  patch: { placement?: Placement; size?: number },
+): boolean {
+  const source = view.state.sliceDoc(from, to)
+  const parts = source.match(NODE_RE)
+  if (!parts) return false
+
+  const was = readPlacement(parts[4])
+  const placement = patch.placement ?? was
+  const size = patch.size ?? (parts[5] ? Number(parts[5]) : defaultSize(was))
+
+  const next = imageMarkdown(parts[2], parts[3], parts[1], placement, size)
+  if (next === source) return false
+
+  view.dispatch({ changes: { from, to, insert: next } })
+  return true
+}
+
+export function pictureSizeAt(view: EditorView, from: number, to: number): number {
+  const parts = view.state.sliceDoc(from, to).match(NODE_RE)
+  if (!parts) return 44
+  return parts[5] ? Number(parts[5]) : defaultSize(readPlacement(parts[4]))
 }

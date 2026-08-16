@@ -5,6 +5,7 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { liveMarkdown } from './markdown'
 import { applyBlock, applyHighlight, applyWrap, continueList, movePicture } from './commands'
 import { PICTURE_DRAG } from '../lib/model'
+import { hideDropMarker, showDropMarker } from './dropmarker'
 
 interface Props {
   initialBody: string
@@ -60,7 +61,27 @@ export function Editor({
             if (update.docChanged) latest.current.onChange(update.state.doc.toString())
           }),
           EditorView.domEventHandlers({
+            /* Paste a picture straight in. Safari puts the image in
+               clipboardData.files; some sources use items instead. */
+            paste(event, view) {
+              const data = event.clipboardData
+              if (!data) return false
+              const fromFiles = Array.from(data.files ?? []).find((f) =>
+                f.type.startsWith('image/'),
+              )
+              const fromItems = Array.from(data.items ?? [])
+                .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+                .map((item) => item.getAsFile())
+                .find(Boolean)
+              const file = fromFiles ?? fromItems
+              if (!file) return false
+              event.preventDefault()
+              latest.current.onDropFile?.(file)
+              void view
+              return true
+            },
             drop(event, view) {
+              hideDropMarker(view)
               /* A picture being moved within the page. */
               const moved = event.dataTransfer?.getData(PICTURE_DRAG)
               if (moved) {
@@ -82,11 +103,30 @@ export function Editor({
               latest.current.onDropFile?.(file)
               return true
             },
-            dragover(event) {
+            dragover(event, view) {
               const types = event.dataTransfer?.types
-              if (types?.includes('Files') || types?.includes(PICTURE_DRAG)) {
-                event.preventDefault()
-              }
+              if (!types?.includes('Files') && !types?.includes(PICTURE_DRAG)) return false
+              event.preventDefault()
+              /* Show where it will land before the finger or mouse lets go. */
+              const at = view.posAtCoords({ x: event.clientX, y: event.clientY })
+              if (at != null) showDropMarker(view, view.state.doc.lineAt(at).from)
+              return false
+            },
+            dragleave(event, view) {
+              /* Crossing between lines fires dragleave with a null
+                 relatedTarget, so go by where the pointer actually is —
+                 otherwise the marker blinks out on every line boundary. */
+              const bounds = view.contentDOM.getBoundingClientRect()
+              const outside =
+                event.clientX < bounds.left ||
+                event.clientX > bounds.right ||
+                event.clientY < bounds.top ||
+                event.clientY > bounds.bottom
+              if (outside) hideDropMarker(view)
+              return false
+            },
+            dragend(_event, view) {
+              hideDropMarker(view)
               return false
             },
           }),

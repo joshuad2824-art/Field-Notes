@@ -325,6 +325,17 @@ async function fixtures() {
   const raw = Buffer.concat(
     Array.from({ length: h }, () => Buffer.concat([Buffer.from([0]), Buffer.alloc(w * 3, 200)])),
   )
+  /* and one with a transparent border, to prove cut-outs lose their frame */
+  const clearRaw = Buffer.concat(
+    Array.from({ length: h }, (_, y) => {
+      const row = Buffer.alloc(w * 4 + 1)
+      for (let x = 0; x < w; x++) {
+        const edge = x < 8 || x > w - 9 || y < 8 || y > h - 9
+        row.set([200, 120, 40, edge ? 0 : 255], 1 + x * 4)
+      }
+      return row
+    }),
+  )
   const chunk = (type, data) => {
     const body = Buffer.concat([Buffer.from(type), data])
     const len = Buffer.alloc(4)
@@ -345,18 +356,29 @@ async function fixtures() {
     chunk('IEND', Buffer.alloc(0)),
   ])
 
+  const clearIhdr = Buffer.from(ihdr)
+  clearIhdr[9] = 6
+  const clearPng = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', clearIhdr),
+    chunk('IDAT', deflateSync(clearRaw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ])
+
   const pngPath = join(tmpdir(), 'field-notes-tall.png')
+  const clearPath = join(tmpdir(), 'field-notes-clear.png')
   const svgPath = join(tmpdir(), 'field-notes-mark.svg')
   writeFileSync(pngPath, png)
+  writeFileSync(clearPath, clearPng)
   writeFileSync(
     svgPath,
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60" width="100" height="60">' +
       '<circle cx="50" cy="30" r="24" fill="#c5ae67"/></svg>',
   )
-  return { pngPath, svgPath }
+  return { pngPath, clearPath, svgPath }
 }
 
-const { pngPath, svgPath } = await fixtures()
+const { pngPath, clearPath, svgPath } = await fixtures()
 
 await atWidth(1440, 950, async (view) => {
   await view.getByText('New page', { exact: true }).first().click()
@@ -413,7 +435,7 @@ await atWidth(1440, 950, async (view) => {
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
 
-  const vector = await view.locator('.md-plate-vector .md-plate-image').evaluate((el) => {
+  const vector = await view.locator('.md-plate-cutout .md-plate-image').first().evaluate((el) => {
     const s = getComputedStyle(el)
     return { border: s.borderTopWidth, radius: s.borderTopLeftRadius, shadow: s.boxShadow }
   })
@@ -422,6 +444,89 @@ await atWidth(1440, 950, async (view) => {
     vector.border === '0px' && vector.radius === '0px' && vector.shadow === 'none',
     JSON.stringify(vector),
   )
+
+  /* a bitmap with real transparency is a cut-out too — the frame is about
+     what the picture is, not what the file is called */
+  await view.locator('.cm-content').click()
+  await view.keyboard.press('Control+End')
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+  await view.locator('.tray input[type=file]').setInputFiles(clearPath)
+  await view.waitForTimeout(1100)
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+  ok(
+    'a transparent png loses its frame too',
+    (await view.locator('.md-plate-cutout').count()) >= 2,
+    String(await view.locator('.md-plate-cutout').count()),
+  )
+
+  /* the plate's own controls */
+  const cutout = view.locator('.md-plate').last()
+  const openControls = async () => {
+    if (!(await cutout.locator('.plate-controls').isVisible())) {
+      await cutout.locator('.md-plate-image').click()
+      await view.waitForTimeout(250)
+    }
+  }
+  await cutout.locator('.md-plate-image').click()
+  await view.waitForTimeout(300)
+  ok('a picture shows its controls when tapped', await cutout.locator('.plate-controls').isVisible())
+
+  const wasWide = (await cutout.boundingBox()).width
+  await cutout.locator('.plate-control[aria-label="Writing on the right"]').click()
+  await view.waitForTimeout(400)
+  ok('the writing can run down the right', (await view.locator('.md-plate-left').count()) === 1)
+  await openControls()
+  await cutout.locator('.plate-control[aria-label="Writing on the left"]').click()
+  await view.waitForTimeout(400)
+  ok('and down the left', (await view.locator('.md-plate-right').count()) >= 1)
+
+  await openControls()
+  await cutout.locator('.plate-control[aria-label="Smaller"]').click()
+  await view.waitForTimeout(400)
+  const nowNarrow = (await cutout.boundingBox()).width
+  ok('a picture can be scaled', nowNarrow < wasWide, `${Math.round(wasWide)} → ${Math.round(nowNarrow)}`)
+
+  const sized = await cutout.evaluate((el) => el.style.getPropertyValue('--plate-width'))
+  await view.waitForTimeout(500)
+  await view.reload({ waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(1200)
+  const afterReload = await view
+    .locator('.md-plate')
+    .last()
+    .evaluate((el) => el.style.getPropertyValue('--plate-width'))
+  ok('the size is written into the file', sized === afterReload && sized !== '', `${sized}`)
+
+  /* pasting a picture */
+  await view.locator('.cm-content').click()
+  await view.keyboard.press('Control+End')
+  const platesBefore = await view.locator('.md-plate').count()
+  await view.evaluate(async () => {
+    const blob = await (await fetch('/icon.svg')).blob()
+    const data = new DataTransfer()
+    data.items.add(new File([blob], 'icon.svg', { type: 'image/svg+xml' }))
+    document
+      .querySelector('.cm-content')
+      .dispatchEvent(
+        new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }),
+      )
+  })
+  await view.waitForTimeout(1200)
+  ok('a picture can be pasted in', (await view.locator('.md-plate').count()) === platesBefore + 1)
+
+  /* the mark that shows where it will land, sampled mid-drag */
+  const target = await view.locator('.cm-line').first().boundingBox()
+  await view.locator('.md-plate-image').last().hover()
+  await view.mouse.down()
+  await view.mouse.move(target.x + 60, target.y + 200, { steps: 6 })
+  await view.waitForTimeout(200)
+  await view.mouse.move(target.x + 40, target.y + 6, { steps: 6 })
+  await view.waitForTimeout(250)
+  ok('a mark shows where it will land', (await view.locator('.cm-drop-marker.on').count()) === 1)
+  await view.mouse.up()
+  await view.waitForTimeout(400)
+  ok('and clears once it lands', (await view.locator('.cm-drop-marker.on').count()) === 0)
 
   /* the quote stands off its rule */
   await view.locator('.cm-content').click()

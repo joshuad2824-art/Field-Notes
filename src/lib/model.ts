@@ -68,7 +68,28 @@ export const TOMBSTONE_DAYS = 30
    in Dexie beside the page; the export writes them to that exact path, so the
    link resolves in any other editor. */
 
-export type Placement = 'margin' | 'full'
+/* Where a picture sits and which side the writing runs down. `margin` is the
+   old name for `right` and is still read, so pages written before this keep
+   working. */
+export type Placement = 'left' | 'right' | 'full'
+
+export const PLACEMENTS: Placement[] = ['left', 'right', 'full']
+
+/* Percent of the measure. A margin plate defaults to 44, a full one to 100. */
+export const SIZES = [25, 33, 44, 50, 60, 75, 100] as const
+
+export function defaultSize(placement: Placement): number {
+  return placement === 'full' ? 100 : 44
+}
+
+export function stepSize(current: number, direction: 1 | -1): number {
+  const nearest = SIZES.reduce((best, size) =>
+    Math.abs(size - current) < Math.abs(best - current) ? size : best,
+  )
+  const at = SIZES.indexOf(nearest)
+  const next = SIZES[Math.min(SIZES.length - 1, Math.max(0, at + direction))]
+  return next
+}
 
 export interface PageImage {
   id: string
@@ -76,20 +97,32 @@ export interface PageImage {
   blob: Blob
   type: string
   ext: string
+  /* True for an SVG or anything with real transparency — it gets no frame. */
+  cutout?: boolean
   added: number
 }
 
 export const IMAGE_DIR = 'images'
 
-export const IMAGE_RE = /!\[([^\]]*)\]\(images\/([\w-]+)\.(\w+)\)(?:\{(margin|full)\})?/g
+export const IMAGE_RE =
+  /!\[([^\]]*)\]\(images\/([\w-]+)\.(\w+)\)(?:\{(left|right|margin|full)(?:\s+(\d{1,3}))?\})?/g
+
+export function readPlacement(raw: string | undefined): Placement {
+  if (raw === 'full') return 'full'
+  if (raw === 'left') return 'left'
+  return 'right'
+}
 
 export function imageMarkdown(
   id: string,
   ext: string,
   caption: string,
   placement: Placement,
+  size = defaultSize(placement),
 ): string {
-  return `![${caption}](${IMAGE_DIR}/${id}.${ext}){${placement}}`
+  const qualifier =
+    size === defaultSize(placement) ? placement : `${placement} ${Math.round(size)}`
+  return `![${caption}](${IMAGE_DIR}/${id}.${ext}){${qualifier}}`
 }
 
 export function imageIdsIn(body: string): string[] {
@@ -106,7 +139,7 @@ export function stripMarkers(line: string): string {
   return line
     .replace(BLOCK_PREFIX, '')
     /* A picture reads as its caption, or as nothing. */
-    .replace(/!\[([^\]]*)\]\([^)]*\)(?:\{(?:margin|full)\})?/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]*\)(?:\{[^}]*\})?/g, '$1')
     .replace(/==(?:\{\w+\})?([^=]+)==/g, '$1')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/~~([^~]+)~~/g, '$1')
