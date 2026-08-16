@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { requestPersistence, storageEstimate } from '../lib/db'
 import { exportNotebook, exportShelf } from '../lib/export'
 import { bytes } from '../lib/format'
-import { NOTEBOOKS, type NotebookId } from '../lib/model'
+import type { NotebookId } from '../lib/model'
+import { useNotebooks } from '../lib/notebooks'
 import { setSettings, useSettings } from '../lib/settings'
 import { back, navigate, to } from '../lib/router'
 
 export function SettingsScreen() {
   const settings = useSettings()
+  const books = useNotebooks()
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [usage, setUsage] = useState<string>('—')
 
@@ -66,7 +68,7 @@ export function SettingsScreen() {
             <button className="btn caps" onClick={() => void exportShelf()}>
               Whole shelf
             </button>
-            {NOTEBOOKS.map((book) => (
+            {books.map((book) => (
               <button
                 key={book.id}
                 className="btn caps"

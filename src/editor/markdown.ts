@@ -1,4 +1,6 @@
 import { RangeSet, type Extension, type Range } from '@codemirror/state'
+import { IMAGE_RE, type Placement } from '../lib/model'
+import { cachedImageUrl, imageUrl } from '../lib/images'
 import {
   Decoration,
   type DecorationSet,
@@ -18,19 +20,30 @@ import {
 
 /* ── the drawn marks ────────────────────────────────────────────────── */
 
+/* Drawn by hand, not stamped. The box is a circle now, and fills brass when
+   it's ticked with the check cut out of it in the page's own colour. */
 const BOX_D =
-  'M3.6 4.6C7.3 3.8 12.5 4.4 16.5 3.9c.5 3.8.1 8.5.4 12.4-4.2.7-9.4.1-13 .5C3.2 12.7 3.8 8.2 3.6 4.6z'
-const CHECK_D = 'M4.6 9.9c1.5 1.5 2.8 3.4 4 5.7C10.9 10.8 13.9 6 17.6 2.3'
+  'M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z'
+const CHECK_D = 'M6.2 10.2c1.1 1.1 2 2.4 2.8 4C10.7 10.6 12.8 7.2 15.4 4.6'
 
-function svg(cls: string, d: string, width: number): SVGSVGElement {
+function svgFor(checked: boolean): SVGSVGElement {
   const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   el.setAttribute('viewBox', '0 0 20 20')
   el.setAttribute('aria-hidden', 'true')
-  el.setAttribute('class', cls)
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  path.setAttribute('d', d)
-  path.setAttribute('stroke-width', String(width))
-  el.appendChild(path)
+
+  const ring = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+  ring.setAttribute('d', BOX_D)
+  ring.setAttribute('class', checked ? 'bx bx-on' : 'bx')
+  ring.setAttribute('stroke-width', '1.5')
+  el.appendChild(ring)
+
+  if (checked) {
+    const tick = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    tick.setAttribute('d', CHECK_D)
+    tick.setAttribute('class', 'ck')
+    tick.setAttribute('stroke-width', '1.9')
+    el.appendChild(tick)
+  }
   return el
 }
 
@@ -53,8 +66,7 @@ class CheckboxWidget extends WidgetType {
     box.setAttribute('role', 'checkbox')
     box.setAttribute('aria-checked', String(this.checked))
     box.contentEditable = 'false'
-    box.appendChild(svg('bx', BOX_D, 1.5))
-    if (this.checked) box.appendChild(svg('ck', CHECK_D, 1.9))
+    box.appendChild(svgFor(this.checked))
     box.addEventListener('mousedown', (e) => {
       e.preventDefault()
       view.dispatch({
@@ -94,6 +106,53 @@ class GlyphWidget extends WidgetType {
   }
 }
 
+/* A picture on the page. The markdown carries the path it will have on export
+   and where it sits; the bytes come out of Dexie. */
+class PictureWidget extends WidgetType {
+  constructor(
+    readonly id: string,
+    readonly caption: string,
+    readonly placement: Placement,
+  ) {
+    super()
+  }
+
+  eq(other: PictureWidget) {
+    return (
+      other.id === this.id &&
+      other.caption === this.caption &&
+      other.placement === this.placement
+    )
+  }
+
+  toDOM() {
+    const figure = document.createElement('span')
+    figure.className = `md-plate md-plate-${this.placement}`
+    figure.contentEditable = 'false'
+
+    const img = document.createElement('img')
+    img.className = 'md-plate-image'
+    img.alt = this.caption
+    img.draggable = false
+    const known = cachedImageUrl(this.id)
+    if (known) img.src = known
+    else void imageUrl(this.id).then((url) => url && (img.src = url))
+    figure.appendChild(img)
+
+    if (this.caption) {
+      const caption = document.createElement('span')
+      caption.className = 'md-plate-caption'
+      caption.textContent = this.caption
+      figure.appendChild(caption)
+    }
+    return figure
+  }
+
+  ignoreEvent() {
+    return true
+  }
+}
+
 class RuleWidget extends WidgetType {
   eq() {
     return true
@@ -123,6 +182,7 @@ const RE = {
 }
 
 const INLINE = {
+  picture: IMAGE_RE,
   code: /`([^`]+)`/g,
   highlight: /==(?:\{(\w+)\})?([^=]+)==/g,
   strong: /\*\*([^*]+)\*\*/g,
@@ -160,6 +220,21 @@ function decorateInline(b: Build, base: number, text: string) {
   const local: [number, number][] = []
   const free = (from: number, to: number) =>
     !isBlocked(b, from, to) && !local.some(([s, e]) => from < e && to > s)
+
+  /* Pictures first — everything inside the node is a path, not prose. */
+  for (const m of text.matchAll(INLINE.picture)) {
+    const from = base + m.index
+    const to = from + m[0].length
+    if (!free(from, to)) continue
+    local.push([from, to])
+    const placement: Placement = m[4] === 'full' ? 'full' : 'margin'
+    block(
+      b,
+      from,
+      to,
+      Decoration.replace({ widget: new PictureWidget(m[2], m[1], placement) }),
+    )
+  }
 
   /* Code first, and its contents are then off limits — a backtick span is
      literal by definition. */

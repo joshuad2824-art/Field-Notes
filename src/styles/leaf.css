@@ -10,10 +10,24 @@
 
 .desk {
   flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
   display: flex;
   justify-content: center;
-  padding: var(--space-9) var(--space-8);
+  padding: 20px 20px 0;
+}
+@media (min-width: 1500px) {
+  .desk {
+    padding: 28px 28px 0;
+    --page-margin-x: 80px;
+  }
+}
+/* Under 1120 the page is the screen — no desk, no margin, no shadow. */
+@media (max-width: 1119px) {
+  .desk {
+    padding: 0;
+    --page-margin-x: var(--page-margin-x-sm);
+  }
 }
 
 /* The room with nothing on the desk yet. */
@@ -22,33 +36,25 @@
   justify-content: center;
 }
 
-/* On a large monitor the leaf doesn't stretch — the measure is the measure —
-   but the page it's printed on gets a more generous margin, and the dark room
-   around it grows. */
-@media (min-width: 1500px) {
-  .desk {
-    padding: var(--space-10) var(--space-9);
-    --page-margin-x: 88px;
-  }
-}
-@media (min-width: 1900px) {
-  .desk {
-    --page-margin-x: 104px;
-  }
-}
-
 .leaf {
+  position: relative;
   background: var(--surface-page);
   color: var(--text-body);
   width: 100%;
-  max-width: calc(var(--measure-prose) + (var(--page-margin-x) * 2));
+  max-width: none;
   box-shadow: var(--shadow-lift);
-  border-radius: 2px;
+  border-radius: 3px 3px 0 0;
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
   overflow: hidden;
+}
+@media (max-width: 1119px) {
+  .leaf {
+    box-shadow: none;
+    border-radius: 0;
+  }
 }
 
 .leaf:focus-within {
@@ -84,13 +90,17 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* The text wraps to whatever room it has and widens with the window, up to a
+   ceiling so a 27" monitor doesn't produce 200-character lines. */
 .editor .cm-content {
-  padding: var(--grid-pitch) var(--page-margin-x) var(--space-11);
+  width: 100%;
+  max-width: min(100%, calc(var(--measure-max) + var(--page-margin-x) * 2));
+  margin: 0 auto;
+  padding: 22px var(--page-margin-x) 48px;
   caret-color: var(--caret);
   background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
   background-size: var(--grid-pitch) var(--grid-pitch);
-  background-position: var(--page-margin-x) 33px;
-  max-width: calc(var(--measure-prose) + (var(--page-margin-x) * 2));
+  background-position: var(--page-margin-x) 29px;
 }
 
 .editor .cm-line {
@@ -111,20 +121,19 @@
 .leaf[data-pen='felt'] .cm-content {
   font-family: var(--font-pen);
   font-size: var(--pen-size);
-  background-position: var(--page-margin-x) 35px;
 }
 .leaf[data-pen='felt'] .md-h1 {
   font-family: var(--font-pen);
-  font-size: 34px;
+  font-size: var(--pen-title);
 }
 .leaf[data-pen='felt'] .md-h2 {
   font-family: var(--font-pen);
-  font-size: 27px;
+  font-size: 26px;
 }
 .leaf[data-pen='felt'] .md-quote {
   font-family: var(--font-pen);
   font-style: normal;
-  font-size: 23px;
+  font-size: var(--pen-quote);
 }
 .leaf[data-pen='felt'] .md-code {
   font-size: 0.78em;
@@ -212,7 +221,16 @@
   stroke-linejoin: round;
 }
 .md-box .bx {
-  opacity: 0.72;
+  opacity: 0.75;
+}
+/* ticked: the circle fills brass and the check is cut out of it */
+.md-box .bx-on {
+  fill: currentColor;
+  fill-opacity: 0.9;
+  opacity: 1;
+}
+.md-box .ck {
+  stroke: var(--surface-page);
 }
 
 .md-rule {
@@ -301,120 +319,186 @@
   --hl: var(--hl-brass);
 }
 
-/* ── the page's own chrome, in the page's own colour ────────────────── */
+/* ── the page's own top margin, carrying three marks ────────────────── */
 
-/* The tools never move. They are a flex sibling of the scroller, not part of
-   it, so the row stays put however far down the page goes. */
 .tools {
   flex: 0 0 auto;
   position: relative;
   z-index: 2;
   background: var(--surface-page);
-  border-bottom: 1px solid transparent;
 }
 
 .tools .row {
-  height: var(--bar-height);
+  height: 44px;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 0 calc(var(--page-margin-x) - 9px);
+  gap: 6px;
+  padding: 0 38px;
+}
+@media (max-width: 1119px) {
+  .tools .row {
+    padding: 0 14px;
+  }
 }
 .tools .row .grow {
   flex: 1;
 }
 
-.tools .panel {
-  display: none;
-  align-items: center;
-  gap: var(--space-3);
-  height: var(--panel-height);
-  padding: 0 calc(var(--page-margin-x) - 9px);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.tools .panel::-webkit-scrollbar {
-  display: none;
-}
-.tools .panel.open {
-  display: flex;
-}
-
-.tool {
-  flex: 0 0 auto;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: var(--text-quiet, var(--frame-quiet));
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  min-width: 36px;
-  height: 32px;
-  padding: 0 9px;
-  border-radius: 3px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background-color var(--duration-instant) var(--ease-standard),
-    color var(--duration-instant) var(--ease-standard);
-}
-.tool:hover {
-  background: var(--wash-hover, var(--frame-hover));
-  color: var(--text-body, var(--frame-heading));
-}
-.tool.on {
-  background: var(--wash-on, var(--frame-on));
-  color: var(--text-accent, var(--frame-accent));
-}
-.tool[disabled] {
-  opacity: 0.28;
-  cursor: default;
-}
-.tool[disabled]:hover {
-  background: transparent;
+/* The toolbar sits on the leaf, so it takes the leaf's colours — the frame's
+   grey-teal is invisible on cream. */
+.tools .mark-button {
   color: var(--text-quiet);
 }
-.tool:focus-visible {
+.tools .mark-button:hover {
+  background: var(--wash-hover);
+  color: var(--text-body);
+}
+.tools .mark-button.on {
+  background: var(--wash-on);
+  color: var(--text-accent);
+}
+.tools .mark-button:focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 2px var(--surface-page, var(--frame-bg)),
+    0 0 0 2px var(--surface-page),
     0 0 0 4px var(--focus-ring);
 }
-.tool.glyph {
-  min-width: 30px;
-  padding: 0 6px;
-  font-family: var(--font-body);
-  font-size: var(--text-lg);
-}
-.tool.caps {
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-smallcaps);
-  text-transform: uppercase;
-  font-weight: 600;
-}
-.tool.serif {
-  font-family: var(--font-editorial);
-  font-size: var(--text-lg);
-}
-.tool.mono {
+
+.breadcrumb {
   font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-quiet);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.tool b {
-  font-weight: 700;
-}
-.tool i {
-  font-style: italic;
+.saved {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-quiet);
+  margin-right: 10px;
 }
 
-.divider {
-  flex: 0 0 auto;
-  width: 1px;
-  height: 18px;
-  background: var(--border-hairline);
-  margin: 0 6px;
+/* the tray behind Aa */
+.tray {
+  position: absolute;
+  z-index: 5;
+  right: 20px;
+  top: 48px;
+  width: 236px;
+  background: var(--teal-850);
+  border: 1px solid var(--frame-hairline);
+  border-radius: 4px;
+  box-shadow: var(--shadow-lift);
+  padding: 10px 0;
+  color: var(--frame-text);
+}
+.tray-label {
+  margin: 0;
+  padding: 8px 16px 10px;
+}
+.tray-styles {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 10px;
+}
+.tray-style {
+  flex: 1;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: var(--frame-text);
+  padding: 6px 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.tray-style:hover {
+  background: var(--frame-hover);
+}
+.tray-style.serif {
+  font-family: var(--font-editorial);
+  font-size: 16px;
+}
+.tray-style.serif.lg {
+  font-size: 18px;
+}
+.tray-style.caps {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-smallcaps);
+  text-transform: uppercase;
+  padding: 9px 0;
+}
+.tray-rule {
+  height: 1px;
+  background: var(--frame-hairline-soft);
+  margin: 2px 12px 10px;
+}
+.tray-swatches {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 12px;
+  align-items: center;
+}
+.tray-swatches .grow {
+  flex: 1;
+}
+.tray-clear {
+  border: none;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--teal-300);
+  cursor: pointer;
+}
+.tray-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border: none;
+  background: transparent;
+  padding: 6px 16px;
+  cursor: pointer;
+  text-align: left;
+}
+.tray-row:hover {
+  background: var(--frame-hover);
+}
+.tray-row-sub {
+  padding-top: 0;
+  padding-bottom: 8px;
+}
+.tray-row-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--frame-text);
+}
+.tray-row-sub .tray-row-name {
+  color: var(--teal-300);
+  font-size: 12px;
+}
+.tray-row-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--brass-400);
+}
+.tray-row-state.pen {
+  font-family: var(--font-pen);
+  font-size: 18px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tray-close {
+  display: none;
 }
 
 .sw {
@@ -423,42 +507,30 @@
   border-radius: 999px;
   cursor: pointer;
   flex: 0 0 auto;
-  border: 1px solid var(--border-hairline);
+  border: 1px solid var(--frame-hairline);
   padding: 0;
+}
+.sw.on {
+  border: 2px solid var(--brass-400);
 }
 .sw:focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 2px var(--surface-page),
+    0 0 0 2px var(--teal-850),
     0 0 0 4px var(--focus-ring);
-}
-.sw[data-c='oxblood'] {
-  background: var(--oxblood-800);
-}
-.sw[data-c='forest'] {
-  background: var(--forest-800);
-}
-.sw[data-c='navy'] {
-  background: var(--navy-800);
-}
-.sw[data-c='driftwood'] {
-  background: var(--driftwood-700);
-}
-.sw[data-c='brass'] {
-  background: var(--brass-700);
-}
-.sw.none {
-  background: transparent;
-  color: var(--text-quiet);
-  font-family: var(--font-ui);
-  font-size: 11px;
 }
 
 .pagefoot {
   flex: 0 0 auto;
   background: var(--surface-page);
+  display: flex;
+  justify-content: center;
+}
+.pagefoot-measure {
+  width: 100%;
+  max-width: min(100%, var(--measure-max));
   margin: 0 var(--page-margin-x);
-  padding: var(--space-5) 0 calc(var(--space-7) + env(safe-area-inset-bottom, 0px));
+  padding: 14px 0 calc(20px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border-hairline);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
@@ -467,10 +539,19 @@
   color: var(--text-quiet);
   display: flex;
   align-items: center;
-  gap: var(--space-5);
+  gap: 16px;
 }
-.pagefoot .grow {
+.pagefoot-measure .grow {
   flex: 1;
+}
+.foot-back {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--text-accent);
 }
 .pagefoot .foot-tag {
   color: var(--text-accent);
@@ -482,30 +563,72 @@
   letter-spacing: var(--tracking-wide);
 }
 
-@media (max-width: 720px) {
-  .desk {
-    padding: 0;
-  }
-  .leaf {
-    max-width: none;
-    box-shadow: none;
-    border-radius: 0;
-  }
-  .editor .cm-content {
-    padding: var(--grid-pitch) var(--page-margin-x-sm) var(--space-11);
-    background-position: var(--page-margin-x-sm) 33px;
-  }
-  .leaf[data-pen='felt'] .cm-content {
-    background-position: var(--page-margin-x-sm) 35px;
-  }
-  .pagefoot {
-    margin: 0 var(--page-margin-x-sm);
-  }
+@media (max-width: 1119px) {
   .md-quote {
     margin-left: 0;
   }
-  .tools .row,
-  .tools .panel {
-    padding: 0 calc(var(--page-margin-x-sm) - 9px);
+}
+
+/* ── pictures on the page ───────────────────────────────────────────── */
+
+/* A plate in the margin: the writing runs around it and closes back over it
+   when the picture ends. */
+.md-plate {
+  display: block;
+  float: right;
+  width: 44%;
+  max-width: 340px;
+  margin: 6px 0 12px 24px;
+}
+.md-plate-full {
+  float: none;
+  clear: both;
+  width: 100%;
+  max-width: none;
+  margin: 6px 0 12px;
+}
+/* On a phone a picture takes the measure and the writing runs above and
+   below it. */
+@media (max-width: 819px) {
+  .md-plate-margin {
+    float: none;
+    width: 100%;
+    max-width: none;
+    margin: 6px 0 12px;
   }
+}
+
+/* The plate keeps the grid: 196px is 7 rows, 280px is 10. */
+.md-plate-image {
+  display: block;
+  width: 100%;
+  height: 196px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid rgba(246, 243, 236, 0.12);
+  box-shadow: var(--shadow-print);
+  transition:
+    transform var(--duration-instant) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
+}
+.md-plate-full .md-plate-image {
+  height: 280px;
+  box-shadow: var(--shadow-print-wide);
+}
+.md-plate-image:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.md-plate-caption {
+  display: block;
+  border-top: 1px solid var(--border-hairline);
+  margin-top: 8px;
+  padding-top: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-quiet);
+  line-height: 20px;
 }

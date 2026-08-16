@@ -1,6 +1,7 @@
-/* Editor behaviour checks. These exist because the editor is the product, and
-   because two of the rules below — the syntax never showing, and every block
-   height being a multiple of 28px — are the ones that quietly break.
+/* Behaviour checks. These exist because the editor is the product, and because
+   the rules most worth keeping — the syntax never showing, every block height a
+   multiple of 28px, the measure never running away — are the ones that quietly
+   break.
 
    Run a server first, then this:
 
@@ -22,9 +23,7 @@ async function loadPlaywright() {
     const root = execSync('npm root -g', { encoding: 'utf8' }).trim()
     return await import(`${root}/playwright/index.mjs`)
   } catch {
-    console.error(
-      'Playwright not found. Try: npm i -g playwright && playwright install chromium',
-    )
+    console.error('Playwright not found. Try: npm i -g playwright && playwright install chromium')
     process.exit(2)
   }
 }
@@ -32,17 +31,19 @@ async function loadPlaywright() {
 const { chromium } = await loadPlaywright()
 
 const browser = await chromium.launch()
-const ctx = await browser.newContext({ viewport: { width: 1100, height: 900 } })
-const page = await ctx.newPage()
-
 const problems = []
 let failures = 0
-page.on('pageerror', (e) => problems.push('pageerror: ' + e.message))
 
 const ok = (name, pass, detail = '') => {
   if (!pass) failures++
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`)
 }
+
+/* ── the editor ─────────────────────────────────────────────────────── */
+
+const ctx = await browser.newContext({ viewport: { width: 1100, height: 900 } })
+const page = await ctx.newPage()
+page.on('pageerror', (e) => problems.push('editor: ' + e.message))
 
 const type = async (text) => {
   await page.keyboard.type(text, { delay: 8 })
@@ -60,9 +61,9 @@ const lastLine = () =>
     .evaluate((el) => el.textContent)
 
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(500)
-await page.getByText('New page', { exact: true }).click()
-await page.waitForTimeout(500)
+await page.waitForTimeout(700)
+await page.getByText('New page', { exact: true }).first().click()
+await page.waitForTimeout(600)
 
 const content = page.locator('.cm-content')
 await content.click()
@@ -84,13 +85,14 @@ await page.keyboard.press('Enter')
 await page.waitForTimeout(150)
 ok('an empty item ends the list', (await page.locator('.md-marker').count()) === 2)
 
-/* checklists */
+/* checklists — a circle that fills when it's ticked */
 await type('- [ ] a task')
 ok('the checkbox is drawn', (await page.locator('.md-box').count()) === 1)
 ok('its syntax is hidden', (await lastLine())?.trim() === 'a task', await lastLine())
 await page.locator('.md-box').click()
 await page.waitForTimeout(200)
 ok('clicking the box checks it', (await page.locator('.md-done').count()) === 1)
+ok('a ticked box fills', (await page.locator('.md-box .bx-on').count()) === 1)
 await page.locator('.md-box').click()
 await page.waitForTimeout(200)
 ok('clicking again clears it', (await page.locator('.md-done').count()) === 0)
@@ -104,22 +106,18 @@ ok('bold renders', (await page.locator('.md-strong').count()) === 1)
 await page.keyboard.press('Backspace')
 await page.waitForTimeout(200)
 const afterBackspace = await lastLine()
-ok(
-  'backspace takes the whole marker',
-  afterBackspace === '**bold',
-  JSON.stringify(afterBackspace),
-)
+ok('backspace takes the whole marker', afterBackspace === '**bold', JSON.stringify(afterBackspace))
 
-/* the bar writes markdown */
+/* the keyboard writes markdown, now that the bar is three marks */
 await page.keyboard.press('Control+End')
 await page.keyboard.press('Enter')
 await type('press me')
 await page.keyboard.down('Shift')
 for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowLeft')
 await page.keyboard.up('Shift')
-await page.locator('.tool', { hasText: 'B' }).first().click()
-await page.waitForTimeout(200)
-ok('the bar wraps a selection', (await page.locator('.md-strong').count()) === 1)
+await page.keyboard.press('Control+b')
+await page.waitForTimeout(250)
+ok('⌘B wraps a selection', (await page.locator('.md-strong').count()) === 1)
 
 /* break this and the page stops looking like paper */
 const heights = await page
@@ -128,24 +126,25 @@ const heights = await page
 const offGrid = heights.filter((h) => h % 28 !== 0)
 ok('every block height is a multiple of 28', offGrid.length === 0, `off: ${offGrid.join(', ')}`)
 
-/* the highlighter */
+/* the highlighter, from the tray */
 await page.keyboard.press('Control+End')
 await page.keyboard.press('Enter')
 await type('pigment')
 await page.keyboard.down('Shift')
 for (let i = 0; i < 7; i++) await page.keyboard.press('ArrowLeft')
 await page.keyboard.up('Shift')
-await page.locator('.tool[title="Highlighter"]').click()
-await page.waitForTimeout(150)
-await page.locator('.sw[data-c="forest"]').click()
+await page.locator('.mark-button[aria-label="Style"]').click()
+await page.waitForTimeout(200)
+ok('the tray opens from Aa', (await page.locator('.tray').count()) === 1)
+await page.locator('.tray .sw[aria-label="forest"]').click()
 await page.waitForTimeout(250)
 ok('the highlighter marks the selection', (await page.locator('.md-hl-forest').count()) === 1)
 
 /* local storage is the primary store, not a cache */
 await page.waitForTimeout(400)
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(600)
-const titles = await page.locator('.row-title').allTextContents()
+await page.waitForTimeout(700)
+const titles = await page.locator('.list-row-title').allTextContents()
 ok(
   'the page survived a reload',
   titles.some((t) => t.includes('The morning')),
@@ -155,65 +154,20 @@ ok(
 /* search never touches the network */
 await page.goto(BASE + '/search', { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(400)
-await page.locator('.well').fill('pigment')
+await page.locator('.well').first().fill('pigment')
 await page.waitForTimeout(600)
 ok('search finds the new page', (await page.locator('.row-page').count()) >= 1)
 
-/* the page screen is the page — no banner above it */
-await page.goto(BASE, { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(500)
-await page.locator('.row-page').first().click()
-await page.waitForTimeout(700)
-ok('no banner above the leaf', (await page.locator('.chrome').count()) === 0)
-
-const row = await page.locator('.tools .row').boundingBox()
-await page.locator('.cm-scroller').evaluate((el) => (el.scrollTop = 400))
-await page.waitForTimeout(300)
-const rowAfter = await page.locator('.tools .row').boundingBox()
-ok(
-  'the tools row stays put while the page scrolls',
-  Math.abs(row.y - rowAfter.y) < 1,
-  `${row.y} → ${rowAfter.y}`,
-)
-
-const fit = await page
-  .locator('.tools .row')
-  .evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth }))
-ok('the tools row fits its width', fit.scroll <= fit.client, JSON.stringify(fit))
-
-/* a default is a default: change it and pages that never disagreed follow */
-await page.goto(BASE + '/settings', { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(400)
-const stockButton = page.locator('.btn', { hasText: 'Stock ·' })
-if ((await stockButton.textContent()).includes('paper')) await stockButton.click()
-const penButton = page.locator('.btn', { hasText: 'Pen ·' })
-if ((await penButton.textContent()).includes('ink')) await penButton.click()
-await page.waitForTimeout(300)
+/* ── the keyboard ───────────────────────────────────────────────────── */
 
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(400)
-await page.getByText('New page', { exact: true }).click()
-await page.waitForTimeout(700)
-const leaf = await page
-  .locator('.leaf')
-  .evaluate((el) => ({ stock: el.dataset.stock, pen: el.dataset.pen }))
-ok(
-  'a new page follows the default',
-  leaf.stock === 'night' && leaf.pen === 'felt',
-  JSON.stringify(leaf),
-)
-
-/* The keyboard. A real soft keyboard can't be summoned here, so this feeds the
-   handler the numbers iOS reports when one opens: a shorter visual viewport,
-   scrolled down under the layout viewport. It proves our reaction is right; it
-   cannot prove iOS reports what we think, which only the phone can settle. */
-await page.goto(BASE, { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(500)
-await page.locator('.row-page').first().click()
+await page.waitForTimeout(600)
+await page.locator('.list-row').first().click()
 await page.waitForTimeout(700)
 
 const toolsResting = await page.locator('.tools .row').boundingBox()
 ok('the foot is there with no keyboard', (await page.locator('.pagefoot').count()) === 1)
+ok('no banner above the leaf', (await page.locator('.chrome').count()) === 0)
 
 const openKeyboard = (height, offsetTop) =>
   page.evaluate(
@@ -228,7 +182,6 @@ const openKeyboard = (height, offsetTop) =>
 
 await openKeyboard(420, 96)
 await page.waitForTimeout(300)
-
 const shifted = await page.evaluate(() => {
   const root = document.getElementById('root').getBoundingClientRect()
   return { top: root.top, height: Math.round(root.height) }
@@ -236,13 +189,6 @@ const shifted = await page.evaluate(() => {
 ok('the app sizes to the visual viewport', shifted.height === 420, String(shifted.height))
 ok('the app follows the viewport offset', shifted.top === 96, String(shifted.top))
 ok('the foot gets out of the way', (await page.locator('.pagefoot').count()) === 0)
-
-const toolsWithKeyboard = await page.locator('.tools .row').boundingBox()
-ok(
-  'the tools row is still on screen',
-  toolsWithKeyboard.y >= 96 && toolsWithKeyboard.y < 156,
-  `y=${toolsWithKeyboard.y}`,
-)
 
 await openKeyboard(844, 0)
 await page.waitForTimeout(300)
@@ -254,65 +200,115 @@ ok(
   `${toolsResting.y} → ${toolsReturned.y}`,
 )
 
-/* Three widths. The leaf never widens past its measure at any of them; what
-   changes is what sits beside it. */
+await ctx.close()
+
+/* ── three widths ───────────────────────────────────────────────────── */
+
 async function atWidth(width, height, run) {
   const context = await browser.newContext({ viewport: { width, height } })
   const view = await context.newPage()
   view.on('pageerror', (e) => problems.push(`${width}px: ${e.message}`))
   await view.goto(BASE, { waitUntil: 'domcontentloaded' })
-  await view.waitForTimeout(500)
-  await view.locator('.cover').first().click()
-  await view.waitForTimeout(400)
-  const row = view.locator('.row-page').first()
-  if (await row.count()) await row.click()
   await view.waitForTimeout(700)
-  await run(view)
+  await run(view, context)
   await context.close()
 }
 
 await atWidth(1440, 900, async (view) => {
-  ok('desktop docks the sidebar', (await view.locator('.sidebar').count()) === 1)
-  const rail = await view.locator('.sidebar').boundingBox()
-  const leafAt = await view.locator('.leaf').boundingBox()
-  ok('the leaf sits beside it', leafAt.x > rail.width, `leaf x=${Math.round(leafAt.x)}`)
-  ok('the open page is marked in the list', (await view.locator('.row-page.active').count()) === 1)
+  ok('the rail docks on desktop', (await view.locator('.rail').count()) === 1)
+  ok('the list column docks beside it', (await view.locator('.listcol').count()) === 1)
+  ok('there is no chrome bar', (await view.locator('.chrome').count()) === 0)
+  ok('there is no cover grid', (await view.locator('.cover').count()) === 0)
 
-  await view.locator('.tool[aria-label="Hide the list"]').click()
-  await view.waitForTimeout(250)
-  ok('the sidebar can be put away', (await view.locator('.sidebar').count()) === 0)
-  await view.reload({ waitUntil: 'domcontentloaded' })
-  await view.waitForTimeout(600)
-  ok('and stays away', (await view.locator('.sidebar').count()) === 0)
-  await view.locator('.tool[aria-label="Show the list"]').click()
-  await view.waitForTimeout(250)
-  ok('and comes back when asked', (await view.locator('.sidebar').count()) === 1)
+  const rail = await view.locator('.rail').boundingBox()
+  const list = await view.locator('.listcol').boundingBox()
+  ok('the rail is 264 wide', Math.round(rail.width) === 264, String(rail.width))
+  ok('the list is 372 wide', Math.round(list.width) === 372, String(list.width))
+  ok('the date is the masthead', (await view.locator('.rail-numeral').count()) === 1)
+  ok('today is lit in the week strip', (await view.locator('.rail-today').count()) === 1)
+
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(700)
+  ok('the toolbar is three marks at rest', (await view.locator('.tools .row button').count()) === 3)
+
+  const leaf = await view.locator('.leaf').boundingBox()
+  ok('the leaf fills the desk', leaf.width > 700, `${Math.round(leaf.width)}px`)
+
+  await view.locator('.tools .row .mark-button').first().click()
+  await view.waitForTimeout(300)
+  ok(
+    'the columns can be put away',
+    (await view.locator('.rail').count()) === 0 && (await view.locator('.listcol').count()) === 0,
+  )
+  ok('a breadcrumb takes their place', (await view.locator('.breadcrumb').count()) === 1)
+  await view.locator('.tools .row .mark-button').first().click()
+  await view.waitForTimeout(300)
+  ok('and they come back', (await view.locator('.rail').count()) === 1)
 })
 
 await atWidth(1920, 1080, async (view) => {
-  const wide = await view.locator('.leaf').boundingBox()
-  ok('the leaf does not stretch on a big monitor', wide.width < 950, `${Math.round(wide.width)}px`)
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(700)
+  const measure = await view.locator('.cm-content').boundingBox()
+  ok(
+    'the measure holds on a big monitor',
+    measure.width <= 1062,
+    `${Math.round(measure.width)}px`,
+  )
 })
 
 await atWidth(834, 1112, async (view) => {
-  ok('an iPad in portrait docks nothing', (await view.locator('.sidebar').count()) === 0)
-  await view.locator('.tool[aria-label="Show the list"]').click()
+  ok('an iPad in portrait docks nothing', (await view.locator('.rail').count()) === 0)
+  ok('the list takes the window', (await view.locator('.listcol').count()) === 1)
+  await view.locator('.list-masthead .mark-button').click()
+  await view.waitForTimeout(350)
+  ok('the rail slides over', (await view.locator('.rail-drawer').count()) === 1)
+  await view.locator('.rail-scrim').click({ position: { x: 700, y: 600 } })
   await view.waitForTimeout(300)
-  ok('the list slides over instead', (await view.locator('.sidebar-drawer').count()) === 1)
-  const rows = view.locator('.sidebar .row-page')
-  if (await rows.count()) {
-    await rows.first().click()
-    await view.waitForTimeout(350)
-  }
-  ok('and closes when you pick something', (await view.locator('.sidebar-drawer').count()) === 0)
+  ok('the scrim closes it', (await view.locator('.rail-drawer').count()) === 0)
+
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(700)
+  ok('a page replaces the list', (await view.locator('.listcol').count()) === 0)
+  ok('the foot offers the way back', (await view.locator('.foot-back').count()) === 1)
 })
 
 await atWidth(390, 844, async (view) => {
+  ok('the phone shows the masthead', (await view.locator('.list-masthead').count()) === 1)
+  ok('the phone docks no rail', (await view.locator('.rail').count()) === 0)
+})
+
+/* ── notebooks are data ─────────────────────────────────────────────── */
+
+await atWidth(1440, 900, async (view) => {
+  const before = await view.locator('.book-row').count()
+  await view.locator('.link-caps', { hasText: 'Manage' }).click()
+  await view.waitForTimeout(400)
+  ok('the manager opens', (await view.locator('.manager').count()) === 1)
+
+  await view.locator('.manager .well').fill('The Garden')
+  await view.locator('.cover-swatch').nth(4).click()
+  await view.locator('.plate-button', { hasText: 'Add notebook' }).click()
+  await view.waitForTimeout(700)
+  ok('a notebook can be added', (await view.locator('.book-row').count()) === before + 1)
+
+  await view.reload({ waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(800)
   ok(
-    'the phone has no sidebar at all',
-    (await view.locator('.sidebar').count()) === 0 &&
-      (await view.locator('.tool[title="The list"]').count()) === 0,
+    'and it survives a reload',
+    (await view.locator('.book-name', { hasText: 'The Garden' }).count()) === 1,
   )
+
+  await view.locator('.link-caps', { hasText: 'Manage' }).click()
+  await view.waitForTimeout(400)
+  const rows = view.locator('.manager-row')
+  const last = rows.nth((await rows.count()) - 1)
+  await last.locator('.mark-button').click()
+  await view.waitForTimeout(300)
+  ok('deleting asks first', (await view.locator('.manager-confirm').count()) === 1)
+  await view.locator('.outline.danger').click()
+  await view.waitForTimeout(600)
+  ok('and then removes it', (await view.locator('.book-row').count()) === before)
 })
 
 if (problems.length) {

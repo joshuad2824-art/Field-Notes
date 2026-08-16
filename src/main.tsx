@@ -6,6 +6,7 @@ import './styles/frame.css'
 import './styles/leaf.css'
 import { App } from './App'
 import { purgeExpiredTombstones, requestPersistence, seedIfEmpty } from './lib/db'
+import { loadNotebooks } from './lib/notebooks'
 import { trackViewport } from './lib/viewport'
 
 trackViewport()
@@ -17,6 +18,7 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
+void loadNotebooks()
 void seedIfEmpty()
 void purgeExpiredTombstones()
 void requestPersistence()

@@ -1,10 +1,13 @@
 import Dexie, { type Table } from 'dexie'
 import {
   DEFAULT_NOTEBOOK,
+  DEFAULT_NOTEBOOKS,
   TOMBSTONE_DAYS,
+  type Notebook,
   type NotebookId,
   type Page,
   type Pen,
+  type PageImage,
   type Stock,
   isBlank,
   tagsOf,
@@ -16,6 +19,8 @@ import {
 
 class FieldNotesDB extends Dexie {
   pages!: Table<Page, string>
+  notebooks!: Table<Notebook, string>
+  images!: Table<PageImage, string>
   meta!: Table<{ key: string; value: unknown }, string>
 
   constructor() {
@@ -43,6 +48,18 @@ class FieldNotesDB extends Dexie {
             if (page.stock === 'paper') delete page.stock
           }),
       )
+
+    /* v3: notebooks stop being a constant and become rows, and pictures get
+       somewhere to live. The four that were hard-coded are seeded so nothing
+       moves for anyone already writing. */
+    this.version(3)
+      .stores({
+        pages: 'id, notebook, updated, created, pinned, deleted, entryDate',
+        notebooks: 'id, order',
+        images: 'id, page',
+        meta: 'key',
+      })
+      .upgrade((tx) => tx.table<Notebook>('notebooks').bulkPut(DEFAULT_NOTEBOOKS))
   }
 }
 
@@ -64,7 +81,7 @@ export function storeVersion(): number {
   return version
 }
 
-function changed() {
+export function changed() {
   version++
   for (const fn of listeners) fn()
 }

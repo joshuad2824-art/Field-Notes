@@ -1,68 +1,122 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { createPage } from '../lib/db'
 import { SIDEBAR_AVAILABLE, SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
+import { firstNotebookId, useNotebooks } from '../lib/notebooks'
+import { navigate, to } from '../lib/router'
 import { setSettings, useSettings } from '../lib/settings'
-import { Sidebar } from './Sidebar'
+import { NotebookManager } from './NotebookManager'
+import { PageList } from './PageList'
+import { Rail } from './Rail'
 
 interface Props {
   notebook: string
+  /* The open page, if there is one. Below 1120 its presence is what decides
+     whether the list or the leaf has the screen. */
   activeId?: string
-  /* Given the sidebar toggle, so the screen can place it in its own bar. */
-  children: (toggle: ReactNode) => ReactNode
+  children: (marks: { toggle: ReactNode; hidden: boolean }) => ReactNode
 }
 
-/* Holds the sidebar next to whatever the screen is showing.
+/* Three columns: the rail, the list, and the desk.
 
-   Docked past 1120px, where there's room for a 268px column and a full
-   measure beside it. Between 820 and 1120 — an iPad in portrait — it slides
-   over the desk instead of squeezing it, and closes again when you pick
-   something. Below that there is no sidebar; the phone navigates screen by
-   screen, which is the right shape for one hand. */
+   Past 1120px all three are on screen and the rail starts open. Below that the
+   app navigates screen by screen — the list is the whole window, a page takes
+   the whole window, and the rail slides over as a drawer that starts closed.
+   Crossing the boundary reconciles the flag, because a drawer that survived a
+   resize into the docked layout would be a second, invisible state. */
 export function Shell({ notebook, activeId, children }: Props) {
   const available = useMediaQuery(SIDEBAR_AVAILABLE)
   const docked = useMediaQuery(SIDEBAR_DOCKED)
   const settings = useSettings()
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const books = useNotebooks()
 
-  /* A drawer that survived a resize into the docked layout would be a second,
-     invisible state. */
+  const [railDrawer, setRailDrawer] = useState(false)
+  const [manage, setManage] = useState(false)
+
   useEffect(() => {
-    if (docked) setDrawerOpen(false)
+    if (docked) setRailDrawer(false)
   }, [docked])
 
-  const showDocked = available && docked && settings.sidebar
-  const showDrawer = available && !docked && drawerOpen
-  const showing = showDocked || showDrawer
+  const compact = !docked
+  const columnsOn = settings.sidebar
+  const railDocked = docked && columnsOn
+  const listDocked = docked && columnsOn
+  const railOver = !docked && railDrawer
 
-  const toggle = available ? (
+  /* Below the boundary the leaf replaces the list rather than joining it. */
+  const showList = compact ? !activeId : listDocked
+  const showLeaf = compact ? !!activeId : true
+  const hidden = docked && !columnsOn
+
+  const pickNotebook = (id: string) => {
+    setSettings({ notebook: id })
+    setRailDrawer(false)
+    navigate(to.notebook(id))
+  }
+
+  const newPage = async () => {
+    const page = await createPage(notebook)
+    setRailDrawer(false)
+    navigate(to.page(page.id))
+  }
+
+  const toggle = (
     <button
-      className={`tool glyph${showing ? ' on' : ''}`}
-      onClick={() =>
-        docked ? setSettings({ sidebar: !settings.sidebar }) : setDrawerOpen((v) => !v)
-      }
-      aria-label={showing ? 'Hide the list' : 'Show the list'}
-      title="The list"
+      className={`mark-button${!hidden && available ? ' on' : ''}`}
+      onClick={() => {
+        if (compact) navigate(to.notebook(notebook))
+        else setSettings({ sidebar: !columnsOn })
+      }}
+      aria-label={compact ? 'The list' : hidden ? 'Show the columns' : 'Hide the columns'}
+      title="The list — ⌘\"
     >
       ☰
     </button>
-  ) : null
+  )
 
   return (
     <div className="shell">
-      {showDocked ? <Sidebar notebook={notebook} activeId={activeId} /> : null}
+      {railOver ? (
+        <div className="rail-scrim" onMouseDown={() => setRailDrawer(false)} />
+      ) : null}
 
-      <div className="shell-main">{children(toggle)}</div>
+      {railDocked || railOver ? (
+        <div className={railOver ? 'rail-drawer' : 'rail-slot'}>
+          <Rail
+            activeId={notebook}
+            onPick={pickNotebook}
+            onManage={() => setManage(true)}
+            onNewPage={newPage}
+          />
+        </div>
+      ) : null}
 
-      {showDrawer ? (
-        <>
-          <div className="sidebar-scrim" onMouseDown={() => setDrawerOpen(false)} />
-          <div className="sidebar-drawer">
-            <Sidebar
-              notebook={notebook}
-              activeId={activeId}
-              onPick={() => setDrawerOpen(false)}
-            />
-          </div>
-        </>
+      {showList ? (
+        <PageList
+          notebook={notebook}
+          activeId={activeId}
+          compact={compact}
+          showRailButton={!docked || !columnsOn}
+          onOpenRail={() => (docked ? setSettings({ sidebar: true }) : setRailDrawer(true))}
+          onNewPage={newPage}
+        />
+      ) : null}
+
+      {showLeaf ? children({ toggle, hidden }) : null}
+
+      {manage ? (
+        <NotebookManager
+          onClose={() => setManage(false)}
+          onAdded={(id) => {
+            setSettings({ notebook: id })
+            navigate(to.notebook(id))
+          }}
+          onDeleted={(id) => {
+            if (id !== notebook) return
+            const next = books.find((book) => book.id !== id)?.id ?? firstNotebookId()
+            setSettings({ notebook: next })
+            navigate(to.notebook(next), { replace: true })
+          }}
+        />
       ) : null}
     </div>
   )

@@ -1,6 +1,7 @@
 import { navigate, to } from '../lib/router'
 import { shortStamp, countLabel } from '../lib/format'
-import { type Page, notebookOf, snippetOf, titleOf, wordCount } from '../lib/model'
+import { type Page, snippetOf, titleOf, wordCount } from '../lib/model'
+import { notebookForPage } from '../lib/notebooks'
 
 interface Props {
   page: Page
@@ -32,7 +33,7 @@ export function PageRow({ page, showNotebook, excerpt, active, compact, onOpen }
       {text ? <div className="row-snippet">{text}</div> : null}
       <div className="row-meta">
         {showNotebook ? (
-          <span className="row-book">{notebookOf(page.notebook).name}</span>
+          <span className="row-book">{notebookForPage(page.notebook).name}</span>
         ) : null}
         <span>{shortStamp(page.updated)}</span>
         {compact ? null : <span>{countLabel(wordCount(page.body), 'word')}</span>}

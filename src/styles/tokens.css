@@ -36,6 +36,8 @@
   --oxblood-800: #530a28;
   --forest-800: #123737;
   --navy-800: #082744;
+  --spruce-700: #24332a;
+  --spruce-800: #1b261f;
 
   /* ── the frame — night stock, always ──────────────────────────────── */
   --frame-bg: var(--teal-800);
@@ -56,8 +58,11 @@
   --font-body: 'Spectral', Georgia, serif;
   --font-ui: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'Courier Prime', 'Courier New', monospace;
-  --font-pen: 'Linotype Feltpen', 'Feltpen Com', 'Feltpen', 'Caveat', var(--font-body);
-  --pen-size: 21px;
+  --font-signage: 'Oswald', 'Archivo', sans-serif;
+  --font-pen: 'Linotype Feltpen', 'Grape Nuts', 'Caveat', var(--font-body);
+  --pen-size: 20px;
+  --pen-title: 30px;
+  --pen-quote: 22px;
 
   --text-2xs: 11px;
   --text-xs: 12px;
@@ -84,17 +89,20 @@
   --space-11: 64px;
 
   --measure-prose: 64ch;
+  --measure-max: 900px; /* the fluid ceiling: min(100%, 900px) */
   --header-height: 76px;
   --tabbar-height: 62px;
   --bar-height: 48px;
   --panel-height: 42px;
-  --sidebar-width: 268px;
-  --cover-ratio: 3 / 4;
+  --sidebar-width: 264px;
+  --list-width: 372px;
 
   /* ── surfaces and light ───────────────────────────────────────────── */
   --shadow-lift: 0 2px 0 rgba(0, 0, 0, 0.4), 0 18px 44px rgba(0, 0, 0, 0.56);
   --shadow-cover: 0 1px 0 rgba(0, 0, 0, 0.5), 0 10px 24px rgba(0, 0, 0, 0.42);
   --shadow-plate-brass: 0 1px 0 rgba(0, 0, 0, 0.55);
+  --shadow-print: 0 1px 0 rgba(0, 0, 0, 0.5), 0 12px 28px rgba(0, 0, 0, 0.48);
+  --shadow-print-wide: 0 1px 0 rgba(0, 0, 0, 0.5), 0 14px 32px rgba(0, 0, 0, 0.5);
   --wash-lantern: radial-gradient(
     circle at 50% 0%,
     rgba(241, 186, 122, 0.16) 0%,
@@ -118,8 +126,8 @@
   /* ── the page ─────────────────────────────────────────────────────── */
   --grid-pitch: 28px;
   --leading-page: 1.647; /* 17px × 1.647 = 28px exactly */
-  --page-margin-x: var(--space-11);
-  --page-margin-x-sm: var(--space-6);
+  --page-margin-x: 56px;
+  --page-margin-x-sm: 24px;
 }
 
 /* ── the leaf: paper stock ──────────────────────────────────────────── */
