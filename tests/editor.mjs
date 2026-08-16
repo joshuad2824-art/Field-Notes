@@ -414,7 +414,8 @@ await atWidth(1440, 900, async (view) => {
   ok('the rail is 264 wide', Math.round(rail.width) === 264, String(rail.width))
   ok('the list is 372 wide', Math.round(list.width) === 372, String(list.width))
   ok('the date is the masthead', (await view.locator('.rail-numeral').count()) === 1)
-  ok('today is lit in the week strip', (await view.locator('.rail-today').count()) === 1)
+  ok('the rail shows a whole month', (await view.locator('.rail .cal-day').count()) === 42)
+  ok('today is the one lit day', (await view.locator('.rail .cal-day.today').count()) === 1)
   /* Folding on an empty desk must not be a one-way door. */
   ok(
     'the bare desk carries the mark too',
@@ -975,6 +976,66 @@ await atWidth(1440, 900, async (view) => {
     'the wander is seeded, so it never shivers as you type',
     (await felt.getAttribute('d')) === wandering,
   )
+})
+
+/* ── the calendar ───────────────────────────────────────────────────── */
+
+/* The week strip became a month. The marks say two different things and a day
+   can carry both: a ring means something was written that day, and the one
+   filled brass dot is today. */
+await atWidth(1440, 900, async (view) => {
+  ok('a day with pages carries a ring', (await view.locator('.rail .cal-day.written').count()) >= 1)
+  ok(
+    'and the ring is not the same mark as today',
+    await view
+      .locator('.rail .cal-day.written .cal-day-n')
+      .first()
+      .evaluate((el) => getComputedStyle(el).boxShadow.includes('inset')),
+  )
+
+  /* the masthead opens the month, whole */
+  await view.locator('.rail-datum').click()
+  await view.waitForTimeout(600)
+  ok('the masthead opens the calendar', view.url().endsWith('/calendar'), view.url())
+  ok('which is six weeks of seven', (await view.locator('.calendar-grid .cal-day').count()) === 42)
+  ok('with no chrome bar', (await view.locator('.calendar-screen .chrome').count()) === 0)
+
+  const heading = () => view.locator('.calendar-name').textContent()
+  const thisMonth = await heading()
+
+  await view.locator('.link-caps[aria-label="The month after"]').click()
+  await view.waitForTimeout(400)
+  const next = await heading()
+  ok('it steps to the month after', next !== thisMonth, `${thisMonth} → ${next}`)
+  ok('and says so in the address', /\/calendar\/\d{4}-\d{2}$/.test(view.url()), view.url())
+
+  await view.locator('.link-caps[aria-label="The month before"]').click()
+  await view.locator('.link-caps[aria-label="The month before"]').click()
+  await view.waitForTimeout(400)
+  ok('and to the month before', (await heading()) !== thisMonth && (await heading()) !== next)
+
+  await view.locator('.link-caps', { hasText: 'Today' }).click()
+  await view.waitForTimeout(400)
+  ok('Today comes back', (await heading()) === thisMonth)
+  ok(
+    'the month lists its pages beneath it',
+    (await view.locator('.calendar-day .row-page').count()) >= 1,
+  )
+
+  /* a day opens its own pages */
+  await view.locator('.calendar-grid .cal-day.written').first().click()
+  await view.waitForTimeout(600)
+  ok('a day can be opened', /\/day\/\d{4}-\d{2}-\d{2}$/.test(view.url()), view.url())
+  ok('and shows what was written on it', (await view.locator('.row-page').count()) >= 1)
+
+  await view.locator('.row-page').first().click()
+  await view.waitForTimeout(600)
+  ok('and those pages open', view.url().includes('/p/'), view.url())
+
+  /* an empty day says so rather than showing nothing */
+  await view.goto(BASE + '/day/1998-03-04', { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(500)
+  ok('a day with nothing on it says so', (await view.locator('.empty').count()) === 1)
 })
 
 if (problems.length) {

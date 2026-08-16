@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie'
+import { dayOf } from './calendar'
 import {
   DEFAULT_NOTEBOOK,
   DEFAULT_NOTEBOOKS,
@@ -125,6 +126,27 @@ export async function allTags(): Promise<{ tag: string; count: number }[]> {
     }
   }
   return [...counts.values()].sort((a, b) => a.tag.localeCompare(b.tag))
+}
+
+/* The calendar's two reads. Both go through `dayOf`, so the rail's marks, the
+   day view and the month view can't disagree about which day a page is on. */
+export async function pagesOnDay(iso: string): Promise<Page[]> {
+  const rows = await db.pages.toArray()
+  return rows
+    .filter((p) => !p.deleted && dayOf(p) === iso)
+    .sort((a, b) => a.created - b.created)
+}
+
+export async function pagesInMonth(month: string): Promise<Page[]> {
+  const rows = await db.pages.toArray()
+  return rows
+    .filter((p) => !p.deleted && dayOf(p).startsWith(month))
+    .sort((a, b) => dayOf(a).localeCompare(dayOf(b)) || a.created - b.created)
+}
+
+export async function daysWritten(): Promise<Set<string>> {
+  const rows = await db.pages.toArray()
+  return new Set(rows.filter((p) => !p.deleted).map(dayOf))
 }
 
 export async function notebookCounts(): Promise<Record<string, number>> {

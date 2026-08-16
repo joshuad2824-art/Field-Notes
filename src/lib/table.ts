@@ -123,9 +123,7 @@ function rowLine(row: Cell[]): string {
 
 function delimiterLine(widths: number[]): string {
   const total = widths.reduce((a, b) => a + b, 0) || 1
-  const dashes = widths.map((w) =>
-    Math.max(MIN_DASHES, Math.round((w / total) * TOTAL_DASHES)),
-  )
+  const dashes = widths.map((w) => Math.max(MIN_DASHES, Math.round((w / total) * TOTAL_DASHES)))
   return `| ${dashes.map((n) => '-'.repeat(n)).join(' | ')} |`
 }
 

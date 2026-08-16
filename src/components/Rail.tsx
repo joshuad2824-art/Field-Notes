@@ -1,9 +1,10 @@
-import { livePages, notebookCounts } from '../lib/db'
-import { isoDay, isToday, mastheadParts, weekOf, WEEKDAY_LETTERS } from '../lib/format'
-import type { Page } from '../lib/model'
+import { daysWritten, notebookCounts } from '../lib/db'
+import { mastheadParts } from '../lib/format'
+import { monthNow } from '../lib/calendar'
 import { useNotebooks } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
+import { MonthGrid } from './MonthGrid'
 
 interface Props {
   activeId: string
@@ -17,11 +18,8 @@ interface Props {
 export function Rail({ activeId, onPick, onManage, onFold }: Props) {
   const books = useNotebooks()
   const counts = useLive<Record<string, number>>(notebookCounts, [], {})
-  const pages = useLive<Page[]>(() => livePages(), [], [])
+  const written = useLive<Set<string>>(daysWritten, [], new Set())
   const { weekday, day, month, year } = mastheadParts()
-
-  /* A brass dot under any day that has pages. */
-  const written = new Set(pages.map((page) => page.entryDate ?? isoDay(page.updated)))
 
   return (
     <aside className="rail">
@@ -42,43 +40,23 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
 
       <div className="rail-date">
         <div className="rail-weekday">{weekday}</div>
-        <div className="rail-datum">
+        {/* The masthead opens the month, whole. */}
+        <button className="rail-datum" onClick={() => navigate(to.calendar())}>
           <span className="rail-numeral">{day}</span>
           <span className="rail-monthyear">
             {month}
             <br />
             {year}
           </span>
-        </div>
+        </button>
       </div>
 
-      <div className="rail-week">
-        <div className="rail-week-row">
-          {WEEKDAY_LETTERS.map((letter, i) => (
-            <span key={i} className="rail-week-letter">
-              {letter}
-            </span>
-          ))}
-        </div>
-        <div className="rail-week-row rail-week-days">
-          {weekOf().map((date) => {
-            const today = isToday(date)
-            return (
-              <span key={date.toISOString()} className="rail-day">
-                {today ? (
-                  <span className="rail-today">{date.getDate()}</span>
-                ) : (
-                  <>
-                    <span className="rail-day-number">{date.getDate()}</span>
-                    <span
-                      className={`rail-day-dot${written.has(isoDay(date.getTime())) ? ' on' : ''}`}
-                    />
-                  </>
-                )}
-              </span>
-            )
-          })}
-        </div>
+      <div className="rail-month">
+        <MonthGrid
+          month={monthNow()}
+          written={written}
+          onPick={(iso) => navigate(to.day(iso))}
+        />
       </div>
 
       <div className="rail-rule" />

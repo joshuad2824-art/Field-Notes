@@ -38,11 +38,12 @@ Do not relitigate these without being asked. Each was argued through.
 11. **The page screen has no banner.** The leaf starts at the top of the screen and its own top margin carries the tools: back, the formatting row, undo/redo, and the ⋯ menu. Pin lives in that menu. The only thing above the page is a thin band behind the status bar, which exists so white status text stays legible over a cream leaf. It is the frame's own teal and it is the *whole* standoff — where the desk would otherwise add its own margin above the leaf, that margin is reduced by whatever the band already gave, so a device with an inset gets one band and not two stacked.
 12. **While the keyboard is up, nothing on screen but the tools and the text.** The page foot — word count, edited time, tags — is for looking at a finished page, not for writing one, so it gives its line back while you type and returns when the keyboard goes.
 13. **Three widths, three columns.** Past 1120px the app is a rail (264px), a page list (372px) and the desk. **Each column folds on its own** and both choices are remembered: the `☰` on the desk takes the list (⌘\), the `‹` in the rail's wordmark row folds the rail, and the `☰` in the list head brings the rail back (⌘⇧\). Every column carries the control for the one beside it, so no state is a dead end. Below 1120 nothing is docked — the list is the whole window, a page replaces it, and the rail slides over as a drawer that starts closed. Crossing the boundary reconciles the drawer.
-14. **The date is the masthead.** There is no chrome bar anywhere. The rail opens with the wordmark, the day numeral in Playfair at 76px, and a week strip with a brass dot under any day that has pages. The shelf screen and the four cover cards are retired.
-15. **The leaf fills the desk.** `max-width: none`; what's capped is the *measure*, fluid up to 900px, so the text widens with the window but a 27" monitor can't produce a 200-character line. Under 1120px the page is edge to edge — no desk, no shadow, no radius.
-16. **The toolbar at rest is three marks, not eleven.** `☰`, `Aa`, `⋯`, with `Saved` between them. Everything that shapes the page lives in the tray behind `Aa`.
-17. **New page belongs to the list, not the rail.** The button sits at the foot of the column showing the pages it will join, at every width. The rail's foot is Trash and Settings — the app's two back rooms and nothing else.
-18. **Nothing reads `env(safe-area-inset-*)` directly.** `--safe-top` and `--safe-bottom` in `tokens.css` are the only two places it appears. A desktop browser always reports zero for both, so the notch and the home indicator are invisible to us unless we can set them — and `npm run check` sets them to what an iPad reports and asserts on the bands that come out.
+14. **The date is the masthead.** There is no chrome bar anywhere. The rail opens with the wordmark, the day numeral in Playfair at 76px, and a **full month** below it. Two marks, and a day can carry both: an unfilled ring means something was written that day, and the one filled brass dot is today — the only thing on that grid that glows. The numeral opens the month whole, at `/calendar/YYYY-MM`, with that month's pages listed under it in the order they were written. Any day opens at `/day/YYYY-MM-DD`. All of it is a lens over the same pages and never a place they live. The shelf screen and the four cover cards are retired.
+15. **A page sits on the day it was written** — `entryDate ?? created`, in one helper, `dayOf`. Not `updated`: a journal whose March page jumps to August because a typo was fixed in it is telling you about the typo, not about March. The rail's marks, the day view and the month view all go through that one function so they can't drift apart.
+16. **The leaf fills the desk.** `max-width: none`; what's capped is the *measure*, fluid up to 900px, so the text widens with the window but a 27" monitor can't produce a 200-character line. Under 1120px the page is edge to edge — no desk, no shadow, no radius.
+17. **The toolbar at rest is three marks, not eleven.** `☰`, `Aa`, `⋯`, with `Saved` between them. Everything that shapes the page lives in the tray behind `Aa`.
+18. **New page belongs to the list, not the rail.** The button sits at the foot of the column showing the pages it will join, at every width. The rail's foot is Trash and Settings — the app's two back rooms and nothing else.
+19. **Nothing reads `env(safe-area-inset-*)` directly.** `--safe-top` and `--safe-bottom` in `tokens.css` are the only two places it appears. A desktop browser always reports zero for both, so the notch and the home indicator are invisible to us unless we can set them — and `npm run check` sets them to what an iPad reports and asserts on the bands that come out.
 
 ---
 
@@ -106,7 +107,7 @@ The order now runs: the wide layouts (done), then sync, then the native question
 What was Phase 3 gets picked over rather than built wholesale:
 
 - **Resurfacing** — a quiet "from your archive" on open, no notifications. Still wanted.
-- **Entry dates and a calendar lens.** The `entryDate` field and its control already exist; only the view is missing. A lens, never a container.
+- ~~**Entry dates and a calendar lens.**~~ **Done.** The rail carries a full month, any day opens its own pages, and the month opens whole with its pages beneath it and steps to past and future months. A lens, never a container — nothing is filed by date, it is only looked at that way.
 - **The commonplace book import** — the ~97 quotes and 40 aphorisms in Word. On hold and possibly dropped; it was a one-time migration of an existing collection, not a capability, and it is only worth doing if resurfacing is.
 - **Scheduled monthly export** — on hold. It was called the highest-value safety feature here, and the reasoning still holds: the realistic threat to this archive is loss, not intrusion. But an installed web app cannot write to iCloud Drive on a schedule, so on this stack it degrades to "offer the export on the first open of the month" and needs a tap. Manual export already covers the same ground. Revisit it if the native path is taken, where it becomes genuinely unattended.
 
@@ -144,9 +145,9 @@ desktop layouts. Nothing in `src/` imports anything that talks to a network — 
 isn't a convention, it's the whole point, and it should stay true until Phase 2.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 121 assertions covering the editor, the grid, indent, tables, the
-keyboard, the three widths, the folding columns, the safe-area bands, the
-notebook manager, pictures and the tray.
+rotted: 136 assertions covering the editor, the grid, indent, tables, the
+calendar, the keyboard, the three widths, the folding columns, the safe-area
+bands, the notebook manager, pictures and the tray.
 
 Two things are built but unproven, because only daily use proves them:
 

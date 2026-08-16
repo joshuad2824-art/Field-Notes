@@ -248,7 +248,8 @@ function render(host: Host, view: EditorView) {
   const active = document.activeElement
 
   while (body.children.length > table.rows.length) body.lastElementChild?.remove()
-  while (body.children.length < table.rows.length) body.appendChild(document.createElement('tr'))
+  while (body.children.length < table.rows.length)
+    body.appendChild(document.createElement('tr'))
 
   table.rows.forEach((row, r) => {
     const tr = body.children[r] as HTMLTableRowElement
@@ -339,7 +340,15 @@ function drawRules(host: Host) {
     const rowBox = tr.getBoundingClientRect()
     const y = Math.round(rowBox.bottom - box.top)
     if (y < h - 1) {
-      pair(svg, 0, y, w, y, seed++, tr.classList.contains('md-table-head') ? 'md-rule-head' : 'md-rule')
+      pair(
+        svg,
+        0,
+        y,
+        w,
+        y,
+        seed++,
+        tr.classList.contains('md-table-head') ? 'md-rule-head' : 'md-rule',
+      )
     }
     for (const td of tr.querySelectorAll('td')) {
       const cellBox = td.getBoundingClientRect()
