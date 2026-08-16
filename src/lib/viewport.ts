@@ -9,9 +9,26 @@ import { useSyncExternalStore } from 'react'
    tools row with it. `visualViewport.offsetTop` is how far it has been moved,
    so the app is positioned at that offset and sized to `visualViewport.height`.
    The result: the app covers exactly what can be seen, with the leaf ending
-   where the keyboard begins. */
+   where the keyboard begins.
+
+   That is the right answer while a keyboard is up and the wrong one the rest
+   of the time. Installed on iPadOS, `visualViewport.height` stops short of
+   the home indicator while `window.innerHeight` does not, so sizing to it
+   leaves a strip of the frame — lantern wash and all — showing under the
+   bottom of the app. An iPhone doesn't do this, which is why it only ever
+   turned up on the tablet. With no keyboard there is nothing to duck, so an
+   installed app takes the whole window and the strip has nowhere to be. In a
+   browser we keep ducking, because there the short viewport is Safari's own
+   toolbar and running under it would hide the foot of the list. */
 
 const KEYBOARD_THRESHOLD = 120
+
+function installed(): boolean {
+  const asApp = window.matchMedia?.('(display-mode: standalone)').matches
+  /* iOS Safari predates display-mode and still answers this one. */
+  const legacy = (window.navigator as { standalone?: boolean }).standalone === true
+  return asApp === true || legacy
+}
 
 let keyboardOpen = false
 const listeners = new Set<() => void>()
@@ -27,11 +44,15 @@ export function trackViewport(): void {
   const apply = () => {
     const height = vv ? vv.height : window.innerHeight
     const top = vv ? vv.offsetTop : 0
-
-    root.style.setProperty('--app-height', `${Math.round(height)}px`)
-    root.style.setProperty('--app-top', `${Math.round(top)}px`)
-
     const open = window.innerHeight - height > KEYBOARD_THRESHOLD
+
+    const whole = installed() && !open
+    root.style.setProperty(
+      '--app-height',
+      `${Math.round(whole ? window.innerHeight : height)}px`,
+    )
+    root.style.setProperty('--app-top', `${Math.round(whole ? 0 : top)}px`)
+
     if (open !== keyboardOpen) {
       keyboardOpen = open
       emit()
