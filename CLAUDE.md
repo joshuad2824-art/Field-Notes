@@ -28,7 +28,7 @@ Do not relitigate these without being asked. Each was argued through.
 1. **One page type.** Not notes-and-entries-and-tasks. A page, plus light attributes: notebook, tags, pinned, optional entry date. The four uses (capture, long-form, journaling, reference) come from attributes, never from separate sections.
 2. **No login, ever, after first run.** Device pairing with a non-expiring key. No sessions, no email, no password. The editor has no awareness a network exists — writes go to local storage and return immediately. Sync may fail without ever blocking the page.
 3. **Markdown files are the storage format.** Export is trivial because storage *is* the export format. No proprietary document tree.
-4. **Notebooks: exactly one level.** Field Notes, The Workshop, The Hearth, Church (names still provisional). No nesting, ever. Tags cut across notebooks.
+4. **Notebooks: exactly one level.** Seeded as Field Notes, The Workshop, The Hearth, Church. They are *data* now, not a constant — any notebook can be added, coloured from the palette, or deleted, and deleting one tombstones its pages for the usual thirty days. Still no nesting, ever. Tags cut across notebooks.
 5. **The syntax is never shown.** Not on hover, not on the active line. He will never want to see markdown. It lives in the file, not on the page.
 6. **No zoom.** `user-scalable=no`.
 7. **No handwriting / Pencil canvas.** Closed deliberately; removed the project's largest engineering risk.
@@ -37,7 +37,10 @@ Do not relitigate these without being asked. Each was argued through.
 10. **Pen and stock are per-page attributes with an app-wide default behind them.** Settings holds the default; a page only stores its own value once it has been given one deliberately, so changing the default moves every page that never disagreed with it. This is still not light/dark mode — the frame stays night either way, and the setting chooses what stock the leaf is cut from.
 11. **The page screen has no banner.** The leaf starts at the top of the screen and its own top margin carries the tools: back, the formatting row, undo/redo, and the ⋯ menu. Pin lives in that menu. The only thing above the page is a thin dark band behind the status bar, which exists so white status text stays legible over a cream leaf.
 12. **While the keyboard is up, nothing on screen but the tools and the text.** The page foot — word count, edited time, tags — is for looking at a finished page, not for writing one, so it gives its line back while you type and returns when the keyboard goes.
-13. **Three widths, one leaf.** The app fills whatever screen it's given; the *page* never does. Past 1120px the notebook list docks as a 268px sidebar and can be put away, and the choice is remembered. Between 820 and 1120 — an iPad in portrait — it slides over the desk instead of squeezing it and closes when you pick something. Below that there is no sidebar; the phone navigates screen by screen. On a large monitor the measure stays put and the page's own margins grow instead, so the leaf reads as a more generous page rather than a stretched one.
+13. **Three widths, three columns.** Past 1120px the app is a rail (264px), a page list (372px) and the desk; the columns can be put away together with ⌘\ and the choice is remembered. Below 1120 nothing is docked — the list is the whole window, a page replaces it, and the rail slides over as a drawer that starts closed. Crossing the boundary reconciles the flag.
+14. **The date is the masthead.** There is no chrome bar anywhere. The rail opens with the wordmark, the day numeral in Playfair at 76px, and a week strip with a brass dot under any day that has pages. The shelf screen and the four cover cards are retired.
+15. **The leaf fills the desk.** `max-width: none`; what's capped is the *measure*, fluid up to 900px, so the text widens with the window but a 27" monitor can't produce a 200-character line. Under 1120px the page is edge to edge — no desk, no shadow, no radius.
+16. **The toolbar at rest is three marks, not eleven.** `☰`, `Aa`, `⋯`, with `Saved` between them. Everything that shapes the page lives in the tray behind `Aa`.
 
 ---
 
@@ -115,7 +118,9 @@ What was Phase 3 gets picked over rather than built wholesale:
 - **Colored highlights use a custom extension** (`=={forest}...==`). Plain `==` is the portable convention; the brace tag is readable but non-standard. Decide before there's a lot of content.
 - **Export writes a small YAML frontmatter block** — notebook, created, updated, and any entry date, pin, pen or stock. Storage is still plain markdown; this is the one thing added on the way out, because a filename can't carry a created date and losing it would be worse. If it turns out to be clutter in another editor, drop it and accept the loss.
 - **The manifest says "Field Notes"** because a PWA needs *some* name on a home screen. That's a placeholder standing in for the undecided one, not a decision.
-- **Linotype Feltpen is commercially licensed.** The stack names it first with Caveat behind it, so it renders where he's installed it locally. If the felt page becomes daily, buy the webfont license and self-host.
+- **The felt pen is Grape Nuts now**, with Linotype Feltpen still named first for the machines where it's installed and Caveat behind it. 20px against Spectral's 17; the 28px line box is unchanged.
+- **Bold, italic, strike, code, lists and quote are keyboard-only on touch.** The design reduced the toolbar to three marks and the tray carries Title/Heading/Sub, the highlighters, picture, pen and stock — nothing else. On a desktop the shortcuts cover it; on a phone the only way to bold a word is to type the asterisks. Worth watching during the month, and cheap to reverse by adding a row to the tray.
+- **Pictures are markdown.** `![caption](images/<id>.<ext>){margin|full}` — the bytes live in Dexie beside the page and the export writes them at exactly that path, so the link resolves in any other editor. Floats wrap because CodeMirror's lines are ordinary sibling blocks; if that ever stops being true, the margin plate becomes a full-measure one.
 - **The iOS keyboard accessory bar** — the up/down arrows and the Done tick — cannot be removed from a web app. It's the strongest concrete argument for the native path and should be weighed at the end of Phase 1. It's also the reason the formatting row sits at the top of the page rather than docked above the keyboard: two bars stacked on the keyboard would be worse than one bar at the top. If the accessory bar ever goes, the strip should move down.
 
 ---
@@ -129,8 +134,8 @@ desktop layouts. Nothing in `src/` imports anything that talks to a network — 
 isn't a convention, it's the whole point, and it should stay true until Phase 2.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 35 assertions covering the editor, the grid, the keyboard, and the three
-widths.
+rotted: 48 assertions covering the editor, the grid, the keyboard, the three
+widths, and the notebook manager.
 
 Two things are built but unproven, because only daily use proves them:
 

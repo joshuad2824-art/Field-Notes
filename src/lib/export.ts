@@ -1,6 +1,8 @@
 import { zipSync, strToU8 } from 'fflate'
 import { db } from './db'
-import { NOTEBOOKS, type NotebookId, type Page, notebookOf, titleOf } from './model'
+import { imagesForPage } from './images'
+import { IMAGE_DIR, type NotebookId, type Page, imageIdsIn, titleOf } from './model'
+import { allNotebooks, notebookForPage } from './notebooks'
 import { isoDay } from './format'
 
 /* A notebook downloads as a folder of .md files. Storage is already markdown,
@@ -21,7 +23,7 @@ function slug(text: string): string {
 function frontmatter(page: Page): string {
   const lines = [
     '---',
-    `notebook: ${notebookOf(page.notebook).name}`,
+    `notebook: ${notebookForPage(page.notebook).name}`,
     `created: ${new Date(page.created).toISOString()}`,
     `updated: ${new Date(page.updated).toISOString()}`,
   ]
@@ -41,7 +43,24 @@ export function fileFor(page: Page): { name: string; text: string } {
   }
 }
 
-type Tree = Record<string, Uint8Array | Record<string, Uint8Array>>
+type Folder = Record<string, Uint8Array | Record<string, Uint8Array>>
+type Tree = Record<string, Uint8Array | Folder>
+
+/* The markdown says `images/<id>.<ext>`; export writes the bytes at exactly
+   that path, so the link resolves wherever the folder is opened. */
+async function imagesFolder(pages: Page[]): Promise<Record<string, Uint8Array>> {
+  const files: Record<string, Uint8Array> = {}
+  for (const page of pages) {
+    const wanted = new Set(imageIdsIn(page.body))
+    if (!wanted.size) continue
+    for (const record of await imagesForPage(page.id)) {
+      if (!wanted.has(record.id)) continue
+      const bytes = new Uint8Array(await record.blob.arrayBuffer())
+      files[`${record.id}.${record.ext}`] = bytes
+    }
+  }
+  return files
+}
 
 function addUnique(folder: Record<string, Uint8Array>, name: string, data: Uint8Array) {
   let candidate = name
@@ -78,8 +97,13 @@ export async function exportNotebook(notebook: NotebookId): Promise<number> {
     const { name, text } = fileFor(page)
     addUnique(folder, name, strToU8(text))
   }
-  const book = notebookOf(notebook)
-  const zip = zipSync({ [slug(book.name)]: folder } as Tree, { level: 6 })
+  const book = notebookForPage(notebook)
+  const pictures = await imagesFolder(pages)
+  const tree: Tree = { [slug(book.name)]: folder as Folder }
+  if (Object.keys(pictures).length) {
+    ;(tree[slug(book.name)] as Folder)[IMAGE_DIR] = pictures
+  }
+  const zip = zipSync(tree as never, { level: 6 })
   download(
     new Blob([zip as BlobPart], { type: 'application/zip' }),
     `${slug(book.name)}-${isoDay()}.zip`,
@@ -90,15 +114,20 @@ export async function exportNotebook(notebook: NotebookId): Promise<number> {
 export async function exportShelf(): Promise<number> {
   const pages = await livePages()
   const tree: Tree = {}
-  for (const book of NOTEBOOKS) {
+  for (const book of allNotebooks()) {
     const folder: Record<string, Uint8Array> = {}
     for (const page of pages.filter((p) => p.notebook === book.id)) {
       const { name, text } = fileFor(page)
       addUnique(folder, name, strToU8(text))
     }
-    if (Object.keys(folder).length) tree[slug(book.name)] = folder
+    if (Object.keys(folder).length) {
+      const pictures = await imagesFolder(pages.filter((p) => p.notebook === book.id))
+      const branch: Folder = { ...folder }
+      if (Object.keys(pictures).length) branch[IMAGE_DIR] = pictures
+      tree[slug(book.name)] = branch
+    }
   }
-  const zip = zipSync(tree, { level: 6 })
+  const zip = zipSync(tree as never, { level: 6 })
   download(
     new Blob([zip as BlobPart], { type: 'application/zip' }),
     `field-notes-${isoDay()}.zip`,
@@ -106,7 +135,20 @@ export async function exportShelf(): Promise<number> {
   return pages.length
 }
 
-export function exportPage(page: Page) {
+/* A single page with pictures has to be a folder too, or the links dangle. */
+export async function exportPage(page: Page): Promise<void> {
   const { name, text } = fileFor(page)
-  download(new Blob([text], { type: 'text/markdown;charset=utf-8' }), name)
+  const pictures = await imagesFolder([page])
+
+  if (!Object.keys(pictures).length) {
+    download(new Blob([text], { type: 'text/markdown;charset=utf-8' }), name)
+    return
+  }
+
+  const stem = name.replace(/\.md$/, '')
+  const zip = zipSync(
+    { [stem]: { [name]: strToU8(text), [IMAGE_DIR]: pictures } } as never,
+    { level: 6 },
+  )
+  download(new Blob([zip as BlobPart], { type: 'application/zip' }), `${stem}.zip`)
 }

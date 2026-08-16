@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { redo, undo, undoDepth, redoDepth } from '@codemirror/commands'
 import type { EditorView } from '@codemirror/view'
 import { Editor } from '../editor/Editor'
-import { applyBlock, applyHighlight, applyWrap } from '../editor/commands'
+import { insertPicture } from '../editor/commands'
 import { Sheet, SheetItem } from '../components/Sheet'
 import { Shell } from '../components/Shell'
+import { StyleTray } from '../components/StyleTray'
 import {
   clearOverrides,
   deletePage,
@@ -17,33 +17,40 @@ import {
   setStock,
 } from '../lib/db'
 import { exportPage } from '../lib/export'
-import { editedStamp, countLabel } from '../lib/format'
+import { addImage, isImage, pruneImages } from '../lib/images'
+import { editedStamp, countLabel, todayLine } from '../lib/format'
 import {
-  NOTEBOOKS,
   type NotebookId,
   type Page,
+  type Placement,
   effectivePen,
   effectiveStock,
+  imageMarkdown,
   isBlank,
-  notebookOf,
   tagsOf,
   wordCount,
 } from '../lib/model'
+import { notebookForPage, useNotebooks } from '../lib/notebooks'
 import { useSettings } from '../lib/settings'
 import { useKeyboardOpen } from '../lib/viewport'
+import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { back, navigate, to } from '../lib/router'
 
 const SAVE_DELAY = 250
 
 export function PageScreen({ id }: { id: string }) {
   const settings = useSettings()
+  const books = useNotebooks()
   const keyboardOpen = useKeyboardOpen()
+  const docked = useMediaQuery(SIDEBAR_DOCKED)
+
   const [page, setPage] = useState<Page | null>(null)
   const [missing, setMissing] = useState(false)
   const [body, setBody] = useState('')
   const [view, setView] = useState<EditorView | null>(null)
-  const [panel, setPanel] = useState<'style' | 'hl' | null>(null)
+  const [tray, setTray] = useState(false)
   const [menu, setMenu] = useState(false)
+  const [placement, setPlacement] = useState<Placement>('margin')
 
   const color = useRef('brass')
   const bodyRef = useRef('')
@@ -85,11 +92,9 @@ export function PageScreen({ id }: { id: string }) {
     return () => {
       window.removeEventListener('pagehide', onHide)
       document.removeEventListener('visibilitychange', onHide)
-      /* A page opened blank and left blank was never written; it leaves
-         nothing behind. A page that had text and was emptied is still a page,
-         and goes to the tombstone pile like any other. */
       if (openedBlank.current && isBlank(bodyRef.current)) void deletePage(id)
       else flush.current()
+      void pruneImages(id, bodyRef.current)
     }
   }, [id])
 
@@ -107,38 +112,41 @@ export function PageScreen({ id }: { id: string }) {
     setPage((current) => (current ? { ...current, ...patch } : current))
   }
 
+  /* Drop a photograph on the page and it lands where it was dropped. */
+  const onDropFile = async (file: File) => {
+    if (!view || !isImage(file)) return
+    const record = await addImage(id, file)
+    insertPicture(view, imageMarkdown(record.id, record.ext, '', placement))
+  }
+
   if (missing) {
     return (
       <div className="app">
         <div className="statusband" />
         <div className="empty">That page isn't here.</div>
-        <div className="bottombar">
-          <button className="primary" onClick={() => navigate(to.shelf())}>
-            The shelf
-          </button>
-        </div>
       </div>
     )
   }
 
   if (!page) return <div className="app" />
 
-  const book = notebookOf(page.notebook)
+  const book = notebookForPage(page.notebook)
   const tags = tagsOf(body)
   const words = wordCount(body)
   const pen = effectivePen(page, settings.pen)
   const stock = effectiveStock(page, settings.stock)
   const follows = page.pen === undefined && page.stock === undefined
-  const canUndo = view ? undoDepth(view.state) > 0 : false
-  const canRedo = view ? redoDepth(view.state) > 0 : false
 
-  const togglePanel = (which: 'style' | 'hl') => {
-    setPanel((current) => (current === which ? null : which))
-    view?.focus()
+  const togglePen = () => {
+    const next = pen === 'felt' ? 'ink' : 'felt'
+    void setPen(page.id, next)
+    update({ pen: next })
   }
 
-  const run = (fn: (v: EditorView) => void) => () => {
-    if (view) fn(view)
+  const toggleStock = () => {
+    const next = stock === 'night' ? 'paper' : 'night'
+    void setStock(page.id, next)
+    update({ stock: next })
   }
 
   return (
@@ -146,177 +154,58 @@ export function PageScreen({ id }: { id: string }) {
       <div className="statusband" />
 
       <Shell notebook={book.id} activeId={page.id}>
-        {(toggle) => (
-          <>
-            <main className="desk">
-              <article className="leaf" data-stock={stock} data-pen={pen}>
-                {/* The page's own top margin carries the tools. There is no banner
-              above it — the leaf starts at the top of the screen. */}
-                <div className="tools">
-                  <div className="row">
-                    {toggle}
-                    <button
-                      className="tool glyph"
-                      onClick={() => back(to.notebook(book.id))}
-                      aria-label="Back"
-                    >
-                      ‹
-                    </button>
-                    <button
-                      className={`tool${panel === 'style' ? ' on' : ''}`}
-                      onClick={() => togglePanel('style')}
-                      title="Styles"
-                    >
-                      Aa
-                    </button>
-                    <button
-                      className="tool"
-                      onClick={run((v) => applyWrap(v, '**'))}
-                      title="Bold ⌘B"
-                    >
-                      <b>B</b>
-                    </button>
-                    <button
-                      className="tool"
-                      onClick={run((v) => applyWrap(v, '*'))}
-                      title="Italic ⌘I"
-                    >
-                      <i>I</i>
-                    </button>
-                    <button
-                      className={`tool${panel === 'hl' ? ' on' : ''}`}
-                      onClick={() => togglePanel('hl')}
-                      title="Highlighter"
-                    >
-                      ▮
-                    </button>
-                    <button
-                      className="tool"
-                      onClick={run((v) => applyBlock(v, '- [ ] '))}
-                      title="Checklist"
-                    >
-                      ☐
-                    </button>
-                    <span className="grow" />
-                    <button
-                      className="tool"
-                      onClick={run(undo)}
-                      disabled={!canUndo}
-                      title="Undo ⌘Z"
-                    >
-                      ↶
-                    </button>
-                    <button
-                      className="tool"
-                      onClick={run(redo)}
-                      disabled={!canRedo}
-                      title="Redo ⌘⇧Z"
-                    >
-                      ↷
-                    </button>
-                    <button
-                      className="tool glyph"
-                      onClick={() => setMenu(true)}
-                      aria-label="Page options"
-                    >
-                      ⋯
-                    </button>
-                  </div>
-
-                  <div className={`panel${panel === 'style' ? ' open' : ''}`}>
-                    <button className="tool serif" onClick={run((v) => applyBlock(v, '# '))}>
-                      Title
-                    </button>
-                    <button className="tool serif" onClick={run((v) => applyBlock(v, '## '))}>
-                      Heading
-                    </button>
-                    <button className="tool caps" onClick={run((v) => applyBlock(v, '### '))}>
-                      Subhead
-                    </button>
-                    <span className="divider" />
-                    <button
-                      className="tool"
-                      onClick={run((v) => applyWrap(v, '~~'))}
-                      title="Strikethrough"
-                    >
-                      <s>S</s>
-                    </button>
-                    <button
-                      className="tool mono"
-                      onClick={run((v) => applyWrap(v, '`'))}
-                      title="Monostyled"
-                    >
-                      ``
-                    </button>
-                    <span className="divider" />
-                    <button
-                      className="tool"
-                      onClick={run((v) => applyBlock(v, '* '))}
-                      title="Bulleted list"
-                    >
-                      •
-                    </button>
-                    <button
-                      className="tool"
-                      onClick={run((v) => applyBlock(v, '- '))}
-                      title="Dashed list"
-                    >
-                      –
-                    </button>
-                    <button
-                      className="tool mono"
-                      onClick={run((v) => applyBlock(v, '1. '))}
-                      title="Numbered list"
-                    >
-                      1.
-                    </button>
-                    <span className="divider" />
-                    <button
-                      className="tool serif"
-                      onClick={run((v) => applyBlock(v, '> '))}
-                      title="Block quote"
-                    >
-                      “
-                    </button>
-                  </div>
-
-                  <div className={`panel${panel === 'hl' ? ' open' : ''}`}>
-                    {['oxblood', 'forest', 'navy', 'driftwood', 'brass'].map((c) => (
-                      <button
-                        key={c}
-                        className="sw"
-                        data-c={c}
-                        aria-label={c}
-                        onClick={() => {
-                          color.current = c
-                          if (view) applyHighlight(view, c)
-                        }}
-                      />
-                    ))}
-                    <button
-                      className="sw none"
-                      aria-label="Remove highlight"
-                      onClick={run((v) => applyHighlight(v, 'off'))}
-                    >
-                      ×
-                    </button>
-                  </div>
+        {({ toggle, hidden }) => (
+          <main className="desk" key="desk">
+            <article className="leaf" data-stock={stock} data-pen={pen}>
+              {/* Three marks at rest, not eleven. */}
+              <div className="tools">
+                <div className="row">
+                  {toggle}
+                  {hidden ? (
+                    <span className="breadcrumb">
+                      {book.name} · {todayLine()}
+                    </span>
+                  ) : null}
+                  <span className="grow" />
+                  <span className="saved">Saved</span>
+                  <button
+                    className={`mark-button wide${tray ? ' on' : ''}`}
+                    onClick={() => setTray((open) => !open)}
+                    aria-label="Style"
+                  >
+                    Aa
+                  </button>
+                  <button
+                    className="mark-button"
+                    onClick={() => setMenu(true)}
+                    aria-label="Page options"
+                  >
+                    ⋯
+                  </button>
                 </div>
+              </div>
 
-                <Editor
-                  key={page.id}
-                  initialBody={page.body}
-                  onChange={onChange}
-                  onView={setView}
-                  highlightColor={() => color.current}
-                  autofocus={isBlank(page.body)}
-                />
+              <Editor
+                key={page.id}
+                initialBody={page.body}
+                onChange={onChange}
+                onView={setView}
+                highlightColor={() => color.current}
+                onDropFile={onDropFile}
+                autofocus={isBlank(page.body)}
+              />
 
-                {/* The foot is for looking at a finished page, not for writing one.
-              While the keyboard is up it gets out of the way and gives its
-              line back to the text. */}
-                {keyboardOpen ? null : (
-                  <div className="pagefoot">
+              {keyboardOpen ? null : (
+                <div className="pagefoot">
+                  <div className="pagefoot-measure">
+                    {docked ? null : (
+                      <button
+                        className="foot-back"
+                        onClick={() => back(to.notebook(book.id))}
+                      >
+                        ‹ list
+                      </button>
+                    )}
                     <span>{countLabel(words, 'word')}</span>
                     <span>·</span>
                     <span>{editedStamp(page.updated)}</span>
@@ -331,10 +220,26 @@ export function PageScreen({ id }: { id: string }) {
                       </button>
                     ))}
                   </div>
-                )}
-              </article>
-            </main>
-          </>
+                </div>
+              )}
+
+              {tray ? (
+                <StyleTray
+                  view={view}
+                  pageId={page.id}
+                  pen={pen}
+                  stock={stock}
+                  placement={placement}
+                  highlight={color.current}
+                  onPlacement={setPlacement}
+                  onHighlight={(next) => (color.current = next)}
+                  onPen={togglePen}
+                  onStock={toggleStock}
+                  onClose={() => setTray(false)}
+                />
+              ) : null}
+            </article>
+          </main>
         )}
       </Shell>
 
@@ -351,21 +256,13 @@ export function PageScreen({ id }: { id: string }) {
           />
           <SheetItem
             label="Pen"
-            state={follows || page.pen === undefined ? `${pen} · default` : pen}
-            onClick={() => {
-              const next = pen === 'felt' ? 'ink' : 'felt'
-              void setPen(page.id, next)
-              update({ pen: next })
-            }}
+            state={page.pen === undefined ? `${pen} · default` : pen}
+            onClick={togglePen}
           />
           <SheetItem
             label="Stock"
             state={page.stock === undefined ? `${stock} · default` : stock}
-            onClick={() => {
-              const next = stock === 'night' ? 'paper' : 'night'
-              void setStock(page.id, next)
-              update({ stock: next })
-            }}
+            onClick={toggleStock}
           />
           {!follows ? (
             <SheetItem
@@ -393,7 +290,7 @@ export function PageScreen({ id }: { id: string }) {
 
           <div className="sheet-rule" />
           <div className="sheet-label">Notebook</div>
-          {NOTEBOOKS.map((b) => (
+          {books.map((b) => (
             <SheetItem
               key={b.id}
               label={b.name}
@@ -410,7 +307,7 @@ export function PageScreen({ id }: { id: string }) {
           <SheetItem
             label="Export as markdown"
             onClick={() => {
-              exportPage({ ...page, body })
+              void exportPage({ ...page, body })
               setMenu(false)
             }}
           />

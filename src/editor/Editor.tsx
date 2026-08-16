@@ -10,13 +10,21 @@ interface Props {
   onChange: (body: string) => void
   onView: (view: EditorView | null) => void
   highlightColor: () => string
+  onDropFile?: (file: File) => void
   autofocus?: boolean
 }
 
-export function Editor({ initialBody, onChange, onView, highlightColor, autofocus }: Props) {
+export function Editor({
+  initialBody,
+  onChange,
+  onView,
+  highlightColor,
+  onDropFile,
+  autofocus,
+}: Props) {
   const host = useRef<HTMLDivElement>(null)
-  const latest = useRef({ onChange, highlightColor })
-  latest.current = { onChange, highlightColor }
+  const latest = useRef({ onChange, highlightColor, onDropFile })
+  latest.current = { onChange, highlightColor, onDropFile }
 
   useEffect(() => {
     if (!host.current) return
@@ -49,6 +57,19 @@ export function Editor({ initialBody, onChange, onView, highlightColor, autofocu
           }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) latest.current.onChange(update.state.doc.toString())
+          }),
+          EditorView.domEventHandlers({
+            drop(event) {
+              const file = event.dataTransfer?.files?.[0]
+              if (!file || !file.type.startsWith('image/')) return false
+              event.preventDefault()
+              latest.current.onDropFile?.(file)
+              return true
+            },
+            dragover(event) {
+              if (event.dataTransfer?.types?.includes('Files')) event.preventDefault()
+              return false
+            },
           }),
         ],
       }),

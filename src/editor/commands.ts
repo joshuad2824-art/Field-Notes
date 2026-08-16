@@ -155,3 +155,22 @@ export function continueList(view: EditorView): boolean {
   })
   return true
 }
+
+/* A picture goes in on its own line, so the float has somewhere to start and
+   the writing that follows runs around it. */
+export function insertPicture(view: EditorView, markdown: string): boolean {
+  const { state } = view
+  const range = state.selection.main
+  const line = state.doc.lineAt(range.from)
+  const atLineStart = line.text.trim() === ''
+  const insert = atLineStart ? `${markdown}\n` : `\n${markdown}\n`
+  const at = atLineStart ? line.from : line.to
+
+  view.dispatch({
+    changes: { from: at, to: atLineStart ? line.to : at, insert },
+    selection: { anchor: at + insert.length },
+    scrollIntoView: true,
+  })
+  view.focus()
+  return true
+}

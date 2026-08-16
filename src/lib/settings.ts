@@ -12,10 +12,17 @@ export interface Settings {
   /* Whether the docked sidebar is showing. Only consulted where there's room
      to dock one; on a tablet the sidebar is a tap away, not a preference. */
   sidebar: boolean
+  /* The notebook the app opens into. */
+  notebook: string
 }
 
 const KEY = 'field-notes.settings'
-const FALLBACK: Settings = { pen: 'ink', stock: 'paper', sidebar: true }
+const FALLBACK: Settings = {
+  pen: 'ink',
+  stock: 'paper',
+  sidebar: true,
+  notebook: 'field-notes',
+}
 
 let current: Settings = read()
 const listeners = new Set<() => void>()
@@ -29,6 +36,7 @@ function read(): Settings {
       pen: parsed.pen === 'felt' ? 'felt' : 'ink',
       stock: parsed.stock === 'night' ? 'night' : 'paper',
       sidebar: parsed.sidebar !== false,
+      notebook: typeof parsed.notebook === 'string' ? parsed.notebook : FALLBACK.notebook,
     }
   } catch {
     return FALLBACK
