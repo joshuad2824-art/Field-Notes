@@ -166,15 +166,19 @@
   line-height: var(--grid-pitch);
 }
 
-.md-quote {
+/* The rule steps further into the margin rather than the text stepping right,
+   so the quote still starts on the same edge as everything else. Scoped to
+   .editor to outrank the .cm-line padding reset — without that the padding was
+   silently dropped and the text sat against the rule. */
+.editor .md-quote {
   font-family: var(--font-editorial);
   font-style: italic;
   font-size: var(--text-lg);
   line-height: var(--grid-pitch);
   color: var(--text-heading);
   border-left: 2px solid var(--rule-accent);
-  padding-left: var(--space-6);
-  margin-left: -22px;
+  padding-left: 30px;
+  margin-left: -32px;
 }
 
 /* The marker sits in the page margin the way a drawn bullet does, and the
@@ -564,8 +568,9 @@
 }
 
 @media (max-width: 1119px) {
-  .md-quote {
-    margin-left: 0;
+  .editor .md-quote {
+    margin-left: -14px;
+    padding-left: 22px;
   }
 }
 
@@ -598,12 +603,15 @@
   }
 }
 
-/* The plate keeps the grid: 196px is 7 rows, 280px is 10. */
+/* The whole picture, never a crop of it — the plate takes whatever shape the
+   photograph is. That costs the 28px grid under the picture itself; the
+   writing above and below still sits on it. */
 .md-plate-image {
   display: block;
   width: 100%;
-  height: 196px;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
+  cursor: grab;
   border-radius: 3px;
   border: 1px solid rgba(246, 243, 236, 0.12);
   box-shadow: var(--shadow-print);
@@ -612,12 +620,29 @@
     box-shadow var(--duration-base) var(--ease-standard);
 }
 .md-plate-full .md-plate-image {
-  height: 280px;
   box-shadow: var(--shadow-print-wide);
+}
+.md-plate-image:active {
+  cursor: grabbing;
 }
 .md-plate-image:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lift);
+}
+
+/* A vector has its own edges. No plate, no frame, no ground behind it. */
+.md-plate-vector .md-plate-image {
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.md-plate-vector .md-plate-image:hover {
+  box-shadow: none;
+}
+.md-plate-vector .md-plate-caption {
+  border-top: none;
+  padding-top: 0;
 }
 
 .md-plate-caption {
@@ -631,4 +656,11 @@
   text-transform: uppercase;
   color: var(--text-quiet);
   line-height: 20px;
+}
+
+/* Held down on a touch screen, ready to be put somewhere else. */
+.md-plate.lifted .md-plate-image {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: var(--shadow-lift);
+  opacity: 0.9;
 }

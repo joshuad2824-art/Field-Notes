@@ -161,3 +161,8 @@ export function wordCount(body: string): number {
 export function isBlank(body: string): boolean {
   return body.trim() === ''
 }
+
+/* The drag payload when a picture is moved from one place in the page to
+   another. Its own type, so a picture dragged out of the page and a file
+   dragged in don't get confused for each other. */
+export const PICTURE_DRAG = 'application/x-field-notes-picture'
