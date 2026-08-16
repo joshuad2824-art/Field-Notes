@@ -140,6 +140,77 @@ await page.locator('.tray .sw[aria-label="forest"]').click()
 await page.waitForTimeout(250)
 ok('the highlighter marks the selection', (await page.locator('.md-hl-forest').count()) === 1)
 
+/* the blocks came back to the tray — they were only ever missing their
+   buttons, never their grammar */
+await page.keyboard.press('Control+End')
+await page.keyboard.press('Enter')
+await type('a line to shape')
+
+const wasDots = await page.locator('.md-dot').count()
+await page.locator('.tray-block[aria-label="Bullet"]').click()
+await page.waitForTimeout(200)
+ok('the tray writes a bullet', (await page.locator('.md-dot').count()) === wasDots + 1)
+
+await page.locator('.tray-block[aria-label="Dash"]').click()
+await page.waitForTimeout(200)
+ok('and swaps it for a dash', (await page.locator('.md-dash').count()) === 1)
+
+await page.locator('.tray-block[aria-label="Numbers"]').click()
+await page.waitForTimeout(200)
+ok('and numbers it', (await page.locator('.md-num').count()) === 1)
+
+const wasBoxes = await page.locator('.md-box').count()
+await page.locator('.tray-block[aria-label="Checkbox"]').click()
+await page.waitForTimeout(200)
+ok('and gives it a box', (await page.locator('.md-box').count()) === wasBoxes + 1)
+
+await page.locator('.tray-block[aria-label="Quote"]').click()
+await page.waitForTimeout(200)
+ok('and turns it into a quote', (await page.locator('.md-quote').count()) === 1)
+ok('none of which shows its syntax', (await lastLine()) === 'a line to shape', await lastLine())
+
+/* a mark finds the word under the caret, because nothing is ever selected
+   when a finger taps B */
+await page.keyboard.press('Control+End')
+await page.keyboard.press('Enter')
+await page.keyboard.press('Enter')
+await type('emphasis')
+const wasStrong = await page.locator('.md-strong').count()
+await page.locator('.tray-mark[aria-label^="Bold"]').click()
+await page.waitForTimeout(250)
+ok(
+  'a mark takes the word under the caret',
+  (await page.locator('.md-strong').count()) === wasStrong + 1,
+)
+ok('and hides its asterisks', (await lastLine()) === 'emphasis', await lastLine())
+
+/* an empty pair has nothing to wrap, so the grammar can't hide it — better to
+   do nothing than to show four asterisks */
+await page.keyboard.press('Control+End')
+await page.keyboard.press('Enter')
+await page.keyboard.press('Control+b')
+await page.waitForTimeout(200)
+ok(
+  'a mark with no word leaves no syntax behind',
+  !(await lastLine())?.includes('*'),
+  JSON.stringify(await lastLine()),
+)
+
+/* a page can be started without leaving the one in hand — below 1120 the list
+   and its New page button aren't on screen at all */
+await page.locator('.mark-button[aria-label="Style"]').click()
+await page.waitForTimeout(150)
+const wasPage = page.url()
+await page.locator('.mark-button[aria-label="Page options"]').click()
+await page.waitForTimeout(250)
+await page.locator('.sheet-item', { hasText: 'New page' }).click()
+await page.waitForTimeout(700)
+ok('a page starts from inside a page', page.url() !== wasPage, page.url())
+ok(
+  'and it opens empty',
+  (await page.locator('.cm-content').evaluate((el) => el.textContent))?.trim() === '',
+)
+
 /* local storage is the primary store, not a cache */
 await page.waitForTimeout(400)
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })

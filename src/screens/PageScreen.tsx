@@ -7,6 +7,7 @@ import { Shell } from '../components/Shell'
 import { StyleTray } from '../components/StyleTray'
 import {
   clearOverrides,
+  createPage,
   deletePage,
   getPage,
   moveTo,
@@ -245,6 +246,19 @@ export function PageScreen({ id }: { id: string }) {
 
       {menu ? (
         <Sheet onClose={() => setMenu(false)}>
+          {/* Below 1120 the list isn't on screen, so this is the only way to
+              start a page without leaving the one in hand. ⌘⇧N does it from
+              anywhere on a desktop. */}
+          <SheetItem
+            label="New page"
+            state="⌘⇧N"
+            onClick={() => {
+              setMenu(false)
+              void createPage(page.notebook).then((next) => navigate(to.page(next.id)))
+            }}
+          />
+
+          <div className="sheet-rule" />
           <div className="sheet-label">Page</div>
           <SheetItem
             label={page.pinned ? 'Unpin' : 'Pin'}
