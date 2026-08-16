@@ -9,10 +9,13 @@ import type { Pen, Stock } from './model'
 export interface Settings {
   pen: Pen
   stock: Stock
+  /* Whether the docked sidebar is showing. Only consulted where there's room
+     to dock one; on a tablet the sidebar is a tap away, not a preference. */
+  sidebar: boolean
 }
 
 const KEY = 'field-notes.settings'
-const FALLBACK: Settings = { pen: 'ink', stock: 'paper' }
+const FALLBACK: Settings = { pen: 'ink', stock: 'paper', sidebar: true }
 
 let current: Settings = read()
 const listeners = new Set<() => void>()
@@ -25,6 +28,7 @@ function read(): Settings {
     return {
       pen: parsed.pen === 'felt' ? 'felt' : 'ink',
       stock: parsed.stock === 'night' ? 'night' : 'paper',
+      sidebar: parsed.sidebar !== false,
     }
   } catch {
     return FALLBACK

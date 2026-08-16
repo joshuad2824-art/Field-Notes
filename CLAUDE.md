@@ -37,6 +37,7 @@ Do not relitigate these without being asked. Each was argued through.
 10. **Pen and stock are per-page attributes with an app-wide default behind them.** Settings holds the default; a page only stores its own value once it has been given one deliberately, so changing the default moves every page that never disagreed with it. This is still not light/dark mode — the frame stays night either way, and the setting chooses what stock the leaf is cut from.
 11. **The page screen has no banner.** The leaf starts at the top of the screen and its own top margin carries the tools: back, the formatting row, undo/redo, and the ⋯ menu. Pin lives in that menu. The only thing above the page is a thin dark band behind the status bar, which exists so white status text stays legible over a cream leaf.
 12. **While the keyboard is up, nothing on screen but the tools and the text.** The page foot — word count, edited time, tags — is for looking at a finished page, not for writing one, so it gives its line back while you type and returns when the keyboard goes.
+13. **Three widths, one leaf.** The app fills whatever screen it's given; the *page* never does. Past 1120px the notebook list docks as a 268px sidebar and can be put away, and the choice is remembered. Between 820 and 1120 — an iPad in portrait — it slides over the desk instead of squeezing it and closes when you pick something. Below that there is no sidebar; the phone navigates screen by screen. On a large monitor the measure stays put and the page's own margins grow instead, so the leaf reads as a more generous page rather than a stretched one.
 
 ---
 
@@ -94,9 +95,17 @@ The Timber & Ink brand voice is first-person singular. **This app is the excepti
 
 **Phase 2 — sync and device pairing.** Only after Phase 1 has survived a month.
 
-**Phase 3 — resurfacing (quiet "from your archive" on open, no notifications), the commonplace book import (~97 quotes and 40 aphorisms currently in Word), entry dates and a calendar lens, scheduled monthly export to iCloud Drive.**
+**Phase 3 — reordered, August 2026, and shorter than it was.**
 
-Scheduled export is the highest-value safety feature in the project. The realistic threat to this archive is loss, not intrusion.
+The order now runs: the wide layouts (done), then sync, then the native question.
+What was Phase 3 gets picked over rather than built wholesale:
+
+- **Resurfacing** — a quiet "from your archive" on open, no notifications. Still wanted.
+- **Entry dates and a calendar lens.** The `entryDate` field and its control already exist; only the view is missing. A lens, never a container.
+- **The commonplace book import** — the ~97 quotes and 40 aphorisms in Word. On hold and possibly dropped; it was a one-time migration of an existing collection, not a capability, and it is only worth doing if resurfacing is.
+- **Scheduled monthly export** — on hold. It was called the highest-value safety feature here, and the reasoning still holds: the realistic threat to this archive is loss, not intrusion. But an installed web app cannot write to iCloud Drive on a schedule, so on this stack it degrades to "offer the export on the first open of the month" and needs a tap. Manual export already covers the same ground. Revisit it if the native path is taken, where it becomes genuinely unattended.
+
+**The native question, after sync.** Two concrete things now argue for it rather than one: the keyboard accessory bar, and unattended scheduled export. A real Apple app would also let the formatting strip dock above the keyboard on iOS while staying at the top of the page on the desktop.
 
 ---
 
@@ -115,8 +124,13 @@ Scheduled export is the highest-value safety feature in the project. The realist
 
 Phase 1 stands up end to end: the shelf and four covers, notebook lists with pinning,
 the leaf editor, search, tags, trash with 30-day tombstones, export, and an installable
-shell. Nothing in `src/` imports anything that talks to a network — that isn't a
-convention, it's the whole point, and it should stay true until Phase 2.
+shell. It's been through two rounds on a real phone and now carries the tablet and
+desktop layouts. Nothing in `src/` imports anything that talks to a network — that
+isn't a convention, it's the whole point, and it should stay true until Phase 2.
+
+`npm run check` drives a real browser and is the fastest way to know nothing has
+rotted: 35 assertions covering the editor, the grid, the keyboard, and the three
+widths.
 
 Two things are built but unproven, because only daily use proves them:
 

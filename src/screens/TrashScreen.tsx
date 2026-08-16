@@ -36,10 +36,7 @@ export function TrashScreen() {
                   <button className="btn caps" onClick={() => void restorePage(page.id)}>
                     Restore
                   </button>
-                  <button
-                    className="btn caps danger"
-                    onClick={() => void purgePage(page.id)}
-                  >
+                  <button className="btn caps danger" onClick={() => void purgePage(page.id)}>
                     Delete now
                   </button>
                 </div>

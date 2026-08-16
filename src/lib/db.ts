@@ -84,9 +84,7 @@ export async function livePages(notebook?: NotebookId): Promise<Page[]> {
 
 export async function deletedPages(): Promise<Page[]> {
   const rows = await db.pages.toArray()
-  return rows
-    .filter((p) => p.deleted)
-    .sort((a, b) => (b.deleted ?? 0) - (a.deleted ?? 0))
+  return rows.filter((p) => p.deleted).sort((a, b) => (b.deleted ?? 0) - (a.deleted ?? 0))
 }
 
 export async function pagesWithTag(tag: string): Promise<Page[]> {

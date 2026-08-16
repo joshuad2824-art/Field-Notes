@@ -52,11 +52,11 @@
   --frame-on: rgba(246, 243, 236, 0.12);
 
   /* ── type ─────────────────────────────────────────────────────────── */
-  --font-editorial: "Playfair Display", Georgia, serif;
-  --font-body: "Spectral", Georgia, serif;
-  --font-ui: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Courier Prime", "Courier New", monospace;
-  --font-pen: "Linotype Feltpen", "Feltpen Com", "Feltpen", "Caveat", var(--font-body);
+  --font-editorial: 'Playfair Display', Georgia, serif;
+  --font-body: 'Spectral', Georgia, serif;
+  --font-ui: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Courier Prime', 'Courier New', monospace;
+  --font-pen: 'Linotype Feltpen', 'Feltpen Com', 'Feltpen', 'Caveat', var(--font-body);
   --pen-size: 21px;
 
   --text-2xs: 11px;
@@ -123,7 +123,7 @@
 }
 
 /* ── the leaf: paper stock ──────────────────────────────────────────── */
-[data-stock="paper"] {
+[data-stock='paper'] {
   --surface-page: var(--cream-100);
   --text-body: var(--teal-800);
   --text-heading: var(--teal-900);
@@ -148,7 +148,7 @@
 }
 
 /* ── the leaf: night stock — the page itself goes dark ──────────────── */
-[data-stock="night"] {
+[data-stock='night'] {
   --surface-page: var(--teal-900);
   --text-body: var(--cream-200);
   --text-heading: var(--cream-100);

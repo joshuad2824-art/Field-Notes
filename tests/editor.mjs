@@ -22,7 +22,9 @@ async function loadPlaywright() {
     const root = execSync('npm root -g', { encoding: 'utf8' }).trim()
     return await import(`${root}/playwright/index.mjs`)
   } catch {
-    console.error('Playwright not found. Try: npm i -g playwright && playwright install chromium')
+    console.error(
+      'Playwright not found. Try: npm i -g playwright && playwright install chromium',
+    )
     process.exit(2)
   }
 }
@@ -46,8 +48,16 @@ const type = async (text) => {
   await page.keyboard.type(text, { delay: 8 })
   await page.waitForTimeout(120)
 }
-const lineText = (n) => page.locator('.cm-line').nth(n).evaluate((el) => el.textContent)
-const lastLine = () => page.locator('.cm-line').last().evaluate((el) => el.textContent)
+const lineText = (n) =>
+  page
+    .locator('.cm-line')
+    .nth(n)
+    .evaluate((el) => el.textContent)
+const lastLine = () =>
+  page
+    .locator('.cm-line')
+    .last()
+    .evaluate((el) => el.textContent)
 
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(500)
@@ -94,7 +104,11 @@ ok('bold renders', (await page.locator('.md-strong').count()) === 1)
 await page.keyboard.press('Backspace')
 await page.waitForTimeout(200)
 const afterBackspace = await lastLine()
-ok('backspace takes the whole marker', afterBackspace === '**bold', JSON.stringify(afterBackspace))
+ok(
+  'backspace takes the whole marker',
+  afterBackspace === '**bold',
+  JSON.stringify(afterBackspace),
+)
 
 /* the bar writes markdown */
 await page.keyboard.press('Control+End')
@@ -132,7 +146,11 @@ await page.waitForTimeout(400)
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(600)
 const titles = await page.locator('.row-title').allTextContents()
-ok('the page survived a reload', titles.some((t) => t.includes('The morning')), titles.join(' | '))
+ok(
+  'the page survived a reload',
+  titles.some((t) => t.includes('The morning')),
+  titles.join(' | '),
+)
 
 /* search never touches the network */
 await page.goto(BASE + '/search', { waitUntil: 'domcontentloaded' })
@@ -235,6 +253,67 @@ ok(
   Math.abs(toolsReturned.y - toolsResting.y) < 1,
   `${toolsResting.y} → ${toolsReturned.y}`,
 )
+
+/* Three widths. The leaf never widens past its measure at any of them; what
+   changes is what sits beside it. */
+async function atWidth(width, height, run) {
+  const context = await browser.newContext({ viewport: { width, height } })
+  const view = await context.newPage()
+  view.on('pageerror', (e) => problems.push(`${width}px: ${e.message}`))
+  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(500)
+  await view.locator('.cover').first().click()
+  await view.waitForTimeout(400)
+  const row = view.locator('.row-page').first()
+  if (await row.count()) await row.click()
+  await view.waitForTimeout(700)
+  await run(view)
+  await context.close()
+}
+
+await atWidth(1440, 900, async (view) => {
+  ok('desktop docks the sidebar', (await view.locator('.sidebar').count()) === 1)
+  const rail = await view.locator('.sidebar').boundingBox()
+  const leafAt = await view.locator('.leaf').boundingBox()
+  ok('the leaf sits beside it', leafAt.x > rail.width, `leaf x=${Math.round(leafAt.x)}`)
+  ok('the open page is marked in the list', (await view.locator('.row-page.active').count()) === 1)
+
+  await view.locator('.tool[aria-label="Hide the list"]').click()
+  await view.waitForTimeout(250)
+  ok('the sidebar can be put away', (await view.locator('.sidebar').count()) === 0)
+  await view.reload({ waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(600)
+  ok('and stays away', (await view.locator('.sidebar').count()) === 0)
+  await view.locator('.tool[aria-label="Show the list"]').click()
+  await view.waitForTimeout(250)
+  ok('and comes back when asked', (await view.locator('.sidebar').count()) === 1)
+})
+
+await atWidth(1920, 1080, async (view) => {
+  const wide = await view.locator('.leaf').boundingBox()
+  ok('the leaf does not stretch on a big monitor', wide.width < 950, `${Math.round(wide.width)}px`)
+})
+
+await atWidth(834, 1112, async (view) => {
+  ok('an iPad in portrait docks nothing', (await view.locator('.sidebar').count()) === 0)
+  await view.locator('.tool[aria-label="Show the list"]').click()
+  await view.waitForTimeout(300)
+  ok('the list slides over instead', (await view.locator('.sidebar-drawer').count()) === 1)
+  const rows = view.locator('.sidebar .row-page')
+  if (await rows.count()) {
+    await rows.first().click()
+    await view.waitForTimeout(350)
+  }
+  ok('and closes when you pick something', (await view.locator('.sidebar-drawer').count()) === 0)
+})
+
+await atWidth(390, 844, async (view) => {
+  ok(
+    'the phone has no sidebar at all',
+    (await view.locator('.sidebar').count()) === 0 &&
+      (await view.locator('.tool[title="The list"]').count()) === 0,
+  )
+})
 
 if (problems.length) {
   failures += problems.length

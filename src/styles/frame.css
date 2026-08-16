@@ -88,6 +88,99 @@
   color: #d98a9f;
 }
 
+/* ── the shell: sidebar beside the desk ─────────────────────────────── */
+
+.shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.shell-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar {
+  flex: 0 0 var(--sidebar-width);
+  width: var(--sidebar-width);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--frame-card);
+  border-right: 1px solid var(--frame-hairline-soft);
+}
+
+.sidebar-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--frame-hairline-soft);
+}
+.sidebar-head .grow {
+  flex: 1;
+  min-width: 0;
+}
+.sidebar-title {
+  font-family: var(--font-editorial);
+  font-size: var(--text-base);
+  color: var(--frame-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-list {
+  padding: var(--space-3) var(--space-3) var(--space-6);
+}
+
+.sidebar-foot {
+  flex: 0 0 auto;
+  padding: var(--space-4);
+  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--frame-hairline-soft);
+}
+.sidebar-foot .primary {
+  width: 100%;
+  height: 38px;
+  border: 1px solid rgba(197, 174, 103, 0.32);
+  background: transparent;
+  color: var(--frame-accent);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-smallcaps);
+  text-transform: uppercase;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color var(--duration-instant) var(--ease-standard);
+}
+.sidebar-foot .primary:hover {
+  background: rgba(197, 174, 103, 0.1);
+}
+
+/* On a tablet it slides over the desk rather than squeezing it. */
+.sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0, 16, 17, 0.5);
+}
+.sidebar-drawer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 31;
+  display: flex;
+  box-shadow: var(--shadow-lift);
+}
+
 /* ── the shelf ──────────────────────────────────────────────────────── */
 
 .shelf {
@@ -126,23 +219,23 @@
 .cover:hover {
   transform: translateY(-1px);
 }
-.cover[data-cover="navy"] {
+.cover[data-cover='navy'] {
   background: var(--navy-800);
 }
-.cover[data-cover="driftwood"] {
+.cover[data-cover='driftwood'] {
   background: var(--driftwood-700);
 }
-.cover[data-cover="oxblood"] {
+.cover[data-cover='oxblood'] {
   background: var(--oxblood-800);
 }
-.cover[data-cover="forest"] {
+.cover[data-cover='forest'] {
   background: var(--forest-800);
 }
 
 /* the hairline edge is what makes it a bound object rather than a rectangle
    painted on the shelf */
 .cover::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   border: 1px solid rgba(246, 243, 236, 0.14);
@@ -220,6 +313,20 @@
 }
 .row-page:hover {
   background: var(--frame-hover);
+}
+.row-page.active {
+  background: var(--frame-on);
+}
+.row-page.compact {
+  padding: var(--space-4);
+  border-bottom: none;
+}
+.row-page.compact .row-snippet {
+  -webkit-line-clamp: 1;
+  font-size: var(--text-xs);
+}
+.row-page.compact .row-meta {
+  margin-top: var(--space-2);
 }
 
 .row-title {
@@ -441,7 +548,7 @@ mark.hit {
   background: var(--frame-hairline-soft);
   margin: var(--space-3) 0;
 }
-.sheet input[type="date"] {
+.sheet input[type='date'] {
   background: var(--frame-well);
   border: 1px solid rgba(0, 0, 0, 0.4);
   color: var(--frame-text);
@@ -503,7 +610,7 @@ mark.hit {
   line-height: var(--grid-pitch);
   color: var(--text-body);
 }
-.specimen[data-pen="felt"] .specimen-text {
+.specimen[data-pen='felt'] .specimen-text {
   font-family: var(--font-pen);
   font-size: var(--pen-size);
 }
