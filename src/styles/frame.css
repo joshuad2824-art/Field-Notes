@@ -1182,3 +1182,17 @@ mark.hit {
   text-transform: uppercase;
   color: var(--brass-400);
 }
+
+/* The screen readout in Settings. Courier and one number to a line, because
+   what it is for is being read off a device and repeated back. */
+.mono-block {
+  font-family: var(--font-mono);
+  /* The metadata register is uppercase; this one isn't, because these are
+     property names being read off a screen and repeated back. */
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--text-2xs);
+  line-height: 20px;
+  white-space: pre;
+  overflow-x: auto;
+}

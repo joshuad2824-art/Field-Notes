@@ -12,12 +12,42 @@ export function SettingsScreen() {
   const books = useNotebooks()
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [usage, setUsage] = useState<string>('—')
+  const [screen, setScreen] = useState<string[]>([])
 
   useEffect(() => {
     void navigator.storage?.persisted?.().then((v) => setPersisted(v))
     void storageEstimate().then((e) => {
       if (e) setUsage(bytes(e.usage))
     })
+  }, [])
+
+  /* Read after paint, and again whenever the window moves under us, so the
+     numbers are what the app is actually living with. */
+  useEffect(() => {
+    const read = () => {
+      const vv = window.visualViewport
+      const root = document.getElementById('root')?.getBoundingClientRect()
+      const app = getComputedStyle(document.documentElement).getPropertyValue('--app-height')
+      setScreen([
+        `window.innerHeight        ${window.innerHeight}`,
+        `visualViewport.height     ${vv ? Math.round(vv.height) : '—'}`,
+        `documentElement.client    ${document.documentElement.clientHeight}`,
+        `screen.height             ${window.screen.height}`,
+        `--app-height              ${app.trim() || 'unset (100dvh)'}`,
+        `#root reaches             ${root ? Math.round(root.bottom) : '—'}`,
+        `installed                 ${
+          window.matchMedia('(display-mode: standalone)').matches ||
+          (window.navigator as { standalone?: boolean }).standalone === true
+        }`,
+      ])
+    }
+    read()
+    window.addEventListener('resize', read)
+    window.visualViewport?.addEventListener('resize', read)
+    return () => {
+      window.removeEventListener('resize', read)
+      window.visualViewport?.removeEventListener('resize', read)
+    }
   }, [])
 
   return (
@@ -98,6 +128,21 @@ export function SettingsScreen() {
           <p className="meta" style={{ marginTop: 16 }}>
             {persisted === null ? 'checking' : persisted ? 'persistent' : 'best effort'} ·{' '}
             {usage} used
+          </p>
+
+          <h2>Screen</h2>
+          <p>
+            What this device says about its own window. Three numbers that ought to agree and
+            don't always — an installed iPad has now twice reported one of them short, which
+            shows up as a band of the desk under the bottom of the app. Here so the next one can
+            be read off the device rather than guessed at.
+          </p>
+          <p className="meta mono-block">
+            {screen.map((line) => (
+              <span key={line} style={{ display: 'block' }}>
+                {line}
+              </span>
+            ))}
           </p>
 
           <h2>Phase</h2>
