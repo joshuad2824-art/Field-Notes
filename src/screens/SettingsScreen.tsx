@@ -27,14 +27,21 @@ export function SettingsScreen() {
     const read = () => {
       const vv = window.visualViewport
       const root = document.getElementById('root')?.getBoundingClientRect()
-      const app = getComputedStyle(document.documentElement).getPropertyValue('--app-height')
+      const style = getComputedStyle(document.documentElement)
+      const app = style.getPropertyValue('--app-height')
+      /* If this reads 0 on a device with a home indicator, `viewport-fit=cover`
+         isn't taking and iOS is painting outside the viewport rather than the
+         app coming up short — a different problem with a different fix. */
+      const safe = style.getPropertyValue('--safe-bottom')
       setScreen([
         `window.innerHeight        ${window.innerHeight}`,
         `visualViewport.height     ${vv ? Math.round(vv.height) : '—'}`,
         `documentElement.client    ${document.documentElement.clientHeight}`,
         `screen.height             ${window.screen.height}`,
-        `--app-height              ${app.trim() || 'unset (100dvh)'}`,
+        `--app-height              ${app.trim() || 'unset (pinned)'}`,
+        `--safe-bottom             ${safe.trim() || '—'}`,
         `#root reaches             ${root ? Math.round(root.bottom) : '—'}`,
+        `body reaches              ${Math.round(document.body.getBoundingClientRect().bottom)}`,
         `installed                 ${
           window.matchMedia('(display-mode: standalone)').matches ||
           (window.navigator as { standalone?: boolean }).standalone === true
