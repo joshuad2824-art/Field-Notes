@@ -1238,6 +1238,38 @@ await atWidth(1800, 950, async (view) => {
   ok('and comes back down', (await view.locator('.tray-zoom').textContent()) === '100%')
 })
 
+/* ── what iOS paints where the app isn't ────────────────────────────── */
+
+/* Measured on a real iPad: the web view is given 712pt of an available 744.
+   Everything inside the viewport is covered — #root and body both reach 712 —
+   and the strip outside it is the system's, filled from theme-color. So the
+   theme colour follows whatever is at the bottom of the screen, and the strip
+   stops being a band because it stops being a different colour. */
+await atWidth(1440, 900, async (view) => {
+  /* the computed token comes back lowercase; the meta in index.html is not */
+  const theme = async () =>
+    (await view.locator('meta[name="theme-color"]').getAttribute('content')).toLowerCase()
+  const FRAME = '#142a2b'
+
+  ok('the list leaves the theme the frame\'s own teal', (await theme()) === FRAME, await theme())
+
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(600)
+  const onPaper = await theme()
+  ok('a cream page makes it cream', onPaper !== FRAME, onPaper)
+
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+  await view.locator('.tray-word[title="Stock"]').click()
+  await view.waitForTimeout(500)
+  const onNight = await theme()
+  ok('and a night page makes it the night leaf', onNight !== onPaper, `${onPaper} → ${onNight}`)
+
+  await view.goBack()
+  await view.waitForTimeout(600)
+  ok('leaving the page hands it back', (await theme()) === FRAME, await theme())
+})
+
 /* ── the calendar ───────────────────────────────────────────────────── */
 
 /* The week strip became a month. The marks say two different things and a day
