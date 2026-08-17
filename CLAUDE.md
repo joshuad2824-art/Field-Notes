@@ -26,7 +26,7 @@ The app itself is at the root: `src/`, `index.html`, `netlify.toml`. `npm run de
 Do not relitigate these without being asked. Each was argued through.
 
 1. **One page type.** Not notes-and-entries-and-tasks. A page, plus light attributes: notebook, tags, pinned, optional entry date. The four uses (capture, long-form, journaling, reference) come from attributes, never from separate sections.
-2. **No login, ever, after first run.** Device pairing with a non-expiring key. No sessions, no email, no password. The editor has no awareness a network exists — writes go to local storage and return immediately. Sync may fail without ever blocking the page.
+2. **No login, ever, after first run.** Device pairing with a non-expiring key. No sessions, no email, no password. The editor has no awareness a network exists — writes go to local storage and return immediately. Sync may fail without ever blocking the page. **Built now, and the key is the whole of it**: the first device generates 256 bits, its SHA-256 is the vault id every row is stamped with, and the server compares that hash against the one it computes from the request's own header. There is no accounts table, no token to refresh and nothing that can expire — which is the structural answer to what killed Moleskine rather than a longer timeout.
 3. **Markdown files are the storage format.** Export is trivial because storage *is* the export format. No proprietary document tree.
 4. **Notebooks: exactly one level.** Seeded as Field Notes, The Workshop, The Hearth, Church. They are *data* now, not a constant — any notebook can be added, coloured from the palette, or deleted, and deleting one tombstones its pages for the usual thirty days. Still no nesting, ever. Tags cut across notebooks.
 5. **The syntax is never shown.** Not on hover, not on the active line. He will never want to see markdown. It lives in the file, not on the page.
@@ -44,7 +44,9 @@ Do not relitigate these without being asked. Each was argued through.
 17. **The toolbar at rest is five marks, not eleven.** `☰`, undo, redo, `Aa`, `⋯`, with `Saved` among them. Undo and redo earned their place back by daily use; nothing else did. Everything that *shapes* the page still lives behind `Aa`.
 18. **The tray is a strip, not a box.** It opens along the top of the leaf rather than dropping a tall rectangle over the writing, so the page being shaped stays in view while it is shaped. Past the width it has it scrolls sideways, and the order is deliberate: styles, blocks, marks and colours first, because what scrolls off the end should be the occasional things. Placement moved out of it entirely — a picture's own plate already carries those three marks, and in the strip they only ever set the side the *next* picture would land on.
 19. **New page belongs to the list, not the rail.** The button sits at the foot of the column showing the pages it will join, at every width. The rail's foot is Trash and Settings — the app's two back rooms and nothing else.
-20. **Nothing reads `env(safe-area-inset-*)` directly.** `--safe-top` and `--safe-bottom` in `tokens.css` are the only two places it appears. A desktop browser always reports zero for both, so the notch and the home indicator are invisible to us unless we can set them — and `npm run check` sets them to what an iPad reports and asserts on the bands that come out.
+20. **A conflict costs a duplicate page, never a paragraph.** Last-write-wins decides which version keeps the page's id; the losing one is written as its own page in the same notebook, opening with a `> Conflicting copy · <date> #conflict` line so it is both visible in the list and findable under a tag. Never a merge dialog. The whole decision is one pure function in `src/sync/reconcile.ts` with no Dexie, no fetch and no clock in it, which is why `npm run check` proves the truth table on node without a server.
+21. **The mirror keeps tombstones forever; the device keeps them thirty days.** A page purged locally after its thirty days leaves its marker on the server, so a device that was switched off for a month cannot walk the page back in when it returns. Tombstone rows are a few bytes and permanence is worth more than the space.
+22. **Nothing reads `env(safe-area-inset-*)` directly.** `--safe-top` and `--safe-bottom` in `tokens.css` are the only two places it appears. A desktop browser always reports zero for both, so the notch and the home indicator are invisible to us unless we can set them — and `npm run check` sets them to what an iPad reports and asserts on the bands that come out.
 
 ---
 
@@ -54,7 +56,7 @@ Do not relitigate these without being asked. Each was argued through.
 - **Dexie over IndexedDB** for local storage. Primary store, not a cache.
 - **MiniSearch or FlexSearch** for full-text search, entirely on-device. Search never touches the network.
 - **Netlify** for hosting; he already ships there.
-- **Supabase** for the sync mirror when Phase 2 arrives. CouchDB + PouchDB is the credible alternative and is purpose-built for this. Do not hand-roll a sync endpoint.
+- **Supabase** for the sync mirror, and it is three tables and one function — `supabase/schema.sql`, run once in a fresh project. No edge function, no server code, no sync endpoint of ours: the reconciliation is on the device and the server is PostgREST with a row policy. The policy is the whole of the auth, and it reads `current_setting('request.headers')` for the vault key rather than any JWT, because a JWT is a session and a session is the thing that must not exist here.
 - **Design tokens** come from his real files — `colors.css` v2.2, `typography.css` v2.1, `surfaces.css` v2.0, `spacing.css`, `base.css`. Copy them in; don't reinvent values. Three added hues: oxblood `#530a28`, forest `#123737`, navy `#082744`.
 
 ## Data model
@@ -73,6 +75,12 @@ pen        ink | felt
 stock      paper | night
 deleted    tombstone, 30 days, never a hard delete
 ```
+
+Sync added nothing to that envelope, deliberately. What this device and the mirror last
+agreed on for each row lives in its own Dexie table (`synced`), keyed `p:`/`n:`/`i:`, so
+nothing sync-shaped can leak into an export or into what a page *is*. Notebooks did grow
+two fields — `updated` and `deleted` — because they are rows on three devices now, and a
+notebook that merely vanished would be handed straight back by the next device to sync.
 
 ## Layout rules that are load-bearing
 
@@ -100,11 +108,21 @@ The Timber & Ink brand voice is first-person singular. **This app is the excepti
 - Export: a notebook or the whole shelf as a folder of `.md`.
 - Then **live in it for a month before writing a line of sync code.** Every one of the seven apps failed at daily use, not at features. This is the phase that tells us whether ours will too.
 
-**Phase 2 — sync and device pairing.** Only after Phase 1 has survived a month.
+**Phase 2 — sync and device pairing. Built.** Three devices against one Supabase project,
+paired by a code and never by a login. `src/sync/` is the only place in the app that knows
+a network exists, and it is imported by exactly three things: `main.tsx` to start it, the
+Settings panel to configure it, and the rail's foot to read one word off it. The store, the
+editor and every screen are written as though it were not there.
+
+The shape, in one pass: pull the rows stamped at or after this device's cursor, decide each
+one against what the two sides last agreed, apply everything inbound to IndexedDB *first*,
+then push. Failing at any step leaves the device exactly as it was. Pictures go last and one
+at a time — the text is the archive, and if the connection is only good enough for one of
+them it should be the writing.
 
 **Phase 3 — reordered, August 2026, and shorter than it was.**
 
-The order now runs: the wide layouts (done), then sync, then the native question.
+The order now runs: the wide layouts (done), then sync (done), then the native question.
 What was Phase 3 gets picked over rather than built wholesale:
 
 - **Resurfacing** — a quiet "from your archive" on open, no notifications. Still wanted.
@@ -135,6 +153,12 @@ What was Phase 3 gets picked over rather than built wholesale:
 - **Pictures are markdown.** `![caption](images/<id>.<ext>){left|right|full 44}` — the placement says which side the writing runs down and the number is percent of the measure. The bytes live in Dexie beside the page and the export writes them at exactly that path, so the link resolves in any other editor. Floats wrap because CodeMirror's lines are ordinary sibling blocks; if that ever stops being true, the margin plate becomes a full-measure one.
 - **A picture with transparency loses its frame.** Whether a plate gets a border and a shadow is worked out from the file when it arrives — an SVG, or a bitmap with real alpha, is drawn bare. It is not guessed from the extension, because a cut-out PNG looks exactly as wrong in a box as an SVG does.
 - **`ignoreEvent` on the picture widget must stay `true`.** Letting CodeMirror see `mousedown` inside the plate makes it start a text selection, which stops the browser ever beginning the native drag. That regression is invisible in the UI and only shows up as "dragging does nothing".
+- **Pairing is a paste, not a scan.** The architecture note said "a QR code or a recovery phrase" and this is the phrase. A QR would need an encoder to show it and a camera plus a decoder to read it — two dependencies and a permission prompt — to save a copy-paste that happens three times ever, on devices that already share a clipboard. Revisit only if pairing turns out to happen more often than it should.
+- **The pairing code carries the vault key in the clear.** It is a ~250-character block that anyone holding can read and write the whole archive. That is the honest cost of having no account to recover: there is nothing else to prove you are you. It is shown only when asked for, behind a button that has to be pressed.
+- **No end-to-end encryption, still.** Unchanged from the architecture note and worth restating now that there is actually a server: the realistic threat to this archive is loss, not intrusion. Server-side encryption at rest comes free; a lost key that makes the mirror unreadable would be a catastrophe bought to protect notes already decided not to be sensitive. Wrong trade.
+- **Pictures ride as base64 in the `images` table, not in a storage bucket.** One transport and one row policy rather than two services with two ways of asking the same question — and the bucket's policy would have to answer the header question through a different code path that can't be tested the same way. The cost is real: base64 is a third larger than the bytes, and the free tier's database is 500MB. If the archive ever grows enough pictures for that to bite, the fix is a bucket, not a bigger row.
+- **The pull cursor is `gte`, not `gt`, and widens rather than skips.** Applying a row twice is a no-op; missing one is not, so the boundary row is always re-read. The failure that shape has is a whole batch of rows sharing one stamp, which would leave the cursor nothing to advance to — hence `clock_timestamp()` in the trigger rather than `now()`, and hence the engine doubling its window rather than stepping past. It gives up loudly at 6400.
+- **A free-tier Supabase project pauses after a week of inactivity.** It shows up here as `Offline` in the rail's foot and nothing else — no blocked write, no lost keystroke — which is the whole point of the design, but it does mean the mirror can be quietly stale for as long as nobody notices. The monthly export is still the actual backup.
 - **The iOS keyboard accessory bar** — the up/down arrows and the Done tick — cannot be removed from a web app. It's the strongest concrete argument for the native path and should be weighed at the end of Phase 1. It's also the reason the formatting row sits at the top of the page rather than docked above the keyboard: two bars stacked on the keyboard would be worse than one bar at the top. If the accessory bar ever goes, the strip should move down.
 
 ---
@@ -144,15 +168,33 @@ What was Phase 3 gets picked over rather than built wholesale:
 Phase 1 stands up end to end: the shelf and four covers, notebook lists with pinning,
 the leaf editor, search, tags, trash with 30-day tombstones, export, and an installable
 shell. It's been through two rounds on a real phone and now carries the tablet and
-desktop layouts. Nothing in `src/` imports anything that talks to a network — that
-isn't a convention, it's the whole point, and it should stay true until Phase 2.
+desktop layouts.
+
+Phase 2 stands up too. `src/sync/transport.ts` is the only file in the app that calls
+`fetch`, and the rule that used to read "nothing in `src/` talks to a network" now reads:
+nothing *above* `src/sync/` does, and nothing above it may. Grep for `fetch(` before
+believing otherwise — one hit is correct, two is a regression.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 168 assertions covering the editor, the grid, indent, tables, the
-calendar, the keyboard, zoom, the three widths, the folding columns, the
-safe-area bands, the notebook manager, pictures and the tray.
+rotted: 216 assertions in two files. `tests/editor.mjs` has 168 covering the editor,
+the grid, indent, tables, the calendar, the keyboard, zoom, the three widths, the
+folding columns, the safe-area bands, the notebook manager, pictures and the tray.
+`tests/sync.mjs` has 48, in two halves — the reconciler's truth table and the pairing
+code run on node with nothing around them, and then two real browsers are driven
+against a fake mirror held inside the test file, through pairing, a page crossing, a
+picture crossing byte for byte, the mirror vanishing mid-sentence, both devices
+editing the same page while apart, a deletion crossing, and unpairing.
 
-Two things are built but unproven, because only daily use proves them:
+Three things are built but unproven, because only daily use proves them:
+
+- **Sync against a real Supabase project.** The engine, the transport's URL building, the
+  pairing ceremony and the conflict rule are all exercised by `tests/sync.mjs`, which drives
+  two real browsers against a fake mirror held in the test file — including the mirror going
+  away mid-sentence and both devices editing the same page while apart. What that cannot
+  prove is the half that lives in `supabase/schema.sql`: whether PostgREST populates
+  `request.headers` the way the row policy assumes, and whether `clock_timestamp()` in the
+  stamp trigger keeps a first sync of several hundred pages from landing in one instant.
+  Both are load-bearing and both want a real project before they're believed.
 
 - **The iOS keyboard.** Two rounds on a real phone found two separate moves: iOS
   scrolls the document (a fixed body stops that) *and* scrolls the visual viewport

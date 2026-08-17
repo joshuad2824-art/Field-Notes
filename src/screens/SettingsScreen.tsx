@@ -6,6 +6,7 @@ import type { NotebookId } from '../lib/model'
 import { useNotebooks } from '../lib/notebooks'
 import { setSettings, useSettings } from '../lib/settings'
 import { back, navigate, to } from '../lib/router'
+import { SyncPanel } from '../components/SyncPanel'
 
 export function SettingsScreen() {
   const settings = useSettings()
@@ -116,10 +117,13 @@ export function SettingsScreen() {
             ))}
           </div>
 
+          <SyncPanel />
+
           <h2>Storage</h2>
           <p>
-            Pages live on this device in IndexedDB. Nothing here talks to a network. Deleted
-            pages linger for thirty days before they go.
+            Pages live on this device in IndexedDB, and that is the primary store rather than a
+            cache — the editor writes there and returns, and never waits on anything else.
+            Deleted pages linger for thirty days before they go.
           </p>
           <div className="actions">
             <button className="btn caps" onClick={() => navigate(to.trash())}>
@@ -154,8 +158,9 @@ export function SettingsScreen() {
 
           <h2>Phase</h2>
           <p>
-            Phase 1 — the single-device notebook. Sync is Phase 2 and deliberately not started;
-            the month of daily use comes first.
+            Phase 2 — sync and device pairing. The mirror is a mirror, not the source of truth:
+            the archive that matters is the one on this device and the folder of markdown an
+            export puts on disk.
           </p>
         </div>
       </div>

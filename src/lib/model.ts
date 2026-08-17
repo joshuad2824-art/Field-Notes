@@ -35,15 +35,23 @@ export interface Notebook {
   name: string
   color: string
   order: number
+  /* Notebooks are rows on three devices now, so they need the same two fields
+     a page has: something to compare when two devices disagree, and a
+     tombstone rather than a hole. A notebook that was merely removed would be
+     handed straight back by the next device to sync. */
+  updated?: number
+  deleted?: number
 }
 
 /* What the shelf is seeded with on first run. After that it's whatever is in
    the notebooks table. */
 export const DEFAULT_NOTEBOOKS: Notebook[] = [
-  { id: 'field-notes', name: 'Field Notes', color: '#082744', order: 0 },
-  { id: 'workshop', name: 'The Workshop', color: '#3a342e', order: 1 },
-  { id: 'hearth', name: 'The Hearth', color: '#530a28', order: 2 },
-  { id: 'church', name: 'Church', color: '#123737', order: 3 },
+  /* Seeded at 0 rather than now: two devices that each stood these four up
+     before ever pairing should meet with nothing to argue about. */
+  { id: 'field-notes', name: 'Field Notes', color: '#082744', order: 0, updated: 0 },
+  { id: 'workshop', name: 'The Workshop', color: '#3a342e', order: 1, updated: 0 },
+  { id: 'hearth', name: 'The Hearth', color: '#530a28', order: 2, updated: 0 },
+  { id: 'church', name: 'Church', color: '#123737', order: 3, updated: 0 },
 ]
 
 /* Covers come from the palette, so a new notebook still looks like it belongs

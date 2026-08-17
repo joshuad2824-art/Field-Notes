@@ -1,6 +1,10 @@
 # The Notebook App — Architecture Note
 
-*v0.1. Companion to the teardown. This is the risk document.*
+*v0.2. Companion to the teardown. This is the risk document.*
+
+*August 2026: sync is built. The sections below are the plan as it was written, kept
+because the reasoning still governs; what actually got built, and the three places it
+differs, are at the bottom under **What sync turned out to be**.*
 
 ---
 
@@ -143,6 +147,58 @@ The sequencing here is the actual recommendation, more than any individual techn
 **Phase 3 — the compounding features.** Resurfacing, the commonplace book import, entry dates and the calendar lens, scheduled export.
 
 The temptation will be to build sync early because it's the interesting problem. Resist it. Sync is what makes a good notebook usable on three devices; it does nothing whatsoever for a notebook you don't enjoy opening.
+
+---
+
+## What sync turned out to be
+
+Built August 2026, against the plan above. It came out close, and the three places it
+differs are worth stating plainly.
+
+**The identity collapsed further than expected.** The plan said device pairing with a
+non-expiring key. What that became is smaller: the vault has no row anywhere. Its id *is*
+the SHA-256 of the key, so there is no vault to create before the first write, no table of
+vaults, and no function to call to make one. Every row carries the hash; the row policy
+computes the same hash from the request's own header and shows the caller what matches.
+A request with no key hashes to something no row will ever carry and sees an empty
+database. Three tables, one function, one policy written three times — that is the whole
+server, and it is in `supabase/schema.sql`.
+
+The consequence worth being clear-eyed about: the vault key is a bearer token in the most
+literal sense. Anyone holding the pairing code has the archive. There is no account to
+recover it with, because an account is the thing we refused to have.
+
+**"Do not hand-roll a sync endpoint" held, but only just.** The reconciliation is entirely
+on the device — `src/sync/reconcile.ts` is a pure function, and `npm run check` proves its
+truth table on node with no server, no browser and no network. What the server does is
+PostgREST and a row policy, which is to say nothing that was written for this app. The
+temptation the note warned about was real and it arrived in the shape of "a small edge
+function would make images easier". It didn't get built, and images ride as base64 in the
+same table for exactly that reason: one transport and one policy rather than two.
+
+**Conflict handling came out as specified**, and it is the part most worth keeping honest.
+Last-write-wins decides which version keeps the page's id; the loser becomes its own page
+in the same notebook, opening with a `> Conflicting copy · <date> #conflict` line. Never a
+merge dialog. Two edits that happen to reach the same text are not treated as a conflict at
+all, or every touch on two devices would spawn a duplicate.
+
+Three smaller things the plan didn't anticipate:
+
+- **Notebooks needed tombstones too.** A notebook row that merely vanished would be handed
+  straight back by the next device to sync, which had no way to tell "deleted" from "not
+  yet seen". They grew `updated` and `deleted`, the same two fields a page has.
+- **The mirror keeps tombstones forever.** The device purges its own after thirty days as
+  planned; the server's marker stays. That is what stops a device switched off for a month
+  walking a deleted page back in — and it is a permanence the thirty-day rule alone
+  couldn't give.
+- **The cursor is a server-side stamp, not any clock a device owns**, and the trigger uses
+  `clock_timestamp()` rather than `now()`. A first sync pushing four hundred pages in one
+  transaction would otherwise give all four hundred the same stamp, and a cursor that can
+  only advance to the last row's stamp would have nothing to advance to.
+
+**Scheduled export is still the actual backup**, and sync did not change that. It made the
+case for it stronger, if anything: there is now a second system that can be wrong, and the
+folder of markdown on disk is the only thing that doesn't depend on either of them.
 
 ---
 

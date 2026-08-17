@@ -369,6 +369,28 @@
   color: rgba(156, 177, 178, 0.7);
 }
 
+/* Sync says one word, in the register the foot already speaks, and stays out
+   of the way of the two links above it. */
+.sync-mark {
+  display: block;
+  margin-top: 8px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: rgba(156, 177, 178, 0.45);
+}
+.sync-mark.dim {
+  color: rgba(156, 177, 178, 0.3);
+}
+.sync-mark.bad {
+  color: var(--brass-400);
+  cursor: pointer;
+}
+
 /* the cream plate — the one solid block in the frame */
 .plate-button {
   width: 100%;
@@ -1181,6 +1203,52 @@ mark.hit {
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--brass-400);
+}
+
+/* ── settings → sync ────────────────────────────────────────────────────
+   A back room in a back room. Nothing here is ever in the way of writing, so
+   it can afford to be plain. */
+
+.sync-form {
+  margin-top: var(--space-5);
+  max-width: 56ch;
+}
+.sync-form .well {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--space-2);
+}
+.sync-label {
+  display: block;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-smallcaps);
+  text-transform: uppercase;
+  color: var(--teal-300);
+}
+/* The code is long by design — it carries the whole vault — so it gets to
+   wrap and to be tall enough to see it landed. */
+.sync-paste {
+  height: 96px;
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 20px;
+  resize: none;
+}
+.sync-code {
+  margin-top: var(--space-4);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.sync-problem {
+  margin-top: var(--space-4);
+  color: var(--brass-400);
+  font-size: var(--text-sm);
 }
 
 /* The screen readout in Settings. Courier and one number to a line, because
