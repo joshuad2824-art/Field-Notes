@@ -5,6 +5,7 @@ import { useNotebooks } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
 import { MonthGrid } from './MonthGrid'
+import { SyncMark } from './SyncMark'
 
 interface Props {
   activeId: string
@@ -98,6 +99,10 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
             Settings
           </button>
         </div>
+        {/* The foot is still Trash and Settings and nothing else — this is a
+            state, not a third back room, and most of the time it is one word
+            that says everything already arrived. */}
+        <SyncMark />
       </div>
     </aside>
   )

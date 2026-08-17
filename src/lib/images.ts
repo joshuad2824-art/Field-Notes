@@ -107,10 +107,25 @@ export function cachedImageUrl(id: string): string | null {
 }
 
 /* Pictures a page no longer refers to. Called after a save, so an image that
-   was undone back out of existence doesn't sit in storage forever. */
+   was undone back out of existence doesn't sit in storage forever.
+
+   An image belongs to the page it arrived on, but it can be *shown* by another
+   one: a conflict copy holds the losing side's body, pictures and all, while
+   the bytes still sit under the page that won. So the test isn't "does my page
+   still mention it" — it's "does anything still mention it". Getting that
+   wrong takes the picture out from under a copy the moment the original stops
+   using it, which is precisely the case a conflict copy exists to prevent. */
 export async function pruneImages(pageId: string, body: string): Promise<number> {
-  const kept = new Set(imageIdsIn(body))
   const mine = await db.images.where('page').equals(pageId).toArray()
+  if (!mine.length) return 0
+
+  const kept = new Set(imageIdsIn(body))
+  const elsewhere = await db.pages.toArray()
+  for (const page of elsewhere) {
+    if (page.id === pageId || page.deleted) continue
+    for (const id of imageIdsIn(page.body)) kept.add(id)
+  }
+
   const gone = mine.filter((row) => !kept.has(row.id))
   if (!gone.length) return 0
   await db.images.bulkDelete(gone.map((row) => row.id))
