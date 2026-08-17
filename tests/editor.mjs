@@ -436,6 +436,19 @@ await ctx.close()
   })
   ok('and the leaf runs to the bottom with it', leaf === 0, `${leaf}px short`)
 
+  /* the invariant behind all of it: the app is not sized, it is pinned to the
+     room it sits in, so the two cannot disagree */
+  const agree = await view.evaluate(() => {
+    const root = document.getElementById('root').getBoundingClientRect()
+    const room = document.body.getBoundingClientRect()
+    return { root: Math.round(root.bottom), room: Math.round(room.bottom) }
+  })
+  ok(
+    'the app is exactly as tall as the room it sits in',
+    agree.root === agree.room,
+    `root ${agree.root}, body ${agree.room}`,
+  )
+
   await lying.close()
 }
 

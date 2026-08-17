@@ -49,19 +49,24 @@ body::before {
   top: var(--app-top, 0px);
   left: 0;
   right: 0;
+  /* The bottom edge, not a height. `body` is `position: fixed; inset: 0` — it
+     is already exactly the screen, however tall the device thinks that is — so
+     pinning to its bottom means the app can't be a different size from the
+     room it sits in. Two independent height calculations that had to agree is
+     what put a band of frame under the app on an iPad twice: first from
+     `visualViewport.height`, then from `window.innerHeight`, and `100dvh`
+     would only have been a third number with an opinion.
+
+     While the keyboard is up `--app-height` is set, and an explicit height on
+     an absolutely positioned box wins over `bottom` — which is what we want
+     there, because the leaf should end where the keyboard starts. */
+  bottom: 0;
   z-index: 1;
-  /* The fallback is the whole point: with no keyboard up, viewport.ts stops
-     measuring and lets these through. `dvh` is the browser's own account of
-     how tall the window is, so it can't come up short the way a number we
-     worked out ourselves can — and a short app leaves the frame showing in a
-     band under it. The vh line is for anything too old to know dvh. */
-  height: var(--app-height, 100vh);
-  height: var(--app-height, 100dvh);
+  height: var(--app-height, auto);
 }
 
 .app {
-  height: var(--app-height, 100vh);
-  height: var(--app-height, 100dvh);
+  height: 100%;
   display: flex;
   flex-direction: column;
   min-height: 0;

@@ -160,16 +160,18 @@ Two things are built but unproven, because only daily use proves them:
   and sizes it to `visualViewport.height`, so it covers exactly what can be seen.
   `npm run check` feeds that handler the numbers iOS reports, which proves our
   reaction; only the phone can prove iOS reports them.
-  **Only while a keyboard is up, and with no measuring at all otherwise.**
-  Installed on iPadOS the visual viewport stops short of the home indicator,
-  and the window turned out to come up short too — so an app sized from either
-  number left a band of frame, lantern wash and all, showing underneath. An
-  iPhone never does this, which is why it took a tablet to find, twice. With no
-  keyboard to duck, `viewport.ts` now removes `--app-height` entirely and lets
-  CSS fall through to `100dvh`: the browser's own account of how tall the
-  window is, which can't disagree with itself the way a number we worked out
-  can. In a browser it keeps ducking, because there a short viewport is
-  Safari's toolbar and running under it would bury the foot of the list.
+  **Only while a keyboard is up. The rest of the time the app is not sized at
+  all.** `#root` is pinned `top: 0; bottom: 0` inside a body that is already
+  `position: fixed; inset: 0` — the viewport itself, whatever the device thinks
+  that is. Nothing measures anything, so nothing can disagree.
+
+  That took three goes to see. The band of frame under the app on an iPad came
+  first from `visualViewport.height` being short of the home indicator, then
+  from `window.innerHeight` being short as well; `100dvh` would only have been
+  a third number with an opinion. The mistake each time was treating it as a
+  measurement problem. It was a structural one: two independent height
+  calculations that had to agree, and no reason they would. An iPhone reports
+  them equal, which is why only the tablet ever showed it.
 - **The felt pen** falls back to Caveat everywhere Feltpen isn't installed.
 
 The next move is not a feature. It's the month.
