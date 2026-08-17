@@ -419,99 +419,118 @@
   margin-right: 10px;
 }
 
-/* the tray behind Aa */
+/* ── the tray behind Aa ─────────────────────────────────────────────────
+   A strip along the top of the leaf, not a tall box dropped over the writing.
+   The page being shaped stays in view while it is shaped, and past the width
+   it has the strip scrolls sideways rather than wrapping into the second row
+   it was trying not to be. */
 .tray {
-  position: absolute;
-  z-index: 5;
-  right: 20px;
-  top: 48px;
-  width: 236px;
+  flex: 0 0 auto;
   background: var(--teal-850);
-  border: 1px solid var(--frame-hairline);
-  border-radius: 4px;
-  box-shadow: var(--shadow-lift);
-  padding: 10px 0;
+  border-bottom: 1px solid var(--frame-hairline);
   color: var(--frame-text);
 }
-.tray-label {
-  margin: 0;
-  padding: 8px 16px 10px;
-}
-.tray-styles {
+.tray-strip {
   display: flex;
-  gap: 6px;
-  padding: 0 12px 10px;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
 }
-.tray-style {
-  flex: 1;
-  text-align: center;
+.tray-strip::-webkit-scrollbar {
+  display: none;
+}
+.tray-strip .grow {
+  flex: 1 0 8px;
+}
+.tray-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.tray-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--frame-hairline-soft);
+}
+
+/* Every button in the strip is the same button, and the type is what tells
+   them apart — the same way the page does it. */
+.tray-style,
+.tray-block,
+.tray-mark,
+.tray-word,
+.tray-step,
+.tray-place,
+.tray-clear,
+.tray-close {
+  flex: 0 0 auto;
   border: none;
   background: transparent;
   color: var(--frame-text);
-  padding: 6px 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 18px;
+  padding: 6px 6px;
   border-radius: 3px;
   cursor: pointer;
+  white-space: nowrap;
 }
-.tray-style:hover {
+.tray-style:hover,
+.tray-block:hover,
+.tray-mark:hover,
+.tray-word:hover,
+.tray-step:hover,
+.tray-place:hover,
+.tray-clear:hover,
+.tray-close:hover {
   background: var(--frame-hover);
 }
+
 .tray-style.serif {
   font-family: var(--font-editorial);
-  font-size: 16px;
+  font-size: 15px;
 }
 .tray-style.serif.lg {
-  font-size: 18px;
+  font-size: 17px;
 }
 .tray-style.caps {
-  font-family: var(--font-ui);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--tracking-smallcaps);
   text-transform: uppercase;
-  padding: 9px 0;
 }
-/* The blocks a line becomes, and the marks a word takes. Same button as the
-   styles above them — the row reads as one strip, not as a second toolbar. */
-.tray-blocks,
-.tray-marks {
-  display: flex;
-  gap: 6px;
-  padding: 0 12px 10px;
-}
+
 .tray-block,
-.tray-mark {
-  flex: 1;
+.tray-mark,
+.tray-step,
+.tray-place {
+  min-width: 27px;
   text-align: center;
-  border: none;
-  background: transparent;
-  color: var(--frame-text);
-  font-family: var(--font-ui);
-  font-size: 14px;
-  line-height: 16px;
-  padding: 9px 0;
-  border-radius: 3px;
-  cursor: pointer;
-}
-.tray-block:hover,
-.tray-mark:hover {
-  background: var(--frame-hover);
 }
 .tray-block.mono,
-.tray-mark.mono {
+.tray-mark.mono,
+.tray-word.mono {
   font-family: var(--font-mono);
   font-size: 12px;
 }
-/* The box on the page is a drawn circle, so the button is one too — it wants
-   a little more size than a letter to read as the same thing. */
+/* The box on the page is a drawn circle, so the button is one too. */
 .tray-block.ring {
-  font-size: 17px;
+  font-size: 16px;
 }
-/* Playfair hangs its quote high in the em box; drop it back onto the line the
+/* Playfair hangs its quote high in the em box; drop it onto the line the
    others sit on. */
 .tray-block.serif {
   font-family: var(--font-editorial);
-  font-size: 21px;
-  transform: translateY(3px);
+  font-size: 20px;
+  line-height: 14px;
+  padding-top: 8px;
+  padding-bottom: 4px;
 }
 .tray-mark.bold {
   font-weight: 700;
@@ -519,82 +538,57 @@
 .tray-mark.italic {
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 16px;
+  font-size: 15px;
 }
 .tray-mark.strike {
   text-decoration: line-through;
 }
+.tray-mark.shout {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-smallcaps);
+}
 
-.tray-rule {
-  height: 1px;
-  background: var(--frame-hairline-soft);
-  margin: 2px 12px 10px;
-}
-.tray-swatches {
-  display: flex;
-  gap: 8px;
-  padding: 0 16px 12px;
-  align-items: center;
-}
-.tray-swatches .grow {
-  flex: 1;
-}
-.tray-clear {
-  border: none;
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--teal-300);
-  cursor: pointer;
-}
-.tray-row {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  border: none;
-  background: transparent;
-  padding: 6px 16px;
-  cursor: pointer;
-  text-align: left;
-}
-.tray-row:hover {
-  background: var(--frame-hover);
-}
-.tray-row-sub {
-  padding-top: 0;
-  padding-bottom: 8px;
-}
-.tray-row-name {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  color: var(--frame-text);
-}
-.tray-row-sub .tray-row-name {
-  color: var(--teal-300);
-  font-size: 12px;
-}
-.tray-row-state {
+.tray-word {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--brass-400);
 }
-.tray-row-state.pen {
+.tray-word.pen {
   font-family: var(--font-pen);
-  font-size: 18px;
-  text-transform: none;
+  font-size: 17px;
   letter-spacing: 0;
+  text-transform: none;
 }
+.tray-zoom {
+  flex: 0 0 auto;
+  min-width: 42px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--brass-400);
+}
+.tray-clear,
 .tray-close {
-  display: none;
+  font-family: var(--font-mono);
+  color: var(--teal-300);
+}
+.tray-place {
+  color: var(--teal-300);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.tray-place.on {
+  color: var(--brass-400);
+  background: var(--frame-on);
 }
 
 .sw {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
   cursor: pointer;
   flex: 0 0 auto;
@@ -1006,4 +1000,33 @@
 }
 .md-table-control-gap {
   width: 12px;
+}
+
+/* ── zoom ───────────────────────────────────────────────────────────────
+   For standing a page on a big screen in front of a room, which is a
+   different thing from the pinch-zoom the viewport still refuses. The type
+   and the grid pitch scale together and every block stays a whole number of
+   lines, so the dots stay under the writing at every step. */
+
+.leaf {
+  --zoom: 1;
+  --grid-pitch: calc(28px * var(--zoom));
+  --text-base: calc(17px * var(--zoom));
+  --text-lg: calc(22px * var(--zoom));
+  --text-xl: calc(28px * var(--zoom));
+  --text-2xl: calc(36px * var(--zoom));
+  --text-sm: calc(14px * var(--zoom));
+  --pen-size: calc(20px * var(--zoom));
+  --pen-title: calc(30px * var(--zoom));
+  --pen-quote: calc(22px * var(--zoom));
+  --measure-max: calc(900px * var(--zoom));
+}
+
+/* The two headings are the only blocks with a line height of their own. */
+.md-h1,
+.md-h2 {
+  line-height: calc(56px * var(--zoom));
+}
+.leaf[data-pen='felt'] .md-h2 {
+  font-size: calc(26px * var(--zoom));
 }

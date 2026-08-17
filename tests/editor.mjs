@@ -424,7 +424,9 @@ await atWidth(1440, 900, async (view) => {
 
   await view.locator('.list-row').first().click()
   await view.waitForTimeout(700)
-  ok('the toolbar is three marks at rest', (await view.locator('.tools .row button').count()) === 3)
+  /* Five now: the list, undo, redo, Aa and the menu. Still nothing that
+     shapes the page — that all lives in the strip behind Aa. */
+  ok('the toolbar is five marks at rest', (await view.locator('.tools .row button').count()) === 5)
 
   const leaf = await view.locator('.leaf').boundingBox()
   ok('the leaf fills the desk', leaf.width > 700, `${Math.round(leaf.width)}px`)
@@ -822,7 +824,7 @@ await atWidth(1440, 900, async (view) => {
 
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
-  await view.locator('.tray-row', { hasText: 'Table' }).click()
+  await view.locator('.tray-word', { hasText: 'Table' }).click()
   await view.waitForTimeout(500)
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
@@ -968,7 +970,7 @@ await atWidth(1440, 900, async (view) => {
   const wandering = await felt.getAttribute('d')
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
-  await view.locator('.tray-row', { hasText: 'Pen' }).click()
+  await view.locator('.tray-word[title="Pen"]').click()
   await view.waitForTimeout(500)
   ok('the felt pen takes the rules over', await shown('felt'))
   ok('and the ink hand goes', !(await shown('ink')))
@@ -1033,7 +1035,7 @@ await atWidth(1440, 900, async (view) => {
   await view.locator('.cm-content').click()
   await view.keyboard.press('Control+End')
   await view.keyboard.press('Enter')
-  await view.locator('.tray-row', { hasText: 'Table' }).click()
+  await view.locator('.tray-word', { hasText: 'Table' }).click()
   await view.waitForTimeout(500)
 
   const cells = view.locator('.md-table td')
@@ -1097,6 +1099,82 @@ await atWidth(1440, 900, async (view) => {
     (await stored()).includes('**oak**'),
     (await stored()).split('\n').find((l) => l.includes('oak')),
   )
+})
+
+/* ── the strip, and what it carries ─────────────────────────────────── */
+
+await atWidth(1800, 950, async (view) => {
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(600)
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(400)
+
+  /* a strip along the top, not a tall box dropped over the writing */
+  const strip = await view.locator('.tray-strip').boundingBox()
+  const text = await view.locator('.cm-content').boundingBox()
+  ok('the tray opens as a strip', strip.height < 60, `${Math.round(strip.height)}px tall`)
+  ok('it runs the width of the leaf', strip.width > 900, `${Math.round(strip.width)}px`)
+  ok('and sits above the writing, not over it', strip.y + strip.height <= text.y + 1)
+  ok(
+    'everything fits without scrolling on a wide desk',
+    await view.locator('.tray-strip').evaluate((el) => el.scrollWidth <= el.clientWidth),
+  )
+
+  /* all caps is a change to the text — there is no markdown for shouted */
+  await view.locator('.cm-content').click()
+  await view.keyboard.press('Control+End')
+  await view.keyboard.press('Enter')
+  await view.keyboard.type('shouted', { delay: 6 })
+  await view.waitForTimeout(200)
+  const line = () => view.locator('.cm-line').last().evaluate((el) => el.textContent)
+  await view.locator('.tray-mark[aria-label="All caps"]').click()
+  await view.waitForTimeout(300)
+  ok('All caps shouts the word under the caret', (await line()) === 'SHOUTED', await line())
+  await view.locator('.tray-mark[aria-label="All caps"]').click()
+  await view.waitForTimeout(300)
+  ok('and puts it back down again', (await line()) === 'shouted', await line())
+
+  /* undo and redo, back on the toolbar */
+  await view.locator('.mark-button[aria-label^="Undo"]').click()
+  await view.waitForTimeout(300)
+  ok('undo takes it back', (await line()) !== 'shouted')
+  await view.locator('.mark-button[aria-label^="Redo"]').click()
+  await view.waitForTimeout(300)
+  ok('and redo brings it forward', (await line()) === 'shouted', await line())
+
+  /* zoom, for a page on a big screen in front of a room */
+  const pitchOf = () =>
+    view.locator('.cm-line').last().evaluate((el) => Math.round(el.getBoundingClientRect().height))
+  ok('the page starts at 100%', (await view.locator('.tray-zoom').textContent()) === '100%')
+  ok('one line is 28px', (await pitchOf()) === 28, String(await pitchOf()))
+
+  await view.locator('.tray-step[aria-label="Larger"]').click()
+  await view.locator('.tray-step[aria-label="Larger"]').click()
+  await view.waitForTimeout(400)
+  ok('zoom steps up', (await view.locator('.tray-zoom').textContent()) === '150%')
+  ok('and the pitch stays a whole number of pixels', (await pitchOf()) === 42, String(await pitchOf()))
+
+  /* the rule the whole page is built on has to survive it */
+  const zoomed = await view
+    .locator('.cm-line')
+    .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)))
+  ok(
+    'and every block is still a whole number of lines',
+    zoomed.every((h) => h % 42 === 0),
+    JSON.stringify(zoomed.filter((h) => h % 42 !== 0)),
+  )
+
+  /* it is a preference, not a per-page attribute */
+  await view.reload({ waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(900)
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(400)
+  ok('zoom is remembered', (await view.locator('.tray-zoom').textContent()) === '150%')
+
+  await view.locator('.tray-step[aria-label="Smaller"]').click()
+  await view.locator('.tray-step[aria-label="Smaller"]').click()
+  await view.waitForTimeout(400)
+  ok('and comes back down', (await view.locator('.tray-zoom').textContent()) === '100%')
 })
 
 /* ── the calendar ───────────────────────────────────────────────────── */

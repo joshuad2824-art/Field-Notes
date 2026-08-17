@@ -217,7 +217,8 @@ export function capsInCell(): boolean {
   const selection = window.getSelection()
   const text = selection?.toString() ?? ''
   if (!text) return true
-  document.execCommand('insertText', false, text.toUpperCase())
+  const shouted = text === text.toUpperCase() && text !== text.toLowerCase()
+  document.execCommand('insertText', false, shouted ? text.toLowerCase() : text.toUpperCase())
   return true
 }
 
