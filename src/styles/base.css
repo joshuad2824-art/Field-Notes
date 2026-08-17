@@ -50,11 +50,18 @@ body::before {
   left: 0;
   right: 0;
   z-index: 1;
-  height: var(--app-height, 100%);
+  /* The fallback is the whole point: with no keyboard up, viewport.ts stops
+     measuring and lets these through. `dvh` is the browser's own account of
+     how tall the window is, so it can't come up short the way a number we
+     worked out ourselves can — and a short app leaves the frame showing in a
+     band under it. The vh line is for anything too old to know dvh. */
+  height: var(--app-height, 100vh);
+  height: var(--app-height, 100dvh);
 }
 
 .app {
-  height: var(--app-height, 100%);
+  height: var(--app-height, 100vh);
+  height: var(--app-height, 100dvh);
   display: flex;
   flex-direction: column;
   min-height: 0;

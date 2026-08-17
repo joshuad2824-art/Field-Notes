@@ -46,12 +46,19 @@ export function trackViewport(): void {
     const top = vv ? vv.offsetTop : 0
     const open = window.innerHeight - height > KEYBOARD_THRESHOLD
 
+    /* With no keyboard to duck, don't measure at all — hand the height back to
+       CSS, which falls through to 100dvh. Any pixel count we work out here can
+       come up short by whatever the device decides not to tell us, and a short
+       app leaves the frame showing under it. `dvh` is the browser's own answer
+       to that question and it can't disagree with itself. */
     const whole = installed() && !open
-    root.style.setProperty(
-      '--app-height',
-      `${Math.round(whole ? window.innerHeight : height)}px`,
-    )
-    root.style.setProperty('--app-top', `${Math.round(whole ? 0 : top)}px`)
+    if (whole) {
+      root.style.removeProperty('--app-height')
+      root.style.removeProperty('--app-top')
+    } else {
+      root.style.setProperty('--app-height', `${Math.round(height)}px`)
+      root.style.setProperty('--app-top', `${Math.round(top)}px`)
+    }
 
     if (open !== keyboardOpen) {
       keyboardOpen = open

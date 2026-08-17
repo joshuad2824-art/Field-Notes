@@ -391,6 +391,54 @@ await ctx.close()
   await inset.close()
 }
 
+/* And the harder version of the same thing, which is what turned up on a real
+   iPad: `window.innerHeight` comes up short too, so an app sized from it falls
+   short however carefully the number is worked out and the frame shows in a
+   band underneath. With no keyboard to duck we now hand the height back to CSS
+   and let 100dvh answer, which no JS getter can talk down. */
+{
+  const lying = await browser.newContext({ viewport: { width: 744, height: 1133 } })
+  await lying.addInitScript(() => {
+    const real = window.matchMedia.bind(window)
+    window.matchMedia = (q) =>
+      q === '(display-mode: standalone)'
+        ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} }
+        : real(q)
+    /* the window itself under-reporting, by more than the 21px above */
+    Object.defineProperty(window, 'innerHeight', { configurable: true, get: () => 1133 - 34 })
+    Object.defineProperty(window.visualViewport, 'height', {
+      configurable: true,
+      get: () => 1133 - 55,
+    })
+  })
+  const view = await lying.newPage()
+  view.on('pageerror', (e) => problems.push('short window: ' + e.message))
+  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(700)
+
+  const reach = await view.evaluate(() => {
+    const root = document.getElementById('root').getBoundingClientRect()
+    return { bottom: Math.round(root.bottom), height: Math.round(root.height) }
+  })
+  ok(
+    'an app whose window under-reports still reaches the bottom',
+    reach.height === 1133,
+    `${reach.height} of 1133`,
+  )
+  ok('and leaves no band of frame under it', reach.bottom === 1133, `${1133 - reach.bottom}px short`)
+
+  /* the leaf has to come with it, not just the shell */
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(600)
+  const leaf = await view.evaluate(() => {
+    const box = document.querySelector('.leaf').getBoundingClientRect()
+    return Math.round(1133 - box.bottom)
+  })
+  ok('and the leaf runs to the bottom with it', leaf === 0, `${leaf}px short`)
+
+  await lying.close()
+}
+
 /* ── three widths ───────────────────────────────────────────────────── */
 
 async function atWidth(width, height, run) {

@@ -148,7 +148,7 @@ desktop layouts. Nothing in `src/` imports anything that talks to a network — 
 isn't a convention, it's the whole point, and it should stay true until Phase 2.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 160 assertions covering the editor, the grid, indent, tables, the
+rotted: 163 assertions covering the editor, the grid, indent, tables, the
 calendar, the keyboard, zoom, the three widths, the folding columns, the
 safe-area bands, the notebook manager, pictures and the tray.
 
@@ -160,13 +160,16 @@ Two things are built but unproven, because only daily use proves them:
   and sizes it to `visualViewport.height`, so it covers exactly what can be seen.
   `npm run check` feeds that handler the numbers iOS reports, which proves our
   reaction; only the phone can prove iOS reports them.
-  **Only while a keyboard is up.** Installed on iPadOS the visual viewport stops
-  short of the home indicator and the window doesn't, so sizing to it left a
-  21px strip of frame — lantern wash and all — showing under the app. An iPhone
-  never does this, which is why it took a tablet to find. With no keyboard an
-  installed app takes the whole window; in a browser it keeps ducking, because
-  there a short viewport is Safari's toolbar and running under it would bury
-  the foot of the list.
+  **Only while a keyboard is up, and with no measuring at all otherwise.**
+  Installed on iPadOS the visual viewport stops short of the home indicator,
+  and the window turned out to come up short too — so an app sized from either
+  number left a band of frame, lantern wash and all, showing underneath. An
+  iPhone never does this, which is why it took a tablet to find, twice. With no
+  keyboard to duck, `viewport.ts` now removes `--app-height` entirely and lets
+  CSS fall through to `100dvh`: the browser's own account of how tall the
+  window is, which can't disagree with itself the way a number we worked out
+  can. In a browser it keeps ducking, because there a short viewport is
+  Safari's toolbar and running under it would bury the foot of the list.
 - **The felt pen** falls back to Caveat everywhere Feltpen isn't installed.
 
 The next move is not a feature. It's the month.
