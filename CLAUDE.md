@@ -148,7 +148,7 @@ desktop layouts. Nothing in `src/` imports anything that talks to a network — 
 isn't a convention, it's the whole point, and it should stay true until Phase 2.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 163 assertions covering the editor, the grid, indent, tables, the
+rotted: 168 assertions covering the editor, the grid, indent, tables, the
 calendar, the keyboard, zoom, the three widths, the folding columns, the
 safe-area bands, the notebook manager, pictures and the tray.
 
@@ -164,6 +164,15 @@ Two things are built but unproven, because only daily use proves them:
   all.** `#root` is pinned `top: 0; bottom: 0` inside a body that is already
   `position: fixed; inset: 0` — the viewport itself, whatever the device thinks
   that is. Nothing measures anything, so nothing can disagree.
+
+  What that does *not* fix is the strip iOS keeps for itself. Measured on a
+  real iPad, the web view is handed 712pt of an available 744 — `innerHeight`,
+  `visualViewport.height` and `clientHeight` all agree on 712, and `#root` and
+  `body` both reach it. The app is not short; the viewport is, and the 32pt
+  outside it is the system's to paint. It fills it from
+  `<meta name="theme-color">`, so that follows whatever is at the bottom of the
+  screen — the leaf's stock on a page, the frame's teal everywhere else. The
+  band stops reading as a band because it stops being a different colour.
 
   That took three goes to see. The band of frame under the app on an iPad came
   first from `visualViewport.height` being short of the home indicator, then
