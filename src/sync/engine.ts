@@ -324,10 +324,24 @@ export async function syncNow(): Promise<void> {
        already set. */
     if (getVault()) {
       const failure = error instanceof SyncError ? error : null
-      setStatus({
-        state: failure?.offline ? 'offline' : 'error',
-        error: error instanceof Error ? error.message : String(error),
-      })
+      let state: 'offline' | 'error' = failure?.offline ? 'offline' : 'error'
+      let said = error instanceof Error ? error.message : String(error)
+
+      /* A request that never left tells us nothing on its own. Ask the plainer
+         question before deciding whether this is weather or a setup that will
+         still be broken tomorrow. */
+      if (failure && failure.status === 0 && !failure.offline) {
+        try {
+          const verdict = await transport!.diagnose()
+          state = verdict.reachable ? 'error' : 'offline'
+          said = verdict.message
+        } catch {
+          /* If even the diagnosis can't run, treat it as weather. */
+          state = 'offline'
+        }
+      }
+
+      setStatus({ state, error: said })
     }
   } finally {
     running = false

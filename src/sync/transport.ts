@@ -10,9 +10,15 @@ import type { Row, TableName } from './wire'
    it was. */
 
 export class SyncError extends Error {
-  /* True when the network never answered — no wifi, aeroplane mode, a paused
-     project. Worth telling apart from a real refusal, because one of them is
-     nothing to act on and the other means the vault is wrong. */
+  /* True when the mirror genuinely could not be reached — no wifi, aeroplane
+     mode, a paused project, a project URL with a typo in it. Worth telling
+     apart from a refusal, because one of them passes on its own and the other
+     will still be there tomorrow.
+
+     It is deliberately *not* set for every thrown fetch. A browser reports a
+     blocked request and an unreachable host identically, and calling both of
+     them "offline — it will catch up" is how a permanently broken setup gets
+     to look like weather. `diagnose` below is what tells them apart. */
   readonly offline: boolean
   readonly status: number
   constructor(message: string, status = 0, offline = false) {
@@ -30,6 +36,17 @@ export interface Transport {
   since(table: TableName, cursor: string, limit: number): Promise<Row[]>
   byId(table: TableName, ids: string[]): Promise<Row[]>
   put(table: TableName, rows: Row[]): Promise<void>
+  /* Asked only after something has already gone wrong, to work out which of
+     the several quite different things it was. */
+  diagnose(): Promise<Diagnosis>
+}
+
+export interface Diagnosis {
+  /* Whether the mirror could be reached at all. False is weather — no wifi, a
+     paused project — and passes on its own. True with a failed sync is a
+     setup that will still be broken tomorrow, and says so. */
+  reachable: boolean
+  message: string
 }
 
 export const EPOCH = '1970-01-01T00:00:00Z'
@@ -50,8 +67,12 @@ export function supabaseTransport(vault: Vault): Transport {
     let response: Response
     try {
       response = await fetch(base + path, init)
-    } catch {
-      throw new SyncError('No answer from the mirror.', 0, true)
+    } catch (error) {
+      /* Whatever the browser actually said. It is usually one unhelpful word,
+         but one unhelpful word is still more than none, and the console beside
+         it will have the long version. */
+      const said = error instanceof Error ? error.message : String(error)
+      throw new SyncError(`The request never left: ${said}`, 0, false)
     }
     if (!response.ok) {
       const detail = (await response.text().catch(() => '')).slice(0, 200)
@@ -83,6 +104,56 @@ export function supabaseTransport(vault: Vault): Transport {
         `&id=in.(${encodeURIComponent(list)})`
       const response = await call(`/${table}${query}`, { headers: headers() })
       return (await response.json()) as Row[]
+    },
+
+    /* Run only after a request has already failed to leave, because the
+       browser refuses to say which of these it was — a blocked request and an
+       unreachable host are the same TypeError with the same one-word message.
+
+       So ask a second, plainer question: the same project, the same anon key,
+       and *no* vault-key header. What comes back separates the three cases
+       that need quite different things done about them. */
+    async diagnose() {
+      const unreachable = (message: string) => ({ reachable: false, message })
+      const reached = (message: string) => ({ reachable: true, message })
+
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        return unreachable('This device has no network at all. It will catch up on its own.')
+      }
+
+      let bare: Response
+      try {
+        bare = await fetch(`${base}/pages?select=id&limit=0`, {
+          headers: { apikey: vault.anonKey, Authorization: `Bearer ${vault.anonKey}` },
+        })
+      } catch {
+        /* Not reachable even asking plainly. The host, not the request. */
+        return unreachable(
+          `Couldn't reach ${vault.url} at all — check the project URL, and whether the project is paused.`,
+        )
+      }
+
+      if (bare.status === 404) {
+        return reached(
+          "Reached the project, but it has no `pages` table — supabase/schema.sql hasn't been run, or didn't finish.",
+        )
+      }
+      if (bare.status === 401 || bare.status === 403) {
+        return reached(
+          'Reached the project, but the anon key was refused. Copy it again from the project API settings.',
+        )
+      }
+      if (!bare.ok) {
+        return reached(`Reached the project and it answered ${bare.status} to a plain request.`)
+      }
+
+      /* The project is there, the table is there, the anon key is good — and
+         the only difference between that request and the one that failed is
+         the vault-key header. Which means the browser is refusing to send it,
+         and that is a CORS preflight, not anything about the vault. */
+      return reached(
+        'Reached the project fine without the vault key, so the browser is blocking the x-vault-key header itself (a CORS preflight). This one is ours to fix, not yours.',
+      )
     },
 
     async put(table, rows) {

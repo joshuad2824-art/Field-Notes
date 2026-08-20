@@ -158,6 +158,7 @@ What was Phase 3 gets picked over rather than built wholesale:
 - **No end-to-end encryption, still.** Unchanged from the architecture note and worth restating now that there is actually a server: the realistic threat to this archive is loss, not intrusion. Server-side encryption at rest comes free; a lost key that makes the mirror unreadable would be a catastrophe bought to protect notes already decided not to be sensitive. Wrong trade.
 - **Pictures ride as base64 in the `images` table, not in a storage bucket.** One transport and one row policy rather than two services with two ways of asking the same question — and the bucket's policy would have to answer the header question through a different code path that can't be tested the same way. The cost is real: base64 is a third larger than the bytes, and the free tier's database is 500MB. If the archive ever grows enough pictures for that to bite, the fix is a bucket, not a bigger row.
 - **The pull cursor is `gte`, not `gt`, and widens rather than skips.** Applying a row twice is a no-op; missing one is not, so the boundary row is always re-read. The failure that shape has is a whole batch of rows sharing one stamp, which would leave the cursor nothing to advance to — hence `clock_timestamp()` in the trigger rather than `now()`, and hence the engine doubling its window rather than stepping past. It gives up loudly at 6400.
+- **`Offline` means unreachable, and it is checked rather than assumed.** A browser reports a blocked request and an unreachable host as the same one-word `TypeError`, so the first version of this called both of them "offline — it will catch up" and a permanently broken setup got to look like weather. When a request fails to leave, the transport now asks a second, plainer question — same project, same anon key, no vault-key header — and what comes back separates the four cases that need quite different things done about them: no network, no project, no `pages` table, or a browser refusing to send `x-vault-key`. Only the first two are weather.
 - **A free-tier Supabase project pauses after a week of inactivity.** It shows up here as `Offline` in the rail's foot and nothing else — no blocked write, no lost keystroke — which is the whole point of the design, but it does mean the mirror can be quietly stale for as long as nobody notices. The monthly export is still the actual backup.
 - **The iOS keyboard accessory bar** — the up/down arrows and the Done tick — cannot be removed from a web app. It's the strongest concrete argument for the native path and should be weighed at the end of Phase 1. It's also the reason the formatting row sits at the top of the page rather than docked above the keyboard: two bars stacked on the keyboard would be worse than one bar at the top. If the accessory bar ever goes, the strip should move down.
 
@@ -176,14 +177,15 @@ nothing *above* `src/sync/` does, and nothing above it may. Grep for `fetch(` be
 believing otherwise — one hit is correct, two is a regression.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 216 assertions in two files. `tests/editor.mjs` has 168 covering the editor,
+rotted: 219 assertions in two files. `tests/editor.mjs` has 168 covering the editor,
 the grid, indent, tables, the calendar, the keyboard, zoom, the three widths, the
 folding columns, the safe-area bands, the notebook manager, pictures and the tray.
-`tests/sync.mjs` has 48, in two halves — the reconciler's truth table and the pairing
+`tests/sync.mjs` has 51, in two halves — the reconciler's truth table and the pairing
 code run on node with nothing around them, and then two real browsers are driven
 against a fake mirror held inside the test file, through pairing, a page crossing, a
-picture crossing byte for byte, the mirror vanishing mid-sentence, both devices
-editing the same page while apart, a deletion crossing, and unpairing.
+picture crossing byte for byte, the mirror vanishing mid-sentence, a mirror that is
+reachable but refuses the vault header, both devices editing the same page while
+apart, a deletion crossing, and unpairing.
 
 Three things are built but unproven, because only daily use proves them:
 

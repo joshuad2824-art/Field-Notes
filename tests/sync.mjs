@@ -198,37 +198,54 @@ let seq = 0
 const T0 = Date.UTC(2026, 0, 1)
 const stamp = () => new Date(T0 + ++seq).toISOString()
 const offline = new Set()
+/* A browser refusing to send a custom header — which is what a CORS preflight
+   failure looks like from inside the app, and is indistinguishable from an
+   unreachable host unless something goes and asks. */
+const headerBlocked = new Set()
 let served = 0
 
 function handler(label) {
   return async (route, request) => {
     if (offline.has(label)) return route.abort('failed')
+    if (headerBlocked.has(label) && request.headers()['x-vault-key']) {
+      return route.abort('failed')
+    }
     served++
 
     const url = new URL(request.url())
     const table = url.pathname.split('/').filter(Boolean).pop()
 
     /* The whole of the authentication, and the thing the row policy compares.
-       A read is filtered to the vault the key hashes to; a write has to carry
-       that same vault on every row, which is `with check` in the schema. If
-       the header ever stops going out, everything below stops matching and
-       these tests go red rather than quietly passing. */
+
+       Faithful to what a row policy actually does, which is not the same as a
+       doorman: a read is *filtered* to the vault the key hashes to and returns
+       nothing when it doesn't match, while a write is genuinely rejected,
+       because that is `using` and `with check` doing two different jobs. A
+       request with no key at all hashes the empty string — exactly the
+       `coalesce(..., '')` in the schema — and so matches nothing real.
+
+       Getting this right matters beyond fidelity: it is what lets the app tell
+       "the header never arrived" apart from "the project is not there". */
     const presented = request.headers()['x-vault-key']
-    const refuse = () => route.fulfill({ status: 401, contentType: 'application/json', body: '{}' })
-    if (!presented) return refuse()
-    const allowed = createHash('sha256').update(presented).digest('hex')
+    const allowed = createHash('sha256')
+      .update(presented ?? '')
+      .digest('hex')
 
     if (request.method() === 'POST') {
       const rows = request.postDataJSON()
-      if (rows.some((row) => row.vault !== allowed)) return refuse()
+      if (rows.some((row) => row.vault !== allowed)) {
+        return route.fulfill({ status: 401, contentType: 'application/json', body: '{}' })
+      }
       for (const row of rows) {
         store.set(`${table}|${row.vault}|${row.id}`, { ...row, server_at: stamp() })
       }
       return route.fulfill({ status: 201, body: '' })
     }
 
-    const vault = (url.searchParams.get('vault') ?? '').replace(/^eq\./, '')
-    if (vault !== allowed) return refuse()
+    /* Rows the policy would let this caller see, then the caller's own filter
+       on top — which is why a mismatched vault comes back empty, not refused. */
+    const vault = (url.searchParams.get('vault') ?? allowed).replace(/^eq\./, '')
+    if (vault !== allowed) return json(route, [])
 
     const mine = [...store.entries()]
       .filter(([k]) => k.startsWith(`${table}|${vault}|`))
@@ -389,6 +406,37 @@ await syncNow(a)
 ok(
   'and catches up by itself once the mirror is back',
   (await titles(a)).some((t) => t.includes('Written with the wifi off')),
+)
+
+/* ── a mirror that is reachable but refuses the header ──────────────────── */
+
+/* The failure that looks exactly like weather and isn't. Calling this one
+   "offline — it will catch up" is how a setup that will still be broken
+   tomorrow gets to look like a passing cloud, so the app goes and asks a
+   plainer question before it decides which it was. */
+headerBlocked.add('B')
+await settings(b)
+await b.view.locator('.btn.caps', { hasText: 'Sync now' }).click()
+await b.view.waitForTimeout(1800)
+
+const verdict = await b.view.locator('.panel-card .meta').first().textContent()
+const explained = await b.view.locator('.sync-problem').first().textContent()
+ok(
+  'a refused header is not reported as weather',
+  !verdict.toLowerCase().includes('offline'),
+  verdict.trim(),
+)
+ok(
+  'and the app works out that the header is the thing',
+  /header|cors/i.test(explained ?? ''),
+  (explained ?? '').trim(),
+)
+
+headerBlocked.delete('B')
+await syncNow(b)
+ok(
+  'and it recovers once the header gets through',
+  (await b.view.locator('.panel-card .meta').first().textContent()).includes('paired'),
 )
 
 /* ── the one that matters: both devices, the same page, no network ──────── */
