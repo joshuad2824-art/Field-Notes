@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { shortStamp } from '../lib/format'
 import { connect, disconnect, syncNow } from '../sync/engine'
-import { decodeCode, encodeCode, looksLikeProjectUrl, normaliseUrl } from '../sync/pairing'
+import {
+  cleanToken,
+  decodeCode,
+  encodeCode,
+  headerSafe,
+  looksLikeProjectUrl,
+  normaliseUrl,
+} from '../sync/pairing'
 import { useSyncStatus } from '../sync/status'
 import { createVault, useVault } from '../sync/vault'
 
@@ -36,13 +43,18 @@ export function SyncPanel() {
       setProblem('That does not look like a project URL. It ends in .supabase.co.')
       return
     }
-    if (anonKey.trim().length < 20) {
+    const clean = cleanToken(anonKey)
+    if (clean.length < 20) {
       setProblem('That anon key looks too short to be one.')
+      return
+    }
+    if (!headerSafe(clean)) {
+      setProblem('That anon key has a character in it that cannot go in a request. Copy it again.')
       return
     }
     setBusy(true)
     try {
-      await connect(await createVault(normaliseUrl(url), anonKey.trim()), false)
+      await connect(await createVault(normaliseUrl(url), clean), false)
     } finally {
       setBusy(false)
     }

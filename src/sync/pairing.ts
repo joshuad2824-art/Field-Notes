@@ -40,6 +40,26 @@ function fromBase64Url(text: string): Uint8Array {
   return bytes
 }
 
+/* A token that is going into an HTTP header, cleaned of the thing that gets
+   into it. An anon key is a JWT and a vault key is base64url — neither has any
+   business containing whitespace — but both are pasted by hand, and a key
+   copied out of a display that wrapped it arrives with a newline in the middle.
+
+   That newline never reaches the network. `fetch` refuses to build the headers
+   and throws before it opens a socket, which looks from the outside exactly
+   like a host that isn't there. `trim()` was not enough: it tidies the ends and
+   leaves the middle alone. */
+export function cleanToken(raw: string): string {
+  return raw.replace(/\s+/g, '')
+}
+
+/* What a header value is allowed to be: visible ASCII, no spaces, no control
+   characters. Worth checking rather than assuming, because the failure is
+   invisible and blames the wrong thing. */
+export function headerSafe(value: string): boolean {
+  return value.length > 0 && /^[\x21-\x7e]+$/.test(value)
+}
+
 export function newVaultKey(): string {
   const bytes = new Uint8Array(32)
   crypto.getRandomValues(bytes)
@@ -83,7 +103,12 @@ export async function decodeCode(code: string): Promise<Vault> {
     throw new Error('That code is missing something. Copy it again.')
   }
   const url = normaliseUrl(u)
-  return { url, anonKey: a, key: k, id: await vaultIdFor(k) }
+  const anonKey = cleanToken(a)
+  const key = cleanToken(k)
+  if (!headerSafe(anonKey) || !headerSafe(key)) {
+    throw new Error('That code carries a key with something odd in it. Copy it again.')
+  }
+  return { url, anonKey, key, id: await vaultIdFor(key) }
 }
 
 /* A pasted project URL arrives with a trailing slash about half the time, and

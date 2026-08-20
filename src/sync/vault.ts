@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { newVaultKey, vaultIdFor, type Vault } from './pairing'
+import { cleanToken, newVaultKey, vaultIdFor, type Vault } from './pairing'
 
 /* Where the vault lives on this device. localStorage rather than Dexie, for
    the same reason settings are there: it reads synchronously, so the app knows
@@ -19,7 +19,17 @@ function read(): Vault | null {
     if (!raw) return null
     const v = JSON.parse(raw) as Partial<Vault>
     if (!v.url || !v.anonKey || !v.key || !v.id) return null
-    return { url: v.url, anonKey: v.anonKey, key: v.key, id: v.id }
+    /* Cleaned on the way out as well as the way in, so a device that was
+       already paired with a key that had a newline in it heals itself on the
+       next load rather than needing to be set up again. The vault id is a hash
+       of the key, so cleaning the key cannot change which vault this is —
+       whitespace was never part of what was hashed. */
+    return {
+      url: v.url,
+      anonKey: cleanToken(v.anonKey),
+      key: cleanToken(v.key),
+      id: v.id,
+    }
   } catch {
     return null
   }
@@ -43,7 +53,7 @@ export function setVault(vault: Vault | null): void {
 /* The first device: a key nobody has ever held, and the vault it names. */
 export async function createVault(url: string, anonKey: string): Promise<Vault> {
   const key = newVaultKey()
-  return { url, anonKey, key, id: await vaultIdFor(key) }
+  return { url, anonKey: cleanToken(anonKey), key, id: await vaultIdFor(key) }
 }
 
 function subscribe(fn: () => void) {
