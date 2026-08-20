@@ -1,4 +1,4 @@
-import { headerSafe, type Vault } from './pairing'
+import { firstUnsafe, headerSafe, looksTruncated, type Vault } from './pairing'
 import type { Row, TableName } from './wire'
 
 /* The only file in the app that knows a network exists.
@@ -122,15 +122,20 @@ export function supabaseTransport(vault: Vault): Transport {
          before it opens a socket — which is indistinguishable, from the catch
          block, from a host that isn't there. Blaming the project URL for it
          sends you to check a dashboard that was fine all along. */
-      if (!headerSafe(vault.anonKey)) {
-        return reached(
-          'The anon key has a character in it that cannot go in a request, so nothing was ever sent. Unpair and paste it again.',
-        )
-      }
-      if (!headerSafe(vault.key)) {
-        return reached(
-          'The vault key has a character in it that cannot go in a request, so nothing was ever sent. Pair this device again from the code.',
-        )
+      for (const [what, value, remedy] of [
+        ['anon key', vault.anonKey, 'Unpair, and copy it from the project API settings again.'],
+        ['vault key', vault.key, 'Pair this device again from the code.'],
+      ] as const) {
+        if (looksTruncated(value)) {
+          return reached(
+            `The ${what} has an ellipsis in it, so what was pasted is a shortened display of it rather than the whole thing. ${remedy}`,
+          )
+        }
+        if (!headerSafe(value)) {
+          return reached(
+            `The ${what} contains ${firstUnsafe(value)}, which cannot go in a request, so nothing was ever sent. ${remedy}`,
+          )
+        }
       }
 
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {

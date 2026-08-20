@@ -5,8 +5,10 @@ import {
   cleanToken,
   decodeCode,
   encodeCode,
+  firstUnsafe,
   headerSafe,
   looksLikeProjectUrl,
+  looksTruncated,
   normaliseUrl,
 } from '../sync/pairing'
 import { useSyncStatus } from '../sync/status'
@@ -48,8 +50,14 @@ export function SyncPanel() {
       setProblem('That anon key looks too short to be one.')
       return
     }
+    if (looksTruncated(clean)) {
+      setProblem(
+        'That anon key has an ellipsis in it, so it is a shortened display of the key rather than the key. Use the copy button beside it.',
+      )
+      return
+    }
     if (!headerSafe(clean)) {
-      setProblem('That anon key has a character in it that cannot go in a request. Copy it again.')
+      setProblem(`That anon key contains ${firstUnsafe(clean)}, which cannot go in a request.`)
       return
     }
     setBusy(true)
