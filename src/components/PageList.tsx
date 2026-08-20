@@ -5,7 +5,7 @@ import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { type Page, snippetOf, titleOf, wordCount } from '../lib/model'
 import { notebookForPage } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
-import { resetThemeColor, setThemeColor, surfaceColor } from '../lib/themecolor'
+import { resetEdgeColor, setEdgeColor, surfaceColor } from '../lib/themecolor'
 import { WeatherLine } from './WeatherLine'
 import { useLive } from '../lib/useLive'
 
@@ -54,8 +54,8 @@ export function PageList({
   const [query, setQuery] = useState('')
   const { weekday, day, month, year } = mastheadParts()
 
-  /* iOS keeps a strip below the app and paints it from `<meta name="theme-color">`,
-     so that colour has to be whatever is actually at the bottom of the screen.
+  /* iOS keeps a strip below the app and paints it from the page's own canvas
+     background, so that colour has to be whatever is at the bottom of the screen.
      When the list is the whole window, that is this foot — a near-black bar,
      not the frame's teal — and getting it wrong draws exactly the band the
      colour is there to prevent.
@@ -67,8 +67,8 @@ export function PageList({
   useEffect(() => {
     const foot = footRef.current
     if (docked || !foot) return
-    setThemeColor(surfaceColor(foot))
-    return resetThemeColor
+    setEdgeColor(surfaceColor(foot))
+    return resetEdgeColor
   }, [docked])
 
   const shown = useMemo(() => {

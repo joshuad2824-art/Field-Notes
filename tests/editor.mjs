@@ -604,6 +604,40 @@ await atWidth(390, 844, async (view) => {
   const ducked = await footAt()
   ok('a browser toolbar pads the foot clear of itself', ducked.pad === '66px', ducked.pad)
   ok('and the app still runs to the bottom edge', ducked.short === 0, `${ducked.short}px short`)
+
+  /* And the strip the system keeps for itself, which is painted from the
+     canvas — `html`, or `body` when `html` hasn't got one. It had not, so the
+     frame's teal propagated up and was painted under every screen whatever the
+     meta said. That is the band. */
+  const canvas = () =>
+    view.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)
+  const footColor = await view
+    .locator('.list-foot')
+    .evaluate((el) => getComputedStyle(el).backgroundColor)
+  ok('the canvas is not left to propagate from the frame', (await canvas()) !== 'rgba(0, 0, 0, 0)')
+  ok(
+    'under the list it is the foot, not the frame',
+    (await canvas()) === 'rgb(6, 28, 29)',
+    `${await canvas()} under ${footColor}`,
+  )
+
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(700)
+  const leafColor = await view
+    .locator('.leaf')
+    .evaluate((el) => getComputedStyle(el).backgroundColor)
+  ok('and under a page it is the leaf', (await canvas()) === leafColor, `${await canvas()} vs ${leafColor}`)
+
+  /* the stock is the page's, so the canvas has to follow it changing */
+  await view.locator('.mark-button[aria-label="Page options"]').click()
+  await view.waitForTimeout(300)
+  await view.locator('.sheet-item', { hasText: 'Stock' }).click()
+  await view.waitForTimeout(400)
+  const flipped = await view
+    .locator('.leaf')
+    .evaluate((el) => getComputedStyle(el).backgroundColor)
+  ok('the other stock takes it with it', (await canvas()) === flipped, `${await canvas()} vs ${flipped}`)
+  ok('which is a different colour than before', flipped !== leafColor, `${leafColor} → ${flipped}`)
 })
 
 await atWidth(1920, 1080, async (view) => {

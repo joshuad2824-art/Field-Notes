@@ -35,7 +35,7 @@ import {
 import { notebookForPage, useNotebooks } from '../lib/notebooks'
 import { getSettings, setSettings, stepZoom, useSettings } from '../lib/settings'
 import { useKeyboardOpen } from '../lib/viewport'
-import { resetThemeColor, setThemeColor, tokenColor } from '../lib/themecolor'
+import { resetEdgeColor, setEdgeColor, tokenColor } from '../lib/themecolor'
 import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { back, navigate, to } from '../lib/router'
 
@@ -103,15 +103,16 @@ export function PageScreen({ id }: { id: string }) {
     }
   }, [id])
 
-  /* The strip iOS paints below the app takes its colour from the theme-color
-     meta, so it follows the stock of the page being looked at. Otherwise a
-     night page sits above a teal-800 band and a cream one above a dark one. */
+  /* The strip iOS keeps below the app is painted from the page's own canvas
+     background, so that follows the stock of the page being looked at.
+     Otherwise a night page sits above a teal-800 band and a cream one above a
+     dark one — which is exactly the band this closes. */
   const stockNow = page ? effectiveStock(page, settings.stock) : null
   useEffect(() => {
     if (!stockNow) return
     const leaf = document.querySelector('.leaf')
-    setThemeColor(leaf ? tokenColor('--surface-page', leaf) : tokenColor('--frame-bg'))
-    return resetThemeColor
+    setEdgeColor(leaf ? tokenColor('--surface-page', leaf) : tokenColor('--frame-bg'))
+    return resetEdgeColor
   }, [stockNow])
 
   const onChange = (next: string) => {
