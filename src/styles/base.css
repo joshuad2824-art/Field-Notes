@@ -13,6 +13,18 @@ body {
   overflow: hidden;
 }
 
+/* The canvas — which is not the same thing as the app.
+
+   A background on `html` is painted across the whole window, including the
+   strip outside the layout viewport that the system keeps for itself. Left
+   unset it propagates up from `body` instead, and `body` is the frame: which
+   is how a cream page came to sit on a teal band at the bottom of a phone.
+   So the canvas is named here and lib/themecolor.ts moves it to whatever is
+   actually at the bottom of the screen. */
+html {
+  background: var(--frame-bg);
+}
+
 /* A fixed body is the only thing iOS honours when the keyboard tries to
    scroll the document out from under the app. See lib/viewport.ts. */
 body {
@@ -86,6 +98,14 @@ button {
   scrollbar-width: thin;
   scrollbar-color: rgba(246, 243, 236, 0.14) transparent;
 }
+/* The app runs to the very bottom edge of the screen now, so a column that
+   ends in a scroll has to keep its own last row clear of whatever the browser
+   is holding down there. One that ends in a foot doesn't — the foot pads
+   itself, and padding both would show as a gap above it. */
+.scroll:last-child {
+  padding-bottom: var(--safe-bottom);
+}
+
 .scroll::-webkit-scrollbar {
   width: 10px;
 }

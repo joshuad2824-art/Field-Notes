@@ -269,6 +269,16 @@
   stroke: var(--surface-page);
 }
 
+/* Where the line sits across the measure. Nothing here changes a height, so
+   the 28px grid is untouched — which is the whole reason alignment is a line
+   class and not a wrapper. */
+.editor .md-align-center {
+  text-align: center;
+}
+.editor .md-align-right {
+  text-align: right;
+}
+
 .md-rule {
   line-height: var(--grid-pitch);
 }
@@ -292,6 +302,41 @@
   text-decoration-thickness: 1px;
   text-decoration-color: var(--mark-dim);
 }
+/* ── the underline ──────────────────────────────────────────────────────
+   A stroke laid under the word, never `text-decoration`. With the ink pen it
+   is a fine rule. With the felt pen it is one quick mark: fattest in the
+   middle, lifting to a thin tip on the right the way a pen leaves the paper —
+   which is a different thing from the slow, evenly rough line a wobble
+   function draws, and the difference is the whole point of it.
+
+   It is painted as a background, so it costs no height and the 28px grid
+   never moves; and it is cloned across a line break, so a phrase that wraps is
+   underlined on both lines rather than only the first.
+
+   The stroke's colour is baked into the data URI because a background image is
+   its own document and cannot see `currentColor`. There are two stocks, so
+   there are two of them, and nothing else in here needs one. */
+.md-underline,
+.md-table td u {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: 0 calc(100% - 3px);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.leaf[data-pen='felt'] .md-underline,
+.leaf[data-pen='felt'] .md-table td u {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%208'%20preserveAspectRatio='none'%3E%3Cpath%20d='M0.5%206C24%204.6%2056%203.5%2099.5%202.5L99.5%203.3C56%204.9%2024%206.4%200.5%207.6Z'%20fill='%23142a2b'%20fill-opacity='.86'/%3E%3C/svg%3E");
+  background-size: 100% 6px;
+  background-position: 0 100%;
+}
+.leaf[data-pen='felt'][data-stock='night'] .md-underline,
+.leaf[data-pen='felt'][data-stock='night'] .md-table td u {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%208'%20preserveAspectRatio='none'%3E%3Cpath%20d='M0.5%206C24%204.6%2056%203.5%2099.5%202.5L99.5%203.3C56%204.9%2024%206.4%200.5%207.6Z'%20fill='%23e9e6df'%20fill-opacity='.86'/%3E%3C/svg%3E");
+}
+
 .md-code {
   font-family: var(--font-mono);
   font-size: 0.92em;
@@ -430,10 +475,15 @@
   border-bottom: 1px solid var(--frame-hairline);
   color: var(--frame-text);
 }
+/* The strip earns its right to be one row by staying inside the leaf on a
+   desk. It has taken on three more marks — an underline and the two
+   alignments — and paid for them in a pixel of gap and a pixel of padding
+   rather than in a second row, which is the one thing it is not allowed to
+   become. */
 .tray-strip {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   padding: 5px 8px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -455,7 +505,7 @@
   flex: 0 0 auto;
   width: 1px;
   height: 20px;
-  margin: 0 4px;
+  margin: 0 3px;
   background: var(--frame-hairline-soft);
 }
 
@@ -476,7 +526,7 @@
   font-family: var(--font-ui);
   font-size: 13px;
   line-height: 18px;
-  padding: 6px 6px;
+  padding: 6px 5px;
   border-radius: 3px;
   cursor: pointer;
   white-space: nowrap;
@@ -510,9 +560,22 @@
 .tray-mark,
 .tray-step,
 .tray-place {
-  min-width: 27px;
+  min-width: 25px;
   text-align: center;
 }
+/* A drawn mark rather than a typed one, so the button holds a picture and
+   nothing has to line a glyph up on a baseline it doesn't share. */
+.tray-block.draw {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.align-mark {
+  width: 16px;
+  height: 12px;
+  fill: currentColor;
+}
+
 .tray-block.mono,
 .tray-mark.mono,
 .tray-word.mono {
@@ -542,6 +605,10 @@
 }
 .tray-mark.strike {
   text-decoration: line-through;
+}
+.tray-mark.under {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .tray-mark.shout {
   font-size: 11px;
@@ -957,6 +1024,13 @@
   pointer-events: auto;
   touch-action: none;
 }
+/* The one on the outside edge takes the whole table wider or narrower. It
+   hangs off the edge rather than straddling it, so it has nothing under it to
+   swallow a click from — which is why it, alone, can run the full height. */
+.md-table-grip.edge {
+  width: 14px;
+  margin-left: -3px;
+}
 .md-table-grip::after {
   content: '';
   position: absolute;
@@ -971,6 +1045,12 @@
 }
 .md-table.active .md-table-grip:hover::after {
   opacity: 0.6;
+}
+/* The edge one is only ever half over the table, so it says so with a mark
+   that is clearly outside rather than one sitting on a seam. */
+.md-table-grip.edge::after {
+  left: 3px;
+  width: 2px;
 }
 
 .md-table-controls {

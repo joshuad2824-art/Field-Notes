@@ -232,15 +232,19 @@ Markdown is the storage format, which was decided for export and durability. A f
 | Numbered list | `1. ` | — |
 | Block quote | `> ` | Playfair italic, brass rule |
 | Bold / Italic | `**` / `*` | — |
+| Underline | `<u>text</u>` | a drawn stroke, quick in felt |
 | Strikethrough | `~~` | — |
 | Highlight | `==text==` | five-color tint wash |
 | — | `- [ ] ` | checklist |
+| — | `{center}` / `{right}` | where the line sits |
 
 Two deliberate departures:
 
 **Subheading goes to Archivo small caps rather than a third Playfair size.** Your system already assigns h4/h5 to tracked Archivo uppercase, and it's a genuinely better subheading than shrinking Playfair a third time — it reads as a *label* inside prose, which is what a subheading is. It also breaks up a long page far better than another serif line.
 
-**Underline is dropped.** It has no markdown equivalent, and on a screen an underline means a link. Bold, italic, and the highlighter cover everything underline was doing, and the highlighter does it more like paper.
+~~**Underline is dropped.**~~ **Reversed, August 2026 — it was wanted, so it is in.** The reasoning above was that underline has no markdown equivalent and that on a screen an underline means a link. Half of that was wrong and half of it was answerable. It does have an equivalent: `<u>text</u>` is inline HTML, which every markdown reader passes through and most render — a *less* private convention than the highlighter's `=={forest}`, which shipped anyway. And it doesn't have to look like a link, because it isn't `text-decoration`: it is a stroke drawn under the word, a fine rule with the ink pen and one quick mark with the felt one — fattest in the middle, lifting to a thin tip on the right the way a pen leaves the paper. That is a pen underlining a word on paper, which is nothing at all like a hyperlink.
+
+**Where a line sits is added.** Centre and right, as a hidden `{center}` or `{right}` at the front of the line — the same brace-tag shape as the highlighter's colour and a picture's placement, and the same trade: private, readable, and one word at the front of the line in any other editor. Left is said by taking the tag off, which is also what tapping the mark a second time does.
 
 **Checklists are added**, because Apple Notes has them and quick capture wants them. `- [ ]` is standard markdown and survives export intact.
 
@@ -251,12 +255,12 @@ The complaint about Apple Notes on mobile is that formatting hides behind the `A
 **Phone: a docked strip above the keyboard.** Always visible while the keyboard is up. No `Aa` gate, no menu to open. Archivo labels, `--surface-chrome` ground, one row, horizontally scrollable:
 
 ```
- Title  H  Sub  |  B  I  S  ⌷  |  •  1.  ☑  |  "  #tag
+ Title  H  Sub  |  B  I  U  S  ⌷  |  •  1.  ☑  ≡  ≡  |  "  #tag
 ```
 
 The rightmost items are the ones a menu usually buries. Highlighter opens a five-swatch row in place — one tap, not a submenu.
 
-**Desktop: a selection bar plus shortcuts.** The bar appears on text selection near the selection; block styles live in a small `Aa` menu in the chrome. Everything has a keyboard shortcut, which is the real desktop answer — `⌘1/2/3` for the three heading levels, `⌘B/I`, `⌘⇧H` for highlight.
+**Desktop: a selection bar plus shortcuts.** The bar appears on text selection near the selection; block styles live in a small `Aa` menu in the chrome. Everything has a keyboard shortcut, which is the real desktop answer — `⌘1/2/3` for the three heading levels, `⌘B/I/U`, `⌘⇧H` for highlight.
 
 **Tablet: the phone strip when the keyboard is up, the desktop bar when it isn't.**
 

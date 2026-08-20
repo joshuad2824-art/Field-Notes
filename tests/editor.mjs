@@ -454,6 +454,12 @@ await ctx.close()
 
 /* ── three widths ───────────────────────────────────────────────────── */
 
+const lastLineIn = (view) =>
+  view
+    .locator('.cm-line')
+    .last()
+    .evaluate((el) => el.textContent)
+
 async function atWidth(width, height, run) {
   const context = await browser.newContext({ viewport: { width, height } })
   const view = await context.newPage()
@@ -561,6 +567,77 @@ await atWidth(1194, 834, async (view) => {
   }))
   ok('the page foot clears the home indicator', foot.pad === '40px', foot.pad)
   ok('and the leaf runs to the bottom edge', foot.bottom === 0, `${foot.bottom}px short`)
+})
+
+/* The bar at the bottom of the screen, and why there isn't one.
+
+   The app is `#root` inside a body that is `position: fixed; inset: 0` — the
+   screen, whatever the device thinks that is — and nothing measures it while
+   there is no keyboard to duck. What a browser holds back at the foot is
+   padding inside the app instead, so the New page bar stays tappable and its
+   background still runs to the very bottom edge. */
+await atWidth(390, 844, async (view) => {
+  const reach = await view.evaluate(() => ({
+    root: Math.round(document.getElementById('root').getBoundingClientRect().bottom),
+    body: Math.round(document.body.getBoundingClientRect().bottom),
+    screen: window.innerHeight,
+    sized: document.documentElement.style.getPropertyValue('--app-height'),
+  }))
+  ok('the app reaches the bottom of the screen', reach.root === reach.screen, `${reach.root} of ${reach.screen}`)
+  ok('and the body under it reaches the same place', reach.body === reach.screen, `${reach.body}`)
+  ok('with no keyboard up, nothing is measured at all', reach.sized === '', reach.sized)
+
+  const footAt = () =>
+    view.locator('.list-foot').evaluate((el) => ({
+      short: Math.round(window.innerHeight - el.getBoundingClientRect().bottom),
+      pad: getComputedStyle(el).paddingBottom,
+    }))
+
+  const rest = await footAt()
+  ok('the New page bar sits on the bottom edge', rest.short === 0, `${rest.short}px short`)
+  ok('and nothing pads it there', rest.pad === '22px', rest.pad)
+
+  /* A browser holding a toolbar over the foot. viewport.ts writes this on the
+     root element, so writing it the same way is asking the same question. */
+  await view.evaluate(() => document.documentElement.style.setProperty('--browser-bottom', '44px'))
+  await view.waitForTimeout(120)
+  const ducked = await footAt()
+  ok('a browser toolbar pads the foot clear of itself', ducked.pad === '66px', ducked.pad)
+  ok('and the app still runs to the bottom edge', ducked.short === 0, `${ducked.short}px short`)
+
+  /* And the strip the system keeps for itself, which is painted from the
+     canvas — `html`, or `body` when `html` hasn't got one. It had not, so the
+     frame's teal propagated up and was painted under every screen whatever the
+     meta said. That is the band. */
+  const canvas = () =>
+    view.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)
+  const footColor = await view
+    .locator('.list-foot')
+    .evaluate((el) => getComputedStyle(el).backgroundColor)
+  ok('the canvas is not left to propagate from the frame', (await canvas()) !== 'rgba(0, 0, 0, 0)')
+  ok(
+    'under the list it is the foot, not the frame',
+    (await canvas()) === 'rgb(6, 28, 29)',
+    `${await canvas()} under ${footColor}`,
+  )
+
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(700)
+  const leafColor = await view
+    .locator('.leaf')
+    .evaluate((el) => getComputedStyle(el).backgroundColor)
+  ok('and under a page it is the leaf', (await canvas()) === leafColor, `${await canvas()} vs ${leafColor}`)
+
+  /* the stock is the page's, so the canvas has to follow it changing */
+  await view.locator('.mark-button[aria-label="Page options"]').click()
+  await view.waitForTimeout(300)
+  await view.locator('.sheet-item', { hasText: 'Stock' }).click()
+  await view.waitForTimeout(400)
+  const flipped = await view
+    .locator('.leaf')
+    .evaluate((el) => getComputedStyle(el).backgroundColor)
+  ok('the other stock takes it with it', (await canvas()) === flipped, `${await canvas()} vs ${flipped}`)
+  ok('which is a different colour than before', flipped !== leafColor, `${leafColor} → ${flipped}`)
 })
 
 await atWidth(1920, 1080, async (view) => {
@@ -1041,6 +1118,234 @@ await atWidth(1440, 900, async (view) => {
   )
 })
 
+/* ── the underline, and where a line sits ───────────────────────────── */
+
+/* Two marks that had to be invented rather than looked up: markdown has no
+   underline and no alignment, and each is said here in the smallest thing
+   that another editor can still make sense of. */
+await atWidth(1440, 900, async (view) => {
+  const stored = () =>
+    view.evaluate(async () => {
+      const request = indexedDB.open('field-notes')
+      const db = await new Promise((r) => {
+        request.onsuccess = () => r(request.result)
+      })
+      const rows = await new Promise((r) => {
+        const q = db.transaction('pages').objectStore('pages').getAll()
+        q.onsuccess = () => r(q.result)
+      })
+      return rows.sort((a, b) => b.updated - a.updated)[0]?.body ?? ''
+    })
+
+  /* A detail is printed on the same line as the result, so a whole body —
+     which is several lines — is quoted by the one line being asked about. */
+  const bodyLine = async (match) =>
+    (await stored()).split('\n').find((l) => l.includes(match)) ?? '(not found)'
+
+  const pitchHolds = async () => {
+    const heights = await view
+      .locator('.cm-line')
+      .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)))
+    return heights.every((h) => h % 28 === 0)
+  }
+
+  await view.locator('.plate-button', { hasText: 'New page' }).click()
+  await view.waitForTimeout(600)
+  await view.locator('.cm-content').click()
+  await view.keyboard.type('# A dedication', { delay: 6 })
+  await view.keyboard.press('Enter')
+  await view.keyboard.type('for Ruth', { delay: 6 })
+  await view.waitForTimeout(250)
+
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+
+  /* the underline */
+  await view.locator('.tray-mark[aria-label="Underline — ⌘U"]').click()
+  await view.waitForTimeout(350)
+
+  ok('the underline marks the word under the caret', (await view.locator('.md-underline').count()) === 1)
+  ok(
+    'and the tags never show',
+    (await view.locator('.cm-line').last().evaluate((el) => el.textContent)) === 'for Ruth',
+    await view.locator('.cm-line').last().evaluate((el) => el.textContent),
+  )
+  ok('the file gets the tag itself', (await stored()).includes('for <u>Ruth</u>'), await bodyLine('Ruth'))
+  ok('and the line box is still 28', await pitchHolds())
+
+  const strokeNow = () =>
+    view.locator('.md-underline').evaluate((el) => getComputedStyle(el).backgroundImage)
+  ok(
+    'the ink hand is a fine rule, not a decoration',
+    (await strokeNow()).startsWith('linear-gradient') &&
+      (await view
+        .locator('.md-underline')
+        .evaluate((el) => getComputedStyle(el).textDecorationLine)) === 'none',
+    await strokeNow(),
+  )
+
+  await view.locator('.tray-word[title="Pen"]').click()
+  await view.waitForTimeout(350)
+  ok('the felt pen underlines with a drawn stroke', (await strokeNow()).includes('svg+xml'))
+  ok('which is still a background, so it costs no height', await pitchHolds())
+  await view.locator('.tray-word[title="Pen"]').click()
+  await view.waitForTimeout(300)
+
+  /* it nests both ways, because the tray can produce either — U then B puts
+     the tags outside, B then U puts them inside */
+  await view.locator('.tray-mark[aria-label="Bold — ⌘B"]').click()
+  await view.waitForTimeout(350)
+  ok('the tags outside a bold word still hide', (await lastLineIn(view)) === 'for Ruth', await lastLineIn(view))
+  ok(
+    'and both marks draw',
+    (await view.locator('.md-underline').count()) === 1 &&
+      (await view.locator('.md-strong').count()) === 1,
+    await bodyLine('Ruth'),
+  )
+
+  await view.locator('.tray-mark[aria-label="Bold — ⌘B"]').click()
+  await view.waitForTimeout(300)
+  await view.locator('.tray-mark[aria-label="Underline — ⌘U"]').click()
+  await view.waitForTimeout(300)
+  await view.locator('.tray-mark[aria-label="Bold — ⌘B"]').click()
+  await view.waitForTimeout(300)
+  await view.locator('.tray-mark[aria-label="Underline — ⌘U"]').click()
+  await view.waitForTimeout(350)
+  ok('the tags inside a bold word hide too', (await lastLineIn(view)) === 'for Ruth', await lastLineIn(view))
+  ok('which is the other order the tray produces', (await bodyLine('Ruth')).includes('**<u>Ruth</u>**'), await bodyLine('Ruth'))
+
+  /* tapping it again takes it off, which is the only way back */
+  await view.locator('.tray-mark[aria-label="Underline — ⌘U"]').click()
+  await view.waitForTimeout(300)
+  await view.locator('.tray-mark[aria-label="Bold — ⌘B"]').click()
+  await view.waitForTimeout(350)
+  ok('a second tap takes each off', !(await stored()).includes('<u>') && !(await stored()).includes('**'), await bodyLine('Ruth'))
+
+  /* where the line sits */
+  await view.locator('.tray-block[aria-label="Centre the line"]').click()
+  await view.waitForTimeout(350)
+  ok('a line can be centred', (await view.locator('.md-align-center').count()) === 1)
+  ok(
+    'and it is really centred, not just marked',
+    (await view
+      .locator('.md-align-center')
+      .evaluate((el) => getComputedStyle(el).textAlign)) === 'center',
+  )
+  ok('the tag is hidden like every other marker', (await lastLineIn(view)) === 'for Ruth')
+  ok('the file says so in a brace tag', (await stored()).includes('{center}for Ruth'), await bodyLine('Ruth'))
+  ok('and nothing moved off the 28px grid', await pitchHolds())
+
+  await view.locator('.tray-block[aria-label="Line to the right"]').click()
+  await view.waitForTimeout(350)
+  ok(
+    'the same line can go to the far right instead',
+    (await view.locator('.md-align-right').count()) === 1 &&
+      (await view.locator('.md-align-center').count()) === 0,
+  )
+  ok('and it swaps rather than stacking', !(await stored()).includes('{center}'), await bodyLine('Ruth'))
+
+  await view.locator('.tray-block[aria-label="Line to the right"]').click()
+  await view.waitForTimeout(350)
+  ok('tapping it again puts the line back to the margin', !(await stored()).includes('{right}'))
+  ok('and nothing is left behind', (await lastLineIn(view)) === 'for Ruth')
+
+  /* alignment sits in front of the block prefix, so a heading is both */
+  await view.locator('.cm-content').click()
+  await view.keyboard.press('Control+Home')
+  await view.locator('.tray-block[aria-label="Centre the line"]').click()
+  await view.waitForTimeout(400)
+  ok(
+    'a heading can be centred and stay a heading',
+    (await view.locator('.md-h1.md-align-center').count()) === 1,
+  )
+  ok('the hashes are still hidden', (await view.locator('.cm-line').first().evaluate((el) => el.textContent)) === 'A dedication')
+  ok('the file keeps them in order', (await stored()).startsWith('{center}# A dedication'), (await stored()).split('\n')[0])
+
+  /* a tag is not what the page is called */
+  const title = await view.locator('.list-row-title').first().textContent()
+  ok('a centred title is still the title', title === 'A dedication', title)
+})
+
+/* ── how wide the whole table sits ──────────────────────────────────── */
+
+await atWidth(1440, 900, async (view) => {
+  const stored = () =>
+    view.evaluate(async () => {
+      const request = indexedDB.open('field-notes')
+      const db = await new Promise((r) => {
+        request.onsuccess = () => r(request.result)
+      })
+      const rows = await new Promise((r) => {
+        const q = db.transaction('pages').objectStore('pages').getAll()
+        q.onsuccess = () => r(q.result)
+      })
+      return rows.sort((a, b) => b.updated - a.updated)[0]?.body ?? ''
+    })
+
+  await view.locator('.plate-button', { hasText: 'New page' }).click()
+  await view.waitForTimeout(600)
+  await view.locator('.cm-content').click()
+  await view.keyboard.type('# Cut list', { delay: 6 })
+  await view.keyboard.press('Enter')
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+  await view.locator('.tray-word', { hasText: 'Table' }).click()
+  await view.waitForTimeout(500)
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.waitForTimeout(250)
+
+  const frameWidth = () =>
+    view.locator('.md-table-frame').evaluate((el) => Math.round(el.getBoundingClientRect().width))
+  const full = await frameWidth()
+  ok('a new table takes the whole measure', full > 500, `${full}px`)
+  ok('and says nothing about its width in the file', !(await stored()).includes('{table'))
+
+  ok('the table has an edge grip of its own', (await view.locator('.md-table-grip.edge').count()) === 1)
+
+  const box = await view.locator('.md-table-grip.edge').boundingBox()
+  await view.mouse.move(box.x + box.width / 2, box.y + 20)
+  await view.mouse.down()
+  await view.mouse.move(box.x + box.width / 2 - 240, box.y + 20, { steps: 10 })
+  await view.mouse.up()
+  await view.waitForTimeout(500)
+
+  const pulled = await frameWidth()
+  ok('the whole table can be dragged narrower', pulled < full - 180, `${full} → ${pulled}`)
+
+  const lines = (await stored()).split('\n')
+  const attr = lines.find((l) => l.startsWith('{table'))
+  ok('the width is one line above the table', /^\{table \d{1,3}\}$/.test(attr ?? ''), String(attr))
+  ok(
+    'and the table under it is untouched GFM',
+    /^\|(?:\s*:?-+:?\s*\|)+$/.test((lines.find((l) => /^\|\s*-/.test(l)) ?? '').trim()),
+    lines.find((l) => /^\|\s*-/.test(l)),
+  )
+  ok(
+    'the columns keep their shares of it',
+    (await view.locator('.md-table td').count()) === 9,
+  )
+
+  /* the file is the storage format, so it has to come back */
+  const wanted = await stored()
+  await view.reload({ waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(900)
+  ok('the width survived a reload', (await stored()) === wanted)
+  ok('and the table drew itself narrow again', Math.abs((await frameWidth()) - pulled) <= 2, `${await frameWidth()}px`)
+  ok(
+    'the width line is never read as writing',
+    (await view.locator('.list-row-title').first().textContent()) === 'Cut list',
+    await view.locator('.list-row-title').first().textContent(),
+  )
+
+  /* and a way back that isn't a drag to the exact edge */
+  await view.locator('.md-table td').first().click()
+  await view.waitForTimeout(200)
+  await view.locator('.md-table-control[aria-label="Back to the full measure"]').click()
+  await view.waitForTimeout(500)
+  ok('it can be given the whole measure back', Math.abs((await frameWidth()) - full) <= 2, `${await frameWidth()}px`)
+  ok('and the line goes with it', !(await stored()).includes('{table'), (await stored()).split('\n')[1])
+})
+
 /* ── what daily use turned up ───────────────────────────────────────── */
 
 /* All four of these were found by writing in the app, not by reading it. */
@@ -1119,11 +1424,12 @@ await atWidth(1440, 900, async (view) => {
   )
 
   /* the grips hang on a row that still breaks at the seam, so merging the
-     head row doesn't take the columns' widths away with it */
+     head row doesn't take the columns' widths away with it. The edge grip —
+     the table's own width — is not one of them and is counted out. */
   ok(
     'the columns still have their grips',
-    (await view.locator('.md-table-grip').count()) === 2,
-    String(await view.locator('.md-table-grip').count()),
+    (await view.locator('.md-table-grip:not(.edge)').count()) === 2,
+    String(await view.locator('.md-table-grip:not(.edge)').count()),
   )
 
   const firstBody = view.locator('.md-table tr').nth(1).locator('td').first()

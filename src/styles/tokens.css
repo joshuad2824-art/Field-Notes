@@ -100,9 +100,16 @@
   /* The notches and the home indicator, given names. Nothing reads
      env(safe-area-inset-*) directly any more: a test can set these and see
      what an iPad sees, which is the only way these edges ever get checked
-     without holding the device. */
+     without holding the device.
+
+     `--browser-bottom` is the other thing that can sit over the foot of the
+     app: Safari's own toolbar, measured in lib/viewport.ts and zero in an
+     installed app. The app itself always runs to the bottom edge of the
+     screen — what pads itself clear is whatever has something to tap in it,
+     and it pads by whichever of the two is deeper rather than by both. */
   --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --browser-bottom: 0px;
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--browser-bottom));
 
   /* ── surfaces and light ───────────────────────────────────────────── */
   --shadow-lift: 0 2px 0 rgba(0, 0, 0, 0.4), 0 18px 44px rgba(0, 0, 0, 0.56);

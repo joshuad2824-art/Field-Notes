@@ -1,6 +1,8 @@
 import { useRef } from 'react'
 import type { EditorView } from '@codemirror/view'
 import {
+  type Align,
+  applyAlign,
   applyBlock,
   applyCaps,
   applyHighlight,
@@ -38,12 +40,45 @@ const BLOCKS: { mark: string; prefix: string; label: string; cls?: string }[] = 
   { mark: '“', prefix: '> ', label: 'Quote', cls: 'serif' },
 ]
 
-const MARKS: { mark: string; open: string; label: string; cls: string; cell: string }[] = [
+/* `close` is only ever given when it differs from `open`, which so far is the
+   underline and its closing tag. */
+const MARKS: {
+  mark: string
+  open: string
+  close?: string
+  label: string
+  cls: string
+  cell: string
+}[] = [
   { mark: 'B', open: '**', label: 'Bold — ⌘B', cls: 'bold', cell: 'bold' },
   { mark: 'I', open: '*', label: 'Italic — ⌘I', cls: 'italic', cell: 'italic' },
+  {
+    mark: 'U',
+    open: '<u>',
+    close: '</u>',
+    label: 'Underline — ⌘U',
+    cls: 'under',
+    cell: 'underline',
+  },
   { mark: 'S', open: '~~', label: 'Strike', cls: 'strike', cell: 'strike' },
   { mark: 'code', open: '`', label: 'Code', cls: 'mono', cell: 'code' },
 ]
+
+/* The two alignments that aren't the default, drawn rather than typed. There
+   is no character that means "centred", and the three that come closest are a
+   menu, a maths symbol and a piece of box drawing — so these are three bars
+   set where the mark would set the writing, which is the one picture that says
+   it without a word. */
+function AlignMark({ align }: { align: Exclude<Align, 'left'> }) {
+  const short = align === 'center' ? 4.5 : 7
+  return (
+    <svg viewBox="0 0 16 12" aria-hidden="true" className="align-mark">
+      <rect x="2" y="1.3" width="12" height="1.5" rx="0.75" />
+      <rect x={short} y="5.25" width="7" height="1.5" rx="0.75" />
+      <rect x="2" y="9.2" width="12" height="1.5" rx="0.75" />
+    </svg>
+  )
+}
 
 const HIGHLIGHTS: { name: string; color: string }[] = [
   { name: 'oxblood', color: '#530a28' },
@@ -150,19 +185,39 @@ export function StyleTray({
           >
             ⇥
           </button>
+          {/* Tapping either a second time puts the line back to the margin,
+              which is the only way back once the caret has moved on. */}
+          <button
+            className="tray-block draw"
+            onMouseDown={hold}
+            onClick={run((v) => applyAlign(v, 'center'))}
+            aria-label="Centre the line"
+            title="Centre the line"
+          >
+            <AlignMark align="center" />
+          </button>
+          <button
+            className="tray-block draw"
+            onMouseDown={hold}
+            onClick={run((v) => applyAlign(v, 'right'))}
+            aria-label="Line to the right"
+            title="Line to the right"
+          >
+            <AlignMark align="right" />
+          </button>
         </div>
 
         <span className="tray-divider" />
 
         <div className="tray-group">
-          {MARKS.map(({ mark, open, label, cls, cell }) => (
+          {MARKS.map(({ mark, open, close, label, cls, cell }) => (
             <button
               key={label}
               className={`tray-mark ${cls}`}
               onMouseDown={hold}
               /* Inside a table the browser is the editor, so a mark goes to
                  the cell rather than to CodeMirror. */
-              onClick={run((v) => markInCell(cell) || applyWrap(v, open))}
+              onClick={run((v) => markInCell(cell) || applyWrap(v, open, close ?? open))}
               aria-label={label}
               title={label}
             >

@@ -9,6 +9,18 @@ import { back, navigate, to } from '../lib/router'
 import { SyncPanel } from '../components/SyncPanel'
 import { WeatherPanel } from '../components/WeatherPanel'
 
+/* What an inset actually comes out as. A custom property reports the text it
+   was given, not the length it resolves to, so the only honest answer is a box
+   that is one inset tall. */
+function measure(token: string): number {
+  const probe = document.createElement('div')
+  probe.style.cssText = `position:absolute;visibility:hidden;height:var(${token})`
+  document.body.appendChild(probe)
+  const height = Math.round(probe.getBoundingClientRect().height)
+  probe.remove()
+  return height
+}
+
 export function SettingsScreen() {
   const settings = useSettings()
   const books = useNotebooks()
@@ -31,17 +43,23 @@ export function SettingsScreen() {
       const root = document.getElementById('root')?.getBoundingClientRect()
       const style = getComputedStyle(document.documentElement)
       const app = style.getPropertyValue('--app-height')
+      const overlay = style.getPropertyValue('--browser-bottom')
       /* If this reads 0 on a device with a home indicator, `viewport-fit=cover`
          isn't taking and iOS is painting outside the viewport rather than the
-         app coming up short — a different problem with a different fix. */
-      const safe = style.getPropertyValue('--safe-bottom')
+         app coming up short — a different problem with a different fix.
+
+         Measured rather than read: `--safe-bottom` is a `max()` of two other
+         tokens, and a custom property hands back its own text rather than the
+         pixels it lands on. A box an inset tall is the only way to ask. */
+      const safe = measure('--safe-bottom')
       setScreen([
         `window.innerHeight        ${window.innerHeight}`,
         `visualViewport.height     ${vv ? Math.round(vv.height) : '—'}`,
         `documentElement.client    ${document.documentElement.clientHeight}`,
         `screen.height             ${window.screen.height}`,
         `--app-height              ${app.trim() || 'unset (pinned)'}`,
-        `--safe-bottom             ${safe.trim() || '—'}`,
+        `--browser-bottom          ${overlay.trim() || '—'}`,
+        `--safe-bottom             ${safe}px`,
         `#root reaches             ${root ? Math.round(root.bottom) : '—'}`,
         `body reaches              ${Math.round(document.body.getBoundingClientRect().bottom)}`,
         `installed                 ${

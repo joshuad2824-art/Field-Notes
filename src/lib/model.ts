@@ -1,3 +1,5 @@
+import { isTableAttr } from './table'
+
 /* A page is a markdown string plus a small envelope. That's the whole model,
    and it's deliberately boring, because boring survives. */
 
@@ -162,10 +164,15 @@ export function stripMarkers(line: string): string {
     /* The indent goes before the prefix does, or an indented list item keeps
        its dash in the title. */
     .replace(/^ +/, '')
+    /* How a line sits, and how wide a table is, are not part of what either
+       one says — so neither is a title and neither is searchable text. */
+    .replace(/^\{(center|right)\}/, '')
+    .replace(/^\{table \d{1,3}\}$/, '')
     .replace(BLOCK_PREFIX, '')
     /* A picture reads as its caption, or as nothing. */
     .replace(/!\[([^\]]*)\]\([^)]*\)(?:\{[^}]*\})?/g, '$1')
     .replace(/==(?:\{\w+\})?([^=]+)==/g, '$1')
+    .replace(/<u>([^<>]+)<\/u>/g, '$1')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/~~([^~]+)~~/g, '$1')
     .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\*)/g, '$1$2')
@@ -175,9 +182,10 @@ export function stripMarkers(line: string): string {
 
 /* A table's rows are structure, not prose. They're skipped when a page is
    being read for a title, a snippet or a word count, so a page that opens
-   with a table isn't called "| Item | Qty |". */
+   with a table isn't called "| Item | Qty |" — nor "{table 70}", which is the
+   same structure said a different way. */
 export function isTableLine(line: string): boolean {
-  return /^\s*\|.*\|\s*$/.test(line)
+  return /^\s*\|.*\|\s*$/.test(line) || isTableAttr(line)
 }
 
 export function titleOf(body: string): string {
@@ -227,7 +235,7 @@ const DELIMITER_ROW = /^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/
 export function wordCount(body: string): number {
   const t = body
     .split('\n')
-    .filter((line) => !DELIMITER_ROW.test(line))
+    .filter((line) => !DELIMITER_ROW.test(line) && !isTableAttr(line))
     .map((line) => (isTableLine(line) ? line.replace(/\|/g, ' ').replace(/(^|\s)<(?=\s|$)/g, ' ') : line))
     .join('\n')
     .trim()
