@@ -1118,6 +1118,36 @@ await atWidth(1440, 900, async (view) => {
   )
 })
 
+/* ── the colour of the strip we can't draw in ────────────────────────── */
+
+/* Installed on a phone in portrait, iOS keeps a strip below the web view and
+   paints it itself. Nothing in the document reaches it — not the canvas, not
+   the theme-colour meta, both of which were tried — so the only colour it can
+   be told is the one in the manifest, read once at launch. That makes these
+   two the same value by necessity rather than by tidiness: whichever of them
+   the system happens to read, it gets the same answer. */
+{
+  const manifest = await (await fetch(`${BASE}/manifest.webmanifest`)).json()
+  const html = await (await fetch(BASE)).text()
+  const meta = html.match(/<meta name="theme-color" content="(#[0-9a-fA-F]{6})"/)?.[1]
+
+  ok(
+    'the manifest names a colour for the strip',
+    /^#[0-9a-fA-F]{6}$/.test(manifest.theme_color ?? ''),
+    String(manifest.theme_color),
+  )
+  ok(
+    'and the document opens on the same one',
+    meta?.toLowerCase() === manifest.theme_color?.toLowerCase(),
+    `${meta} vs ${manifest.theme_color}`,
+  )
+  ok(
+    'which is also what the splash is painted with',
+    manifest.background_color?.toLowerCase() === manifest.theme_color?.toLowerCase(),
+    `${manifest.background_color} vs ${manifest.theme_color}`,
+  )
+}
+
 /* ── the underline, and where a line sits ───────────────────────────── */
 
 /* Two marks that had to be invented rather than looked up: markdown has no
