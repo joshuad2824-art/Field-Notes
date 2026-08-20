@@ -17,8 +17,10 @@
 import { createHash } from 'node:crypto'
 import { decide, samePage, conflictBody } from '../src/sync/reconcile.ts'
 import {
+  cleanToken,
   decodeCode,
   encodeCode,
+  headerSafe,
   looksLikeProjectUrl,
   newVaultKey,
   normaliseUrl,
@@ -166,6 +168,57 @@ ok(
 ok(
   'and something that is not one is caught before it is stored',
   looksLikeProjectUrl('https://abc.supabase.co') && !looksLikeProjectUrl('abc.supabase.co'),
+)
+
+/* ── keys that can actually go in a header ──────────────────────────────── */
+
+/* A key copied out of a display that wrapped it arrives with a newline in the
+   middle, and `trim()` tidies the ends and leaves the middle alone. That
+   newline never reaches the network at all: fetch refuses to build the headers
+   and throws before opening a socket, which reads from the catch block exactly
+   like a host that isn't there. */
+const wrapped = 'eyJhbGciOiJIUzI1NiIsInR5cCI6\n  IkpXVCJ9.payload.signature'
+ok(
+  'a key that was copied across two lines is put back together',
+  cleanToken(wrapped) === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature',
+)
+ok(
+  'and trim alone would not have done it',
+  wrapped.trim() !== cleanToken(wrapped),
+)
+ok(
+  'a whole JWT is header-safe and a wrapped one is not',
+  headerSafe(cleanToken(wrapped)) && !headerSafe(wrapped),
+)
+ok(
+  'so is every key we generate ourselves',
+  headerSafe(newVaultKey()) && headerSafe(newVaultKey()),
+)
+ok(
+  'and something with a control character in it is refused',
+  !headerSafe('abc\u0007def') && !headerSafe('abc def') && !headerSafe(''),
+)
+
+/* The real proof: the browser itself is the judge of what a header may hold. */
+for (const [name, value, usable] of [
+  ['a cleaned key', cleanToken(wrapped), true],
+  ['a key with a newline still in it', wrapped, false],
+]) {
+  let built = true
+  try {
+    new Headers({ apikey: value })
+  } catch {
+    built = false
+  }
+  ok(`${name} ${usable ? 'builds' : 'cannot build'} a request`, built === usable)
+}
+
+/* Cleaning cannot move a device to a different vault, because whitespace was
+   never part of what was hashed. */
+const messy = ` ${newVaultKey()} `
+ok(
+  'cleaning a key does not change which vault it names',
+  (await vaultIdFor(cleanToken(messy))) === (await vaultIdFor(messy.trim())),
 )
 
 /* ── two devices and a fake mirror ──────────────────────────────────────── */

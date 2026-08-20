@@ -1,4 +1,4 @@
-import type { Vault } from './pairing'
+import { headerSafe, type Vault } from './pairing'
 import type { Row, TableName } from './wire'
 
 /* The only file in the app that knows a network exists.
@@ -116,6 +116,22 @@ export function supabaseTransport(vault: Vault): Transport {
     async diagnose() {
       const unreachable = (message: string) => ({ reachable: false, message })
       const reached = (message: string) => ({ reachable: true, message })
+
+      /* Ask this before anything about the network. A key with a stray
+         character in it makes `fetch` refuse to build the headers and throw
+         before it opens a socket — which is indistinguishable, from the catch
+         block, from a host that isn't there. Blaming the project URL for it
+         sends you to check a dashboard that was fine all along. */
+      if (!headerSafe(vault.anonKey)) {
+        return reached(
+          'The anon key has a character in it that cannot go in a request, so nothing was ever sent. Unpair and paste it again.',
+        )
+      }
+      if (!headerSafe(vault.key)) {
+        return reached(
+          'The vault key has a character in it that cannot go in a request, so nothing was ever sent. Pair this device again from the code.',
+        )
+      }
 
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
         return unreachable('This device has no network at all. It will catch up on its own.')
