@@ -369,6 +369,55 @@
   color: rgba(156, 177, 178, 0.7);
 }
 
+/* ── the weather ────────────────────────────────────────────────────────
+   The field-note register, unchanged: Courier, tracked, uppercase. No icon and
+   no colour of its own — the rule that there is one amber element per view is
+   not spent on the weather, so the temperature is the frame's own heading
+   cream and the rest is quiet. */
+
+.weather {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 20px 16px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: rgba(156, 177, 178, 0.7);
+}
+.weather-now {
+  color: var(--frame-heading);
+}
+.weather-word {
+  /* The one part that can run long — HEAVY SHOWERS in a 264px rail — so it is
+     the one part allowed to be cut rather than to push the range off the end. */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.weather-range {
+  margin-left: auto;
+  color: rgba(156, 177, 178, 0.5);
+}
+
+/* Beside a 76px numeral, so it sits on the baseline of the date rather than
+   floating, and gives up the day's range for want of room. */
+.weather.compact {
+  padding: 0 0 4px;
+  gap: 6px;
+}
+
+/* The place search results in Settings: rows, because that is what a list of
+   things you might pick already looks like everywhere else in this app. */
+.weather-found {
+  margin-top: var(--space-3);
+  border: 1px solid var(--frame-hairline);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
 /* Sync says one word, in the register the foot already speaks, and stays out
    of the way of the two links above it. */
 .sync-mark {
@@ -1209,16 +1258,19 @@ mark.hit {
    A back room in a back room. Nothing here is ever in the way of writing, so
    it can afford to be plain. */
 
-.sync-form {
+.sync-form,
+.weather-form {
   margin-top: var(--space-5);
   max-width: 56ch;
 }
-.sync-form .well {
+.sync-form .well,
+.weather-form .well {
   display: block;
   width: 100%;
   margin-bottom: var(--space-2);
 }
-.sync-label {
+.sync-label,
+.panel-label {
   display: block;
   margin-top: var(--space-4);
   margin-bottom: var(--space-2);
@@ -1245,7 +1297,8 @@ mark.hit {
   overflow-wrap: anywhere;
   user-select: all;
 }
-.sync-problem {
+.sync-problem,
+.panel-problem {
   margin-top: var(--space-4);
   color: var(--brass-400);
   font-size: var(--text-sm);

@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { livePages } from '../lib/db'
 import { countLabel, groupFor, mastheadParts, shortStamp } from '../lib/format'
+import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { type Page, snippetOf, titleOf, wordCount } from '../lib/model'
 import { notebookForPage } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
+import { resetThemeColor, setThemeColor, surfaceColor } from '../lib/themecolor'
+import { WeatherLine } from './WeatherLine'
 import { useLive } from '../lib/useLive'
 
 interface Props {
@@ -51,6 +54,23 @@ export function PageList({
   const [query, setQuery] = useState('')
   const { weekday, day, month, year } = mastheadParts()
 
+  /* iOS keeps a strip below the app and paints it from `<meta name="theme-color">`,
+     so that colour has to be whatever is actually at the bottom of the screen.
+     When the list is the whole window, that is this foot — a near-black bar,
+     not the frame's teal — and getting it wrong draws exactly the band the
+     colour is there to prevent.
+
+     Only when the list is the whole window. Docked, the foot is one column of
+     three and has no claim on the width of the screen. */
+  const footRef = useRef<HTMLDivElement>(null)
+  const docked = useMediaQuery(SIDEBAR_DOCKED)
+  useEffect(() => {
+    const foot = footRef.current
+    if (docked || !foot) return
+    setThemeColor(surfaceColor(foot))
+    return resetThemeColor
+  }, [docked])
+
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return pages
@@ -75,6 +95,10 @@ export function PageList({
             {month} {year}
           </span>
           <span className="grow" />
+          {/* The rail is a closed drawer at this width, so the weather has to
+              be here or it is nowhere. Compact: the day's range gives up its
+              place to a numeral 76px tall. */}
+          <WeatherLine compact />
           <button className="mark-button" onClick={onToggleRail} aria-label="Notebooks">
             ☰
           </button>
@@ -143,7 +167,7 @@ export function PageList({
       </div>
 
       {/* New page belongs under the pages it makes, at every width. */}
-      <div className="list-foot">
+      <div className="list-foot" ref={footRef}>
         <button className="link-signage" onClick={() => navigate(to.search())}>
           Search
         </button>

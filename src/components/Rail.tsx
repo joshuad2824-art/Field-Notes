@@ -6,6 +6,7 @@ import { navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
 import { MonthGrid } from './MonthGrid'
 import { SyncMark } from './SyncMark'
+import { WeatherLine } from './WeatherLine'
 
 interface Props {
   activeId: string
@@ -59,6 +60,10 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
           onPick={(iso) => navigate(to.day(iso))}
         />
       </div>
+
+      {/* Under the month, because it belongs to the same thought — what day
+          it is and what the day is like. Nothing when there is no reading. */}
+      <WeatherLine />
 
       <div className="rail-rule" />
 
