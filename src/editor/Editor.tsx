@@ -80,6 +80,7 @@ export function Editor({
             { key: 'Mod-3', run: (v) => applyBlock(v, '### ') },
             { key: 'Mod-b', run: (v) => applyWrap(v, '**') },
             { key: 'Mod-i', run: (v) => applyWrap(v, '*') },
+            { key: 'Mod-u', run: (v) => applyWrap(v, '<u>', '</u>') },
             {
               key: 'Mod-Shift-h',
               run: (v) => applyHighlight(v, latest.current.highlightColor()),

@@ -6,6 +6,7 @@ import {
   type Placement,
   defaultSize,
   imageMarkdown,
+  isTableLine,
   readPlacement,
 } from '../lib/model'
 
@@ -15,15 +16,28 @@ import {
 
 const BLOCK_RE = /^(#{1,3}\s+|>\s?|[-*]\s\[[ xX]\]\s|[-*]\s|\d+\.\s)/
 
-/* A line is indent, then a block prefix, then the writing. Everything that
-   reshapes a line has to read it in that order, or the first indented list
-   item stops behaving like a list item at all. */
+/* Where a line sits across the measure, when it is anywhere other than where
+   every line sits by default. There is no markdown for this and no way to
+   invent one that another editor would honour, so it is a brace tag — the
+   same shape as `=={forest}` and a picture's `{left 44}`, and the same trade:
+   readable, private, and one word at the front of the line anywhere else. */
+export type Align = 'center' | 'right' | 'left'
+export const ALIGN_RE = /^\{(center|right)\}/
+
+/* A line is indent, then how it sits, then a block prefix, then the writing.
+   Everything that reshapes a line has to read it in that order, or the first
+   indented list item stops behaving like a list item at all. */
 export function leadOf(text: string): string {
   return text.match(/^ */)?.[0] ?? ''
 }
 
+export function alignOf(text: string): string {
+  return text.slice(leadOf(text).length).match(ALIGN_RE)?.[0] ?? ''
+}
+
 export function prefixOf(text: string): string {
-  return text.slice(leadOf(text).length).match(BLOCK_RE)?.[0] ?? ''
+  const at = leadOf(text).length + alignOf(text).length
+  return text.slice(at).match(BLOCK_RE)?.[0] ?? ''
 }
 
 export function applyBlock(view: EditorView, prefix: string): boolean {
@@ -36,7 +50,7 @@ export function applyBlock(view: EditorView, prefix: string): boolean {
 
   for (let i = first; i <= last; i++) {
     const line = state.doc.line(i)
-    const lead = leadOf(line.text)
+    const lead = leadOf(line.text) + alignOf(line.text)
     const existing = prefixOf(line.text)
     const same =
       existing === prefix ||
@@ -213,6 +227,59 @@ export function applyHighlight(view: EditorView, color: string): boolean {
   return true
 }
 
+/* Where the line sits across the measure. Left is where every line sits
+   already, so it is said by taking the tag off rather than by writing one —
+   which is also what tapping the mark a second time does, since a mark that
+   can only be put on is a mark that traps the line it was put on.
+
+   Every line under the selection moves together, and a table's lines are left
+   alone: a table is one block widget standing in for a run of them, and a tag
+   in front of any of those lines would take it apart. */
+export function applyAlign(view: EditorView, align: Align): boolean {
+  const { state } = view
+  const range = state.selection.main
+  const first = state.doc.lineAt(range.from).number
+  const last = state.doc.lineAt(range.to).number
+
+  const lines: { at: number; tag: string }[] = []
+  for (let i = first; i <= last; i++) {
+    const line = state.doc.line(i)
+    if (isTableLine(line.text)) continue
+    lines.push({ at: line.from + leadOf(line.text).length, tag: alignOf(line.text) })
+  }
+  if (!lines.length) {
+    view.focus()
+    return false
+  }
+
+  const wanted = align === 'left' ? '' : `{${align}}`
+  const off = wanted !== '' && lines.every((line) => line.tag === wanted)
+  const insert = off ? '' : wanted
+
+  const changes: ChangeSpec[] = lines
+    .filter((line) => line.tag !== insert)
+    .map((line) => ({ from: line.at, to: line.at + line.tag.length, insert }))
+
+  if (!changes.length) {
+    view.focus()
+    return false
+  }
+
+  const probe = state.update({ changes })
+  view.dispatch(
+    state.update({
+      changes,
+      selection: {
+        anchor: probe.changes.mapPos(range.anchor, 1),
+        head: probe.changes.mapPos(range.head, 1),
+      },
+      scrollIntoView: true,
+    }),
+  )
+  view.focus()
+  return true
+}
+
 /* Enter inside a list carries the list on, indent and all; Enter on an empty
    item steps it back out a level, and ends it once there's nowhere left to
    step back to. */
@@ -222,7 +289,9 @@ export function continueList(view: EditorView): boolean {
   if (!range.empty) return false
 
   const line = state.doc.lineAt(range.head)
-  const lead = leadOf(line.text)
+  /* The alignment travels with the item: pressing Enter in the middle of a
+     centred list shouldn't drop the next bullet back to the margin. */
+  const lead = leadOf(line.text) + alignOf(line.text)
   const prefix = prefixOf(line.text)
   if (!prefix || /^#{1,3}\s+$/.test(prefix)) return false
   if (range.head < line.from + lead.length + prefix.length) return false
@@ -230,7 +299,7 @@ export function continueList(view: EditorView): boolean {
   if (line.text.trimEnd() === (lead + prefix).trimEnd()) {
     /* An empty item that is indented gives up a level first — the way out of
        a nested list is the same key that got you into it. */
-    if (lead.length >= INDENT_UNIT.length) {
+    if (lead.startsWith(INDENT_UNIT)) {
       const shorter = lead.slice(INDENT_UNIT.length)
       view.dispatch({
         changes: { from: line.from, to: line.to, insert: shorter + prefix },
@@ -285,6 +354,7 @@ export function applyIndent(view: EditorView, direction: 1 | -1): boolean {
     const depth = Math.min(MAX_INDENT, Math.max(0, was + direction))
     if (depth !== was) touched = true
 
+    const align = alignOf(line.text)
     const prefix = prefixOf(line.text)
     const numbered = /^\d+\.\s$/.test(prefix)
     let rest = line.text.slice(lead.length)
@@ -300,14 +370,16 @@ export function applyIndent(view: EditorView, direction: 1 | -1): boolean {
         const above = state.doc.line(i - 1)
         const aboveLead = leadOf(above.text)
         const aboveDepth = Math.floor(aboveLead.length / INDENT_UNIT.length)
-        const aboveNumber = above.text.slice(aboveLead.length).match(/^(\d+)\.\s/)
+        const aboveNumber = above.text
+          .slice(aboveLead.length + alignOf(above.text).length)
+          .match(/^(\d+)\.\s/)
         const aboveMoved = above.number >= first && above.number <= last
         if (!aboveMoved && aboveDepth === depth && aboveNumber) n = Number(aboveNumber[1]) + 1
       }
       numberedAt = i
       numberedDepth = depth
       numberedValue = n
-      rest = `${n}. ` + rest.slice(prefix.length)
+      rest = align + `${n}. ` + rest.slice(align.length + prefix.length)
     }
 
     changes.push({

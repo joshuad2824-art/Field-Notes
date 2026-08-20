@@ -15,6 +15,26 @@
 
 export const MERGE_MARK = '<'
 
+/* And a third thing a pipe table has no word for: how wide the whole table
+   sits. The two above ride inside the table's own syntax because they could;
+   this one can't. The delimiter row is the only place with a number in it,
+   and its dashes already mean the columns' shares of the width — reading a
+   total out of them as well would mean a table hand-aligned in another editor
+   arrived here two thirds the size it was written at. So the width goes on a
+   line of its own above the table, in the brace-tag shape the app already
+   uses for a highlight's colour and a picture's placement, and it is only
+   written at all when the table is narrower than the measure. A table at its
+   full width — which is nearly all of them — is exactly the GFM it always
+   was. */
+const TABLE_ATTR_RE = /^\{table (\d{1,3})\}$/
+
+export function isTableAttr(line: string): boolean {
+  return TABLE_ATTR_RE.test(line.trim())
+}
+
+export const FULL_WIDTH = 100
+export const MIN_TABLE_WIDTH = 20
+
 /* Enough dashes to carry a width to about a percent, few enough that the
    delimiter row still fits on a line worth reading. */
 const TOTAL_DASHES = 72
@@ -29,8 +49,11 @@ export interface Cell {
 export interface Table {
   /* The head is the first row; everything after it is the body. */
   rows: Cell[][]
-  /* Percentages of the measure, one per column, summing to a hundred. */
+  /* Percentages of the table, one per column, summing to a hundred. */
   widths: number[]
+  /* And the table's own share of the measure. A hundred unless it was
+     deliberately pulled in. */
+  width: number
 }
 
 const ROW_RE = /^\s*\|.*\|\s*$/
@@ -93,6 +116,13 @@ function toCells(raw: string[], columns: number): Cell[] {
 }
 
 export function parseTable(lines: string[]): Table | null {
+  let width = FULL_WIDTH
+  const attr = lines[0]?.trim().match(TABLE_ATTR_RE)
+  if (attr) {
+    width = clampWidth(Number(attr[1]))
+    lines = lines.slice(1)
+  }
+
   if (lines.length < 2) return null
   if (!isTableRow(lines[0]) || !isDelimiterRow(lines[1])) return null
 
@@ -109,7 +139,12 @@ export function parseTable(lines: string[]): Table | null {
     if (i === 1) continue
     rows.push(toCells(splitCells(lines[i]), columns))
   }
-  return { rows, widths }
+  return { rows, widths, width }
+}
+
+export function clampWidth(width: number): number {
+  if (!Number.isFinite(width)) return FULL_WIDTH
+  return Math.min(FULL_WIDTH, Math.max(MIN_TABLE_WIDTH, Math.round(width)))
 }
 
 function rowLine(row: Cell[]): string {
@@ -129,7 +164,9 @@ function delimiterLine(widths: number[]): string {
 
 export function serializeTable(table: Table): string {
   const [head, ...body] = table.rows
-  const lines = [rowLine(head ?? []), delimiterLine(table.widths)]
+  const width = clampWidth(table.width ?? FULL_WIDTH)
+  const lines = width < FULL_WIDTH ? [`{table ${width}}`] : []
+  lines.push(rowLine(head ?? []), delimiterLine(table.widths))
   for (const row of body) lines.push(rowLine(row))
   return lines.join('\n')
 }
@@ -141,10 +178,11 @@ function blankRow(columns: number): Cell[] {
 }
 
 export function emptyTable(columns = 3, bodyRows = 2): Table {
-  const width = 100 / columns
+  const share = 100 / columns
   return {
     rows: [blankRow(columns), ...Array.from({ length: bodyRows }, () => blankRow(columns))],
-    widths: Array.from({ length: columns }, () => width),
+    widths: Array.from({ length: columns }, () => share),
+    width: FULL_WIDTH,
   }
 }
 
@@ -201,7 +239,7 @@ export function addColumn(table: Table, after: number): Table {
     return out
   })
 
-  return { rows, widths }
+  return { ...table, rows, widths }
 }
 
 export function removeColumn(table: Table, at: number): Table {
@@ -228,7 +266,7 @@ export function removeColumn(table: Table, at: number): Table {
     return out.length ? out : blankRow(columns - 1)
   })
 
-  return { rows, widths: scaled }
+  return { ...table, rows, widths: scaled }
 }
 
 /* Merging is per row — that is the whole point of it. The cell takes in the
@@ -262,6 +300,12 @@ export function splitAt(table: Table, row: number, index: number): Table {
 
 export function setWidths(table: Table, widths: number[]): Table {
   return { ...table, widths }
+}
+
+/* The whole table, narrower or wider. The columns keep their shares of it, so
+   pulling the table in doesn't rearrange what is inside it. */
+export function setTableWidth(table: Table, width: number): Table {
+  return { ...table, width: clampWidth(width) }
 }
 
 /* Where a cell sits in columns, so the widget can size and seam it. */

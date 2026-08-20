@@ -2,18 +2,23 @@ import { Decoration, EditorView, WidgetType } from '@codemirror/view'
 import type { Text } from '@codemirror/state'
 import {
   type Cell,
+  FULL_WIDTH,
+  MIN_TABLE_WIDTH,
   type Table,
   addColumn,
   addRow,
+  clampWidth,
   columnOf,
   emptyTable,
   isDelimiterRow,
+  isTableAttr,
   isTableRow,
   mergeAt,
   parseTable,
   removeColumn,
   removeRow,
   serializeTable,
+  setTableWidth,
   setWidths,
   splitAt,
 } from '../lib/table'
@@ -44,13 +49,20 @@ export interface TableRun {
   text: string
 }
 
-/* A run is a pipe row, a delimiter row under it, and every pipe row after. */
+/* A run is a pipe row, a delimiter row under it, and every pipe row after —
+   with, above all of that, the one optional line carrying the table's own
+   width. That line belongs to the table rather than sitting in front of it: it
+   is inside the replaced range, so it is hidden with everything else and the
+   caret steps over the whole table in one move. */
 export function tableRunAt(doc: Text, line: number): TableRun | null {
-  if (line + 1 > doc.lines) return null
-  if (!isTableRow(doc.line(line).text)) return null
-  if (!isDelimiterRow(doc.line(line + 1).text)) return null
+  const attr = isTableAttr(doc.line(line).text)
+  const head = attr ? line + 1 : line
 
-  let last = line + 1
+  if (head + 1 > doc.lines) return null
+  if (!isTableRow(doc.line(head).text)) return null
+  if (!isDelimiterRow(doc.line(head + 1).text)) return null
+
+  let last = head + 1
   while (last + 1 <= doc.lines && isTableRow(doc.line(last + 1).text)) last++
 
   const from = doc.line(line).from
@@ -134,6 +146,11 @@ export function cellToHtml(text: string): string {
     return `\u0000${stash.length - 1}\u0000`
   })
 
+  /* The underline is the tag itself in the file, so it comes back out of the
+     escaping it just went into. Before the other marks, so `<u>**a**</u>`
+     still bolds. */
+  s = s.replace(/&lt;u&gt;([\s\S]*?)&lt;\/u&gt;/g, '<u>$1</u>')
+
   s = s.replace(/==(?:\{(\w+)\})?([^=]+)==/g, (_, c, t) => {
     const color = c && HL_COLORS.has(c) ? c : 'brass'
     return `<span class="md-hl md-hl-${color}">${t}</span>`
@@ -163,6 +180,7 @@ export function htmlToCell(node: Node): string {
     const tag = child.tagName
     if (tag === 'STRONG' || tag === 'B') out += `**${inner}**`
     else if (tag === 'EM' || tag === 'I') out += `*${inner}*`
+    else if (tag === 'U') out += `<u>${inner}</u>`
     else if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') out += `~~${inner}~~`
     else if (tag === 'CODE') out += `\`${inner}\``
     else if (child.classList.contains('md-hl')) {
@@ -184,11 +202,13 @@ export function focusedCell(): HTMLElement | null {
 
 /* Marks inside a cell. Bold, italic and strike are the browser's own; code and
    the highlighter have no command of their own and get wrapped by hand. */
-export function markInCell(mark: 'bold' | 'italic' | 'strike' | 'code' | string): boolean {
+export function markInCell(
+  mark: 'bold' | 'italic' | 'underline' | 'strike' | 'code' | string,
+): boolean {
   const cell = focusedCell()
   if (!cell) return false
 
-  if (mark === 'bold' || mark === 'italic') {
+  if (mark === 'bold' || mark === 'italic' || mark === 'underline') {
     document.execCommand(mark)
     return true
   }
@@ -329,7 +349,7 @@ function commitCells(host: Host, view: EditorView) {
     }
     rows.push(cells)
   }
-  const text = serializeTable({ rows, widths: live.table.widths })
+  const text = serializeTable({ ...live.table, rows })
   if (text === view.state.sliceDoc(live.from, live.to)) return
   view.dispatch({ changes: { from: live.from, to: live.to, insert: text } })
 }
@@ -342,7 +362,15 @@ function render(host: Host, view: EditorView) {
 
   const colgroup = host.querySelector('colgroup')
   const body = host.querySelector('tbody')
+  const frame = host.querySelector('.md-table-frame')
   if (!colgroup || !body) return
+
+  /* The table's share of the measure sits on the frame, so the rules and the
+     grips — both of which are the frame's own children — are pulled in with
+     it and nothing has to be told twice. */
+  if (frame instanceof HTMLElement) {
+    frame.style.width = `${clampWidth(table.width ?? FULL_WIDTH)}%`
+  }
 
   /* Widths first — they're the only thing that has to be right before the
      rules are measured. */
@@ -538,6 +566,8 @@ function layHandles(host: Host, view: EditorView) {
        cell — which looks exactly like the cell being dead. */
     grip.style.top = `${row.getBoundingClientRect().top - top}px`
     grip.style.height = `${row.getBoundingClientRect().height}px`
+    grip.dataset.seam = String(seam)
+    grip.dataset.row = String(rows.indexOf(row))
     grip.setAttribute('role', 'separator')
     grip.setAttribute('aria-label', 'Column width')
 
@@ -582,6 +612,91 @@ function layHandles(host: Host, view: EditorView) {
     })
 
     holder.appendChild(grip)
+  }
+
+  /* And one on the outside edge, which moves the whole table rather than a
+     boundary inside it. The columns keep their shares, so pulling the table
+     in narrows all of them together instead of rearranging what is in it.
+
+     It can run the full height where the column grips can't: it sits on the
+     outer edge, past the last cell, so there is nothing underneath it whose
+     clicks it could swallow. */
+  const edge = document.createElement('div')
+  edge.className = 'md-table-grip edge'
+  edge.setAttribute('role', 'separator')
+  edge.setAttribute('aria-label', 'Table width')
+  edge.style.left = `${table.offsetWidth}px`
+  edge.style.top = '0'
+  edge.style.height = `${table.offsetHeight}px`
+
+  edge.addEventListener('pointerdown', (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    edge.setPointerCapture(event.pointerId)
+
+    const startX = event.clientX
+    /* The host is the whole measure; the frame inside it is the table. A
+       percentage only means anything against the room the table has. */
+    const measure = host.offsetWidth || table.offsetWidth
+    const start = clampWidth((host.live ?? live).table.width ?? FULL_WIDTH)
+    let latest = start
+
+    const move = (e: PointerEvent) => {
+      const delta = ((e.clientX - startX) / measure) * 100
+      latest = Math.min(FULL_WIDTH, Math.max(MIN_TABLE_WIDTH, Math.round(start + delta)))
+      const frame = host.querySelector('.md-table-frame')
+      if (frame instanceof HTMLElement) frame.style.width = `${latest}%`
+      /* Everything hanging off the table's edges moved with it. */
+      placeGrips(host)
+      drawRules(host)
+    }
+
+    const up = () => {
+      edge.removeEventListener('pointermove', move)
+      edge.removeEventListener('pointerup', up)
+      edge.removeEventListener('pointercancel', up)
+      commit(host, view, setTableWidth((host.live ?? live).table, latest))
+    }
+
+    edge.addEventListener('pointermove', move)
+    edge.addEventListener('pointerup', up)
+    edge.addEventListener('pointercancel', up)
+  })
+
+  holder.appendChild(edge)
+}
+
+/* Put every grip back where the table now says it goes. Only the table's own
+   width needs this — moving one seam leaves every other seam exactly where it
+   was, because the two columns either side of it trade the same room. */
+function placeGrips(host: Host) {
+  const holder = host.querySelector('.md-table-handles')
+  const table = host.querySelector('table')
+  const widths = host.live?.table.widths
+  if (!holder || !table || !widths) return
+
+  const width = table.offsetWidth
+  const top = table.getBoundingClientRect().top
+  const rows = [...host.querySelectorAll('tr')] as HTMLTableRowElement[]
+
+  for (const grip of holder.querySelectorAll('.md-table-grip')) {
+    if (!(grip instanceof HTMLElement)) continue
+    if (grip.classList.contains('edge')) {
+      grip.style.left = `${width}px`
+      grip.style.height = `${table.offsetHeight}px`
+      continue
+    }
+    const seam = Number(grip.dataset.seam)
+    let acc = 0
+    for (let i = 0; i <= seam; i++) acc += widths[i]
+    grip.style.left = `${(acc / 100) * width}px`
+    /* A narrower table wraps cells, which moves the rows the grips hang on. */
+    const row = rows[Number(grip.dataset.row)]
+    if (row) {
+      const box = row.getBoundingClientRect()
+      grip.style.top = `${box.top - top}px`
+      grip.style.height = `${box.height}px`
+    }
   }
 }
 
@@ -647,6 +762,15 @@ function controlsFor(host: Host, view: EditorView): HTMLElement {
   const gap2 = document.createElement('span')
   gap2.className = 'md-table-control-gap'
   bar.appendChild(gap2)
+
+  control('full', 'Back to the full measure', () => {
+    const t = table()
+    if (t) commit(host, view, setTableWidth(t, FULL_WIDTH))
+  })
+
+  const gap3 = document.createElement('span')
+  gap3.className = 'md-table-control-gap'
+  bar.appendChild(gap3)
 
   control('merge', 'Join this cell to the one on its right', () => {
     const t = table()

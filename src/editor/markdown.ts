@@ -10,7 +10,7 @@ import {
 } from '../lib/model'
 import { cachedCutout, cachedImageUrl, imageMeta } from '../lib/images'
 import { tableDecoration, tableRunAt } from './table'
-import { movePicture, repicture } from './commands'
+import { ALIGN_RE, movePicture, repicture } from './commands'
 import { hideDropMarker, showDropMarker } from './dropmarker'
 import {
   Decoration,
@@ -336,6 +336,7 @@ class RuleWidget extends WidgetType {
 /* ── the grammar ────────────────────────────────────────────────────── */
 
 const RE = {
+  align: ALIGN_RE,
   heading: /^(#{1,3})(\s+)(.*)$/,
   todo: /^([-*]\s)(\[[ xX]\])(\s)(.*)$/,
   quote: /^(>\s?)(.*)$/,
@@ -348,6 +349,14 @@ const INLINE = {
   picture: IMAGE_RE,
   code: /`([^`]+)`/g,
   highlight: /==(?:\{(\w+)\})?([^=]+)==/g,
+  /* There is no markdown for underline, and the two candidates for inventing
+     one are both taken: `__x__` is bold in CommonMark and `_x_` is italic. So
+     this is the tag itself, which is the one thing every markdown reader
+     already agrees about — `u` isn't a block tag, so it stays inline, the
+     writing inside it is still parsed as markdown, and the line renders
+     underlined in any editor that renders HTML at all. Seven characters of
+     syntax to hide instead of four; the mechanism doesn't care. */
+  underline: /<u>([^<>]+)<\/u>/g,
   strong: /\*\*([^*]+)\*\*/g,
   strike: /~~([^~]+)~~/g,
   em: /(^|[^*\w])\*([^*\n]+)\*(?!\*)/g,
@@ -373,6 +382,15 @@ function block(b: Build, from: number, to: number, deco = hidden) {
   b.marks.push(deco.range(from, to))
   b.atoms.push(deco.range(from, to))
   b.blocked.push([from, to])
+}
+
+/* Hide a marker without claiming the run it belongs to, so other marks can
+   still be found inside it and around it. Only ever safe for a marker no
+   other rule could match — see the underline below. */
+function mask(b: Build, from: number, to: number) {
+  if (to <= from) return
+  b.marks.push(hidden.range(from, to))
+  b.atoms.push(hidden.range(from, to))
 }
 
 function isBlocked(b: Build, from: number, to: number) {
@@ -424,6 +442,29 @@ function decorateInline(b: Build, base: number, text: string) {
     block(b, from, from + openLen)
     b.marks.push(markDeco(`md-hl md-hl-${color}`).range(from + openLen, to - 2))
     block(b, to - 2, to)
+  }
+
+  /* The underline goes in before the other paired marks, and alone among them
+     it doesn't claim the run it wraps.
+
+     Every other mark shuts the door behind it: a match registers the whole
+     span, so a second mark inside it is skipped and its markers end up showing
+     on the page. That is why `=={brass}**a**==` draws its asterisks. The
+     underline can afford not to, because its tags are the only marker in here
+     that no other rule could ever match — nothing else is looking for a `<` —
+     so leaving the span open costs nothing and buys the one thing the others
+     can't do. Both `<u>**a**</u>` and `**<u>a</u>**` draw, which matters
+     because tapping U then B gives the first and B then U gives the second.
+
+     First, though: it still asks whether it *may* match, so a `<u>` inside a
+     code span stays the literal text it is. */
+  for (const m of text.matchAll(INLINE.underline)) {
+    const from = base + m.index
+    const to = from + m[0].length
+    if (!free(from, to)) continue
+    mask(b, from, from + 3)
+    b.marks.push(markDeco('md-underline').range(from + 3, to - 4))
+    mask(b, to - 4, to)
   }
 
   for (const [re, cls, len] of [
@@ -478,6 +519,19 @@ function decorateLine(b: Build, from: number, text: string) {
     block(b, from, from + lead.length)
     from += lead.length
     text = text.slice(lead.length)
+  }
+
+  /* Where the line sits across the measure. A brace tag, the same shape as the
+     one a highlight and a picture already carry, and hidden the same way — so
+     a centred title is a centred title on the page and one legible word at the
+     front of the line in any other editor. It comes after the indent and
+     before everything else, so `{center}## A heading` is both. */
+  if ((m = text.match(RE.align))) {
+    const tag = m[0]
+    b.marks.push(lineDeco(`md-line md-align-${m[1]}`).range(lineAt))
+    block(b, from, from + tag.length)
+    from += tag.length
+    text = text.slice(tag.length)
   }
 
   if ((m = text.match(RE.todo))) {
