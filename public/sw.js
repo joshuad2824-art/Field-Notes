@@ -2,7 +2,10 @@
    an archaeology dig. It caches the shell and the fonts; it never touches page
    data, which lives in IndexedDB and is nobody's business but the app's. */
 
-const VERSION = 'v1'
+/* Bump this to land a change to anything in the shell — the manifest is
+   cached cache-first and is only re-fetched when this worker reinstalls, so a
+   manifest edit on an unchanged version never reaches a phone at all. */
+const VERSION = 'v2'
 const SHELL = `shell-${VERSION}`
 const ASSETS = `assets-${VERSION}`
 const FONTS = `fonts-${VERSION}`
