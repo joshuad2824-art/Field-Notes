@@ -49,8 +49,39 @@ function fromBase64Url(text: string): Uint8Array {
    and throws before it opens a socket, which looks from the outside exactly
    like a host that isn't there. `trim()` was not enough: it tidies the ends and
    leaves the middle alone. */
+const INVISIBLE = /[\u200b-\u200d\u2060\ufeff]/g
+
 export function cleanToken(raw: string): string {
-  return raw.replace(/\s+/g, '')
+  /* Whitespace, and then the characters that are not whitespace as far as
+     `\s` is concerned but are still nothing to look at: zero-width spaces,
+     the joiners, the word joiner, a stray byte-order mark. A paste picks them
+     up from all sorts of places and no eye will ever find them — which makes
+     them the one class of damage a person genuinely cannot fix by hand. */
+  return raw.replace(/\s+/g, '').replace(INVISIBLE, '')
+}
+
+/* An ellipsis is the opposite case and must never be stripped. It means the
+   key was copied from a display that had shortened it, so what is held is not
+   a damaged key but a *partial* one — and quietly removing the mark would
+   turn an honest failure into a 401 nobody could explain. A JWT is three
+   base64url segments and two dots, so three dots in a row is never one
+   either. */
+export function looksTruncated(value: string): boolean {
+  return value.includes('…') || value.includes('...')
+}
+
+/* The first character that could not go in a header, named rather than
+   described — because "there is a bad character in it" is not something you
+   can act on when you cannot see it. */
+export function firstUnsafe(value: string): string | null {
+  for (const ch of value) {
+    const n = ch.codePointAt(0) ?? 0
+    if (n < 0x21 || n > 0x7e) {
+      const hex = n.toString(16).toUpperCase().padStart(4, '0')
+      return `U+${hex}${n === 0x20 ? ' (a space)' : ''}`
+    }
+  }
+  return null
 }
 
 /* What a header value is allowed to be: visible ASCII, no spaces, no control

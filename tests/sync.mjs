@@ -20,7 +20,9 @@ import {
   cleanToken,
   decodeCode,
   encodeCode,
+  firstUnsafe,
   headerSafe,
+  looksTruncated,
   looksLikeProjectUrl,
   newVaultKey,
   normaliseUrl,
@@ -212,6 +214,39 @@ for (const [name, value, usable] of [
   }
   ok(`${name} ${usable ? 'builds' : 'cannot build'} a request`, built === usable)
 }
+
+/* The damage a person cannot see, and so cannot fix by hand. */
+const zeroWidth = 'eyJhbGci\u200bOiJIUzI1NiJ9.body\ufeff.sig'
+ok(
+  'invisible characters are taken out too, and `\\s` would have missed them',
+  cleanToken(zeroWidth) === 'eyJhbGciOiJIUzI1NiJ9.body.sig' &&
+    zeroWidth.replace(/\s+/g, '') !== cleanToken(zeroWidth),
+)
+
+/* The opposite case: an ellipsis must survive cleaning, because it means the
+   key is partial rather than damaged, and stripping it would turn an honest
+   failure into a 401 nobody could explain. */
+ok(
+  'an ellipsis is never quietly removed',
+  cleanToken('eyJhbGciOi…tail').includes('…'),
+)
+ok(
+  'a shortened key is recognised as shortened',
+  looksTruncated('eyJhbGciOi…') && looksTruncated('eyJhbGciOi...'),
+)
+ok(
+  'and a whole JWT is not mistaken for one',
+  !looksTruncated('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.abc-_123'),
+)
+
+/* Naming the character, because "there is a bad character in it" is not
+   something anyone can act on when the character is invisible. */
+ok(
+  'the offending character is named rather than described',
+  firstUnsafe('abc\u200bdef') === 'U+200B' &&
+    firstUnsafe('abc def') === 'U+0020 (a space)' &&
+    firstUnsafe('perfectly-fine_key.123') === null,
+)
 
 /* Cleaning cannot move a device to a different vault, because whitespace was
    never part of what was hashed. */
