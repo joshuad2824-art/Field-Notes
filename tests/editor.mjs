@@ -1270,6 +1270,55 @@ await atWidth(1440, 900, async (view) => {
   ok('leaving the page hands it back', (await theme()) === FRAME, await theme())
 })
 
+/* On a phone the list is the whole window, so what is at the bottom of the
+   screen is its foot — a near-black bar, not the frame's teal. Calling it teal
+   put a visibly lighter band under the app, which is the exact band the theme
+   colour exists to prevent. The composite is worked out here rather than asked
+   of the app, so this stays an independent check and not an echo. */
+await atWidth(430, 900, async (view) => {
+  const theme = async () =>
+    (await view.locator('meta[name="theme-color"]').getAttribute('content')).toLowerCase()
+
+  const footColour = await view.locator('.list-foot').evaluate((el) => {
+    const [r, g, b, a = 1] = getComputedStyle(el)
+      .backgroundColor.match(/[\d.]+/g)
+      .map(Number)
+    const frame = getComputedStyle(document.documentElement)
+      .getPropertyValue('--frame-bg')
+      .trim()
+      .replace('#', '')
+    const under = [0, 2, 4].map((i) => parseInt(frame.slice(i, i + 2), 16))
+    const mix = (c, u) => Math.round(c * a + u * (1 - a))
+    return (
+      '#' +
+      [mix(r, under[0]), mix(g, under[1]), mix(b, under[2])]
+        .map((n) => n.toString(16).padStart(2, '0'))
+        .join('')
+    )
+  })
+
+  ok(
+    'the strip below a phone takes the foot\'s own colour',
+    (await theme()) === footColour,
+    `theme ${await theme()} vs foot ${footColour}`,
+  )
+  ok(
+    'which is not the frame\'s teal, or there would have been no band',
+    footColour !== '#142a2b',
+    footColour,
+  )
+
+  /* and a page still wins it back, then hands it straight to the foot again */
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(700)
+  const onPage = await theme()
+  ok('a page still takes the strip', onPage !== footColour, onPage)
+
+  await view.goBack()
+  await view.waitForTimeout(700)
+  ok('and the list takes it back', (await theme()) === footColour, await theme())
+})
+
 /* ── the calendar ───────────────────────────────────────────────────── */
 
 /* The week strip became a month. The marks say two different things and a day

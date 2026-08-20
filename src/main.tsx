@@ -9,6 +9,7 @@ import { purgeExpiredTombstones, requestPersistence, seedIfEmpty } from './lib/d
 import { loadNotebooks } from './lib/notebooks'
 import { trackViewport } from './lib/viewport'
 import { startSync } from './sync/engine'
+import { startWeather } from './weather/store'
 
 trackViewport()
 
@@ -27,6 +28,7 @@ void (async () => {
   await seedIfEmpty()
   await purgeExpiredTombstones()
   startSync()
+  startWeather()
 })()
 
 void requestPersistence()

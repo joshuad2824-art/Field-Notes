@@ -46,7 +46,9 @@ Do not relitigate these without being asked. Each was argued through.
 19. **New page belongs to the list, not the rail.** The button sits at the foot of the column showing the pages it will join, at every width. The rail's foot is Trash and Settings — the app's two back rooms and nothing else.
 20. **A conflict costs a duplicate page, never a paragraph.** Last-write-wins decides which version keeps the page's id; the losing one is written as its own page in the same notebook, opening with a `> Conflicting copy · <date> #conflict` line so it is both visible in the list and findable under a tag. Never a merge dialog. The whole decision is one pure function in `src/sync/reconcile.ts` with no Dexie, no fetch and no clock in it, which is why `npm run check` proves the truth table on node without a server.
 21. **The mirror keeps tombstones forever; the device keeps them thirty days.** A page purged locally after its thirty days leaves its marker on the server, so a device that was switched off for a month cannot walk the page back in when it returns. Tombstone rows are a few bytes and permanence is worth more than the space.
-22. **Nothing reads `env(safe-area-inset-*)` directly.** `--safe-top` and `--safe-bottom` in `tokens.css` are the only two places it appears. A desktop browser always reports zero for both, so the notch and the home indicator are invisible to us unless we can set them — and `npm run check` sets them to what an iPad reports and asserts on the bands that come out.
+22. **The weather is chrome, not a feature.** One line under the month in the rail, and on the date at the top of the list where the rail is a drawer — a temperature, one word, and the day's range. Open-Meteo, because it needs no key: a key in a client-side build is a key in public, which would have meant a server, for weather. No icon and no emoji; every mark in this app is a typed character and a little coloured cloud would be the only picture in it. It renders nothing at all until there is a reading — no placeholder, no spinner, no dash — because a slot held open for information that hasn't arrived makes the app look like it is waiting, and nothing here is allowed to look like it is waiting.
+23. **The one prompt.** Weather asks this device where it is, once. An app whose whole identity design exists to avoid asking for anything now asks for exactly one thing, and it is worth being honest that this is a cost rather than pretending it isn't. It takes no for an answer permanently — a refusal is remembered so it is never raised again — and Settings can name a place instead, which also pins the weather to home while you are away from it. Refusing costs one line of chrome and nothing else.
+24. **Nothing reads `env(safe-area-inset-*)` directly.** `--safe-top` and `--safe-bottom` in `tokens.css` are the only two places it appears. A desktop browser always reports zero for both, so the notch and the home indicator are invisible to us unless we can set them — and `npm run check` sets them to what an iPad reports and asserts on the bands that come out.
 
 ---
 
@@ -159,6 +161,7 @@ What was Phase 3 gets picked over rather than built wholesale:
 - **Pictures ride as base64 in the `images` table, not in a storage bucket.** One transport and one row policy rather than two services with two ways of asking the same question — and the bucket's policy would have to answer the header question through a different code path that can't be tested the same way. The cost is real: base64 is a third larger than the bytes, and the free tier's database is 500MB. If the archive ever grows enough pictures for that to bite, the fix is a bucket, not a bigger row.
 - **The pull cursor is `gte`, not `gt`, and widens rather than skips.** Applying a row twice is a no-op; missing one is not, so the boundary row is always re-read. The failure that shape has is a whole batch of rows sharing one stamp, which would leave the cursor nothing to advance to — hence `clock_timestamp()` in the trigger rather than `now()`, and hence the engine doubling its window rather than stepping past. It gives up loudly at 6400.
 - **`Offline` means unreachable, and it is checked rather than assumed.** A browser reports a blocked request and an unreachable host as the same one-word `TypeError`, so the first version of this called both of them "offline — it will catch up" and a permanently broken setup got to look like weather. When a request fails to leave, the transport now asks a second, plainer question — same project, same anon key, no vault-key header — and what comes back separates the four cases that need quite different things done about them: no network, no project, no `pages` table, or a browser refusing to send `x-vault-key`. Only the first two are weather.
+- **The strip iOS keeps is coloured from what is actually at the bottom, and that had to be measured rather than assumed.** `<meta name="theme-color">` fills it, and the rule was always "whatever is at the bottom of the screen" — but only the page screen ever did the work. Everywhere else it was hardcoded to the frame's teal, and on a phone the bottom of the screen is the list's foot, which is `rgba(5, 27, 28, .92)` and lands at about `#061c1d`. Twenty points darker in every channel, which is a plainly visible band. `surfaceColor` composites an element's real background — `getComputedStyle` reports the colour that was asked for, not the one that landed — and the list sets the strip from its own foot whenever it is the whole window. Docked, it doesn't: the foot is then one column of three and has no claim on the width of the screen.
 - **A key going into a header is cleaned of whitespace, not trimmed of it.** An anon key is a JWT and a vault key is base64url, so neither can legitimately contain any — but both are pasted by hand, and one copied out of a display that wrapped it arrives with a newline *in the middle*, where `trim()` doesn't look. That newline never reaches the network: `fetch` refuses to build the headers and throws before it opens a socket, which from inside the catch block is indistinguishable from a host that isn't there. It cost an afternoon of blaming a Supabase project that was healthy the whole time. Cleaning takes out the invisible characters too — zero-width spaces and joiners, which `\s` does not match and which nobody can delete by hand because nobody can see them. An ellipsis is the one mark that is deliberately *kept*: it means the key is partial rather than damaged, and stripping it would turn an honest failure into a 401 nobody could explain, so it is named as truncation instead. Keys are now cleaned on the way in, on the way out of storage (so a device already paired with a damaged key heals itself rather than needing setting up again), and checked against what a header may actually hold before the network is blamed for anything.
 - **A free-tier Supabase project pauses after a week of inactivity.** It shows up here as `Offline` in the rail's foot and nothing else — no blocked write, no lost keystroke — which is the whole point of the design, but it does mean the mirror can be quietly stale for as long as nobody notices. The monthly export is still the actual backup.
 - **The iOS keyboard accessory bar** — the up/down arrows and the Done tick — cannot be removed from a web app. It's the strongest concrete argument for the native path and should be weighed at the end of Phase 1. It's also the reason the formatting row sits at the top of the page rather than docked above the keyboard: two bars stacked on the keyboard would be worse than one bar at the top. If the accessory bar ever goes, the strip should move down.
@@ -172,13 +175,15 @@ the leaf editor, search, tags, trash with 30-day tombstones, export, and an inst
 shell. It's been through two rounds on a real phone and now carries the tablet and
 desktop layouts.
 
-Phase 2 stands up too. `src/sync/transport.ts` is the only file in the app that calls
-`fetch`, and the rule that used to read "nothing in `src/` talks to a network" now reads:
-nothing *above* `src/sync/` does, and nothing above it may. Grep for `fetch(` before
-believing otherwise — one hit is correct, two is a regression.
+Phase 2 stands up too. Two files in the app call `fetch` and no others may:
+`src/sync/transport.ts` and `src/weather/open-meteo.ts`. The rule that used to read
+"nothing in `src/` talks to a network" now reads: a network lives in a leaf module named
+for the service it talks to, nothing above it knows, and every failure it can have costs
+nothing that was written. Grep for `fetch(` before believing otherwise — two hits are
+correct, three is a regression until it is argued for here.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 232 assertions in two files. `tests/editor.mjs` has 168 covering the editor,
+rotted: 260 assertions in three files. `tests/editor.mjs` has 172 covering the editor,
 the grid, indent, tables, the calendar, the keyboard, zoom, the three widths, the
 folding columns, the safe-area bands, the notebook manager, pictures and the tray.
 `tests/sync.mjs` has 64, in two halves — the reconciler's truth table and the pairing
@@ -186,7 +191,9 @@ code run on node with nothing around them, and then two real browsers are driven
 against a fake mirror held inside the test file, through pairing, a page crossing, a
 picture crossing byte for byte, the mirror vanishing mid-sentence, a mirror that is
 reachable but refuses the vault header, both devices editing the same page while
-apart, a deletion crossing, and unpairing.
+apart, a deletion crossing, and unpairing. `tests/weather.mjs` has 24 — the code
+lookup on node, and then a browser told where it is by Playwright, driven against a
+weather service faked in the test file.
 
 **Sync runs against a real project now.** August 2026: three devices paired and
 carrying the same pages. That settles the load-bearing half `tests/sync.mjs` could

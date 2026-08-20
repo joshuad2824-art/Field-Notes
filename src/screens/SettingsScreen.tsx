@@ -7,6 +7,7 @@ import { useNotebooks } from '../lib/notebooks'
 import { setSettings, useSettings } from '../lib/settings'
 import { back, navigate, to } from '../lib/router'
 import { SyncPanel } from '../components/SyncPanel'
+import { WeatherPanel } from '../components/WeatherPanel'
 
 export function SettingsScreen() {
   const settings = useSettings()
@@ -118,6 +119,8 @@ export function SettingsScreen() {
           </div>
 
           <SyncPanel />
+
+          <WeatherPanel />
 
           <h2>Storage</h2>
           <p>

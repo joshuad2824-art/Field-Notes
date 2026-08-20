@@ -24,7 +24,8 @@ Node 20 or newer.
 src/editor/    the CodeMirror 6 core — live markdown, no visible syntax
 src/screens/   shelf, notebook, page, search, trash, settings
 src/lib/       Dexie storage, search index, export, router
-src/sync/      device pairing and the background mirror — the only network here
+src/sync/      device pairing and the background mirror
+src/weather/   one line of chrome, and the only other network in the app
 src/styles/    Timber & Ink tokens, the frame, the leaf
 supabase/      schema.sql — three tables and one row policy, run once
 ```
