@@ -188,16 +188,28 @@ picture crossing byte for byte, the mirror vanishing mid-sentence, a mirror that
 reachable but refuses the vault header, both devices editing the same page while
 apart, a deletion crossing, and unpairing.
 
-Three things are built but unproven, because only daily use proves them:
+**Sync runs against a real project now.** August 2026: three devices paired and
+carrying the same pages. That settles the load-bearing half `tests/sync.mjs` could
+never reach — PostgREST does populate `request.headers` the way `vault_of()` assumes,
+so the row policy works and the whole no-account design stands up outside the fake
+mirror. The rest of the engine was already proven against that mirror; this was the
+half that needed a server.
 
-- **Sync against a real Supabase project.** The engine, the transport's URL building, the
-  pairing ceremony and the conflict rule are all exercised by `tests/sync.mjs`, which drives
-  two real browsers against a fake mirror held in the test file — including the mirror going
-  away mid-sentence and both devices editing the same page while apart. What that cannot
-  prove is the half that lives in `supabase/schema.sql`: whether PostgREST populates
-  `request.headers` the way the row policy assumes, and whether `clock_timestamp()` in the
-  stamp trigger keeps a first sync of several hundred pages from landing in one instant.
-  Both are load-bearing and both want a real project before they're believed.
+Two smaller things about it are still only *probably* right, and both want time
+rather than another test:
+
+- **The stamp trigger under a bulk first sync.** `clock_timestamp()` rather than
+  `now()` is what stops several hundred pages pushed in one transaction from sharing
+  one stamp and leaving the cursor nothing to advance past. A first sync of a few
+  pages does not exercise it. The engine widens its window rather than skipping and
+  gives up loudly at 6400, so the failure would be visible — but it has not happened
+  yet, which is not the same as it working.
+- **A conflict in the wild.** The truth table is proven on node and two real browsers
+  are driven through a divergence against the fake mirror, but nothing has yet gone
+  wrong between the actual three devices. The first real conflict copy is worth
+  looking at properly when it appears.
+
+Two things are built but unproven, because only daily use proves them:
 
 - **The iOS keyboard.** Two rounds on a real phone found two separate moves: iOS
   scrolls the document (a fixed body stops that) *and* scrolls the visual viewport

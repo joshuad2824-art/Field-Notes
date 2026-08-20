@@ -196,6 +196,22 @@ Three smaller things the plan didn't anticipate:
   transaction would otherwise give all four hundred the same stamp, and a cursor that can
   only advance to the last row's stamp would have nothing to advance to.
 
+**It runs.** Three devices, one project, August 2026. Worth recording precisely what that
+settles, because it is the one question this note could not answer when it was written: the
+row policy reads the vault key out of `current_setting('request.headers')`, and PostgREST
+does in fact put it there. So the identity design holds outside a test — no account, no
+session, nothing that expires, and a server that never learned what any of this is for.
+
+What it cost to get there is worth recording too, because none of it was the interesting
+part. The first sync failed with a message saying the mirror could not be reached, and the
+mirror was fine the whole time. A key pasted by hand had a character in it that cannot go in
+an HTTP header, so `fetch` threw before opening a socket — and the error handling, written by
+someone who assumed a thrown fetch meant a network, reported that as "offline, it will catch
+up". Two days of looking at Supabase for a fault that was in our own catch block. The lesson
+is not about whitespace. It is that a failure path invented in advance will describe the
+failure you imagined rather than the one you get, and that "it will catch up" is the most
+expensive thing a program can say when it won't.
+
 **Scheduled export is still the actual backup**, and sync did not change that. It made the
 case for it stronger, if anything: there is now a second system that can be wrong, and the
 folder of markdown on disk is the only thing that doesn't depend on either of them.
