@@ -52,11 +52,17 @@ export function SettingsScreen() {
          tokens, and a custom property hands back its own text rather than the
          pixels it lands on. A box an inset tall is the only way to ask. */
       const safe = measure('--safe-bottom')
+      /* The number that ends the argument. When the app fills the view and the
+         view is still short of the screen, what is left over is not ours and
+         no colour set in this document reaches it — measured at 62 on a phone
+         in portrait and 32 on an iPad. Only the manifest can paint there. */
+      const outside = Math.max(0, window.screen.height - window.innerHeight)
       setScreen([
         `window.innerHeight        ${window.innerHeight}`,
         `visualViewport.height     ${vv ? Math.round(vv.height) : '—'}`,
         `documentElement.client    ${document.documentElement.clientHeight}`,
         `screen.height             ${window.screen.height}`,
+        `outside the view          ${outside}`,
         `--app-height              ${app.trim() || 'unset (pinned)'}`,
         `--browser-bottom          ${overlay.trim() || '—'}`,
         `--safe-bottom             ${safe}px`,
@@ -164,10 +170,11 @@ export function SettingsScreen() {
 
           <h2>Screen</h2>
           <p>
-            What this device says about its own window. Three numbers that ought to agree and
-            don't always — an installed iPad has now twice reported one of them short, which
-            shows up as a band of the desk under the bottom of the app. Here so the next one can
-            be read off the device rather than guessed at.
+            What this device says about its own window. The three heights ought to agree with
+            each other, and where they agree but fall short of the screen, the difference is a
+            strip the system keeps and no colour set in here can reach — 62 on a phone in
+            portrait, 32 on an iPad. Read rather than guessed at, which is the whole reason
+            this is on the screen.
           </p>
           <p className="meta mono-block">
             {screen.map((line) => (
