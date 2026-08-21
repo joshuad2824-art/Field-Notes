@@ -3,10 +3,12 @@ import type { EditorView } from '@codemirror/view'
 import {
   INDENT_UNIT,
   MAX_INDENT,
+  type MarkRun,
   type Placement,
   defaultSize,
   imageMarkdown,
   isTableLine,
+  marksIn,
   readPlacement,
 } from '../lib/model'
 
@@ -138,38 +140,82 @@ export function applyWrap(view: EditorView, open: string, close = open): boolean
   return true
 }
 
+/* The highlights the selection has to do with, read with the grammar's own
+   pattern so the tray and the page can never disagree about where one is.
+
+   `inside` is the run the selection sits within, markers included — a caret at
+   either edge of the word counts, because that is where a click lands, and it
+   is the whole of what was wrong before: the old reading asked whether the
+   selection's own edges sat exactly on the markers, which is true only in the
+   moment just after the highlight was made. Everywhere else it fell through
+   and started a second one inside the first.
+
+   `across` is every run the selection touches, which is what a colour has to
+   come off. */
+function highlightsAt(state: EditorState, range: { from: number; to: number }) {
+  const first = state.doc.lineAt(range.from)
+  const last = state.doc.lineAt(range.to)
+  const runs: MarkRun[] = []
+  for (let i = first.number; i <= last.number; i++) {
+    const line = state.doc.line(i)
+    runs.push(...marksIn(line.text, line.from).filter((r) => r.kind.name === 'highlight'))
+  }
+  return {
+    inside: runs.find((r) => range.from >= r.from && range.to <= r.to) ?? null,
+    across: runs.filter((r) => range.from < r.to && range.to > r.from),
+  }
+}
+
+/* The markers taken back out of a stretch of text, so a run can be laid over
+   writing that was already lit without nesting one inside the other. */
+const BARE = /==(?:\{\w+\})?([^=]+)==/g
+
 export function applyHighlight(view: EditorView, color: string): boolean {
   const { state } = view
   const range = state.selection.main
-  const head = state.sliceDoc(Math.max(0, range.from - 12), range.from)
-  const open = head.match(/==(?:\{\w+\})?$/)?.[0]
-  const closed = state.sliceDoc(range.to, Math.min(state.doc.length, range.to + 2)) === '=='
+  const { inside, across } = highlightsAt(state, range)
 
-  /* Already highlighted: swap the colour, or take it off. */
-  if (open && closed) {
-    const from = range.from - open.length
-    if (color === 'off') {
-      view.dispatch({
-        changes: [
-          { from, to: range.from, insert: '' },
-          { from: range.to, to: range.to + 2, insert: '' },
-        ],
-        selection: { anchor: from, head: range.to - open.length },
-      })
-    } else {
-      const next = `=={${color}}`
-      view.dispatch({
-        changes: { from, to: range.from, insert: next },
-        selection: { anchor: from + next.length, head: range.to - open.length + next.length },
-      })
+  /* Taking a colour off takes it off everything the selection touches, which
+     is the only reading of "not highlighted any more" that can't leave some of
+     it behind. */
+  if (color === 'off') {
+    if (!across.length) {
+      view.focus()
+      return false
     }
+    const changes: ChangeSpec[] = across.flatMap((run) => [
+      { from: run.from, to: run.body[0], insert: '' },
+      { from: run.body[1], to: run.to, insert: '' },
+    ])
+    const probe = state.update({ changes })
+    view.dispatch(
+      state.update({
+        changes,
+        selection: {
+          anchor: probe.changes.mapPos(range.from, 1),
+          head: probe.changes.mapPos(range.to, -1),
+        },
+      }),
+    )
     view.focus()
     return true
   }
 
-  if (color === 'off') {
+  /* Standing inside one: change its colour rather than start another. The
+     whole run changes, not the part under the selection — a run holds one
+     colour, and splitting it to hold two would write `====` into the file for
+     something nobody asked for. */
+  if (inside) {
+    const next = `=={${color}}`
+    view.dispatch({
+      changes: { from: inside.from, to: inside.body[0], insert: next },
+      selection: {
+        anchor: inside.from + next.length,
+        head: inside.body[1] - inside.open.length + next.length,
+      },
+    })
     view.focus()
-    return false
+    return true
   }
 
   /* Nothing selected: take the word under the caret, the same as a mark. */
@@ -199,11 +245,23 @@ export function applyHighlight(view: EditorView, color: string): boolean {
     while (from < to && /\s/.test(state.sliceDoc(from, from + 1))) from++
     while (to > from && /\s/.test(state.sliceDoc(to - 1, to))) to--
     if (to <= from) continue
-    /* `[^=]+` is what hides it, so a segment already carrying an `=` can't be
-       wrapped without showing the markers. */
-    if (state.sliceDoc(from, to).includes('=')) continue
-    changes.push({ from, insert: opener })
-    changes.push({ from: to, insert: '==' })
+
+    /* A run the segment only half covers is swallowed whole, or taking its
+       markers out would leave the other one of the pair stranded outside the
+       selection with nothing to close. */
+    for (const run of marksIn(line.text, line.from)) {
+      if (run.kind.name !== 'highlight') continue
+      if (from < run.to && to > run.from) {
+        from = Math.min(from, run.from)
+        to = Math.max(to, run.to)
+      }
+    }
+
+    const text = state.sliceDoc(from, to).replace(BARE, '$1')
+    /* `[^=]+` is what hides it, so a segment still carrying an `=` of its own
+       can't be wrapped without showing the markers. */
+    if (text.includes('=')) continue
+    changes.push({ from, to, insert: opener + text + '==' })
   }
 
   if (!changes.length) {

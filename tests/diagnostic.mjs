@@ -105,14 +105,22 @@ await page.locator('.cm-content').click()
 console.log('\n— the highlighter, revisited —\n')
 
 /* Six ways of pointing at a highlighted word before reaching for the tray.
-   Only one of them can currently be the one you happened to use. */
+   Five of them used to fall through and start a second highlight inside the
+   first, or do nothing at all.
+
+   The last of the six is the one that means something different: a selection
+   that reaches past the run is asking for the whole of what is selected in the
+   new colour, not for the word inside it to be recoloured. So it lights the
+   line and swallows the old markers rather than nesting inside them. Taking a
+   colour off has no such split — it comes off everything the selection
+   touches, whichever way you pointed. */
 const WAYS = [
-  ['the caret inside the word', (d) => [d.indexOf('bravo') + 2]],
-  ['the word selected exactly', (d) => [d.indexOf('bravo'), d.indexOf('bravo') + 5]],
-  ['the word and a trailing space', (d) => [d.indexOf('bravo'), d.indexOf('bravo') + 6]],
-  ['the whole line selected', (d) => [0, d.length]],
-  ['the caret at the front of the word', (d) => [d.indexOf('bravo')]],
-  ['the caret at the back of the word', (d) => [d.indexOf('bravo') + 5]],
+  ['the caret inside the word', (d) => [d.indexOf('bravo') + 2], 'alpha =={navy}bravo== charlie'],
+  ['the word selected exactly', (d) => [d.indexOf('bravo'), d.indexOf('bravo') + 5], 'alpha =={navy}bravo== charlie'],
+  ['the word and a trailing space', (d) => [d.indexOf('bravo'), d.indexOf('bravo') + 6], 'alpha =={navy}bravo== charlie'],
+  ['the whole line selected', (d) => [0, d.length], '=={navy}alpha bravo charlie=='],
+  ['the caret at the front of the word', (d) => [d.indexOf('bravo')], 'alpha =={navy}bravo== charlie'],
+  ['the caret at the back of the word', (d) => [d.indexOf('bravo') + 5], 'alpha =={navy}bravo== charlie'],
 ]
 
 const highlighted = async () => {
@@ -130,16 +138,12 @@ for (const [where, find] of WAYS) {
   ok(`a highlight comes off with ${where}`, after === 'alpha bravo charlie', JSON.stringify(after))
 }
 
-for (const [where, find] of WAYS) {
+for (const [where, find, wanted] of WAYS) {
   const before = await highlighted()
   await at(...find(before))
   await tray('navy')
   const after = await doc()
-  ok(
-    `a highlight changes colour with ${where}`,
-    after === 'alpha =={navy}bravo== charlie',
-    JSON.stringify(after),
-  )
+  ok(`a highlight changes colour with ${where}`, after === wanted, JSON.stringify(after))
 }
 
 /* The failure that costs a page rather than a tap: a second opener nested
