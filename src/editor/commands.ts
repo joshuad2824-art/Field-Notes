@@ -338,9 +338,54 @@ export function applyAlign(view: EditorView, align: Align): boolean {
   return true
 }
 
+/* Where a line break has to go, and what has to be said on either side of it.
+
+   A mark is read one line at a time, so a run split across a break can never
+   be hidden — press Enter in the middle of a bold word and `**` appears on
+   both halves, which is markdown showing on the page and the writer deleting
+   it by hand. So the run is closed before the break and opened again after it,
+   and what the eye sees is a bold word that now happens to be on two lines.
+
+   The opener is reproduced from the file rather than written fresh, because
+   the highlighter's carries a colour.
+
+   At the very edge of a run there is nothing to split: closing it there would
+   leave `****` with nothing between the markers, which has no content for the
+   grammar to match and shows just as loudly. The break moves outside the run
+   instead — the whole marked word goes down to the new line, or stays up on
+   the old one, depending on which end the caret was at. */
+export interface Break {
+  from: number
+  close: string
+  open: string
+  /* Whether this is anything other than a plain break where the caret is, and
+     so whether Enter has anything to do that the default keymap wouldn't. */
+  moved: boolean
+}
+
+export function breakAt(state: EditorState, pos: number): Break {
+  const line = state.doc.lineAt(pos)
+  const runs = marksIn(line.text, line.from).filter((r) => pos > r.from && pos < r.to)
+  if (!runs.length) return { from: pos, close: '', open: '', moved: false }
+
+  /* Sorted outermost first, so the innermost run is the one the caret is
+     really standing in and the outermost is what a break has to clear. */
+  const inner = runs[runs.length - 1]
+  const outer = runs[0]
+  if (pos <= inner.body[0]) return { from: outer.from, close: '', open: '', moved: true }
+  if (pos >= inner.body[1]) return { from: outer.to, close: '', open: '', moved: true }
+
+  return {
+    from: pos,
+    close: runs.map((r) => r.kind.close).reverse().join(''),
+    open: runs.map((r) => r.open).join(''),
+    moved: true,
+  }
+}
+
 /* Enter inside a list carries the list on, indent and all; Enter on an empty
    item steps it back out a level, and ends it once there's nowhere left to
-   step back to. */
+   step back to. Enter inside a mark carries the mark on the same way. */
 export function continueList(view: EditorView): boolean {
   const { state } = view
   const range = state.selection.main
@@ -351,10 +396,15 @@ export function continueList(view: EditorView): boolean {
      centred list shouldn't drop the next bullet back to the margin. */
   const lead = leadOf(line.text) + alignOf(line.text)
   const prefix = prefixOf(line.text)
-  if (!prefix || /^#{1,3}\s+$/.test(prefix)) return false
-  if (range.head < line.from + lead.length + prefix.length) return false
+  /* A heading is not a list, so Enter at the end of one starts a plain line
+     rather than a second heading — but the caret can still be standing inside
+     a mark on it, which is why this no longer gives up here. */
+  const listing =
+    !!prefix &&
+    !/^#{1,3}\s+$/.test(prefix) &&
+    range.head >= line.from + lead.length + prefix.length
 
-  if (line.text.trimEnd() === (lead + prefix).trimEnd()) {
+  if (listing && line.text.trimEnd() === (lead + prefix).trimEnd()) {
     /* An empty item that is indented gives up a level first — the way out of
        a nested list is the same key that got you into it. */
     if (lead.startsWith(INDENT_UNIT)) {
@@ -372,14 +422,24 @@ export function continueList(view: EditorView): boolean {
     return true
   }
 
-  let next = prefix.replace(/\[[xX]\]/, '[ ]')
-  const numbered = prefix.match(/^(\d+)\.\s$/)
-  if (numbered) next = `${Number(numbered[1]) + 1}. `
-  next = lead + next
+  const split = breakAt(state, range.head)
 
+  let next = ''
+  if (listing) {
+    next = prefix.replace(/\[[xX]\]/, '[ ]')
+    const numbered = prefix.match(/^(\d+)\.\s$/)
+    if (numbered) next = `${Number(numbered[1]) + 1}. `
+    next = lead + next
+  } else if (!split.moved) {
+    /* Nothing to carry on and nothing to close: let the default keymap have
+       the key, so whatever else it does about a new line still happens. */
+    return false
+  }
+
+  const insert = split.close + '\n' + next + split.open
   view.dispatch({
-    changes: { from: range.head, to: range.to, insert: '\n' + next },
-    selection: { anchor: range.head + 1 + next.length },
+    changes: { from: split.from, to: split.from, insert },
+    selection: { anchor: split.from + insert.length },
     scrollIntoView: true,
   })
   return true
