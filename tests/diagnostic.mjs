@@ -319,7 +319,34 @@ console.log('\n— one mark inside another —\n')
   ok('a highlight over a bold word draws', (await showing()).length === 0, `${await doc()} → ${(await seen()).join(' / ')}`)
 }
 
-/* ── 5. marks inside a table cell ────────────────────────────────────── */
+/* ── 5. the grid under a marked-up line ──────────────────────────────── */
+
+console.log('\n— every line box still 28 —\n')
+
+/* The suite measures the grid under the blocks. It never put an inline mark on
+   the line while it did, and a code span turned out to make the line 29px:
+   Courier's baseline sits differently inside its box than Spectral's, and the
+   union of the two was a pixel taller than the pitch. */
+for (const body of [
+  'a `code` span',
+  'a **bold** word',
+  'a =={brass}lit== word',
+  'a <u>drawn</u> word',
+  'a =={brass}**both**== at once',
+  '## a heading with `code` in it',
+  '- a bullet with `code` in it',
+]) {
+  await blank(body)
+  await page.waitForTimeout(300)
+  const off = await page
+    .locator('.cm-line')
+    .evaluateAll((els) =>
+      els.map((e) => +e.getBoundingClientRect().height.toFixed(2)).filter((h) => h % 28 !== 0),
+    )
+  ok(`${JSON.stringify(body)} sits on the grid`, off.length === 0, off.join(', '))
+}
+
+/* ── 6. marks inside a table cell ────────────────────────────────────── */
 
 console.log('\n— inside a table —\n')
 

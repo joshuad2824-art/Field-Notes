@@ -432,32 +432,36 @@ function decorateInline(b: Build, base: number, text: string) {
     block(b, to - 1, to)
   }
 
+  /* The highlighter leaves the run it wraps open, the way the underline below
+     does, so a mark can sit inside a colour and a colour inside a mark.
+
+     It used to shut the door behind it: the match registered the whole span,
+     so a second mark inside was skipped and its markers ended up on the page —
+     `=={brass}**a**==` drew its asterisks, and so did `**=={brass}a==**`, and
+     both are two taps apart in the tray. The markers are masked rather than
+     blocked for the same reason: blocking them would leave a mark that reaches
+     across the whole run, `**` outside `==`, with a claimed range in its way.
+
+     What makes this safe is the same thing that makes it safe for the
+     underline — no other rule in here is looking for an `=` or a `{`, so there
+     is nothing for an unclaimed span to be misread as. It still asks whether
+     it *may* match, so a `==` inside a code span stays the literal text it
+     is. */
   for (const m of text.matchAll(INLINE.highlight)) {
     const from = base + m.index
     const to = from + m[0].length
     if (!free(from, to)) continue
-    local.push([from, to])
     const color = m[1] && HL_COLORS.has(m[1]) ? m[1] : 'brass'
     const openLen = 2 + (m[1] ? m[1].length + 2 : 0)
-    block(b, from, from + openLen)
+    mask(b, from, from + openLen)
     b.marks.push(markDeco(`md-hl md-hl-${color}`).range(from + openLen, to - 2))
-    block(b, to - 2, to)
+    mask(b, to - 2, to)
   }
 
-  /* The underline goes in before the other paired marks, and alone among them
-     it doesn't claim the run it wraps.
-
-     Every other mark shuts the door behind it: a match registers the whole
-     span, so a second mark inside it is skipped and its markers end up showing
-     on the page. That is why `=={brass}**a**==` draws its asterisks. The
-     underline can afford not to, because its tags are the only marker in here
-     that no other rule could ever match — nothing else is looking for a `<` —
-     so leaving the span open costs nothing and buys the one thing the others
-     can't do. Both `<u>**a**</u>` and `**<u>a</u>**` draw, which matters
-     because tapping U then B gives the first and B then U gives the second.
-
-     First, though: it still asks whether it *may* match, so a `<u>` inside a
-     code span stays the literal text it is. */
+  /* The underline, which leaves its run open for the same reason: nothing else
+     in the grammar is looking for a `<`. Both `<u>**a**</u>` and
+     `**<u>a</u>**` draw, which matters because tapping U then B gives the
+     first and B then U gives the second. */
   for (const m of text.matchAll(INLINE.underline)) {
     const from = base + m.index
     const to = from + m[0].length
