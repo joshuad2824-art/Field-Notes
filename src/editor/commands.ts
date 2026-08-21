@@ -3,10 +3,12 @@ import type { EditorView } from '@codemirror/view'
 import {
   INDENT_UNIT,
   MAX_INDENT,
+  type MarkRun,
   type Placement,
   defaultSize,
   imageMarkdown,
   isTableLine,
+  marksIn,
   readPlacement,
 } from '../lib/model'
 
@@ -138,38 +140,82 @@ export function applyWrap(view: EditorView, open: string, close = open): boolean
   return true
 }
 
+/* The highlights the selection has to do with, read with the grammar's own
+   pattern so the tray and the page can never disagree about where one is.
+
+   `inside` is the run the selection sits within, markers included — a caret at
+   either edge of the word counts, because that is where a click lands, and it
+   is the whole of what was wrong before: the old reading asked whether the
+   selection's own edges sat exactly on the markers, which is true only in the
+   moment just after the highlight was made. Everywhere else it fell through
+   and started a second one inside the first.
+
+   `across` is every run the selection touches, which is what a colour has to
+   come off. */
+function highlightsAt(state: EditorState, range: { from: number; to: number }) {
+  const first = state.doc.lineAt(range.from)
+  const last = state.doc.lineAt(range.to)
+  const runs: MarkRun[] = []
+  for (let i = first.number; i <= last.number; i++) {
+    const line = state.doc.line(i)
+    runs.push(...marksIn(line.text, line.from).filter((r) => r.kind.name === 'highlight'))
+  }
+  return {
+    inside: runs.find((r) => range.from >= r.from && range.to <= r.to) ?? null,
+    across: runs.filter((r) => range.from < r.to && range.to > r.from),
+  }
+}
+
+/* The markers taken back out of a stretch of text, so a run can be laid over
+   writing that was already lit without nesting one inside the other. */
+const BARE = /==(?:\{\w+\})?([^=]+)==/g
+
 export function applyHighlight(view: EditorView, color: string): boolean {
   const { state } = view
   const range = state.selection.main
-  const head = state.sliceDoc(Math.max(0, range.from - 12), range.from)
-  const open = head.match(/==(?:\{\w+\})?$/)?.[0]
-  const closed = state.sliceDoc(range.to, Math.min(state.doc.length, range.to + 2)) === '=='
+  const { inside, across } = highlightsAt(state, range)
 
-  /* Already highlighted: swap the colour, or take it off. */
-  if (open && closed) {
-    const from = range.from - open.length
-    if (color === 'off') {
-      view.dispatch({
-        changes: [
-          { from, to: range.from, insert: '' },
-          { from: range.to, to: range.to + 2, insert: '' },
-        ],
-        selection: { anchor: from, head: range.to - open.length },
-      })
-    } else {
-      const next = `=={${color}}`
-      view.dispatch({
-        changes: { from, to: range.from, insert: next },
-        selection: { anchor: from + next.length, head: range.to - open.length + next.length },
-      })
+  /* Taking a colour off takes it off everything the selection touches, which
+     is the only reading of "not highlighted any more" that can't leave some of
+     it behind. */
+  if (color === 'off') {
+    if (!across.length) {
+      view.focus()
+      return false
     }
+    const changes: ChangeSpec[] = across.flatMap((run) => [
+      { from: run.from, to: run.body[0], insert: '' },
+      { from: run.body[1], to: run.to, insert: '' },
+    ])
+    const probe = state.update({ changes })
+    view.dispatch(
+      state.update({
+        changes,
+        selection: {
+          anchor: probe.changes.mapPos(range.from, 1),
+          head: probe.changes.mapPos(range.to, -1),
+        },
+      }),
+    )
     view.focus()
     return true
   }
 
-  if (color === 'off') {
+  /* Standing inside one: change its colour rather than start another. The
+     whole run changes, not the part under the selection — a run holds one
+     colour, and splitting it to hold two would write `====` into the file for
+     something nobody asked for. */
+  if (inside) {
+    const next = `=={${color}}`
+    view.dispatch({
+      changes: { from: inside.from, to: inside.body[0], insert: next },
+      selection: {
+        anchor: inside.from + next.length,
+        head: inside.body[1] - inside.open.length + next.length,
+      },
+    })
     view.focus()
-    return false
+    return true
   }
 
   /* Nothing selected: take the word under the caret, the same as a mark. */
@@ -199,11 +245,23 @@ export function applyHighlight(view: EditorView, color: string): boolean {
     while (from < to && /\s/.test(state.sliceDoc(from, from + 1))) from++
     while (to > from && /\s/.test(state.sliceDoc(to - 1, to))) to--
     if (to <= from) continue
-    /* `[^=]+` is what hides it, so a segment already carrying an `=` can't be
-       wrapped without showing the markers. */
-    if (state.sliceDoc(from, to).includes('=')) continue
-    changes.push({ from, insert: opener })
-    changes.push({ from: to, insert: '==' })
+
+    /* A run the segment only half covers is swallowed whole, or taking its
+       markers out would leave the other one of the pair stranded outside the
+       selection with nothing to close. */
+    for (const run of marksIn(line.text, line.from)) {
+      if (run.kind.name !== 'highlight') continue
+      if (from < run.to && to > run.from) {
+        from = Math.min(from, run.from)
+        to = Math.max(to, run.to)
+      }
+    }
+
+    const text = state.sliceDoc(from, to).replace(BARE, '$1')
+    /* `[^=]+` is what hides it, so a segment still carrying an `=` of its own
+       can't be wrapped without showing the markers. */
+    if (text.includes('=')) continue
+    changes.push({ from, to, insert: opener + text + '==' })
   }
 
   if (!changes.length) {
@@ -280,9 +338,54 @@ export function applyAlign(view: EditorView, align: Align): boolean {
   return true
 }
 
+/* Where a line break has to go, and what has to be said on either side of it.
+
+   A mark is read one line at a time, so a run split across a break can never
+   be hidden — press Enter in the middle of a bold word and `**` appears on
+   both halves, which is markdown showing on the page and the writer deleting
+   it by hand. So the run is closed before the break and opened again after it,
+   and what the eye sees is a bold word that now happens to be on two lines.
+
+   The opener is reproduced from the file rather than written fresh, because
+   the highlighter's carries a colour.
+
+   At the very edge of a run there is nothing to split: closing it there would
+   leave `****` with nothing between the markers, which has no content for the
+   grammar to match and shows just as loudly. The break moves outside the run
+   instead — the whole marked word goes down to the new line, or stays up on
+   the old one, depending on which end the caret was at. */
+export interface Break {
+  from: number
+  close: string
+  open: string
+  /* Whether this is anything other than a plain break where the caret is, and
+     so whether Enter has anything to do that the default keymap wouldn't. */
+  moved: boolean
+}
+
+export function breakAt(state: EditorState, pos: number): Break {
+  const line = state.doc.lineAt(pos)
+  const runs = marksIn(line.text, line.from).filter((r) => pos > r.from && pos < r.to)
+  if (!runs.length) return { from: pos, close: '', open: '', moved: false }
+
+  /* Sorted outermost first, so the innermost run is the one the caret is
+     really standing in and the outermost is what a break has to clear. */
+  const inner = runs[runs.length - 1]
+  const outer = runs[0]
+  if (pos <= inner.body[0]) return { from: outer.from, close: '', open: '', moved: true }
+  if (pos >= inner.body[1]) return { from: outer.to, close: '', open: '', moved: true }
+
+  return {
+    from: pos,
+    close: runs.map((r) => r.kind.close).reverse().join(''),
+    open: runs.map((r) => r.open).join(''),
+    moved: true,
+  }
+}
+
 /* Enter inside a list carries the list on, indent and all; Enter on an empty
    item steps it back out a level, and ends it once there's nowhere left to
-   step back to. */
+   step back to. Enter inside a mark carries the mark on the same way. */
 export function continueList(view: EditorView): boolean {
   const { state } = view
   const range = state.selection.main
@@ -293,10 +396,15 @@ export function continueList(view: EditorView): boolean {
      centred list shouldn't drop the next bullet back to the margin. */
   const lead = leadOf(line.text) + alignOf(line.text)
   const prefix = prefixOf(line.text)
-  if (!prefix || /^#{1,3}\s+$/.test(prefix)) return false
-  if (range.head < line.from + lead.length + prefix.length) return false
+  /* A heading is not a list, so Enter at the end of one starts a plain line
+     rather than a second heading — but the caret can still be standing inside
+     a mark on it, which is why this no longer gives up here. */
+  const listing =
+    !!prefix &&
+    !/^#{1,3}\s+$/.test(prefix) &&
+    range.head >= line.from + lead.length + prefix.length
 
-  if (line.text.trimEnd() === (lead + prefix).trimEnd()) {
+  if (listing && line.text.trimEnd() === (lead + prefix).trimEnd()) {
     /* An empty item that is indented gives up a level first — the way out of
        a nested list is the same key that got you into it. */
     if (lead.startsWith(INDENT_UNIT)) {
@@ -314,17 +422,86 @@ export function continueList(view: EditorView): boolean {
     return true
   }
 
-  let next = prefix.replace(/\[[xX]\]/, '[ ]')
-  const numbered = prefix.match(/^(\d+)\.\s$/)
-  if (numbered) next = `${Number(numbered[1]) + 1}. `
-  next = lead + next
+  const split = breakAt(state, range.head)
 
+  let next = ''
+  if (listing) {
+    next = prefix.replace(/\[[xX]\]/, '[ ]')
+    const numbered = prefix.match(/^(\d+)\.\s$/)
+    if (numbered) next = `${Number(numbered[1]) + 1}. `
+    next = lead + next
+  } else if (!split.moved) {
+    /* Nothing to carry on and nothing to close: let the default keymap have
+       the key, so whatever else it does about a new line still happens. */
+    return false
+  }
+
+  const insert = split.close + '\n' + next + split.open
   view.dispatch({
-    changes: { from: range.head, to: range.to, insert: '\n' + next },
-    selection: { anchor: range.head + 1 + next.length },
+    changes: { from: split.from, to: split.from, insert },
+    selection: { anchor: split.from + insert.length },
     scrollIntoView: true,
   })
   return true
+}
+
+/* A marker never outlives the one it is paired with.
+
+   Markers are atomic, so backspace takes a whole `**` in one press — which is
+   the point of them being decorations rather than characters. What it used to
+   leave behind was the other `**`, with nothing to pair with and so nothing to
+   hide it: press backspace once at the end of a bold word and two asterisks
+   appear on the page. The same went for emptying a run's writing, which left
+   `=={brass}==` and put the colour's name on the page as text.
+
+   So a marker taken means the pair taken, and the writing between them stays
+   where it is, no longer marked. Deleting a mark is a thing you can see happen
+   rather than a thing that breaks the line. */
+export function deleteAround(view: EditorView, forward: boolean): boolean {
+  const { state } = view
+  const range = state.selection.main
+  const line = state.doc.lineAt(range.head)
+  const runs = marksIn(line.text, line.from)
+  if (!runs.length) return false
+
+  /* A selection that takes in the whole of a run's writing takes the run: the
+     markers have nothing left to hold and would show. */
+  if (!range.empty) {
+    const doomed = runs.filter((r) => range.from <= r.body[0] && range.to >= r.body[1])
+    if (!doomed.length) return false
+    const from = Math.min(range.from, ...doomed.map((r) => r.from))
+    const to = Math.max(range.to, ...doomed.map((r) => r.to))
+    view.dispatch({ changes: { from, to, insert: '' }, selection: { anchor: from } })
+    return true
+  }
+
+  /* Innermost first — the caret is standing against the marker nearest it. */
+  for (const run of [...runs].reverse()) {
+    const [body, end] = run.body
+    const onOpener = forward ? range.head === run.from : range.head === body
+    const onCloser = forward ? range.head === end : range.head === run.to
+    if (!onOpener && !onCloser) {
+      /* The last character of the writing going is the same thing as the run
+         going, because an empty pair has nothing for the grammar to match. */
+      const lastOut =
+        end - body === 1 && (forward ? range.head === body : range.head === end)
+      if (!lastOut) continue
+      view.dispatch({
+        changes: { from: run.from, to: run.to, insert: '' },
+        selection: { anchor: run.from },
+      })
+      return true
+    }
+    view.dispatch({
+      changes: [
+        { from: run.from, to: body, insert: '' },
+        { from: end, to: run.to, insert: '' },
+      ],
+      selection: { anchor: forward === onOpener ? run.from : end - (body - run.from) },
+    })
+    return true
+  }
+  return false
 }
 
 /* Step the lines under the selection in or out one level. The indent is plain

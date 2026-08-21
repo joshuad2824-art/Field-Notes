@@ -139,6 +139,88 @@ export function imageIdsIn(body: string): string[] {
   return [...body.matchAll(IMAGE_RE)].map((m) => m[2])
 }
 
+/* ── the paired inline marks ───────────────────────────────────────────
+
+   One table, read by three things that must never disagree about where a run
+   begins and ends: the grammar that hides the markers, the tray that puts them
+   on and takes them off, and Enter, which has to know it is standing inside
+   one before it breaks the line.
+
+   Each entry says how to find a run and how to say its two markers again. The
+   opener is read off the match rather than written down, because the
+   highlighter's carries a colour and reopening it has to reproduce the one
+   that was there. `lead` is how far into the match the run actually starts —
+   only the emphasis needs it, because its pattern has to claim the character
+   in front to tell `*a*` from `**a**`. */
+
+export const HL_COLORS = new Set(['oxblood', 'forest', 'navy', 'driftwood', 'brass'])
+
+export interface MarkKind {
+  name: string
+  re: RegExp
+  lead: (m: RegExpMatchArray) => number
+  open: (m: RegExpMatchArray) => string
+  close: string
+}
+
+/* In the order the grammar reads them: code is literal by definition and so
+   goes first, and the highlighter before the marks that can sit inside it. */
+export const MARKS: MarkKind[] = [
+  { name: 'code', re: /`([^`]+)`/g, lead: () => 0, open: () => '`', close: '`' },
+  {
+    name: 'highlight',
+    re: /==(?:\{(\w+)\})?([^=]+)==/g,
+    lead: () => 0,
+    open: (m) => m[0].slice(0, 2 + (m[1] ? m[1].length + 2 : 0)),
+    close: '==',
+  },
+  {
+    name: 'underline',
+    re: /<u>([^<>]+)<\/u>/g,
+    lead: () => 0,
+    open: () => '<u>',
+    close: '</u>',
+  },
+  { name: 'strong', re: /\*\*([^*]+)\*\*/g, lead: () => 0, open: () => '**', close: '**' },
+  { name: 'strike', re: /~~([^~]+)~~/g, lead: () => 0, open: () => '~~', close: '~~' },
+  {
+    name: 'em',
+    re: /(^|[^*\w])\*([^*\n]+)\*(?!\*)/g,
+    lead: (m) => m[1].length,
+    open: () => '*',
+    close: '*',
+  },
+]
+
+/* One run of one mark, in document coordinates. `from`/`to` take in the
+   markers; `body` is the writing between them. */
+export interface MarkRun {
+  kind: MarkKind
+  from: number
+  to: number
+  body: [number, number]
+  open: string
+}
+
+/* Every paired mark on one line, innermost last. `base` is where the line
+   starts in the document, so the offsets come back ready to use. */
+export function marksIn(text: string, base = 0): MarkRun[] {
+  const runs: MarkRun[] = []
+  for (const kind of MARKS) {
+    for (const m of text.matchAll(kind.re)) {
+      const open = kind.open(m)
+      const from = base + (m.index ?? 0) + kind.lead(m)
+      const to = base + (m.index ?? 0) + m[0].length
+      /* A run found inside one already claimed is the grammar's business, not
+         ours — but a run that merely overlaps a claimed one is a false read,
+         so both are skipped the same way the decorations skip them. */
+      if (runs.some((r) => from < r.to && to > r.from && !(from >= r.from && to <= r.to))) continue
+      runs.push({ kind, from, to, body: [from + open.length, to - kind.close.length], open })
+    }
+  }
+  return runs.sort((a, b) => a.from - b.from || b.to - a.to)
+}
+
 /* ── deriving things from the body ─────────────────────────────────────
    Title and tags are derived, never stored. The body is the single source
    of truth and there is no metadata to drift out of sync with it. */

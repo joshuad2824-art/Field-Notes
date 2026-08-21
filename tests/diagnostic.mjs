@@ -105,14 +105,22 @@ await page.locator('.cm-content').click()
 console.log('\n— the highlighter, revisited —\n')
 
 /* Six ways of pointing at a highlighted word before reaching for the tray.
-   Only one of them can currently be the one you happened to use. */
+   Five of them used to fall through and start a second highlight inside the
+   first, or do nothing at all.
+
+   The last of the six is the one that means something different: a selection
+   that reaches past the run is asking for the whole of what is selected in the
+   new colour, not for the word inside it to be recoloured. So it lights the
+   line and swallows the old markers rather than nesting inside them. Taking a
+   colour off has no such split — it comes off everything the selection
+   touches, whichever way you pointed. */
 const WAYS = [
-  ['the caret inside the word', (d) => [d.indexOf('bravo') + 2]],
-  ['the word selected exactly', (d) => [d.indexOf('bravo'), d.indexOf('bravo') + 5]],
-  ['the word and a trailing space', (d) => [d.indexOf('bravo'), d.indexOf('bravo') + 6]],
-  ['the whole line selected', (d) => [0, d.length]],
-  ['the caret at the front of the word', (d) => [d.indexOf('bravo')]],
-  ['the caret at the back of the word', (d) => [d.indexOf('bravo') + 5]],
+  ['the caret inside the word', (d) => [d.indexOf('bravo') + 2], 'alpha =={navy}bravo== charlie'],
+  ['the word selected exactly', (d) => [d.indexOf('bravo'), d.indexOf('bravo') + 5], 'alpha =={navy}bravo== charlie'],
+  ['the word and a trailing space', (d) => [d.indexOf('bravo'), d.indexOf('bravo') + 6], 'alpha =={navy}bravo== charlie'],
+  ['the whole line selected', (d) => [0, d.length], '=={navy}alpha bravo charlie=='],
+  ['the caret at the front of the word', (d) => [d.indexOf('bravo')], 'alpha =={navy}bravo== charlie'],
+  ['the caret at the back of the word', (d) => [d.indexOf('bravo') + 5], 'alpha =={navy}bravo== charlie'],
 ]
 
 const highlighted = async () => {
@@ -130,16 +138,12 @@ for (const [where, find] of WAYS) {
   ok(`a highlight comes off with ${where}`, after === 'alpha bravo charlie', JSON.stringify(after))
 }
 
-for (const [where, find] of WAYS) {
+for (const [where, find, wanted] of WAYS) {
   const before = await highlighted()
   await at(...find(before))
   await tray('navy')
   const after = await doc()
-  ok(
-    `a highlight changes colour with ${where}`,
-    after === 'alpha =={navy}bravo== charlie',
-    JSON.stringify(after),
-  )
+  ok(`a highlight changes colour with ${where}`, after === wanted, JSON.stringify(after))
 }
 
 /* The failure that costs a page rather than a tap: a second opener nested
@@ -315,7 +319,34 @@ console.log('\n— one mark inside another —\n')
   ok('a highlight over a bold word draws', (await showing()).length === 0, `${await doc()} → ${(await seen()).join(' / ')}`)
 }
 
-/* ── 5. marks inside a table cell ────────────────────────────────────── */
+/* ── 5. the grid under a marked-up line ──────────────────────────────── */
+
+console.log('\n— every line box still 28 —\n')
+
+/* The suite measures the grid under the blocks. It never put an inline mark on
+   the line while it did, and a code span turned out to make the line 29px:
+   Courier's baseline sits differently inside its box than Spectral's, and the
+   union of the two was a pixel taller than the pitch. */
+for (const body of [
+  'a `code` span',
+  'a **bold** word',
+  'a =={brass}lit== word',
+  'a <u>drawn</u> word',
+  'a =={brass}**both**== at once',
+  '## a heading with `code` in it',
+  '- a bullet with `code` in it',
+]) {
+  await blank(body)
+  await page.waitForTimeout(300)
+  const off = await page
+    .locator('.cm-line')
+    .evaluateAll((els) =>
+      els.map((e) => +e.getBoundingClientRect().height.toFixed(2)).filter((h) => h % 28 !== 0),
+    )
+  ok(`${JSON.stringify(body)} sits on the grid`, off.length === 0, off.join(', '))
+}
+
+/* ── 6. marks inside a table cell ────────────────────────────────────── */
 
 console.log('\n— inside a table —\n')
 
@@ -326,28 +357,47 @@ await openTray()
 await page.locator('.tray-word', { hasText: /^Table$/ }).first().click()
 await page.waitForTimeout(600)
 
-const cellMark = async (index, word, apply, wanted, where) => {
+const cellMark = async (index, word, apply, wanted, where, name, remove = apply) => {
   const cell = page.locator('.md-table td').nth(index)
+  /* Select the word from inside the cell — the browser is the editor in here,
+     and a selection made any other way reaches past the cell. */
+  const select = async () => {
+    await cell.click()
+    await page.waitForTimeout(180)
+    await page.keyboard.press('End')
+    await page.keyboard.down('Shift')
+    for (let i = 0; i < word.length; i++) await page.keyboard.press('ArrowLeft')
+    await page.keyboard.up('Shift')
+    await page.waitForTimeout(120)
+  }
   await cell.click()
-  await page.waitForTimeout(200)
+  await page.waitForTimeout(180)
   await type(word)
-  await page.keyboard.down('Shift')
-  for (let i = 0; i < word.length; i++) await page.keyboard.press('ArrowLeft')
-  await page.keyboard.up('Shift')
+  await select()
   await apply()
   await page.waitForTimeout(350)
-  ok(`${wanted.replace(/[*~`={}]|<\/?u>/g, '')} in ${where} reaches the file`, (await doc()).includes(wanted), await cell.evaluate((e) => e.innerHTML))
+  ok(`${name} in ${where} reaches the file`, (await doc()).includes(wanted), await cell.evaluate((e) => e.innerHTML))
+  await select()
+  await remove()
+  await page.waitForTimeout(350)
+  ok(`${name} in ${where} comes off again`, !(await doc()).includes(wanted), await cell.evaluate((e) => e.innerHTML))
 }
 
 /* The head row is already set in a heavier weight, so the browser's own bold
    command reads the cell as bold and turns it off. What lands in the DOM is a
    span asking for normal weight, which the file has no word for — so the mark
    is dropped and the head cell un-bolds until the table next redraws. */
-await cellMark(0, 'abc', press('Control+b'), '**abc**', 'a head cell')
-await cellMark(3, 'abc', press('Control+b'), '**abc**', 'a body cell')
-await cellMark(4, 'xyz', () => tray('Italic — ⌘I'), '*xyz*', 'a body cell')
-await cellMark(5, 'pq', () => tray('Strike'), '~~pq~~', 'a body cell')
-await cellMark(6, 'lit', () => tray('brass'), '=={brass}lit==', 'a body cell')
+await cellMark(0, 'abc', press('Control+b'), '**abc**', 'a head cell', 'bold')
+await cellMark(1, 'def', () => tray('Bold — ⌘B'), '**def**', 'a head cell', 'bold from the tray')
+await cellMark(3, 'ghi', press('Control+b'), '**ghi**', 'a body cell', 'bold')
+await cellMark(4, 'jkl', () => tray('Italic — ⌘I'), '*jkl*', 'a body cell', 'italic')
+await cellMark(5, 'mno', () => tray('Underline — ⌘U'), '<u>mno</u>', 'a body cell', 'underline')
+await cellMark(6, 'pq', () => tray('Strike'), '~~pq~~', 'a body cell', 'strike')
+/* A colour has its own way off — the × — the same as it does out on the page.
+   Tapping the swatch again means "this colour", not "no colour". */
+await cellMark(7, 'lit', () => tray('brass'), '=={brass}lit==', 'a body cell', 'a highlight', () =>
+  tray('Remove highlight'),
+)
 
 console.log('\n' + (problems.length ? problems.join('\n') : 'no page errors'))
 console.log(`\n${open} open item${open === 1 ? '' : 's'}.`)

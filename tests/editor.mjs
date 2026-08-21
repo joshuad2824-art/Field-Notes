@@ -106,7 +106,13 @@ ok('bold renders', (await page.locator('.md-strong').count()) === 1)
 await page.keyboard.press('Backspace')
 await page.waitForTimeout(200)
 const afterBackspace = await lastLine()
-ok('backspace takes the whole marker', afterBackspace === '**bold', JSON.stringify(afterBackspace))
+/* One press takes the marker, which is the point of it being an atomic range
+   rather than two characters. It used to take only the one under the caret and
+   leave the other with nothing to pair with — so `**` appeared on the page and
+   had to be deleted by hand. The pair goes together now: the word stays, no
+   longer bold, which is a thing you can watch happen. */
+ok('backspace takes the whole marker', afterBackspace === 'bold', JSON.stringify(afterBackspace))
+ok('and the one it was paired with', (await page.locator('.md-strong').count()) === 0)
 
 /* the keyboard writes markdown, now that the bar is three marks */
 await page.keyboard.press('Control+End')
@@ -1486,9 +1492,12 @@ await atWidth(1440, 900, async (view) => {
   await view.keyboard.up('Shift')
   await view.locator('.tray-mark[aria-label^="Bold"]').click()
   await view.waitForTimeout(500)
+  /* Either tag: the file says `**` for both, and the mark is wrapped by hand
+     now rather than by `execCommand`, which read the head row's own weight as
+     bold and turned it off instead. */
   ok(
     'a cell can be given a mark',
-    (await firstBody.evaluate((el) => el.innerHTML)).toLowerCase().includes('<b>'),
+    /<(b|strong)>/i.test(await firstBody.evaluate((el) => el.innerHTML)),
     await firstBody.evaluate((el) => el.innerHTML),
   )
   ok(
