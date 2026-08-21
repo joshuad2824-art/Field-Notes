@@ -200,28 +200,130 @@ export function focusedCell(): HTMLElement | null {
   return null
 }
 
-/* Marks inside a cell. Bold, italic and strike are the browser's own; code and
-   the highlighter have no command of their own and get wrapped by hand. */
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+/* The element inside this cell that answers this question, if there is one.
+
+   Walking up from where the caret is finds it in the common case; a selection
+   made by dragging or by shift-arrowing from the end of the cell anchors
+   *outside* the mark it covers, though, so anything the range merely crosses
+   counts too. Getting that wrong is why taking a colour off a cell did
+   nothing: the anchor was the cell itself and the walk stopped there. */
+function markedIn(cell: HTMLElement, match: (el: HTMLElement) => boolean): HTMLElement | null {
+  const selection = window.getSelection()
+  if (!selection?.rangeCount) return null
+
+  const start = selection.anchorNode
+  let el: HTMLElement | null = start instanceof HTMLElement ? start : (start?.parentElement ?? null)
+  while (el && el.tagName !== 'TD') {
+    if (match(el)) return el
+    el = el.parentElement
+  }
+
+  const range = selection.getRangeAt(0)
+  for (const candidate of cell.querySelectorAll('*')) {
+    if (candidate instanceof HTMLElement && match(candidate) && range.intersectsNode(candidate)) {
+      return candidate
+    }
+  }
+  return null
+}
+
+/* Put something else in an element's place.
+
+   By hand rather than through `execCommand('insertHTML')`, which quietly does
+   nothing when the range it is handed is a whole element rather than a stretch
+   of text. The cell only writes itself back to the file on `input`, so the
+   event has to be raised here too — and CodeMirror still owns undo, because
+   what `commitCells` sends it is a change to the document. */
+function replaceElement(el: HTMLElement, html: string): void {
+  const cell = el.closest('td')
+  const fragment = document.createRange().createContextualFragment(html)
+  const last = fragment.lastChild
+  el.replaceWith(fragment)
+
+  /* Leave the caret after what was just put in, so typing carries on from
+     where the writer was rather than from the front of the cell. */
+  const selection = window.getSelection()
+  if (selection && last) {
+    const range = document.createRange()
+    range.setStartAfter(last)
+    range.collapse(true)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+  cell?.dispatchEvent(new InputEvent('input', { bubbles: true }))
+}
+
+/* Emphasis, put on and taken off by hand rather than by `execCommand`.
+
+   `execCommand('bold')` decides which way to go from the *computed* weight,
+   and the head row is already set heavy — so in a head cell it read the text
+   as bold and turned it off, leaving `<span style="font-weight: normal">`,
+   which the file has no word for. The mark was dropped on the way back to
+   markdown and the head cell un-bolded until the table next redrew.
+   `execCommand('underline')` had the other half of it: one would go on and
+   then never come off again.
+
+   So the question asked is whether the caret is inside the tag, which is the
+   only thing that decides what the file says. Taking a mark off takes the
+   whole element rather than the part under the selection, the same trade the
+   highlighter makes when it recolours a run. */
+function toggleTag(cell: HTMLElement, tag: 'strong' | 'em' | 'u', tags: string[]): boolean {
+  const selection = window.getSelection()
+  if (!selection?.rangeCount) return true
+
+  const existing = markedIn(cell, (el) => tags.includes(el.tagName))
+  if (existing) {
+    replaceElement(existing, existing.innerHTML)
+    return true
+  }
+
+  const text = selection.toString()
+  if (!text) return true
+  document.execCommand('insertHTML', false, `<${tag}>${escapeHtml(text)}</${tag}>`)
+  return true
+}
+
+/* Marks inside a cell. Strike is the browser's own; the rest have no command
+   that can be trusted here and get wrapped by hand. */
 export function markInCell(
-  mark: 'bold' | 'italic' | 'underline' | 'strike' | 'code' | string,
+  mark: 'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'off' | string,
 ): boolean {
   const cell = focusedCell()
   if (!cell) return false
 
-  if (mark === 'bold' || mark === 'italic' || mark === 'underline') {
-    document.execCommand(mark)
-    return true
-  }
+  if (mark === 'bold') return toggleTag(cell, 'strong', ['B', 'STRONG'])
+  if (mark === 'italic') return toggleTag(cell, 'em', ['I', 'EM'])
+  if (mark === 'underline') return toggleTag(cell, 'u', ['U'])
   if (mark === 'strike') {
     document.execCommand('strikeThrough')
     return true
   }
 
   const selection = window.getSelection()
+
+  /* The highlighter, which has the same two questions to answer as it does out
+     on the page: standing inside one changes its colour rather than starting
+     another, and off takes the one it is standing in away. */
+  if (mark === 'off' || HL_COLORS.has(mark)) {
+    if (!selection?.rangeCount) return true
+    const lit = markedIn(cell, (el) => el.classList.contains('md-hl'))
+    if (mark === 'off') {
+      if (lit) replaceElement(lit, lit.innerHTML)
+      return true
+    }
+    if (lit) {
+      replaceElement(lit, `<span class="md-hl md-hl-${mark}">${lit.innerHTML}</span>`)
+      return true
+    }
+  }
+
   const text = selection?.toString() ?? ''
   if (!text) return true
 
-  const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safe = escapeHtml(text)
   if (mark === 'code') {
     document.execCommand('insertHTML', false, `<code>${safe}</code>`)
     return true

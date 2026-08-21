@@ -9,6 +9,7 @@ import {
   applyIndent,
   applyWrap,
   continueList,
+  deleteAround,
   movePicture,
 } from './commands'
 import { PICTURE_DRAG } from '../lib/model'
@@ -46,6 +47,11 @@ export function Editor({
           history(),
           keymap.of([
             { key: 'Enter', run: continueList },
+            /* Before the default keymap, so a marker about to go takes the one
+               it is paired with rather than leaving it on the page. Both fall
+               through when there is no mark in the way. */
+            { key: 'Backspace', run: (v) => deleteAround(v, false) },
+            { key: 'Delete', run: (v) => deleteAround(v, true) },
             /* Tab belongs to the page while the page has the caret. Escape
                hands it back, so the editor is still something a keyboard can
                get out of.

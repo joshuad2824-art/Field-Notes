@@ -445,6 +445,65 @@ export function continueList(view: EditorView): boolean {
   return true
 }
 
+/* A marker never outlives the one it is paired with.
+
+   Markers are atomic, so backspace takes a whole `**` in one press — which is
+   the point of them being decorations rather than characters. What it used to
+   leave behind was the other `**`, with nothing to pair with and so nothing to
+   hide it: press backspace once at the end of a bold word and two asterisks
+   appear on the page. The same went for emptying a run's writing, which left
+   `=={brass}==` and put the colour's name on the page as text.
+
+   So a marker taken means the pair taken, and the writing between them stays
+   where it is, no longer marked. Deleting a mark is a thing you can see happen
+   rather than a thing that breaks the line. */
+export function deleteAround(view: EditorView, forward: boolean): boolean {
+  const { state } = view
+  const range = state.selection.main
+  const line = state.doc.lineAt(range.head)
+  const runs = marksIn(line.text, line.from)
+  if (!runs.length) return false
+
+  /* A selection that takes in the whole of a run's writing takes the run: the
+     markers have nothing left to hold and would show. */
+  if (!range.empty) {
+    const doomed = runs.filter((r) => range.from <= r.body[0] && range.to >= r.body[1])
+    if (!doomed.length) return false
+    const from = Math.min(range.from, ...doomed.map((r) => r.from))
+    const to = Math.max(range.to, ...doomed.map((r) => r.to))
+    view.dispatch({ changes: { from, to, insert: '' }, selection: { anchor: from } })
+    return true
+  }
+
+  /* Innermost first — the caret is standing against the marker nearest it. */
+  for (const run of [...runs].reverse()) {
+    const [body, end] = run.body
+    const onOpener = forward ? range.head === run.from : range.head === body
+    const onCloser = forward ? range.head === end : range.head === run.to
+    if (!onOpener && !onCloser) {
+      /* The last character of the writing going is the same thing as the run
+         going, because an empty pair has nothing for the grammar to match. */
+      const lastOut =
+        end - body === 1 && (forward ? range.head === body : range.head === end)
+      if (!lastOut) continue
+      view.dispatch({
+        changes: { from: run.from, to: run.to, insert: '' },
+        selection: { anchor: run.from },
+      })
+      return true
+    }
+    view.dispatch({
+      changes: [
+        { from: run.from, to: body, insert: '' },
+        { from: end, to: run.to, insert: '' },
+      ],
+      selection: { anchor: forward === onOpener ? run.from : end - (body - run.from) },
+    })
+    return true
+  }
+  return false
+}
+
 /* Step the lines under the selection in or out one level. The indent is plain
    leading spaces, so this is nothing more exotic than adding or taking away
    two of them — but an ordered item has to be renumbered when it moves, or a

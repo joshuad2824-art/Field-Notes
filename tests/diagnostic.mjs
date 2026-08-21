@@ -330,28 +330,47 @@ await openTray()
 await page.locator('.tray-word', { hasText: /^Table$/ }).first().click()
 await page.waitForTimeout(600)
 
-const cellMark = async (index, word, apply, wanted, where) => {
+const cellMark = async (index, word, apply, wanted, where, name, remove = apply) => {
   const cell = page.locator('.md-table td').nth(index)
+  /* Select the word from inside the cell — the browser is the editor in here,
+     and a selection made any other way reaches past the cell. */
+  const select = async () => {
+    await cell.click()
+    await page.waitForTimeout(180)
+    await page.keyboard.press('End')
+    await page.keyboard.down('Shift')
+    for (let i = 0; i < word.length; i++) await page.keyboard.press('ArrowLeft')
+    await page.keyboard.up('Shift')
+    await page.waitForTimeout(120)
+  }
   await cell.click()
-  await page.waitForTimeout(200)
+  await page.waitForTimeout(180)
   await type(word)
-  await page.keyboard.down('Shift')
-  for (let i = 0; i < word.length; i++) await page.keyboard.press('ArrowLeft')
-  await page.keyboard.up('Shift')
+  await select()
   await apply()
   await page.waitForTimeout(350)
-  ok(`${wanted.replace(/[*~`={}]|<\/?u>/g, '')} in ${where} reaches the file`, (await doc()).includes(wanted), await cell.evaluate((e) => e.innerHTML))
+  ok(`${name} in ${where} reaches the file`, (await doc()).includes(wanted), await cell.evaluate((e) => e.innerHTML))
+  await select()
+  await remove()
+  await page.waitForTimeout(350)
+  ok(`${name} in ${where} comes off again`, !(await doc()).includes(wanted), await cell.evaluate((e) => e.innerHTML))
 }
 
 /* The head row is already set in a heavier weight, so the browser's own bold
    command reads the cell as bold and turns it off. What lands in the DOM is a
    span asking for normal weight, which the file has no word for — so the mark
    is dropped and the head cell un-bolds until the table next redraws. */
-await cellMark(0, 'abc', press('Control+b'), '**abc**', 'a head cell')
-await cellMark(3, 'abc', press('Control+b'), '**abc**', 'a body cell')
-await cellMark(4, 'xyz', () => tray('Italic — ⌘I'), '*xyz*', 'a body cell')
-await cellMark(5, 'pq', () => tray('Strike'), '~~pq~~', 'a body cell')
-await cellMark(6, 'lit', () => tray('brass'), '=={brass}lit==', 'a body cell')
+await cellMark(0, 'abc', press('Control+b'), '**abc**', 'a head cell', 'bold')
+await cellMark(1, 'def', () => tray('Bold — ⌘B'), '**def**', 'a head cell', 'bold from the tray')
+await cellMark(3, 'ghi', press('Control+b'), '**ghi**', 'a body cell', 'bold')
+await cellMark(4, 'jkl', () => tray('Italic — ⌘I'), '*jkl*', 'a body cell', 'italic')
+await cellMark(5, 'mno', () => tray('Underline — ⌘U'), '<u>mno</u>', 'a body cell', 'underline')
+await cellMark(6, 'pq', () => tray('Strike'), '~~pq~~', 'a body cell', 'strike')
+/* A colour has its own way off — the × — the same as it does out on the page.
+   Tapping the swatch again means "this colour", not "no colour". */
+await cellMark(7, 'lit', () => tray('brass'), '=={brass}lit==', 'a body cell', 'a highlight', () =>
+  tray('Remove highlight'),
+)
 
 console.log('\n' + (problems.length ? problems.join('\n') : 'no page errors'))
 console.log(`\n${open} open item${open === 1 ? '' : 's'}.`)

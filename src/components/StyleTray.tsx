@@ -255,7 +255,9 @@ export function StyleTray({
           <button
             className="tray-clear"
             onMouseDown={hold}
-            onClick={run((v) => applyHighlight(v, 'off'))}
+            /* Inside a table the browser is the editor, so taking a colour off
+               is the cell's own business — the same as putting one on. */
+            onClick={run((v) => markInCell('off') || applyHighlight(v, 'off'))}
             aria-label="Remove highlight"
             title="Remove highlight"
           >
