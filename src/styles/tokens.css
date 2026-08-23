@@ -120,6 +120,10 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --browser-bottom: 0px;
   --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--browser-bottom));
+  /* The inset on its own, unmixed with the browser overlay. Nothing lays out
+     against this — it exists so the diagnostics panel can report what the
+     device says separately from what the token resolves to. */
+  --raw-inset-bottom: env(safe-area-inset-bottom, 0px);
 
   /* ── surfaces and light ───────────────────────────────────────────── */
   --shadow-lift: 0 2px 0 rgba(0, 0, 0, 0.4), 0 18px 44px rgba(0, 0, 0, 0.56);

@@ -56,6 +56,17 @@ export function SettingsScreen() {
 
   /* Read after paint, and again whenever the window moves under us, so the
      numbers are what the app is actually living with. */
+  /* Read through whatever cache this device is holding rather than from the
+     network: the question is "what is this phone actually running", and a
+     fresh copy from the server answers a different one. */
+  const [swVersion, setSwVersion] = useState('reading')
+  useEffect(() => {
+    fetch('/sw.js')
+      .then((r) => r.text())
+      .then((t) => setSwVersion(t.match(/VERSION = '([^']+)'/)?.[1] ?? 'unknown'))
+      .catch(() => setSwVersion('unreachable'))
+  }, [])
+
   useEffect(() => {
     const read = () => {
       const vv = window.visualViewport
@@ -71,6 +82,14 @@ export function SettingsScreen() {
          tokens, and a custom property hands back its own text rather than the
          pixels it lands on. A box an inset tall is the only way to ask. */
       const safe = measure('--safe-bottom')
+      /* The two elements the system might sample to paint the strip it keeps
+         outside the layout viewport. Four attempts at that band were spent
+         arguing about which one it reads; printing both ends the argument on
+         whichever device is actually showing it. The inset is measured apart
+         from `--safe-bottom`, because the token is a `max()` of it and
+         `--browser-bottom`, and the two disagreeing is itself a finding. */
+      const paint = (el: Element) => getComputedStyle(el).backgroundColor
+      const insetBottom = measure('--raw-inset-bottom')
       /* The number that ends the argument. When the app fills the view and the
          view is still short of the screen, what is left over is not ours and
          no colour set in this document reaches it — measured at 62 on a phone
@@ -85,8 +104,12 @@ export function SettingsScreen() {
         `--app-height              ${app.trim() || 'unset (pinned)'}`,
         `--browser-bottom          ${overlay.trim() || '—'}`,
         `--safe-bottom             ${safe}px`,
+        `env(inset-bottom)         ${insetBottom}px`,
+        `html background           ${paint(document.documentElement)}`,
+        `body background           ${paint(document.body)}`,
         `#root reaches             ${root ? Math.round(root.bottom) : '—'}`,
         `body reaches              ${Math.round(document.body.getBoundingClientRect().bottom)}`,
+        `service worker            ${swVersion}`,
         `installed                 ${
           window.matchMedia('(display-mode: standalone)').matches ||
           (window.navigator as { standalone?: boolean }).standalone === true
@@ -100,7 +123,10 @@ export function SettingsScreen() {
       window.removeEventListener('resize', read)
       window.visualViewport?.removeEventListener('resize', read)
     }
-  }, [])
+    /* The worker's version arrives from a fetch a moment after the first read,
+       so the panel has to run again when it lands or it prints "reading"
+       forever. */
+  }, [swVersion])
 
   return (
     <div className="app">
