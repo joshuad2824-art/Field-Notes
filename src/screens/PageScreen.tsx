@@ -18,6 +18,7 @@ import {
   setPinned,
   setStock,
 } from '../lib/db'
+import { caretAtEndFor } from '../lib/capture'
 import { exportPage } from '../lib/export'
 import { addImage, isImage, pruneImages } from '../lib/images'
 import { editedStamp, countLabel, todayLine } from '../lib/format'
@@ -258,7 +259,7 @@ export function PageScreen({ id }: { id: string }) {
                 onView={setView}
                 highlightColor={() => color.current}
                 onDropFile={onDropFile}
-                autofocus={isBlank(page.body)}
+                autofocus={caretAtEndFor(id) ? 'end' : isBlank(page.body)}
               />
 
               {keyboardOpen ? null : (

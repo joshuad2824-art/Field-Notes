@@ -41,7 +41,20 @@ const ok = (name, pass, detail = '') => {
 
 /* ── the editor ─────────────────────────────────────────────────────── */
 
+/* Every long-standing context in this file declares its zoom already settled,
+   so the first-run device default (tested in its own section at the end)
+   doesn't move the pitch under two hundred assertions that measure it. */
+const settledZoom = () => {
+  /* about:blank, which goBack can land on, denies storage — nothing to settle there */
+  try {
+    localStorage.setItem('field-notes.zoom-defaulted', '1')
+  } catch {
+    /* not a document with settings */
+  }
+}
+
 const ctx = await browser.newContext({ viewport: { width: 1100, height: 900 } })
+await ctx.addInitScript(settledZoom)
 const page = await ctx.newPage()
 page.on('pageerror', (e) => problems.push('editor: ' + e.message))
 
@@ -369,6 +382,7 @@ await ctx.close()
    device proves iPadOS reports it. */
 {
   const inset = await browser.newContext({ viewport: { width: 834, height: 1112 } })
+  await inset.addInitScript(settledZoom)
   await inset.addInitScript(() => {
     const real = window.matchMedia.bind(window)
     window.matchMedia = (q) =>
@@ -426,6 +440,7 @@ await ctx.close()
    and let 100dvh answer, which no JS getter can talk down. */
 {
   const lying = await browser.newContext({ viewport: { width: 744, height: 1133 } })
+  await lying.addInitScript(settledZoom)
   await lying.addInitScript(() => {
     const real = window.matchMedia.bind(window)
     window.matchMedia = (q) =>
@@ -490,6 +505,7 @@ const lastLineIn = (view) =>
 
 async function atWidth(width, height, run) {
   const context = await browser.newContext({ viewport: { width, height } })
+  await context.addInitScript(settledZoom)
   const view = await context.newPage()
   view.on('pageerror', (e) => problems.push(`${width}px: ${e.message}`))
   await view.goto(BASE, { waitUntil: 'domcontentloaded' })
@@ -1783,6 +1799,177 @@ await atWidth(1440, 900, async (view) => {
   await view.waitForTimeout(500)
   ok('a day with nothing on it says so', (await view.locator('.empty').count()) === 1)
 })
+
+/* ── the capture path: /new and /today ──────────────────────────────── */
+
+/* The two routes that create. A URL is the one entry point everything can
+   reach — a bookmark, a dock icon, an iOS Shortcut — and the whole point is
+   a live caret with nothing between the tap and the text. */
+{
+  const cap = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+  await cap.addInitScript(settledZoom)
+  const view = await cap.newPage()
+  view.on('pageerror', (e) => problems.push('capture: ' + e.message))
+
+  const readPages = async () => {
+    const open = indexedDB.open('field-notes')
+    const dbi = await new Promise((res, rej) => {
+      open.onsuccess = () => res(open.result)
+      open.onerror = () => rej(open.error)
+    })
+    const rows = await new Promise((res, rej) => {
+      const r = dbi.transaction('pages').objectStore('pages').getAll()
+      r.onsuccess = () => res(r.result)
+      r.onerror = () => rej(r.error)
+    })
+    dbi.close()
+    return rows
+  }
+  const caretLive = () =>
+    view.evaluate(() => document.activeElement?.classList.contains('cm-content') ?? false)
+  const lastLineText = () =>
+    view
+      .locator('.cm-line')
+      .last()
+      .evaluate((el) => el.textContent)
+  /* '2:32 PM — ' or '14:32 — ', depending on the device's own locale. */
+  const stampShaped = (text) => /^\d{1,2}[:.]\d{2}(\s?[AP]M)?\s—\s?$/.test(text.trim())
+
+  await view.goto(BASE + '/new', { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(1100)
+  ok('/new lands on a page', view.url().includes('/p/'), view.url())
+  ok('with a live caret', await caretLive())
+  await view.keyboard.type('caught before it faded', { delay: 8 })
+  await view.waitForTimeout(400)
+  ok(
+    'and typing goes straight onto it',
+    (await view.locator('.cm-line').first().evaluate((el) => el.textContent)) ===
+      'caught before it faded',
+  )
+
+  /* back must step over the moment of creation, not into it */
+  await view.goBack()
+  await view.waitForTimeout(600)
+  ok('back does not return to /new', !view.url().includes('/new'), view.url())
+
+  await view.goto(BASE + '/new/the%20workshop', { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(1100)
+  ok('/new/<notebook> takes a name, case blind', view.url().includes('/p/'), view.url())
+  const newest = (await view.evaluate(readPages)).sort((a, b) => b.created - a.created)[0]
+  ok('and files the page there', newest?.notebook === 'workshop', String(newest?.notebook))
+
+  /* append to today lands on the day's page — here, the freshest of the
+     pages this section just made — with a stamp at its foot */
+  await view.goto(BASE + '/today', { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(1100)
+  const todayUrl = view.url()
+  ok('/today lands on a page', todayUrl.includes('/p/'), todayUrl)
+  ok('with a timestamped line at the foot', stampShaped(await lastLineText()), await lastLineText())
+  ok('and the caret after the stamp', await caretLive())
+  await view.keyboard.type('held the door', { delay: 8 })
+  await view.waitForTimeout(400)
+
+  await view.goto(BASE + '/today', { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(1100)
+  ok('a second thought joins the same page', view.url() === todayUrl, view.url())
+  ok('as its own stamped line', stampShaped(await lastLineText()), await lastLineText())
+  ok(
+    'under the one before it',
+    await view
+      .locator('.cm-line')
+      .allTextContents()
+      .then((lines) => lines.some((l) => l.includes('held the door'))),
+  )
+
+  /* an empty day starts a page rather than finding one */
+  await view.evaluate(async () => {
+    const open = indexedDB.open('field-notes')
+    const dbi = await new Promise((res, rej) => {
+      open.onsuccess = () => res(open.result)
+      open.onerror = () => rej(open.error)
+    })
+    const tx = dbi.transaction('pages', 'readwrite')
+    const store = tx.objectStore('pages')
+    const rows = await new Promise((res) => {
+      const r = store.getAll()
+      r.onsuccess = () => res(r.result)
+    })
+    for (const row of rows) store.put({ ...row, deleted: Date.now(), updated: Date.now() })
+    await new Promise((res) => (tx.oncomplete = res))
+    dbi.close()
+  })
+  await view.goto(BASE + '/today', { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(1100)
+  ok('an empty day starts a page', view.url().includes('/p/') && view.url() !== todayUrl, view.url())
+  ok('holding only the stamp', stampShaped(await lastLineText()), await lastLineText())
+
+  await cap.close()
+}
+
+/* ── what the dial opens at ─────────────────────────────────────────── */
+
+/* Decision 6's control does two jobs now: it still steps a page up for a
+   room, and its first-run default is where the reading size lives. Spectral
+   17 is in the recommended legibility band at a phone's distance, at the ISO
+   floor on a tablet, and below the minimum on a desk — so a fresh device
+   opens at 100, 125 or 150 and the quarters keep the dots under the lines.
+   A device that has already chosen keeps its choice. */
+{
+  const pitchOn = async (context, open) => {
+    const view = await context.newPage()
+    view.on('pageerror', (e) => problems.push('dial: ' + e.message))
+    await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+    await view.waitForTimeout(900)
+    await open(view)
+    await view.waitForTimeout(900)
+    const line = await view
+      .locator('.cm-content')
+      .evaluate((el) => getComputedStyle(el).lineHeight)
+    const whole = await view
+      .locator('.cm-line')
+      .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)))
+    await context.close()
+    return { line, whole }
+  }
+  const tapFirstRow = (view) => view.locator('.list-row').first().click()
+
+  const desk = await pitchOn(
+    await browser.newContext({ viewport: { width: 1440, height: 900 } }),
+    tapFirstRow,
+  )
+  ok('a fresh desk opens the writing at 150%', desk.line === '42px', desk.line)
+  ok(
+    'and every block is still a whole number of lines',
+    desk.whole.every((h) => h % 42 === 0),
+    JSON.stringify(desk.whole.filter((h) => h % 42 !== 0)),
+  )
+
+  const pad = await pitchOn(
+    await browser.newContext({
+      viewport: { width: 834, height: 1112 },
+      hasTouch: true,
+      isMobile: true,
+    }),
+    tapFirstRow,
+  )
+  ok('a fresh tablet opens at 125%', pad.line === '35px', pad.line)
+
+  const phone = await pitchOn(
+    await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      isMobile: true,
+    }),
+    tapFirstRow,
+  )
+  ok('and a phone stays at 100%', phone.line === '28px', phone.line)
+
+  /* the default is a first-run value, never an override */
+  const settled = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+  await settled.addInitScript(settledZoom)
+  const kept = await pitchOn(settled, tapFirstRow)
+  ok('a device that has already chosen keeps its choice', kept.line === '28px', kept.line)
+}
 
 if (problems.length) {
   failures += problems.length

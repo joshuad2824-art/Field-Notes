@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useRoute, navigate, to } from './lib/router'
+import { captureNew, captureToday, wantCaretAtEnd } from './lib/capture'
 import { createPage } from './lib/db'
 import { firstNotebookId, notebookOf, useNotebooks } from './lib/notebooks'
 import { getSettings, setSettings, useSettings } from './lib/settings'
@@ -63,7 +64,32 @@ export function App() {
       return <TrashScreen />
     case 'settings':
       return <SettingsScreen />
+    case 'new':
+      return <CaptureScreen key={`new-${route.notebook ?? ''}`} kind="new" notebook={route.notebook} />
+    case 'today':
+      return <CaptureScreen key="today" kind="today" />
     default:
       return <HomeScreen notebook={remembered} />
   }
+}
+
+/* The routes that create. Nothing is drawn — the page they make replaces them
+   in history before anything could paint, so back from the new page steps
+   over this moment rather than into it, and an abandoned /new can't strand an
+   empty page behind the back button. */
+function CaptureScreen({ kind, notebook }: { kind: 'new' | 'today'; notebook?: string }) {
+  useEffect(() => {
+    let live = true
+    void (async () => {
+      const id = kind === 'new' ? await captureNew(notebook) : await captureToday()
+      if (!live) return
+      /* An appended line wants the caret after the stamp, not at the top. */
+      if (kind === 'today') wantCaretAtEnd(id)
+      navigate(to.page(id), { replace: true })
+    })()
+    return () => {
+      live = false
+    }
+  }, [kind, notebook])
+  return null
 }
