@@ -21,7 +21,9 @@ interface Props {
   onView: (view: EditorView | null) => void
   highlightColor: () => string
   onDropFile?: (file: File) => void
-  autofocus?: boolean
+  /* `'end'` lands the caret after the last character — what an appended line
+     wants — where `true` takes the top, which is right for a blank page. */
+  autofocus?: boolean | 'end'
 }
 
 export function Editor({
@@ -178,6 +180,9 @@ export function Editor({
     })
 
     onView(view)
+    if (autofocus === 'end') {
+      view.dispatch({ selection: { anchor: view.state.doc.length }, scrollIntoView: true })
+    }
     if (autofocus) view.focus()
 
     return () => {
