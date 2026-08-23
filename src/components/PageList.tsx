@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { livePages } from '../lib/db'
 import { countLabel, groupFor, mastheadParts, shortStamp } from '../lib/format'
 import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
@@ -105,7 +105,11 @@ export function PageList({
         </div>
       ) : null}
 
-      <div className="list-head">
+      {/* The head wears the notebook's colour as a band along its bottom
+          edge, where a border already was. The 9px dot beside the name is
+          nearly invisible against the frame; a wide band is read by hue at
+          a glance in a way a dot never is. */}
+      <div className="list-head" style={{ '--book-color': book.color } as React.CSSProperties}>
         <div className="list-head-row">
           {compact ? null : (
             <button

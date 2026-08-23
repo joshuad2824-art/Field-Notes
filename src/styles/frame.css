@@ -319,7 +319,11 @@
   height: 9px;
   border-radius: 99px;
   flex: 0 0 auto;
-  border: 1px solid rgba(246, 243, 236, 0.3);
+  /* The hairline is the channel, not the trim: the six cover fills sit at
+     1.1–1.5:1 against the rail and were never going to carry a 9px dot on
+     their own. At 0.34 the ring clears 3:1 against the rail on all six
+     covers (0.30 fell short on oxblood and pine). Asserted in check. */
+  border: 1px solid rgba(246, 243, 236, 0.34);
 }
 .book-dot.big {
   width: 10px;
@@ -566,9 +570,12 @@
   flex: 0 0 auto;
   padding: 18px 20px 14px;
   display: flex;
+  /* The notebook's own colour, said as a band rather than a dot. It sits
+     where the hairline already was, so it costs no height not already
+     spent; the fallback keeps the hairline anywhere no colour is set. */
+  border-bottom: 2px solid var(--book-color, var(--frame-hairline-soft));
   flex-direction: column;
   gap: 14px;
-  border-bottom: 1px solid var(--frame-hairline-soft);
 }
 .list-head-row {
   display: flex;
@@ -803,6 +810,17 @@
   align-items: center;
   gap: 10px;
   margin-top: 14px;
+}
+/* The dot in a manager row is a button now — same mark, made pressable. */
+button.book-dot {
+  appearance: none;
+  padding: 0;
+  cursor: pointer;
+}
+.manager-recolor {
+  margin-top: 0;
+  padding: 10px 8px 12px 31px;
+  border-bottom: 1px solid var(--frame-hairline-soft);
 }
 .swatch-row .grow {
   flex: 1;

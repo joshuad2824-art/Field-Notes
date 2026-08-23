@@ -15,6 +15,7 @@ Companion documents, all of which should be read once at the start:
 - `docs/teardown.md` — the seven apps, what each got right, what killed it
 - `docs/architecture.md` — sync, storage, backup, risks, cost
 - `docs/visual-system.md` — palette, type, grid, formatting, the pen
+- `docs/level-up-plan.md` — the App_Design research read against this build: what's missing, what's measurably wrong, and the order to take it in
 - `spike/phase0.html` — the working editor prototype this repo grows out of
 
 The app itself is at the root: `src/`, `index.html`, `netlify.toml`. `npm run dev`.
@@ -28,7 +29,7 @@ Do not relitigate these without being asked. Each was argued through.
 1. **One page type.** Not notes-and-entries-and-tasks. A page, plus light attributes: notebook, tags, pinned, optional entry date. The four uses (capture, long-form, journaling, reference) come from attributes, never from separate sections.
 2. **No login, ever, after first run.** Device pairing with a non-expiring key. No sessions, no email, no password. The editor has no awareness a network exists — writes go to local storage and return immediately. Sync may fail without ever blocking the page. **Built now, and the key is the whole of it**: the first device generates 256 bits, its SHA-256 is the vault id every row is stamped with, and the server compares that hash against the one it computes from the request's own header. There is no accounts table, no token to refresh and nothing that can expire — which is the structural answer to what killed Moleskine rather than a longer timeout.
 3. **Markdown files are the storage format.** Export is trivial because storage *is* the export format. No proprietary document tree.
-4. **Notebooks: exactly one level.** Seeded as Field Notes, The Workshop, The Hearth, Church. They are *data* now, not a constant — any notebook can be added, coloured from the palette, or deleted, and deleting one tombstones its pages for the usual thirty days. Still no nesting, ever. Tags cut across notebooks.
+4. **Notebooks: exactly one level.** Seeded as Field Notes, The Workshop, The Hearth, Church. They are *data* now, not a constant — any notebook can be added, coloured from the palette (and re-coloured later; the dot in the manager is the control), or deleted, and deleting one tombstones its pages for the usual thirty days. The colour is said twice: a 9px dot whose cream hairline is the load-bearing channel (the fills sit at 1.1–1.5:1 against the rail and always will), and a 2px band along the bottom of the list head, which is what actually reads at a glance. Still no nesting, ever. Tags cut across notebooks.
 5. **The syntax is never shown.** Not on hover, not on the active line. He will never want to see markdown. It lives in the file, not on the page.
 6. **No pinch zoom; a deliberate one instead.** `user-scalable=no` stands — a pinch that rescales the layout wrecks the measure and the grid together. But a page standing on a big screen in front of a room is a different need, and the tray now steps the writing from 100% to 200%. The type and the 28px pitch scale as one, and the steps are quarters *because* of that: at 1.3 the line box is 36.4px, the browser rounds it to 36, and the dots walk out from under the writing a third of a pixel a line. 1, 1.25, 1.5, 1.75 and 2 give 28, 35, 42, 49 and 56 exactly.
 7. **No handwriting / Pencil canvas.** Closed deliberately; removed the project's largest engineering risk.
@@ -90,9 +91,10 @@ notebook that merely vanished would be handed straight back by the next device t
 - Body: Spectral 17px, line-height **28px exactly** (1.647), measure 64ch.
 - **Every block height is a multiple of 28px**, headings included, so the dot grid never drifts out from under the text. Break this and the page stops looking like paper.
 - Dot grid pitch 28px. Paper: `rgba(20,42,43,.10)`. Night: `rgba(246,243,236,.06)`.
+- Quiet text on paper is `--cream-quiet-ink` (#6f6c66), never `cream-500` — that is a *frame* quiet, and on cream it computes to 2.27:1 and vanishes. Night's quiet (`teal-300`) was always fine.
 - Two stocks on the leaf itself: `paper` (cream page) and `night` (teal-900 page). The frame is always dark. This is not light/dark mode — it's one scene.
 - One amber element per view. Inside a page that's the caret. Nothing else glows.
-- Highlighters are pigment, not light: layered angled gradients, uneven radii, multiply on paper and screen on night. Five colors, `=={color}text==`.
+- Highlighters are pigment, not light: layered angled gradients, uneven radii, multiply on paper and screen on night. Five colors, `=={color}text==`. The *composites* sit at one perceived lightness with only hue varying (OKLCH L 0.845 / C 0.055 on paper, L 0.340 on night) — the tints in `tokens.css` are solved backwards through the blend mode, so a mark is found by its colour rather than read. The names in the markdown never change; only the values moved (August 2026, before there was content to freeze them).
 - Motion: nothing between the tap and the text is ever animated. `--duration-instant` (90ms) or nothing.
 
 ## Voice in the interface
@@ -141,9 +143,10 @@ What was Phase 3 gets picked over rather than built wholesale:
 
 - **The name.** Still undecided, deliberately. It should come from the thing once it has a shape.
 - **Colored highlights use a custom extension** (`=={forest}...==`). Plain `==` is the portable convention; the brace tag is readable but non-standard. Decide before there's a lot of content.
-- **Export writes a small YAML frontmatter block** — notebook, created, updated, and any entry date, pin, pen or stock. Storage is still plain markdown; this is the one thing added on the way out, because a filename can't carry a created date and losing it would be worse. If it turns out to be clutter in another editor, drop it and accept the loss.
+- **Export writes a small YAML frontmatter block** — the page id, notebook, created, updated, and any entry date, pin, pen or stock. Storage is still plain markdown; this is the one thing added on the way out, because a filename can't carry a created date and losing it would be worse. Every scalar is quoted unconditionally: a notebook named `No` is a boolean in any YAML 1.1 reader, and a title ending `.0` is a float. The id is what makes a future restore an upsert rather than a second copy of everything — it went in before the importer exists so the exports made in the meantime are already restorable. If the block turns out to be clutter in another editor, drop it and accept the loss.
 - **The manifest says "Field Notes"** because a PWA needs *some* name on a home screen. That's a placeholder standing in for the undecided one, not a decision.
 - **The felt pen is Grape Nuts now**, with Linotype Feltpen still named first for the machines where it's installed and Caveat behind it. 20px against Spectral's 17; the 28px line box is unchanged.
+- **The type is vendored** — `public/fonts/`, latin and latin-ext woff2 of exactly what index.html used to pull from fonts.googleapis.com, and the CDN links are gone. An app whose editor has zero awareness a network exists should not get its *feel* from one: first paint on a fresh device with no network must not fall back to Georgia. The service worker caches `/fonts/` in the same cache the CDN used to fill, `scripts/vendor-fonts.mjs` regenerates the folder, and `npm run check` asserts both that the faces load and that nothing asks a font CDN for anything. One metric is ours now, not the font's: **Playfair Display carries ascent/descent overrides in its `@font-face`** (100%/25%, the font's own ~80/20 share boxed to 1.25em), because its natural ~1.36em metrics put a 30px box on the quote's 28px line and tipped the line box to 29 — the dot grid walking out from under a quote, visible only on machines whose rasterizer honours the full metrics. Owning the files is what made the fix possible; a CDN font's metrics are take-it-or-leave-it.
 - **A table is a GFM pipe table, and two things ride in it that GFM has no word for.** Column width is the number of dashes in the delimiter row — already how an eye reads a hand-aligned table, entirely valid GFM, and no other editor has to know we meant anything by it. A merge is a cell holding nothing but `<`, meaning "joined to the one on my left". That one *is* a convention rather than a standard, and it's the same class of decision as `=={forest}`. The obvious alternative — an empty cell meaning merged, which is what MultiMarkdown does — costs the ability to leave a cell blank, and a spreadsheet needs blank cells far more often than merged ones.
 - **The table is the one block that isn't decorated text.** Widths, per-row merges and a wrapping cell are all things a row of independent lines can't do: the moment a cell runs to two lines, the cells beside it have no way to know. So the whole table is replaced by one atomic block widget drawing a real `<table>`, and every edit dispatches markdown back into the document so CodeMirror's history still owns undo. Two things this forces: `ignoreEvent` must stay `true`, exactly as for the picture plate, and `updateDOM` must keep the existing DOM — rebuilding it on each keystroke takes the caret out of the cell being typed in. Block decorations also can't come from a view plugin, so tables live in their own `StateField` while everything else stays in the plugin.
 - **A table's rules are drawn over it, never set as borders.** A border takes up height, and one pixel between every row would walk the table off the 28px grid. Both hands are drawn into the SVG every time and CSS shows whichever pen the page is holding, so switching pens needs nothing to redraw. The felt hand's wander is seeded from the line's own index and never from a random number — a table that re-drew itself differently on every keystroke would shiver as you type.
@@ -195,10 +198,11 @@ nothing that was written. Grep for `fetch(` before believing otherwise — two h
 correct, three is a regression until it is argued for here.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 313 assertions in three files. `tests/editor.mjs` has 225 covering the editor,
+rotted: 318 assertions in three files. `tests/editor.mjs` has 230 covering the editor,
 the grid, indent, tables and how wide they sit, the calendar, the keyboard, zoom, the
 three widths, the folding columns, the safe-area bands, the bottom edge of the screen,
-the underline, line alignment, the notebook manager, pictures and the tray.
+the underline, line alignment, the notebook manager (recolouring included), the
+self-hosted type, the book-dot hairline, pictures and the tray.
 `tests/sync.mjs` has 64, in two halves — the reconciler's truth table and the pairing
 code run on node with nothing around them, and then two real browsers are driven
 against a fake mirror held inside the test file, through pairing, a page crossing, a

@@ -62,6 +62,28 @@ const lastLine = () =>
 
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(700)
+
+/* The type is self-hosted. If Spectral or Playfair ever come off a CDN
+   again — or the local files go missing — first paint on a fresh device with
+   no network falls back to Georgia, and the feel of this app is almost
+   entirely type. */
+await page.evaluate(() => document.fonts.ready)
+ok(
+  'the type loads from our own origin',
+  await page.evaluate(
+    () => document.fonts.check('17px Spectral') && document.fonts.check('700 20px "Playfair Display"'),
+  ),
+)
+ok(
+  'and nothing asks a font CDN for it',
+  await page.evaluate(
+    () =>
+      !performance
+        .getEntriesByType('resource')
+        .some((r) => r.name.includes('fonts.googleapis.com') || r.name.includes('fonts.gstatic.com')),
+  ),
+)
+
 await page.getByText('New page', { exact: true }).first().click()
 await page.waitForTimeout(600)
 
@@ -489,6 +511,20 @@ await atWidth(1440, 900, async (view) => {
   ok('the date is the masthead', (await view.locator('.rail-numeral').count()) === 1)
   ok('the rail shows a whole month', (await view.locator('.rail .cal-day').count()) === 42)
   ok('today is the one lit day', (await view.locator('.rail .cal-day.today').count()) === 1)
+  /* The cover fills sit at 1.1–1.5:1 against the rail — mud, at 9px. The
+     cream hairline is what separates a dot from the card, and 0.34 is the
+     first alpha at which all six covers clear 3:1. The ring is load-bearing:
+     a future chip must never ship as a bare fill. */
+  ok(
+    'the book dot keeps its hairline',
+    await view
+      .locator('.rail .book-dot')
+      .first()
+      .evaluate((el) => {
+        const s = getComputedStyle(el)
+        return s.borderTopWidth === '1px' && s.borderTopColor === 'rgba(246, 243, 236, 0.34)'
+      }),
+  )
   /* Folding on an empty desk must not be a one-way door. */
   ok(
     'the bare desk carries the mark too',
@@ -701,6 +737,23 @@ await atWidth(1440, 900, async (view) => {
 
   await view.locator('.link-caps', { hasText: 'Manage' }).click()
   await view.waitForTimeout(400)
+
+  /* a colour is data too — the dot is the control that changes it */
+  const managerRows = view.locator('.manager-row')
+  const garden = managerRows.nth((await managerRows.count()) - 1)
+  await garden.locator('.book-dot').click()
+  await view.waitForTimeout(200)
+  ok('the dot opens the swatches', (await view.locator('.manager-recolor').count()) === 1)
+  await view.locator('.manager-recolor .cover-swatch').nth(2).click()
+  await view.waitForTimeout(400)
+  ok(
+    'and the rail wears the new colour',
+    await view
+      .locator('.book-row', { hasText: 'The Garden' })
+      .locator('.book-dot')
+      .evaluate((el) => getComputedStyle(el).backgroundColor === 'rgb(83, 10, 40)'),
+  )
+
   const rows = view.locator('.manager-row')
   const last = rows.nth((await rows.count()) - 1)
   await last.locator('.mark-button').click()
@@ -995,7 +1048,14 @@ await atWidth(1440, 900, async (view) => {
   const heights = await view
     .locator('.md-table tr')
     .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)))
-  ok('a cell wraps and takes its row with it', heights[1] === 56, JSON.stringify(heights))
+  /* Two lines on a Mac, sometimes three on Linux — how many is the
+     rasterizer's business. What must hold: the cell wrapped at all, and the
+     row grew by whole lines. */
+  ok(
+    'a cell wraps and takes its row with it',
+    heights[1] >= 56 && heights[1] % 28 === 0,
+    JSON.stringify(heights),
+  )
   ok(
     'and every row is still a multiple of 28',
     heights.every((h) => h % 28 === 0),

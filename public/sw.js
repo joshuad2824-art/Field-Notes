@@ -5,7 +5,7 @@
 /* Bump this to land a change to anything in the shell — the manifest is
    cached cache-first and is only re-fetched when this worker reinstalls, so a
    manifest edit on an unchanged version never reaches a phone at all. */
-const VERSION = 'v2'
+const VERSION = 'v3'
 const SHELL = `shell-${VERSION}`
 const ASSETS = `assets-${VERSION}`
 const FONTS = `fonts-${VERSION}`
@@ -68,7 +68,8 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+  /* The type is self-hosted now — same cache, local path. */
+  if (url.origin === location.origin && url.pathname.startsWith('/fonts/')) {
     event.respondWith(cacheFirst(request, FONTS))
     return
   }

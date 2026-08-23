@@ -90,6 +90,18 @@ export async function renameNotebook(id: string, name: string): Promise<void> {
   changed()
 }
 
+/* A colour is no longer chosen once at creation and fixed forever. Notebooks
+   carry `updated`, so the new colour crosses the wire on the next sync with
+   no schema change and no reconciler change. */
+export async function recolorNotebook(id: string, color: string): Promise<void> {
+  const book = cache.find((n) => n.id === id)
+  if (!book) return
+  const next = { ...book, color, updated: Date.now() }
+  await db.notebooks.put(next)
+  cache = sort(cache.map((n) => (n.id === id ? next : n)))
+  changed()
+}
+
 /* Deleting a notebook tombstones its pages rather than destroying them — the
    same thirty days a page gets on its own — and now tombstones the notebook
    too. A row that simply vanished would be handed straight back by the next

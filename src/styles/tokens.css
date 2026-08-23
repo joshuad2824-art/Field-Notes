@@ -18,6 +18,10 @@
   --cream-200: #e9e6df;
   --cream-300: #d8d6cf;
   --cream-500: #a6a39c;
+  /* Quiet ink for cream paper. cream-500 is a *frame* quiet — on teal it
+     works; on the paper stock it computes to 2.27:1 and nearly vanishes.
+     This clears AA (4.72:1 on cream-100) and still reads as quiet. */
+  --cream-quiet-ink: #6f6c66;
 
   --driftwood-800: #2a2622;
   --driftwood-700: #3a342e;
@@ -149,7 +153,7 @@
   --surface-page: var(--cream-100);
   --text-body: var(--teal-800);
   --text-heading: var(--teal-900);
-  --text-quiet: var(--cream-500);
+  --text-quiet: var(--cream-quiet-ink);
   --text-accent: var(--brass-700);
   --rule-accent: var(--brass-700);
   --border-hairline: rgba(20, 42, 43, 0.1);
@@ -162,11 +166,18 @@
   --code-well: rgba(20, 42, 43, 0.05);
   --select-wash: rgba(143, 83, 0, 0.16);
   --hl-blend: multiply;
-  --hl-oxblood: rgba(83, 10, 40, 0.2);
-  --hl-forest: rgba(18, 55, 55, 0.2);
-  --hl-navy: rgba(8, 39, 68, 0.2);
-  --hl-driftwood: rgba(58, 52, 46, 0.2);
-  --hl-brass: rgba(122, 98, 1, 0.26);
+  /* The tints are solved backwards through the blend so the *composites* sit
+     at one lightness (OKLCH L 0.845, C 0.055) with only hue varying — five
+     separable colours instead of five slightly different greys. Composites:
+     oxblood #eebfbc (H22), forest #b4d7ba (H150), navy #b1d0ef (H248),
+     driftwood #ddc1e3 (H320), brass #d7cca4 (H95). Ink stays ≈9:1. The
+     names are written into the markdown and never change; only the values
+     moved. */
+  --hl-oxblood: rgba(229, 84, 93, 0.32);
+  --hl-forest: rgba(41, 163, 86, 0.32);
+  --hl-navy: rgba(31, 140, 255, 0.32);
+  --hl-driftwood: rgba(174, 91, 225, 0.32);
+  --hl-brass: rgba(155, 127, 12, 0.32);
 }
 
 /* ── the leaf: night stock — the page itself goes dark ──────────────── */
@@ -187,9 +198,14 @@
   --code-well: rgba(246, 243, 236, 0.06);
   --select-wash: rgba(222, 157, 75, 0.2);
   --hl-blend: screen;
-  --hl-oxblood: rgba(180, 102, 127, 0.24);
-  --hl-forest: rgba(111, 163, 163, 0.22);
-  --hl-navy: rgba(109, 147, 190, 0.22);
-  --hl-driftwood: rgba(169, 156, 140, 0.2);
-  --hl-brass: rgba(215, 190, 106, 0.24);
+  /* Screening a light tint over teal used to drag every hue toward the
+     ground's own — the mark named oxblood rendered blue-purple, brass
+     rendered green. Solved the same way as paper: composites at L 0.340,
+     C 0.055 — oxblood #512c2b, forest #224028, navy #1f3a53, driftwood
+     #452e4a, brass #413713. On night stock oxblood is oxblood again. */
+  --hl-oxblood: rgba(204, 50, 44, 0.38);
+  --hl-forest: rgba(78, 109, 35, 0.38);
+  --hl-navy: rgba(70, 91, 163, 0.38);
+  --hl-driftwood: rgba(172, 56, 136, 0.38);
+  --hl-brass: rgba(161, 82, 0, 0.38);
 }
