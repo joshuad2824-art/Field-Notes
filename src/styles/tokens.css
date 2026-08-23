@@ -51,6 +51,12 @@
   --frame-text: var(--cream-200);
   --frame-heading: var(--cream-100);
   --frame-quiet: var(--teal-300);
+  /* One amber element per view — the caret inside a page, the filled dot for
+     today in the month grid. One exemption, written down so the next reader
+     doesn't find a rule and a contradiction and have to guess: the puffin mark
+     in the rail head is a full-colour picture with a saturated orange beak
+     (~5.3:1 on teal-900) and it does not count against the rule. Nothing else
+     is exempt, and the rule is still not spent on the weather. */
   --frame-accent: var(--brass-400);
   --frame-hairline: rgba(246, 243, 236, 0.1);
   --frame-hairline-soft: rgba(246, 243, 236, 0.06);

@@ -9,7 +9,7 @@ import {
   type Stock,
   imageIdsIn,
 } from './model'
-import { addNotebook, allNotebooks } from './notebooks'
+import { addNotebook, allNotebooks, shelfNotebooks } from './notebooks'
 
 /* The way back in. Export has always been a copy rather than a conversion;
    this is the same copy read in the other direction, which is what makes
@@ -124,7 +124,7 @@ async function resolveNotebook(
   cache: Map<string, string>,
   report: ImportReport,
 ): Promise<string> {
-  const fallback = allNotebooks()[0]?.id ?? 'field-notes'
+  const fallback = shelfNotebooks()[0]?.id ?? 'field-notes'
   const trimmed = name?.trim()
   if (!trimmed) return fallback
   const known = cache.get(trimmed.toLowerCase())

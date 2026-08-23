@@ -82,6 +82,21 @@ const PAGES = [
     updated: 1755600200000,
     pinned: 0,
   },
+  /* A journal entry. It rides along because it is an ordinary page in a
+     reserved notebook and nothing about export or import was allowed to learn
+     otherwise — and because a whole-shelf export that quietly left out the one
+     notebook nothing else can rebuild would not be a backup. On the way back
+     in it has to land in the journal the fresh device already seeded rather
+     than adding a sixth notebook called Journal. */
+  {
+    id: 'rt-journal',
+    notebook: 'journal',
+    body: '# 16–22 August 2026\n\n## Monday 17 August\n\n### The tent held\n\n*Field Notes*\n\nRope and rain. #camp',
+    created: 1755500300000,
+    updated: 1755600300000,
+    pinned: 0,
+    entryDate: '2026-08-16',
+  },
 ]
 
 const NOTEBOOKS = [{ id: 'no-book', name: 'No', color: '#530a28', order: 7, updated: 1 }]
@@ -205,7 +220,7 @@ await b.view.locator('input[aria-label="Import files"]').setInputFiles(zipPath)
 await b.view.waitForSelector('[data-import-report]')
 const firstReport = await b.view.locator('[data-import-report]').textContent()
 
-ok('the report says what came in', firstReport.includes('4 pages in'), firstReport)
+ok('the report says what came in', firstReport.includes('5 pages in'), firstReport)
 ok('the picture with it', firstReport.includes('1 picture'), firstReport)
 ok('and the notebook the shelf was missing', firstReport.includes('1 notebook added'), firstReport)
 
@@ -248,6 +263,18 @@ ok(
   bookName(alphaBack?.notebook) === 'Field Notes' &&
     after.notebooks.filter((n) => !n.deleted && n.name === 'Field Notes').length === 1,
 )
+const journalBack = after.pages.find((p) => p.id === 'rt-journal')
+ok(
+  'a journal entry is exported and restored like any other page',
+  bookName(journalBack?.notebook) === 'Journal' && journalBack?.entryDate === '2026-08-16',
+  `${bookName(journalBack?.notebook)} / ${journalBack?.entryDate}`,
+)
+ok(
+  'and lands in the journal the device already had, not a sixth notebook',
+  after.notebooks.filter((n) => !n.deleted && n.name === 'Journal').length === 1 &&
+    journalBack?.notebook === 'journal',
+)
+
 const imageBack = after.images.find((im) => im.id === 'rtimg001')
 ok(
   'the picture crossed byte for byte',
@@ -263,7 +290,7 @@ await b.view.waitForFunction(
   () => document.querySelector('[data-import-report]')?.textContent?.includes('already here'),
 )
 const secondReport = await b.view.locator('[data-import-report]').textContent()
-ok('the second restore is an upsert, not a second copy', secondReport.includes('4 already here'), secondReport)
+ok('the second restore is an upsert, not a second copy', secondReport.includes('5 already here'), secondReport)
 
 const again = await b.view.evaluate(readStores)
 ok('nothing was added', again.pages.length === countBefore, `${again.pages.length} vs ${countBefore}`)

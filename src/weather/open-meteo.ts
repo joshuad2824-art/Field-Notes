@@ -1,6 +1,9 @@
 import type { Place } from './place'
 
-/* The second — and last — file in the app that calls `fetch`.
+/* The second of the three files in the app that call `fetch` — the third is
+   the journal's prose pass, which is off unless a key has been pasted into
+   Settings. This one used to say "and last", and that was true for as long as
+   nothing in the app needed a model.
 
    Open-Meteo, and the reason is the fourth sentence of the architecture note:
    one person maintains this, in spare hours, for years. It needs no API key,
@@ -19,8 +22,13 @@ export interface Reading {
   temp: number
   high: number
   low: number
-  /* WMO code — `conditionWord` turns it into the one word shown. */
+  /* WMO code — `conditionFamily` turns it into the drawing shown, and
+     `conditionWord` into the name that drawing answers to. */
   code: number
+  /* Open-Meteo's own `is_day`, which is 1 or 0 and becomes this. A sun at
+     nine in the evening is simply wrong, and sunrise where you are is not
+     something a clock in the browser can work out. */
+  isDay: boolean
   unit: Unit
   /* When this was fetched, so staleness is the store's business and not a
      guess made at render time. */
@@ -48,7 +56,7 @@ export async function forecast(
   const query = new URLSearchParams({
     latitude: String(place.lat),
     longitude: String(place.lon),
-    current: 'temperature_2m,weather_code',
+    current: 'temperature_2m,weather_code,is_day',
     daily: 'temperature_2m_max,temperature_2m_min',
     timezone: 'auto',
     forecast_days: '1',
@@ -56,7 +64,7 @@ export async function forecast(
   if (unit === 'F') query.set('temperature_unit', 'fahrenheit')
 
   const body = (await ask(`${FORECAST}?${query}`, signal)) as {
-    current?: { temperature_2m?: unknown; weather_code?: unknown }
+    current?: { temperature_2m?: unknown; weather_code?: unknown; is_day?: unknown }
     daily?: { temperature_2m_max?: unknown[]; temperature_2m_min?: unknown[] }
   }
 
@@ -72,6 +80,10 @@ export async function forecast(
   return {
     temp,
     code,
+    /* Missing, on a service that has never once left it out, would still be
+       daylight rather than nothing — the sun is the commoner half of the day
+       and the wrong drawing is a smaller failure than no line at all. */
+    isDay: num(body.current?.is_day) !== 0,
     high: high ?? temp,
     low: low ?? temp,
     unit,

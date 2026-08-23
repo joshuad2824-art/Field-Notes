@@ -586,6 +586,101 @@ await atWidth(1440, 900, async (view) => {
     (await view.locator('.list-foot .plate-button').count()) === 1 &&
       (await view.locator('.rail .plate-button').count()) === 0,
   )
+
+  /* ── the head of the rail ────────────────────────────────────────────
+     The mark and the name. What this is really guarding is that the name is
+     type rather than a picture of type, and that the two words wrap because
+     they are two spans rather than because something measured them. */
+  ok(
+    'the rail head carries the mark and the name',
+    (await view.locator('.rail-wordmark .rail-mark').count()) === 1 &&
+      (await view.locator('.rail-wordmark .rail-name').count()) === 1,
+  )
+  ok(
+    'the name is selectable text in the signage face',
+    await view.evaluate(() => {
+      const name = document.querySelector('.rail-name')
+      const s = getComputedStyle(name)
+      return (
+        name.textContent === 'FieldNotes' &&
+        s.fontFamily.toLowerCase().includes('oswald') &&
+        s.textTransform === 'uppercase'
+      )
+    }),
+  )
+  ok(
+    'and it stacks on two lines without a measurement deciding where',
+    await view.evaluate(() => {
+      const [field, notes] = document.querySelectorAll('.rail-name span')
+      return field.getBoundingClientRect().bottom <= notes.getBoundingClientRect().top + 0.5
+    }),
+  )
+  ok(
+    'the mark says nothing, because the name beside it already does',
+    (await view.locator('.rail-mark').getAttribute('alt')) === '',
+  )
+  ok(
+    'it is 44px, which leaves the date numeral the masthead',
+    await view.evaluate(() => {
+      const mark = document.querySelector('.rail-mark').getBoundingClientRect()
+      const numeral = document.querySelector('.rail-numeral').getBoundingClientRect()
+      return Math.abs(mark.height - 44) < 1 && numeral.height > mark.height * 1.3
+    }),
+  )
+  ok(
+    'and it is drawn at full strength rather than muted',
+    await view.evaluate(() => getComputedStyle(document.querySelector('.rail-mark')).opacity === '1'),
+  )
+  ok(
+    'the head, the fold and the name all fit the rail without scrolling it',
+    await view.evaluate(() => {
+      const head = document.querySelector('.rail-wordmark')
+      return head.scrollWidth <= head.clientWidth + 1
+    }),
+  )
+})
+
+/* ── what the shell points at ───────────────────────────────────────────
+   The icons are cache-first out of the service worker's SHELL cache, so a path
+   that 404s is not a broken picture — it is a worker that never installs and
+   an app that has quietly lost its offline capability. Every path the shell
+   names has to exist, and that is cheapest to assert here. */
+
+await atWidth(1440, 900, async (view) => {
+  const shell = await view.evaluate(async () => {
+    const links = [...document.querySelectorAll('link[rel*="icon"]')].map((l) => l.getAttribute('href'))
+    const manifest = await (await fetch('/manifest.webmanifest')).json()
+    const worker = await (await fetch('/sw.js')).text()
+    const precache = worker.match(/cache\.addAll\(\[([^\]]*)\]\)/)?.[1] ?? ''
+    const named = [
+      ...links,
+      ...manifest.icons.map((i) => i.src),
+      ...[...precache.matchAll(/'([^']+)'/g)].map((m) => m[1]),
+    ]
+    const missing = []
+    for (const path of new Set(named)) {
+      const r = await fetch(path, { method: 'GET' })
+      if (!r.ok) missing.push(path)
+    }
+    return { links, icons: manifest.icons, version: worker.match(/VERSION = '([^']+)'/)?.[1], missing }
+  })
+
+  ok('nothing the shell names is missing', shell.missing.length === 0, shell.missing.join(', '))
+  ok(
+    'the tab icon is a png the vendored type can be sure of',
+    shell.links.length >= 2 && shell.links.every((h) => h.endsWith('.png')),
+    shell.links.join(' '),
+  )
+  ok(
+    'the maskable icon is its own file, inset for the crop',
+    shell.icons.some((i) => i.purpose === 'maskable' && i.src.includes('maskable')) &&
+      !shell.icons.some((i) => i.purpose === 'maskable' && i.src === '/icon-512.png'),
+  )
+  ok(
+    'and the worker was bumped, or none of the above reaches a phone',
+    shell.version === 'v4',
+    shell.version,
+  )
 })
 
 /* ── the edges of the screen ────────────────────────────────────────── */
@@ -972,9 +1067,15 @@ await atWidth(1440, 950, async (view) => {
   await view.keyboard.press('Control+End')
   const platesBefore = await view.locator('.md-plate').count()
   await view.evaluate(async () => {
-    const blob = await (await fetch('/icon.svg')).blob()
+    /* Made here rather than fetched from `public/`: this checks that a paste
+       lands a picture, not that any particular asset is still shipping, and
+       the placeholder icon it used to fetch has since been deleted. */
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">' +
+      '<circle cx="60" cy="60" r="46" fill="#b98a3c"/></svg>'
+    const blob = new Blob([svg], { type: 'image/svg+xml' })
     const data = new DataTransfer()
-    data.items.add(new File([blob], 'icon.svg', { type: 'image/svg+xml' }))
+    data.items.add(new File([blob], 'pasted.svg', { type: 'image/svg+xml' }))
     document
       .querySelector('.cm-content')
       .dispatchEvent(

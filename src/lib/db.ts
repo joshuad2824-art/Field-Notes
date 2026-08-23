@@ -3,6 +3,7 @@ import { dayOf } from './calendar'
 import {
   DEFAULT_NOTEBOOK,
   DEFAULT_NOTEBOOKS,
+  JOURNAL_NOTEBOOK,
   TOMBSTONE_DAYS,
   type Notebook,
   type NotebookId,
@@ -182,9 +183,17 @@ export async function pagesInMonth(month: string): Promise<Page[]> {
     .sort((a, b) => dayOf(a).localeCompare(dayOf(b)) || a.created - b.created)
 }
 
+/* The days something was written on. Not the journal: its entry sits on the
+   week's Sunday, and a ring there would say "you wrote on the 17th" about a
+   page that was assembled out of the other six days. The mark has always meant
+   one thing and this keeps it meaning that — which is the answer to the
+   collision the change brief left open, and a cheaper one than a second,
+   quieter mark that would have needed explaining. Journal entries are found in
+   the month view's own strip and in their day group, which is where the brief
+   asked for them. */
 export async function daysWritten(): Promise<Set<string>> {
   const rows = await db.pages.toArray()
-  return new Set(rows.filter((p) => !p.deleted).map(dayOf))
+  return new Set(rows.filter((p) => !p.deleted && p.notebook !== JOURNAL_NOTEBOOK).map(dayOf))
 }
 
 export async function notebookCounts(): Promise<Record<string, number>> {

@@ -5,7 +5,7 @@
 /* Bump this to land a change to anything in the shell — the manifest is
    cached cache-first and is only re-fetched when this worker reinstalls, so a
    manifest edit on an unchanged version never reaches a phone at all. */
-const VERSION = 'v3'
+const VERSION = 'v4'
 const SHELL = `shell-${VERSION}`
 const ASSETS = `assets-${VERSION}`
 const FONTS = `fonts-${VERSION}`
@@ -15,7 +15,10 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(SHELL)
-      .then((cache) => cache.addAll(['/', '/manifest.webmanifest', '/icon.svg']))
+      /* `addAll` rejects atomically: one 404 in this list and the worker never
+         installs, and the app quietly loses offline capability with nothing on
+         screen to say so. Every path here has to be one that exists. */
+      .then((cache) => cache.addAll(['/', '/manifest.webmanifest', '/apple-touch-icon.png']))
       .then(() => self.skipWaiting()),
   )
 })

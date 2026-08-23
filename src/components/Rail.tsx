@@ -1,7 +1,8 @@
 import { daysWritten, notebookCounts } from '../lib/db'
 import { mastheadParts } from '../lib/format'
 import { monthNow } from '../lib/calendar'
-import { useNotebooks } from '../lib/notebooks'
+import { JOURNAL_NOTEBOOK } from '../lib/model'
+import { journalBook, useNotebooks } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
 import { MonthGrid } from './MonthGrid'
@@ -26,7 +27,19 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
   return (
     <aside className="rail">
       <div className="rail-wordmark">
-        <img src="/logo-wordmark-reverse.png" alt="Timber &amp; Ink" />
+        {/* The mark is decorative once the name beside it is real text — an
+            alt here would announce "Field Notes" twice. The portrait is
+            cropped below the beak on purpose: the coat and the flat cap are
+            near-black forest green, more than half of them fall under 1.5:1
+            against the rail, and cutting them off is what makes a plate or a
+            disc unnecessary. The bird faces right, into the name. */}
+        <img className="rail-mark" src="/mark-puffin.png" alt="" />
+        {/* Two spans rather than a max-width that forces a wrap: a wrap that
+            depends on a measurement breaks the first time the type moves. */}
+        <span className="rail-name">
+          <span>Field</span>
+          <span>Notes</span>
+        </span>
         <span className="grow" />
         {/* The rail folds itself, so it can be put away with the list
             already gone. */}
@@ -96,6 +109,21 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
       </div>
 
       <div className="rail-foot">
+        {/* Below the rule with Trash and Settings rather than in the notebook
+            list. It is an ordinary notebook in the file and a reserved one in
+            the interface: nothing is written into it by hand, so it does not
+            belong on the shelf you pick from — but it is somewhere you go, so
+            it sits above the two back rooms rather than among them. */}
+        <button
+          className={`book-row rail-journal${activeId === JOURNAL_NOTEBOOK ? ' active' : ''}`}
+          onClick={() => onPick(JOURNAL_NOTEBOOK)}
+        >
+          <span className="book-mark" />
+          <span className="book-dot" style={{ background: journalBook().color }} />
+          <span className="book-name">{journalBook().name}</span>
+          <span className="book-count">{counts[JOURNAL_NOTEBOOK] ?? 0}</span>
+        </button>
+
         <div className="rail-foot-line">
           <button className="link-quiet" onClick={() => navigate(to.trash())}>
             Trash

@@ -4,9 +4,10 @@ import { exportNotebook, exportShelf } from '../lib/export'
 import { type ImportReport, importFiles } from '../lib/import'
 import { bytes, countLabel } from '../lib/format'
 import type { NotebookId } from '../lib/model'
-import { useNotebooks } from '../lib/notebooks'
+import { useAllNotebooks } from '../lib/notebooks'
 import { setSettings, useSettings } from '../lib/settings'
 import { back, navigate, to } from '../lib/router'
+import { JournalPanel } from '../components/JournalPanel'
 import { SyncPanel } from '../components/SyncPanel'
 import { WeatherPanel } from '../components/WeatherPanel'
 
@@ -36,7 +37,9 @@ function importLine(r: ImportReport): string {
 
 export function SettingsScreen() {
   const settings = useSettings()
-  const books = useNotebooks()
+  /* Every notebook here, the journal included: a backup that leaves out the
+     one notebook nothing else can rebuild is not a backup. */
+  const books = useAllNotebooks()
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [usage, setUsage] = useState<string>('—')
   const [screen, setScreen] = useState<string[]>([])
@@ -199,6 +202,8 @@ export function SettingsScreen() {
               {imported}
             </p>
           ) : null}
+
+          <JournalPanel />
 
           <SyncPanel />
 

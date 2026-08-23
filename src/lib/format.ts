@@ -95,6 +95,41 @@ export function weekOf(ts: number = Date.now()): Date[] {
 
 export const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
+/* What a week is called, given the seven days `weekOf` handed back. Written the
+   way a person would say it: one month named once when the week doesn't cross
+   one, both when it does, and the year only at the end. */
+const dayOnly = new Intl.DateTimeFormat([], { day: 'numeric' })
+const dayAndMonth = new Intl.DateTimeFormat([], { day: 'numeric', month: 'long' })
+const dayMonthYearLong = new Intl.DateTimeFormat([], {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+
+export function weekRange(days: Date[]): string {
+  const first = days[0]
+  const last = days[days.length - 1]
+  const end = dayMonthYearLong.format(last)
+  if (first.getMonth() === last.getMonth() && first.getFullYear() === last.getFullYear()) {
+    return `${dayOnly.format(first)}–${end}`
+  }
+  if (first.getFullYear() === last.getFullYear()) {
+    return `${dayAndMonth.format(first)} – ${end}`
+  }
+  return `${dayMonthYearLong.format(first)} – ${end}`
+}
+
+/* The long form of one day, for the section headings inside a week. */
+const weekdayAndDate = new Intl.DateTimeFormat([], {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+})
+
+export function longDay(day: Date): string {
+  return weekdayAndDate.format(day)
+}
+
 export function isToday(day: Date): boolean {
   return sameDay(day, new Date())
 }

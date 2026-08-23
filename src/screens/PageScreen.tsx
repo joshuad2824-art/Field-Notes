@@ -22,7 +22,9 @@ import { caretAtEndFor } from '../lib/capture'
 import { exportPage } from '../lib/export'
 import { addImage, isImage, pruneImages } from '../lib/images'
 import { editedStamp, countLabel, todayLine } from '../lib/format'
+import { collectWeek } from '../lib/journal'
 import {
+  JOURNAL_NOTEBOOK,
   type NotebookId,
   type Page,
   type Placement,
@@ -33,7 +35,9 @@ import {
   tagsOf,
   wordCount,
 } from '../lib/model'
-import { notebookForPage, useNotebooks } from '../lib/notebooks'
+import { firstNotebookId, isReserved, notebookForPage, useNotebooks } from '../lib/notebooks'
+import { hasConsented, hasModelKey } from '../writeup/key'
+import { WriteupError, writeUp } from '../writeup/anthropic'
 import { getSettings, setSettings, stepZoom, useSettings } from '../lib/settings'
 import { useKeyboardOpen } from '../lib/viewport'
 import { resetEdgeColor, setEdgeColor, tokenColor } from '../lib/themecolor'
@@ -54,6 +58,11 @@ export function PageScreen({ id }: { id: string }) {
   const [view, setView] = useState<EditorView | null>(null)
   const [tray, setTray] = useState(false)
   const [menu, setMenu] = useState(false)
+  /* The prose pass, which is the only thing in this app that can be busy or
+     can fail out loud. Both states live here rather than in the sheet, because
+     the sheet closes and the request does not. */
+  const [writing, setWriting] = useState(false)
+  const [wroteUp, setWroteUp] = useState<string | null>(null)
   /* Where a newly dropped or inserted picture sits. The plate carries its own
      controls once it is on the page, so this is only ever the starting side. */
   const [placement] = useState<Placement>('right')
@@ -128,6 +137,45 @@ export function PageScreen({ id }: { id: string }) {
 
   const update = (patch: Partial<Page>) => {
     setPage((current) => (current ? { ...current, ...patch } : current))
+  }
+
+  /* ── the journal's two buttons ──────────────────────────────────────
+     Both replace the whole document, and both do it by dispatching into the
+     editor rather than by writing to Dexie behind its back. The editor owns
+     its document once created — a save made underneath it would be undone by
+     the next keystroke — and going through a dispatch means CodeMirror's
+     history still owns undo, so a prose pass you don't like is one ⌘Z away.
+     Same rule the table widget follows, for the same reason. */
+  const replaceDocument = (next: string) => {
+    if (!view) return
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: next } })
+  }
+
+  const recollect = async () => {
+    if (!page?.entryDate) return
+    /* Midday of the entry's own Sunday, so no timezone can nudge it into the
+       week before. */
+    const digest = await collectWeek(new Date(`${page.entryDate}T12:00:00`).getTime())
+    const fresh = await getPage(digest.id)
+    if (fresh) replaceDocument(fresh.body)
+  }
+
+  const runWriteUp = async () => {
+    setWroteUp(null)
+    setWriting(true)
+    try {
+      const prose = await writeUp(bodyRef.current)
+      replaceDocument(prose)
+      setWroteUp('written up · ⌘Z takes it back')
+    } catch (e) {
+      setWroteUp(
+        e instanceof WriteupError
+          ? e.message
+          : 'That did not work, and the page is untouched.',
+      )
+    } finally {
+      setWriting(false)
+    }
   }
 
   /* Drop a photograph on the page and it lands where it was dropped. */
@@ -301,7 +349,10 @@ export function PageScreen({ id }: { id: string }) {
             state="⌘⇧N"
             onClick={() => {
               setMenu(false)
-              void createPage(page.notebook).then((next) => navigate(to.page(next.id)))
+              /* Beside a journal entry, "here" is a notebook nothing is
+                 written into by hand, so a new page goes to the shelf. */
+              const into = isReserved(page.notebook) ? firstNotebookId() : page.notebook
+              void createPage(into).then((next) => navigate(to.page(next.id)))
             }}
           />
 
@@ -348,6 +399,39 @@ export function PageScreen({ id }: { id: string }) {
               }}
             />
           </div>
+
+          {page.notebook === JOURNAL_NOTEBOOK ? (
+            <>
+              <div className="sheet-rule" />
+              <div className="sheet-label">Journal</div>
+              {/* Gathering the week again is the one thing here that is not a
+                  page attribute, and it belongs on the page it rewrites. */}
+              <SheetItem
+                label="Collect this week again"
+                state={page.entryDate ?? undefined}
+                onClick={() => void recollect()}
+              />
+              {/* Off unless a key has been pasted and the line beside it in
+                  Settings has been answered. The collected week is already a
+                  real entry; this is laid on top of it and is allowed to be
+                  unavailable. */}
+              <SheetItem
+                label={writing ? 'Writing it up' : 'Write it up'}
+                state={
+                  wroteUp ??
+                  (!hasModelKey()
+                    ? 'needs a key in Settings'
+                    : !hasConsented()
+                      ? 'not agreed to yet'
+                      : undefined)
+                }
+                onClick={() => {
+                  if (writing || !hasModelKey() || !hasConsented()) return
+                  void runWriteUp()
+                }}
+              />
+            </>
+          ) : null}
 
           <div className="sheet-rule" />
           <div className="sheet-label">Notebook</div>

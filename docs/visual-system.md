@@ -105,6 +105,8 @@ Nothing else on the page glows. Not the save state, not the toolbar, not the act
 
 `--focus-ring` on paper is already `--amber-700`, so keyboard focus and the caret are the same warmth without adding a token.
 
+**One exemption, and only one: the mark in the rail head.** The puffin portrait is a full-colour picture with a saturated orange beak, around 5.3:1 on teal-900, which is close enough to brass to compete with it. That is deliberate — it is the brand, and a brand rendered in one hue is not one. Nothing else is exempt, and in particular the rule is still not spent on the weather: the sky glyph beside the temperature takes the frame's own heading cream, not brass.
+
 ---
 
 ## Two places the brand and the app pull against each other

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPage } from '../lib/db'
 import { SIDEBAR_AVAILABLE, SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
-import { firstNotebookId, useNotebooks } from '../lib/notebooks'
+import { firstNotebookId, isReserved, useNotebooks } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
 import { setSettings, useSettings } from '../lib/settings'
 import { NotebookManager } from './NotebookManager'
@@ -50,7 +50,10 @@ export function Shell({ notebook, activeId, children }: Props) {
   const hidden = docked && !listDocked && !railDocked
 
   const pickNotebook = (id: string) => {
-    setSettings({ notebook: id })
+    /* The journal is somewhere you go, not where you live. Remembering it as
+       the notebook the app opens into would mean a visit to it quietly became
+       the front door. */
+    if (!isReserved(id)) setSettings({ notebook: id })
     setRailDrawer(false)
     navigate(to.notebook(id))
   }

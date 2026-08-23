@@ -50,6 +50,10 @@ function readReading(): Reading | null {
     return {
       temp: r.temp,
       code: r.code,
+      /* Defaulted rather than required, the way `high` and `low` already are:
+         a reading cached before `isDay` existed still parses, and shows a sun
+         until the next fetch replaces it. */
+      isDay: typeof r.isDay === 'boolean' ? r.isDay : true,
       high: typeof r.high === 'number' ? r.high : r.temp,
       low: typeof r.low === 'number' ? r.low : r.temp,
       unit: r.unit === 'F' ? 'F' : 'C',

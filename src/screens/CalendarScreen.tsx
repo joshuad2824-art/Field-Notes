@@ -4,7 +4,7 @@ import { PageRow } from '../components/PageRow'
 import { daysWritten, pagesInMonth } from '../lib/db'
 import { dayOf, monthNow, monthParts, stepMonth } from '../lib/calendar'
 import { countLabel, readableDay } from '../lib/format'
-import type { Page } from '../lib/model'
+import { JOURNAL_NOTEBOOK, type Page, titleOf } from '../lib/model'
 import { back, navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
 
@@ -24,6 +24,12 @@ export function CalendarScreen({ month }: { month?: string }) {
     setShown(next)
     navigate(to.calendar(next), { replace: true })
   }
+
+  /* The month's journal entries, read off the pages already loaded rather
+     than asked for a second time. They are also down in their own day groups
+     below, because they are pages and the calendar is a lens over pages — this
+     strip is the direct answer to wanting somewhere to find them as a set. */
+  const entries = pages.filter((page) => page.notebook === JOURNAL_NOTEBOOK)
 
   /* Grouped by day, so a day with three pages reads as a day and not as three
      unrelated rows. */
@@ -83,6 +89,23 @@ export function CalendarScreen({ month }: { month?: string }) {
           <div className="calendar-count section-label">
             {countLabel(pages.length, 'page')} this month
           </div>
+
+          {entries.length ? (
+            <div className="calendar-journal">
+              <div className="section-label">Journal</div>
+              <div className="calendar-journal-rows">
+                {entries.map((entry) => (
+                  <button
+                    key={entry.id}
+                    className="calendar-journal-row"
+                    onClick={() => navigate(to.page(entry.id))}
+                  >
+                    {titleOf(entry.body)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {days.map((day) => (
             <div key={day.iso} className="calendar-day">

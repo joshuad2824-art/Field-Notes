@@ -69,6 +69,32 @@ export const COVER_COLORS = [
 
 export const DEFAULT_NOTEBOOK: NotebookId = 'field-notes'
 
+/* ── the journal ───────────────────────────────────────────────────────
+   A weekly entry is an ordinary page. Same envelope, same markdown body, same
+   `dayOf` — so export, import, sync, search and tags all keep working without
+   learning anything new, which is decision 1 held to rather than bent. What it
+   is not is a page in one of the four notebooks: "separate from the notebooks"
+   is answered by a fifth notebook that the shelf doesn't show, not by a second
+   container hierarchy and not by a second page type.
+
+   Ordinary in the file, reserved in the interface: it never appears in the
+   shelf list or in the manager, and `notebooks.ts` refuses to rename, recolour
+   or delete it. Reserved by refusal rather than by resurrection — a notebook
+   that could be deleted and then reappeared on the next boot would be a
+   notebook that ignores you. */
+export const JOURNAL_NOTEBOOK: NotebookId = 'journal'
+
+/* Seeded at 0 for the reason the other four are: two devices that each stood
+   it up before ever pairing should meet with nothing to argue about. It is
+   ordered last so that if it ever does show in a list, it shows at the foot. */
+export const JOURNAL_BOOK: Notebook = {
+  id: JOURNAL_NOTEBOOK,
+  name: 'Journal',
+  color: '#1b261f',
+  order: 900,
+  updated: 0,
+}
+
 /* Pages linger for thirty days after deletion so a bug can't take them. */
 export const TOMBSTONE_DAYS = 30
 

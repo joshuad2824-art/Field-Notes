@@ -1,7 +1,8 @@
 import { dayOf } from './calendar'
 import { createPage, db, saveBody } from './db'
 import { isoDay } from './format'
-import { allNotebooks, firstNotebookId, loadNotebooks, notebooksReady } from './notebooks'
+import { JOURNAL_NOTEBOOK } from './model'
+import { firstNotebookId, loadNotebooks, notebooksReady, shelfNotebooks } from './notebooks'
 import { getSettings } from './settings'
 
 /* The capture path. Two routes that land a live caret — `/new` and `/today` —
@@ -23,7 +24,7 @@ async function ready(): Promise<void> {
 
 function homeNotebook(): string {
   const remembered = getSettings().notebook
-  return allNotebooks().some((b) => b.id === remembered) ? remembered : firstNotebookId()
+  return shelfNotebooks().some((b) => b.id === remembered) ? remembered : firstNotebookId()
 }
 
 /* `/new/church` should work however the notebook is said — by id or by name,
@@ -32,9 +33,13 @@ function homeNotebook(): string {
 function resolveNotebook(slug: string | undefined): string {
   if (slug) {
     const wanted = slug.trim().toLowerCase()
+    /* The shelf, not every notebook: the journal is assembled, and a capture
+       route that filed a fleeting thought into it would be writing into a page
+       the next collection is going to overwrite. `/new/journal` falls back to
+       the remembered notebook like any other word the shelf doesn't know. */
     const book =
-      allNotebooks().find((b) => b.id.toLowerCase() === wanted) ??
-      allNotebooks().find((b) => b.name.trim().toLowerCase() === wanted)
+      shelfNotebooks().find((b) => b.id.toLowerCase() === wanted) ??
+      shelfNotebooks().find((b) => b.name.trim().toLowerCase() === wanted)
     if (book) return book.id
   }
   return homeNotebook()
@@ -70,8 +75,11 @@ export function captureToday(): Promise<string> {
     await ready()
     const today = isoDay()
     const rows = await db.pages.toArray()
+    /* Not the journal: its entry sits on the week's Sunday, so on a Sunday it
+       is a page `dayOf` puts on this square — and appending a fleeting thought
+       to it would put writing into a page the next collection overwrites. */
     const standing = rows
-      .filter((p) => !p.deleted && dayOf(p) === today)
+      .filter((p) => !p.deleted && p.notebook !== JOURNAL_NOTEBOOK && dayOf(p) === today)
       .sort((a, b) => b.updated - a.updated)[0]
     const stamp = `${time.format(new Date())} — `
 

@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { livePages } from '../lib/db'
 import { countLabel, groupFor, mastheadParts, shortStamp } from '../lib/format'
+import { collectWeek, lastWeekAt } from '../lib/journal'
 import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
-import { type Page, snippetOf, titleOf, wordCount } from '../lib/model'
+import { JOURNAL_NOTEBOOK, type Page, snippetOf, titleOf, wordCount } from '../lib/model'
 import { notebookForPage } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
 import { resetEdgeColor, setEdgeColor, surfaceColor } from '../lib/themecolor'
@@ -53,6 +54,12 @@ export function PageList({
   const pages = useLive<Page[]>(() => livePages(notebook), [notebook], [])
   const [query, setQuery] = useState('')
   const { weekday, day, month, year } = mastheadParts()
+  /* The journal's foot carries a different button, for the same reason
+     decision 19 put New page here in the first place: the control belongs at
+     the foot of the column showing the pages it will make. Nothing is written
+     in the journal by hand, so New page would be the wrong offer. */
+  const journal = notebook === JOURNAL_NOTEBOOK
+  const [collecting, setCollecting] = useState(false)
 
   /* iOS keeps a strip below the app and paints it from the page's own canvas
      background, so that colour has to be whatever is at the bottom of the screen.
@@ -176,9 +183,31 @@ export function PageList({
           Search
         </button>
         <span className="grow" />
-        <button className="plate-button tight" onClick={onNewPage} title="⌘⇧N">
-          New page
-        </button>
+        {journal ? (
+          <button
+            className="plate-button tight"
+            disabled={collecting}
+            /* Last week, not this one: on a Sunday morning the week you want
+               is the one that just finished. Collecting the same week twice
+               updates the entry rather than making a second. */
+            onClick={async () => {
+              setCollecting(true)
+              try {
+                const done = await collectWeek(lastWeekAt())
+                navigate(to.page(done.id))
+                onPick?.()
+              } finally {
+                setCollecting(false)
+              }
+            }}
+          >
+            {collecting ? 'Collecting' : 'Collect last week'}
+          </button>
+        ) : (
+          <button className="plate-button tight" onClick={onNewPage} title="⌘⇧N">
+            New page
+          </button>
+        )}
       </div>
     </div>
   )
