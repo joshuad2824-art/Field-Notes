@@ -196,8 +196,10 @@ Phase 2 stands up too. Two files in the app call `fetch` and no others may:
 `src/sync/transport.ts` and `src/weather/open-meteo.ts`. The rule that used to read
 "nothing in `src/` talks to a network" now reads: a network lives in a leaf module named
 for the service it talks to, nothing above it knows, and every failure it can have costs
-nothing that was written. Grep for `fetch(` before believing otherwise — two hits are
-correct, three is a regression until it is argued for here.
+nothing that was written. Grep for `fetch(` before believing otherwise — three calls in
+those two files are correct (the transport carries a second, plainer probe that tells
+no-network from a refused header; it is argued in the open items), and a call in any
+third file is a regression until it is argued for here.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
 rotted: 365 assertions in four files. `tests/editor.mjs` has 249 covering the editor,

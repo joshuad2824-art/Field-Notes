@@ -36,6 +36,16 @@ const { chromium } = await loadPlaywright()
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ viewport: { width: 1240, height: 900 } })
+/* Declare the zoom already settled, exactly as tests/editor.mjs does: this is
+   a desk viewport, and the dial's first-run default (150% on a desk) would
+   otherwise put the pitch at 42px under every grid measurement below. */
+await ctx.addInitScript(() => {
+  try {
+    localStorage.setItem('field-notes.zoom-defaulted', '1')
+  } catch {
+    /* about:blank denies storage — nothing to settle there */
+  }
+})
 const page = await ctx.newPage()
 const problems = []
 page.on('pageerror', (e) => problems.push('page error: ' + e.message))
