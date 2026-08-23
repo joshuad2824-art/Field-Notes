@@ -686,7 +686,7 @@ await atWidth(1440, 900, async (view) => {
   )
   ok(
     'and the worker was bumped, or none of the above reaches a phone',
-    shell.version === 'v4',
+    shell.version === 'v5',
     shell.version,
   )
 })
@@ -766,12 +766,28 @@ await atWidth(390, 844, async (view) => {
   ok('a browser toolbar pads the foot clear of itself', ducked.pad === '66px', ducked.pad)
   ok('and the app still runs to the bottom edge', ducked.short === 0, `${ducked.short}px short`)
 
-  /* And the strip the system keeps for itself, which is painted from the
-     canvas — `html`, or `body` when `html` hasn't got one. It had not, so the
-     frame's teal propagated up and was painted under every screen whatever the
-     meta said. That is the band. */
+  /* And the strip the system keeps for itself.
+
+     Read on **both** outermost elements, which is the assertion this file was
+     missing for three attempts at the band. The strip is painted from the
+     document's background; `html` is what the spec nominates, and setting
+     `html` alone measured perfectly right — `rgb(6,28,29)` under the list,
+     the leaf's own stock under a page — while `body` sat unmoved on the
+     frame's `rgb(20,42,43)`, which is the colour the band on the phone
+     actually was. A test that only ever looked at `html` was green through
+     every one of those attempts.
+
+     So `agree()` fails unless the two match, and neither is allowed to be
+     the frame's colour when the frame is not what is at the bottom. */
   const canvas = () =>
     view.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)
+  const paper = () => view.evaluate(() => getComputedStyle(document.body).backgroundColor)
+  const agree = async (where) =>
+    ok(
+      `and \`body\` carries the same colour ${where}`,
+      (await canvas()) === (await paper()),
+      `html ${await canvas()} / body ${await paper()}`,
+    )
   const footColor = await view
     .locator('.list-foot')
     .evaluate((el) => getComputedStyle(el).backgroundColor)
@@ -781,6 +797,7 @@ await atWidth(390, 844, async (view) => {
     (await canvas()) === 'rgb(6, 28, 29)',
     `${await canvas()} under ${footColor}`,
   )
+  await agree('under the list')
 
   await view.locator('.list-row').first().click()
   await view.waitForTimeout(700)
@@ -788,6 +805,7 @@ await atWidth(390, 844, async (view) => {
     .locator('.leaf')
     .evaluate((el) => getComputedStyle(el).backgroundColor)
   ok('and under a page it is the leaf', (await canvas()) === leafColor, `${await canvas()} vs ${leafColor}`)
+  await agree('under a page')
 
   /* the stock is the page's, so the canvas has to follow it changing */
   await view.locator('.mark-button[aria-label="Page options"]').click()
@@ -799,6 +817,26 @@ await atWidth(390, 844, async (view) => {
     .evaluate((el) => getComputedStyle(el).backgroundColor)
   ok('the other stock takes it with it', (await canvas()) === flipped, `${await canvas()} vs ${flipped}`)
   ok('which is a different colour than before', flipped !== leafColor, `${leafColor} → ${flipped}`)
+  await agree('when the stock changes')
+
+  /* The room moved off `body` when `body` became the edge colour, so the thing
+     that used to paint it has to still be painting it — otherwise this fix
+     would have traded a band at the bottom for a cream screen behind a
+     half-transparent list. */
+  ok(
+    'and the room is still painted, by the app rather than by the document',
+    await view.evaluate(() => {
+      const root = getComputedStyle(document.getElementById('root')).backgroundColor
+      return root !== 'rgba(0, 0, 0, 0)' && root !== ''
+    }),
+  )
+  ok(
+    'with the lantern still falling across it',
+    await view.evaluate(() => {
+      const wash = getComputedStyle(document.getElementById('root'), '::before').backgroundImage
+      return wash.includes('gradient')
+    }),
+  )
 })
 
 await atWidth(1920, 1080, async (view) => {

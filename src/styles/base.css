@@ -13,14 +13,23 @@ body {
   overflow: hidden;
 }
 
-/* The canvas — which is not the same thing as the app.
+/* The canvas — which is not the same thing as the app, and which took four
+   goes to paint because the element being corrected was the wrong one.
 
-   A background on `html` is painted across the whole window, including the
-   strip outside the layout viewport that the system keeps for itself. Left
-   unset it propagates up from `body` instead, and `body` is the frame: which
-   is how a cream page came to sit on a teal band at the bottom of a phone.
-   So the canvas is named here and lib/themecolor.ts moves it to whatever is
-   actually at the bottom of the screen. */
+   The strip iOS keeps outside the layout viewport is painted from the
+   document's background, and `lib/themecolor.ts` moves that to whatever is
+   actually at the bottom of the screen. The correction that failed three times
+   was to move it on `html` alone: measured in a browser, `html` was landing on
+   exactly the right colour — the list's foot, the leaf's own stock — while
+   `body` sat on the frame's `#142a2b` and never moved, and `#142a2b` is what
+   the band on the phone actually was. WebKit samples `body` for that strip.
+
+   So both carry it now, and neither is allowed to be the frame's colour by
+   default — the frame moved down to `#root`, which is the app, so that the two
+   outermost elements are free to be nothing but the edge colour. That is the
+   shape the four sibling apps have had all along without anyone noticing: a
+   `body` whose background simply *is* the app's colour, so no strip can ever
+   be a different one and there is no moment for a repaint to be missed. */
 html {
   background: var(--frame-bg);
 }
@@ -43,14 +52,22 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-/* the lantern falling across the top of the room, and the corners going dark */
-body::before {
+/* the lantern falling across the top of the room, and the corners going dark.
+   On `#root` rather than on `body`, because `body`'s background is the edge
+   colour now and the room has to be painted by something that only ever covers
+   the app. */
+#root::before {
   content: '';
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
   background: var(--wash-lantern), var(--vignette);
+}
+/* Above the wash. The screens each render one `.app`, so this is that one. */
+#root > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Pinned to the visible region rather than the layout viewport, so the tools
@@ -75,6 +92,11 @@ body::before {
   bottom: 0;
   z-index: 1;
   height: var(--app-height, auto);
+  /* The room. This used to be `body`'s, and it moved here so that `body` could
+     be free to carry the edge colour instead — see the note on the canvas
+     above. `#root` covers exactly the viewport, so nothing about the look
+     changed by moving it. */
+  background: var(--frame-bg);
 }
 
 .app {

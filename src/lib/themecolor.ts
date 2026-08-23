@@ -1,4 +1,4 @@
-/* What the system paints where the app isn't.
+/* What the system paints where the app isn't — `html` and `body` together.
 
    Installed on an iPad, the web view is not always given the whole screen —
    measured on a real device, 712pt of an available 744. Everything inside the
@@ -37,8 +37,15 @@ export function setEdgeColor(color: string): void {
   if (next === painted) return
   painted = next
 
-  /* The canvas. `html` before `body`, so this is the one that propagates. */
+  /* Both, and this is the whole correction. `html` is what the CSS spec says
+     paints the canvas, and setting it alone is what three previous goes at
+     this did — correctly, and to no effect, because the strip WebKit keeps
+     below an installed app on a phone is painted from `body`. Measured: on a
+     cream page `html` was `rgb(246,243,236)` and `body` was `rgb(20,42,43)`,
+     and `rgb(20,42,43)` is the band. Setting both costs one line and cannot
+     be wrong whichever one the system decides to read. */
   document.documentElement.style.backgroundColor = next
+  if (document.body) document.body.style.backgroundColor = next
 
   const meta = tag()
   if (meta && meta.content !== next) meta.content = next
