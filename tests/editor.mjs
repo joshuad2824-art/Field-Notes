@@ -1,3 +1,11 @@
+/* One thing about the keys, because it cost an afternoon and is invisible
+   otherwise: every shortcut here is written `ControlOrMeta+`, never `Control+`.
+   CodeMirror binds `Mod-`, which resolves to Cmd on a Mac and Ctrl everywhere
+   else, so `Control+End` on a Mac moves nothing at all — the caret stays put,
+   the next line of typing lands in the middle of the last one, and what fails
+   is some assertion three steps later about text that looks scrambled. The
+   suite passed for years on a machine where Ctrl was the modifier and could
+   never have passed on the machine this app is actually written on. */
 /* Behaviour checks. These exist because the editor is the product, and because
    the rules most worth keeping — the syntax never showing, every block height a
    multiple of 28px, the measure never running away — are the ones that quietly
@@ -134,7 +142,7 @@ ok('clicking again clears it', (await page.locator('.md-done').count()) === 0)
 
 /* markers are atomic — the whole reason this is CodeMirror */
 await content.click()
-await page.keyboard.press('Control+End')
+await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')
 await type('**bold**')
 ok('bold renders', (await page.locator('.md-strong').count()) === 1)
@@ -150,13 +158,13 @@ ok('backspace takes the whole marker', afterBackspace === 'bold', JSON.stringify
 ok('and the one it was paired with', (await page.locator('.md-strong').count()) === 0)
 
 /* the keyboard writes markdown, now that the bar is three marks */
-await page.keyboard.press('Control+End')
+await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')
 await type('press me')
 await page.keyboard.down('Shift')
 for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowLeft')
 await page.keyboard.up('Shift')
-await page.keyboard.press('Control+b')
+await page.keyboard.press('ControlOrMeta+b')
 await page.waitForTimeout(250)
 ok('⌘B wraps a selection', (await page.locator('.md-strong').count()) === 1)
 
@@ -168,7 +176,7 @@ const offGrid = heights.filter((h) => h % 28 !== 0)
 ok('every block height is a multiple of 28', offGrid.length === 0, `off: ${offGrid.join(', ')}`)
 
 /* the highlighter, from the tray */
-await page.keyboard.press('Control+End')
+await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')
 await type('pigment')
 await page.keyboard.down('Shift')
@@ -183,7 +191,7 @@ ok('the highlighter marks the selection', (await page.locator('.md-hl-forest').c
 
 /* the blocks came back to the tray — they were only ever missing their
    buttons, never their grammar */
-await page.keyboard.press('Control+End')
+await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')
 await type('a line to shape')
 
@@ -212,7 +220,7 @@ ok('none of which shows its syntax', (await lastLine()) === 'a line to shape', a
 
 /* a mark finds the word under the caret, because nothing is ever selected
    when a finger taps B */
-await page.keyboard.press('Control+End')
+await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')
 await page.keyboard.press('Enter')
 await type('emphasis')
@@ -227,9 +235,9 @@ ok('and hides its asterisks', (await lastLine()) === 'emphasis', await lastLine(
 
 /* an empty pair has nothing to wrap, so the grammar can't hide it — better to
    do nothing than to show four asterisks */
-await page.keyboard.press('Control+End')
+await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')
-await page.keyboard.press('Control+b')
+await page.keyboard.press('ControlOrMeta+b')
 await page.waitForTimeout(200)
 ok(
   'a mark with no word leaves no syntax behind',
@@ -239,7 +247,7 @@ ok(
 
 /* indent is leading spaces, hidden like every other marker and said again as
    space on the page */
-await page.keyboard.press('Control+End')
+await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')
 await page.keyboard.press('Enter')
 await type('* one')
@@ -278,7 +286,7 @@ for (let i = 0; i < 7; i++) {
 ok('indent stops at four levels', (await page.locator('.md-in-4').count()) === 1)
 
 /* an empty item gives up a level before it gives up the list */
-await page.keyboard.press('Control+End')
+await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')
 const deep = await page.locator('.md-in-4').count()
 await page.keyboard.press('Enter')
@@ -991,7 +999,7 @@ await atWidth(1440, 950, async (view) => {
 
   /* a vector is the graphic and nothing else */
   await view.locator('.cm-content').click()
-  await view.keyboard.press('Control+End')
+  await view.keyboard.press('ControlOrMeta+End')
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
   await view.locator('.tray input[type=file]').setInputFiles(svgPath)
@@ -1012,7 +1020,7 @@ await atWidth(1440, 950, async (view) => {
   /* a bitmap with real transparency is a cut-out too — the frame is about
      what the picture is, not what the file is called */
   await view.locator('.cm-content').click()
-  await view.keyboard.press('Control+End')
+  await view.keyboard.press('ControlOrMeta+End')
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
   await view.locator('.tray input[type=file]').setInputFiles(clearPath)
@@ -1064,7 +1072,7 @@ await atWidth(1440, 950, async (view) => {
 
   /* pasting a picture */
   await view.locator('.cm-content').click()
-  await view.keyboard.press('Control+End')
+  await view.keyboard.press('ControlOrMeta+End')
   const platesBefore = await view.locator('.md-plate').count()
   await view.evaluate(async () => {
     /* Made here rather than fetched from `public/`: this checks that a paste
@@ -1100,7 +1108,7 @@ await atWidth(1440, 950, async (view) => {
 
   /* the quote stands off its rule */
   await view.locator('.cm-content').click()
-  await view.keyboard.press('Control+End')
+  await view.keyboard.press('ControlOrMeta+End')
   await view.keyboard.press('Enter')
   await view.keyboard.type('> a quoted line')
   await view.waitForTimeout(400)
@@ -1464,7 +1472,7 @@ await atWidth(1440, 900, async (view) => {
 
   /* alignment sits in front of the block prefix, so a heading is both */
   await view.locator('.cm-content').click()
-  await view.keyboard.press('Control+Home')
+  await view.keyboard.press('ControlOrMeta+Home')
   await view.locator('.tray-block[aria-label="Centre the line"]').click()
   await view.waitForTimeout(400)
   ok(
@@ -1586,9 +1594,9 @@ await atWidth(1440, 900, async (view) => {
   await view.keyboard.type('Additional notes here', { delay: 5 })
   await view.keyboard.press('Enter')
   await view.keyboard.type('and a second line', { delay: 5 })
-  await view.keyboard.press('Control+Home')
+  await view.keyboard.press('ControlOrMeta+Home')
   await view.keyboard.down('Shift')
-  await view.keyboard.press('Control+End')
+  await view.keyboard.press('ControlOrMeta+End')
   await view.keyboard.up('Shift')
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
@@ -1612,7 +1620,7 @@ await atWidth(1440, 900, async (view) => {
 
   /* a table with its head row merged into a title */
   await view.locator('.cm-content').click()
-  await view.keyboard.press('Control+End')
+  await view.keyboard.press('ControlOrMeta+End')
   await view.keyboard.press('Enter')
   await view.locator('.tray-word', { hasText: 'Table' }).click()
   await view.waitForTimeout(500)
@@ -1705,7 +1713,7 @@ await atWidth(1800, 950, async (view) => {
 
   /* all caps is a change to the text — there is no markdown for shouted */
   await view.locator('.cm-content').click()
-  await view.keyboard.press('Control+End')
+  await view.keyboard.press('ControlOrMeta+End')
   await view.keyboard.press('Enter')
   await view.keyboard.type('shouted', { delay: 6 })
   await view.waitForTimeout(200)

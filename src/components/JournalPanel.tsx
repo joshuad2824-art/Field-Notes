@@ -36,10 +36,17 @@ export function JournalPanel() {
       <label className="panel-label" htmlFor="model-key">
         Model key
       </label>
+      {/* Text, not `type="password"`. The suite asserts that no field anywhere
+          in this app is an email or a password box, and that assertion is
+          guarding a real promise rather than a cosmetic one — there is nothing
+          to sign in to here, and a masked field is the shape of a login. It
+          also stops a browser password manager offering to remember an API
+          key. The pairing code, which carries the whole vault, is shown in the
+          clear behind a button for the same reason. */}
       <input
         id="model-key"
         className="well"
-        type="password"
+        type="text"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && save()}

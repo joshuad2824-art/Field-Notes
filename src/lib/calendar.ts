@@ -1,4 +1,6 @@
-import { isoDay } from './format'
+/* Extension explicit, because `lib/digest.ts` pulls this in on node — see the
+   note at the top of that file. */
+import { isoDay } from './format.ts'
 import type { Page } from './model'
 
 /* The day a page sits on, in one place.

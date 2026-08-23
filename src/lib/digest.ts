@@ -1,6 +1,14 @@
-import { dayOf } from './calendar'
-import { isoDay, longDay, weekOf, weekRange } from './format'
-import { IMAGE_RE, JOURNAL_NOTEBOOK, type Page, tagsOf, titleOf } from './model'
+/* The `.ts` on these three is deliberate and load-bearing. This module is
+   meant to run on node with nothing around it — that is the whole reason it is
+   separate from `journal.ts` — and node's ESM resolver will not guess an
+   extension. `sync/reconcile.ts` gets away without them only because its one
+   relative import is `import type`, which type-stripping erases before the
+   resolver ever sees it. These are real imports, so they say what they mean.
+   `allowImportingTsExtensions` is on in tsconfig and Vite resolves them the
+   same way, so nothing else has to care. */
+import { dayOf } from './calendar.ts'
+import { isoDay, longDay, weekOf, weekRange } from './format.ts'
+import { IMAGE_RE, JOURNAL_NOTEBOOK, type Page, tagsOf, titleOf } from './model.ts'
 
 /* What a week reads as. The journal's step one, and all of it that can be
    thought about without a database.

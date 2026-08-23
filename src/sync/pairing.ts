@@ -40,11 +40,16 @@ function fromBase64Url(text: string): Uint8Array {
   return bytes
 }
 
-/* The key hygiene these three functions used to hold moved to `lib/keys.ts`
+/* The key hygiene these four functions used to hold moved to `lib/keys.ts`
    when a third pasted key arrived that had nothing to do with a mirror. They
-   are re-exported here so that everything already asking `pairing` for them
-   goes on working, and so the sync module has one door rather than two. */
-export { cleanToken, firstUnsafe, headerSafe, looksTruncated } from '../lib/keys'
+   are imported for this file's own use and re-exported so that everything
+   already asking `pairing` for them goes on working, and so the sync module
+   has one door rather than two. Both lines are needed: a re-export passes a
+   name through without ever putting it in this module's scope. The `.ts` is
+   needed because `tests/sync.mjs` runs this file on node, and node's resolver
+   does not guess extensions — the same reason `lib/digest.ts` carries them. */
+import { cleanToken, firstUnsafe, headerSafe, looksTruncated } from '../lib/keys.ts'
+export { cleanToken, firstUnsafe, headerSafe, looksTruncated }
 
 export function newVaultKey(): string {
   const bytes = new Uint8Array(32)

@@ -1,4 +1,6 @@
-import { isTableAttr } from './table'
+/* Extension explicit, because `lib/digest.ts` pulls this in on node — see the
+   note at the top of that file. */
+import { isTableAttr } from './table.ts'
 
 /* A page is a markdown string plus a small envelope. That's the whole model,
    and it's deliberately boring, because boring survives. */

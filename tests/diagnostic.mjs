@@ -180,9 +180,9 @@ for (const [where, find, wanted] of WAYS) {
    the caret lands exactly on their markers, which is the fix the highlighter
    is missing. */
 for (const [name, key, open_, close] of [
-  ['bold', 'Control+b', '**', '**'],
-  ['italic', 'Control+i', '*', '*'],
-  ['underline', 'Control+u', '<u>', '</u>'],
+  ['bold', 'ControlOrMeta+b', '**', '**'],
+  ['italic', 'ControlOrMeta+i', '*', '*'],
+  ['underline', 'ControlOrMeta+u', '<u>', '</u>'],
 ]) {
   await blank('alpha bravo charlie')
   await at(6, 11)
@@ -223,9 +223,9 @@ const press = (key) => async () => {
   await page.waitForTimeout(150)
 }
 
-await splitting('a bold word', press('Control+b'))
-await splitting('an italic word', press('Control+i'))
-await splitting('an underlined word', press('Control+u'))
+await splitting('a bold word', press('ControlOrMeta+b'))
+await splitting('an italic word', press('ControlOrMeta+i'))
+await splitting('an underlined word', press('ControlOrMeta+u'))
 await splitting('a struck word', () => tray('Strike'))
 await splitting('a code span', () => tray('Code'))
 await splitting('a highlight', () => tray('brass'))
@@ -237,7 +237,7 @@ for (const [name, setup] of [
   ['a bold line', async () => {
     await type('alpha bravo')
     await at(6, 11)
-    await page.keyboard.press('Control+b')
+    await page.keyboard.press('ControlOrMeta+b')
   }],
   ['a highlighted line', async () => {
     await type('alpha bravo')
@@ -253,7 +253,7 @@ for (const [name, setup] of [
   await blank()
   await setup()
   await page.waitForTimeout(150)
-  await page.keyboard.press('Control+End')
+  await page.keyboard.press('ControlOrMeta+End')
   await page.keyboard.press('Enter')
   await type('and then')
   ok(`Enter at the end of ${name} leaves no syntax showing`, (await showing()).length === 0, (await seen()).join(' / '))
@@ -269,7 +269,7 @@ console.log('\n— a marker left on its own —\n')
 {
   await blank('alpha bravo charlie')
   await at(6, 11)
-  await page.keyboard.press('Control+b')
+  await page.keyboard.press('ControlOrMeta+b')
   await page.waitForTimeout(150)
   const d = await doc()
   await at(d.indexOf('bravo'))
@@ -280,7 +280,7 @@ console.log('\n— a marker left on its own —\n')
 {
   await blank('alpha bravo charlie')
   await at(6, 11)
-  await page.keyboard.press('Control+b')
+  await page.keyboard.press('ControlOrMeta+b')
   await page.waitForTimeout(150)
   const d = await doc()
   await at(d.indexOf('bravo') + 5)
@@ -314,14 +314,14 @@ console.log('\n— one mark inside another —\n')
   await tray('brass')
   const d = await doc()
   await at(d.indexOf('bravo'), d.indexOf('bravo') + 5)
-  await page.keyboard.press('Control+b')
+  await page.keyboard.press('ControlOrMeta+b')
   await page.waitForTimeout(200)
   ok('bold inside a highlight draws', (await showing()).length === 0, `${await doc()} → ${(await seen()).join(' / ')}`)
 }
 {
   await blank('alpha bravo charlie')
   await at(6, 11)
-  await page.keyboard.press('Control+b')
+  await page.keyboard.press('ControlOrMeta+b')
   await page.waitForTimeout(150)
   const d = await doc()
   await at(d.indexOf('bravo'), d.indexOf('bravo') + 5)
@@ -361,7 +361,7 @@ for (const body of [
 console.log('\n— inside a table —\n')
 
 await blank('a page with a table')
-await page.keyboard.press('Control+End')
+await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')
 await openTray()
 await page.locator('.tray-word', { hasText: /^Table$/ }).first().click()
@@ -397,9 +397,9 @@ const cellMark = async (index, word, apply, wanted, where, name, remove = apply)
    command reads the cell as bold and turns it off. What lands in the DOM is a
    span asking for normal weight, which the file has no word for — so the mark
    is dropped and the head cell un-bolds until the table next redraws. */
-await cellMark(0, 'abc', press('Control+b'), '**abc**', 'a head cell', 'bold')
+await cellMark(0, 'abc', press('ControlOrMeta+b'), '**abc**', 'a head cell', 'bold')
 await cellMark(1, 'def', () => tray('Bold — ⌘B'), '**def**', 'a head cell', 'bold from the tray')
-await cellMark(3, 'ghi', press('Control+b'), '**ghi**', 'a body cell', 'bold')
+await cellMark(3, 'ghi', press('ControlOrMeta+b'), '**ghi**', 'a body cell', 'bold')
 await cellMark(4, 'jkl', () => tray('Italic — ⌘I'), '*jkl*', 'a body cell', 'italic')
 await cellMark(5, 'mno', () => tray('Underline — ⌘U'), '<u>mno</u>', 'a body cell', 'underline')
 await cellMark(6, 'pq', () => tray('Strike'), '~~pq~~', 'a body cell', 'strike')

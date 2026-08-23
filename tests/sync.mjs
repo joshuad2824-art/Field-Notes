@@ -394,7 +394,7 @@ const titles = async (d) => {
 
 const write = async (d, text) => {
   await d.view.locator('.cm-content').click()
-  await d.view.keyboard.press('Control+End')
+  await d.view.keyboard.press('ControlOrMeta+End')
   await d.view.keyboard.type(text, { delay: 8 })
   await d.view.waitForTimeout(400)
   /* Leaving the page flushes the save, which is what a real hand does too. */
@@ -485,7 +485,7 @@ await b.view.locator('.btn.caps', { hasText: 'Sync now' }).click()
 await b.view.waitForTimeout(1500)
 ok(
   'sync says it is offline rather than raising anything',
-  (await b.view.locator('.panel-card .meta').first().textContent()).includes('offline'),
+  (await b.view.locator('[data-sync-state]').first().textContent()).includes('offline'),
 )
 
 offline.delete('B')
@@ -507,7 +507,7 @@ await settings(b)
 await b.view.locator('.btn.caps', { hasText: 'Sync now' }).click()
 await b.view.waitForTimeout(1800)
 
-const verdict = await b.view.locator('.panel-card .meta').first().textContent()
+const verdict = await b.view.locator('[data-sync-state]').first().textContent()
 const explained = await b.view.locator('.sync-problem').first().textContent()
 ok(
   'a refused header is not reported as weather',
@@ -524,7 +524,7 @@ headerBlocked.delete('B')
 await syncNow(b)
 ok(
   'and it recovers once the header gets through',
-  (await b.view.locator('.panel-card .meta').first().textContent()).includes('paired'),
+  (await b.view.locator('[data-sync-state]').first().textContent()).includes('paired'),
 )
 
 /* ── the one that matters: both devices, the same page, no network ──────── */

@@ -95,11 +95,16 @@ export function weekOf(ts: number = Date.now()): Date[] {
 
 export const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
-/* What a week is called, given the seven days `weekOf` handed back. Written the
-   way a person would say it: one month named once when the week doesn't cross
-   one, both when it does, and the year only at the end. */
-const dayOnly = new Intl.DateTimeFormat([], { day: 'numeric' })
-const dayAndMonth = new Intl.DateTimeFormat([], { day: 'numeric', month: 'long' })
+/* What a week is called, given the seven days `weekOf` handed back.
+
+   `formatRange` rather than two formats and a join, because deciding what to
+   leave out of the near end of a range — the month when the week doesn't cross
+   one, the year when it doesn't cross one of those — is a question every
+   language answers differently, and hand-rolling it gets one language right.
+   The first attempt did exactly that and produced "16–22 August 2026" here and
+   "16–August 22, 2026" on an American machine, which is not a sentence. This
+   gives "16–22 August 2026" and "August 16 – 22, 2026", each correct where it
+   is read. */
 const dayMonthYearLong = new Intl.DateTimeFormat([], {
   day: 'numeric',
   month: 'long',
@@ -109,14 +114,7 @@ const dayMonthYearLong = new Intl.DateTimeFormat([], {
 export function weekRange(days: Date[]): string {
   const first = days[0]
   const last = days[days.length - 1]
-  const end = dayMonthYearLong.format(last)
-  if (first.getMonth() === last.getMonth() && first.getFullYear() === last.getFullYear()) {
-    return `${dayOnly.format(first)}–${end}`
-  }
-  if (first.getFullYear() === last.getFullYear()) {
-    return `${dayAndMonth.format(first)} – ${end}`
-  }
-  return `${dayMonthYearLong.format(first)} – ${end}`
+  return dayMonthYearLong.formatRange(first, last)
 }
 
 /* The long form of one day, for the section headings inside a week. */

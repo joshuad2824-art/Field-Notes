@@ -227,7 +227,7 @@ does not generalise to this. A key typed into one device by the one person who u
 app, deletable in a tap, is not in public.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: five files now, the fifth being the journal's. `tests/editor.mjs` covers the editor,
+rotted: **433 assertions in five files**, all green. `tests/editor.mjs` has 260 covering the editor,
 the grid, indent, tables and how wide they sit, the calendar, the keyboard, zoom, the
 three widths, the folding columns, the safe-area bands, the bottom edge of the screen,
 the underline, line alignment, the notebook manager (recolouring included), the
@@ -236,26 +236,57 @@ the dial's first-run default, the rail head, and every path the shell names actu
 resolving — which is not cosmetic: the icons are precached with `addAll`, which rejects
 atomically, so one 404 there is a worker that never installs and an app that has quietly
 lost its offline capability with nothing on screen to say so.
-`tests/sync.mjs` is in two halves — the reconciler's truth table and the pairing
+`tests/sync.mjs` has 64, in two halves — the reconciler's truth table and the pairing
 code run on node with nothing around them, and then two real browsers are driven
 against a fake mirror held inside the test file, through pairing, a page crossing, a
 picture crossing byte for byte, the mirror vanishing mid-sentence, a mirror that is
 reachable but refuses the vault header, both devices editing the same page while
-apart, a deletion crossing, and unpairing. `tests/weather.mjs` — the code lookup and
+apart, a deletion crossing, and unpairing. `tests/weather.mjs` has 43 — the code lookup and
 the family map on node, checked against each other so the word and the drawing can never
 disagree, and then a browser told where it is by Playwright, driven against a weather
 service faked in the test file: the glyph, its accessible name, a clear night drawing a
 moon rather than a sun, and a reading cached before `isDay` existed still rendering a
-line. `tests/journal.mjs` — what a week reads as, on node, over `src/lib/digest.ts`,
+line. `tests/journal.mjs` has 33 — what a week reads as, on node, over `src/lib/digest.ts`,
 which has no Dexie and no clock in it for exactly that reason; then a browser for the two
 things most likely to be wrong. The reserved notebook's migration is exercised by
 **deleting the row out from underneath the app and making it put the row back**, because
 a fresh install passes that test whether or not the migration works. And a week is
-collected twice, to prove one entry. `tests/roundtrip.mjs` — two browser
+collected twice, to prove one entry. `tests/roundtrip.mjs` has 33 — two browser
 contexts standing in for two devices: the first is written in and exports the shelf,
 the second is brand new, imports the zip, and has to end up holding the same archive
 byte for byte, twice over to prove the upsert. A backup that has never been restored
 is not a backup; this is the restore, run on every check.
+
+**Running it needs two terminals and, the first time, a toolchain.** `npm run
+build && npm run preview` in one, `npm run check` in the other — the suite drives
+a real browser against the built app on `localhost:4173`. Playwright is a global
+install (`npm i -g playwright && playwright install chromium`), deliberately, so
+it isn't a dependency of the app.
+
+Three things about that were learned the hard way in August 2026 and are worth
+having written down:
+
+- **The suite could never have passed on a Mac until now, and nobody knew.** Every
+  shortcut in it was written `Control+…`. CodeMirror binds `Mod-`, which resolves
+  to **Cmd** on macOS and Ctrl everywhere else — so on this machine `Control+End`
+  moved nothing, the next line of typing landed in the middle of the previous one,
+  and twelve assertions failed several steps later complaining about scrambled
+  text. They are `ControlOrMeta+…` now, which is Playwright's own word for the
+  platform's modifier and matches `Mod-` exactly. **The "365 assertions, all
+  green" this file used to claim was true on some other machine.** A green suite
+  that has only ever been green somewhere else is worth about as much as a backup
+  that has never been restored.
+- **A module that is meant to run on node must write its own imports with `.ts` on
+  them.** Node's resolver does not guess extensions, and type-stripping erases
+  `import type` before the resolver ever sees it — which is the only reason
+  `sync/reconcile.ts` gets away with a bare specifier. `lib/digest.ts`,
+  `lib/calendar.ts`, `lib/model.ts` and `sync/pairing.ts` carry them for that
+  reason. `allowImportingTsExtensions` is on in tsconfig and Vite resolves them
+  identically, so nothing else has to care.
+- **Node lives in `~/.local/node` on the laptop**, not in `/usr/local`, because
+  installing it there wanted an admin password and putting it in the home folder
+  did not. `~/.zshrc` puts it on the PATH. Nothing about the project depends on
+  where it is.
 
 `npm run diagnose` is a second harness with a different question. `check` proves a
 mark goes **on**: select a word, tap B, see it bold. What it never did was go *back*
@@ -327,16 +358,24 @@ Two things are built but unproven, because only daily use proves them:
   calculations that had to agree, and no reason they would. An iPhone reports
   them equal, which is why only the tablet ever showed it.
 - **The felt pen** falls back to Caveat everywhere Feltpen isn't installed.
+- **A positional selector in a test is a trap that springs later.** Three sync
+  assertions found the sync state as "the first `.meta` in the panel card",
+  which was true until a panel was added above it — and then two failed and one
+  *passed for the wrong reason*, reading the journal's copy and correctly not
+  finding the word "offline" in it. That last one is the dangerous shape: a
+  green assertion pointed at the wrong element. The status line carries
+  `data-sync-state` now. A false pass is worse than a failure, because nothing
+  tells you about it.
+
 - **The prose pass has never been run against the real API.** Every failure it
   can have is handled and none of them touch the page — a refused key, an empty
   answer and an unreachable host all leave the entry exactly as it was — but
   the shape of a good answer has only been reasoned about. It is also the one
   place in the app that calls a service which can change under it, and the one
   place that costs money.
-- **The rail head, the icon set and the weather glyphs were drawn and read on a
-  screen, but `npm run check` has not been run over any of it.** The machine
-  this was built on has no node on it. The assertions are written and they are
-  the first thing to run.
+- ~~**`npm run check` has not been run over any of it.**~~ **It has now, and it
+  is green.** Node had to be installed first — see the note below, which is
+  worth reading before the next machine.
 
 August 2026 added three things: the weather says the sky in a drawing rather
 than a word, the rail head carries the mark and a typed name, and the journal

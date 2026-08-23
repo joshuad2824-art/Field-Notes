@@ -94,7 +94,13 @@ export function SyncPanel() {
           and nothing to sign in to again.
         </p>
 
-        <p className="meta" style={{ marginTop: 16 }}>
+        {/* Named, not just styled. The suite used to find this line as "the
+            first `.meta` in the panel", which was true right up until another
+            panel was added above it — and then three sync assertions were
+            quietly reading the journal's copy instead, two failing and one
+            passing for the wrong reason. A hook costs nothing and cannot
+            drift. */}
+        <p className="meta" data-sync-state style={{ marginTop: 16 }}>
           {label(status.state)}
           {status.lastSyncedAt ? ` · last ${shortStamp(status.lastSyncedAt)}` : ''}
         </p>
