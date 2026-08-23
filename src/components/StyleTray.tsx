@@ -80,12 +80,16 @@ function AlignMark({ align }: { align: Exclude<Align, 'left'> }) {
   )
 }
 
+/* The swatch shows the hue the mark will actually land with. These are the
+   night-stock tints solid — mid-value, clearly separable against the dark
+   strip. The names are the file's and never change; only the values moved
+   when the highlighters were re-solved for hue separation. */
 const HIGHLIGHTS: { name: string; color: string }[] = [
-  { name: 'oxblood', color: '#530a28' },
-  { name: 'forest', color: '#123737' },
-  { name: 'navy', color: '#082744' },
-  { name: 'driftwood', color: '#3a342e' },
-  { name: 'brass', color: '#7a6201' },
+  { name: 'oxblood', color: '#cc322c' },
+  { name: 'forest', color: '#4e6d23' },
+  { name: 'navy', color: '#465ba3' },
+  { name: 'driftwood', color: '#ac3888' },
+  { name: 'brass', color: '#a15200' },
 ]
 
 /* One strip, not a box.

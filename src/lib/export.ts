@@ -20,17 +20,30 @@ function slug(text: string): string {
   )
 }
 
+/* Every scalar is quoted, unconditionally, dates included. A notebook is
+   user-editable data: one named `No` or `Off` parses as a boolean in any
+   YAML 1.1 reader, and a title ending `.0` becomes a float. An unquoted
+   value that changes type on the way out is a silent corruption a round-trip
+   would catch and a human never would. Single quotes, doubled inside, so the
+   value survives any reader. */
+function yamlQuote(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`
+}
+
 function frontmatter(page: Page): string {
   const lines = [
     '---',
-    `notebook: ${notebookForPage(page.notebook).name}`,
-    `created: ${new Date(page.created).toISOString()}`,
-    `updated: ${new Date(page.updated).toISOString()}`,
+    /* The id is what makes a restore an upsert rather than a second copy of
+       everything — restore twice, get one page. */
+    `id: ${yamlQuote(page.id)}`,
+    `notebook: ${yamlQuote(notebookForPage(page.notebook).name)}`,
+    `created: ${yamlQuote(new Date(page.created).toISOString())}`,
+    `updated: ${yamlQuote(new Date(page.updated).toISOString())}`,
   ]
-  if (page.entryDate) lines.push(`date: ${page.entryDate}`)
+  if (page.entryDate) lines.push(`date: ${yamlQuote(page.entryDate)}`)
   if (page.pinned) lines.push('pinned: true')
-  if (page.pen && page.pen !== 'ink') lines.push(`pen: ${page.pen}`)
-  if (page.stock && page.stock !== 'paper') lines.push(`stock: ${page.stock}`)
+  if (page.pen && page.pen !== 'ink') lines.push(`pen: ${yamlQuote(page.pen)}`)
+  if (page.stock && page.stock !== 'paper') lines.push(`stock: ${yamlQuote(page.stock)}`)
   lines.push('---', '')
   return lines.join('\n')
 }

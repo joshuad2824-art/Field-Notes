@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { notebookCounts } from '../lib/db'
 import { countLabel } from '../lib/format'
 import { COVER_COLORS } from '../lib/model'
-import { addNotebook, deleteNotebook, useNotebooks } from '../lib/notebooks'
+import { addNotebook, deleteNotebook, recolorNotebook, useNotebooks } from '../lib/notebooks'
 import { useLive } from '../lib/useLive'
 
 interface Props {
@@ -15,6 +15,7 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
   const books = useNotebooks()
   const counts = useLive<Record<string, number>>(notebookCounts, [], {})
   const [confirm, setConfirm] = useState<string | null>(null)
+  const [recoloring, setRecoloring] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [color, setColor] = useState(COVER_COLORS[4])
 
@@ -41,19 +42,48 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
 
         <div className="manager-rows">
           {books.map((book) => (
-            <div key={book.id} className="manager-row">
-              <span className="book-dot big" style={{ background: book.color }} />
-              <span className="manager-name">{book.name}</span>
-              <span className="manager-count">{counts[book.id] ?? 0}</span>
-              <button
-                className="mark-button danger"
-                onClick={() => setConfirm(book.id)}
-                aria-label={`Delete ${book.name}`}
-                disabled={books.length === 1}
-                title={books.length === 1 ? 'The last notebook stays' : 'Delete'}
-              >
-                ×
-              </button>
+            <div key={book.id}>
+              <div className="manager-row">
+                {/* The dot is the control: a colour is data now, not a
+                    christening. Swatches stay on COVER_COLORS — a free picker
+                    would let a cover be any hex, and most arbitrary dark
+                    colours vanish against the rail exactly as these nearly
+                    do. */}
+                <button
+                  className="book-dot big"
+                  style={{ background: book.color }}
+                  onClick={() => setRecoloring(recoloring === book.id ? null : book.id)}
+                  aria-label={`Recolour ${book.name}`}
+                  title="Recolour"
+                />
+                <span className="manager-name">{book.name}</span>
+                <span className="manager-count">{counts[book.id] ?? 0}</span>
+                <button
+                  className="mark-button danger"
+                  onClick={() => setConfirm(book.id)}
+                  aria-label={`Delete ${book.name}`}
+                  disabled={books.length === 1}
+                  title={books.length === 1 ? 'The last notebook stays' : 'Delete'}
+                >
+                  ×
+                </button>
+              </div>
+              {recoloring === book.id ? (
+                <div className="manager-recolor swatch-row">
+                  {COVER_COLORS.map((option) => (
+                    <button
+                      key={option}
+                      className={`cover-swatch${option === book.color ? ' on' : ''}`}
+                      style={{ background: option }}
+                      onClick={async () => {
+                        await recolorNotebook(book.id, option)
+                        setRecoloring(null)
+                      }}
+                      aria-label={option}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </div>
           ))}
         </div>

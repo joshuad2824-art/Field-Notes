@@ -14,12 +14,9 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..600&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Archivo:wght@400;500;600&family=Oswald:wght@300;400;500;600&family=Courier+Prime:wght@400;700&family=Grape+Nuts&family=Caveat:wght@400..600&display=swap"
-      rel="stylesheet"
-    />
+    <!-- The type is vendored — the feel of this app is almost entirely type,
+         and a fresh device with no network must not open on Georgia. -->
+    <link rel="stylesheet" href="/fonts/fonts.css" />
   </head>
   <body>
     <div id="root"></div>
