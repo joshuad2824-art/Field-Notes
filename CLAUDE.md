@@ -143,7 +143,8 @@ What was Phase 3 gets picked over rather than built wholesale:
 
 - **The name.** Still undecided, deliberately. It should come from the thing once it has a shape.
 - **Colored highlights use a custom extension** (`=={forest}...==`). Plain `==` is the portable convention; the brace tag is readable but non-standard. Decide before there's a lot of content.
-- **Export writes a small YAML frontmatter block** — the page id, notebook, created, updated, and any entry date, pin, pen or stock. Storage is still plain markdown; this is the one thing added on the way out, because a filename can't carry a created date and losing it would be worse. Every scalar is quoted unconditionally: a notebook named `No` is a boolean in any YAML 1.1 reader, and a title ending `.0` is a float. The id is what makes a future restore an upsert rather than a second copy of everything — it went in before the importer exists so the exports made in the meantime are already restorable. If the block turns out to be clutter in another editor, drop it and accept the loss.
+- **Export writes a small YAML frontmatter block** — the page id, notebook, created, updated, and any entry date, pin, pen or stock. Storage is still plain markdown; this is the one thing added on the way out, because a filename can't carry a created date and losing it would be worse. Every scalar is quoted unconditionally: a notebook named `No` is a boolean in any YAML 1.1 reader, and a title ending `.0` is a float. The id is what makes a restore an upsert rather than a second copy of everything. If the block turns out to be clutter in another editor, drop it and accept the loss — though the importer now leans on it, so the loss would be the round trip.
+- **Export runs both ways now.** `src/lib/import.ts` reads a zip an export made, or any loose markdown, from a button in Settings beside the export ones. One build closed four holes at once: the monthly export is a backup that can actually be restored, the commonplace book has a door when it wants one, an Apple Notes migration has a path, and a rebuilt device can be fed from a folder instead of only from the mirror. The rules, argued in the level-up plan: upsert by id, never by filename — a file at the same or an older `updated` is skipped whole, which is what lets pairing after a restore reconcile instead of growing conflict copies; import is a local write like any other and knows nothing of the network; a file with no frontmatter becomes a new page with an invented envelope, honestly duplicated if imported twice, because there is no id to say otherwise. Importing over a local tombstone is the one place the stamp is *not* preserved — a deliberate resurrection gets `Date.now()`, or the mirror's tombstone would quietly win the next sync and the page would vanish twice. Notebooks arrive as names: a name the shelf has (case blind) is that notebook, one it hasn't is added from the palette. And the importer takes one trailing newline back off, because export put it there; a body that genuinely ended in one loses an invisible character, which is the smaller lie than growing one per round trip. `npm run check` proves the whole loop in `tests/roundtrip.mjs`.
 - **The manifest says "Field Notes"** because a PWA needs *some* name on a home screen. That's a placeholder standing in for the undecided one, not a decision.
 - **The felt pen is Grape Nuts now**, with Linotype Feltpen still named first for the machines where it's installed and Caveat behind it. 20px against Spectral's 17; the 28px line box is unchanged.
 - **The type is vendored** — `public/fonts/`, latin and latin-ext woff2 of exactly what index.html used to pull from fonts.googleapis.com, and the CDN links are gone. An app whose editor has zero awareness a network exists should not get its *feel* from one: first paint on a fresh device with no network must not fall back to Georgia. The service worker caches `/fonts/` in the same cache the CDN used to fill, `scripts/vendor-fonts.mjs` regenerates the folder, and `npm run check` asserts both that the faces load and that nothing asks a font CDN for anything. One metric is ours now, not the font's: **Playfair Display carries ascent/descent overrides in its `@font-face`** (100%/25%, the font's own ~80/20 share boxed to 1.25em), because its natural ~1.36em metrics put a 30px box on the quote's 28px line and tipped the line box to 29 — the dot grid walking out from under a quote, visible only on machines whose rasterizer honours the full metrics. Owning the files is what made the fix possible; a CDN font's metrics are take-it-or-leave-it.
@@ -198,7 +199,7 @@ nothing that was written. Grep for `fetch(` before believing otherwise — two h
 correct, three is a regression until it is argued for here.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: 318 assertions in three files. `tests/editor.mjs` has 230 covering the editor,
+rotted: 346 assertions in four files. `tests/editor.mjs` has 230 covering the editor,
 the grid, indent, tables and how wide they sit, the calendar, the keyboard, zoom, the
 three widths, the folding columns, the safe-area bands, the bottom edge of the screen,
 the underline, line alignment, the notebook manager (recolouring included), the
@@ -210,7 +211,11 @@ picture crossing byte for byte, the mirror vanishing mid-sentence, a mirror that
 reachable but refuses the vault header, both devices editing the same page while
 apart, a deletion crossing, and unpairing. `tests/weather.mjs` has 24 — the code
 lookup on node, and then a browser told where it is by Playwright, driven against a
-weather service faked in the test file.
+weather service faked in the test file. `tests/roundtrip.mjs` has 28 — two browser
+contexts standing in for two devices: the first is written in and exports the shelf,
+the second is brand new, imports the zip, and has to end up holding the same archive
+byte for byte, twice over to prove the upsert. A backup that has never been restored
+is not a backup; this is the restore, run on every check.
 
 `npm run diagnose` is a second harness with a different question. `check` proves a
 mark goes **on**: select a word, tap B, see it bold. What it never did was go *back*

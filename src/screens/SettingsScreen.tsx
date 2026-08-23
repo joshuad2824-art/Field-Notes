@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { requestPersistence, storageEstimate } from '../lib/db'
 import { exportNotebook, exportShelf } from '../lib/export'
-import { bytes } from '../lib/format'
+import { type ImportReport, importFiles } from '../lib/import'
+import { bytes, countLabel } from '../lib/format'
 import type { NotebookId } from '../lib/model'
 import { useNotebooks } from '../lib/notebooks'
 import { setSettings, useSettings } from '../lib/settings'
@@ -21,12 +22,27 @@ function measure(token: string): number {
   return height
 }
 
+/* The report in the interface's own register: labels, not sentences, and
+   nothing at all when a part of it is zero. */
+function importLine(r: ImportReport): string {
+  const parts: string[] = []
+  if (r.added) parts.push(`${countLabel(r.added, 'page')} in`)
+  if (r.replaced) parts.push(`${r.replaced} replaced`)
+  if (r.skipped) parts.push(`${r.skipped} already here`)
+  if (r.pictures) parts.push(countLabel(r.pictures, 'picture'))
+  if (r.notebooks) parts.push(`${countLabel(r.notebooks, 'notebook')} added`)
+  return parts.length ? parts.join(' · ') : 'nothing new'
+}
+
 export function SettingsScreen() {
   const settings = useSettings()
   const books = useNotebooks()
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [usage, setUsage] = useState<string>('—')
   const [screen, setScreen] = useState<string[]>([])
+  const filesRef = useRef<HTMLInputElement>(null)
+  const [imported, setImported] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
 
   useEffect(() => {
     void navigator.storage?.persisted?.().then((v) => setPersisted(v))
@@ -141,6 +157,48 @@ export function SettingsScreen() {
               </button>
             ))}
           </div>
+
+          <h2>Import</h2>
+          <p>
+            The same door, opening inward. A zip an export made restores as itself — every
+            page carries its id, so restoring twice gets one copy — and any folder of plain
+            markdown comes in as new pages.
+          </p>
+          <div className="actions">
+            <button
+              className="btn caps"
+              disabled={importing}
+              onClick={() => filesRef.current?.click()}
+            >
+              {importing ? 'Reading' : 'Choose files'}
+            </button>
+            <input
+              ref={filesRef}
+              type="file"
+              multiple
+              accept=".md,.markdown,.txt,.zip,text/markdown,application/zip"
+              style={{ display: 'none' }}
+              aria-label="Import files"
+              onChange={async (e) => {
+                const picked = Array.from(e.currentTarget.files ?? [])
+                e.currentTarget.value = ''
+                if (!picked.length) return
+                setImporting(true)
+                try {
+                  setImported(importLine(await importFiles(picked)))
+                } catch {
+                  setImported('could not read that')
+                } finally {
+                  setImporting(false)
+                }
+              }}
+            />
+          </div>
+          {imported ? (
+            <p className="meta" style={{ marginTop: 16 }} data-import-report>
+              {imported}
+            </p>
+          ) : null}
 
           <SyncPanel />
 
