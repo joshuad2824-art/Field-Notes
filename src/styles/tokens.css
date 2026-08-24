@@ -119,11 +119,27 @@
      and it pads by whichever of the two is deeper rather than by both. */
   --safe-top: env(safe-area-inset-top, 0px);
   --browser-bottom: 0px;
-  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--browser-bottom));
-  /* The inset on its own, unmixed with the browser overlay. Nothing lays out
-     against this — it exists so the diagnostics panel can report what the
-     device says separately from what the token resolves to. */
+  /* How much of the screen sits *below* the app. Set by `lib/viewport.ts`,
+     which is the only place that can see `screen.height`. On an installed app
+     that covers the status bar, iOS hands the web view the screen less the
+     status bar and leaves the rest at the foot — measured on a phone, 894 of
+     956 — and then still reports a 34px bottom inset for a home indicator that
+     is entirely below the view. Padding for that inset reserves clearance from
+     something the app never reaches, twice over. */
+  --outside-bottom: 0px;
+  /* The inset on its own, unmixed with the browser overlay or the strip below
+     the app. `--safe-bottom` is built from it, and the diagnostics panel
+     reports it — which also makes the whole calculation testable, because a
+     desktop browser answers 0 to every `env()` and a suite can substitute
+     this one thing and watch the rest follow. Declared before its use. */
   --raw-inset-bottom: env(safe-area-inset-bottom, 0px);
+  /* So: whichever is deeper of the browser's own furniture and the part of the
+     indicator that actually overlaps us, and never less than nothing. */
+  --safe-bottom: max(
+    0px,
+    var(--browser-bottom),
+    calc(var(--raw-inset-bottom) - var(--outside-bottom))
+  );
 
   /* ── surfaces and light ───────────────────────────────────────────── */
   --shadow-lift: 0 2px 0 rgba(0, 0, 0, 0.4), 0 18px 44px rgba(0, 0, 0, 0.56);

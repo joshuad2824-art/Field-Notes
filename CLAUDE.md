@@ -190,6 +190,22 @@ What was Phase 3 gets picked over rather than built wholesale:
 
   The fix is a rule rather than another colour correction: **the outer elements carry the edge colour, the room moves inward.** `html`, `body` and `#root` are all driven by `setEdgeColor`; `--frame-bg` lives on `.app`, which is the innermost element that still covers the whole viewport and therefore the outermost one the system will never sample. The lantern wash moved to `.app::before` at `z-index: -1`, which paints above the room's own background and below every child.
 
+  **And then the space, which was the same mistake wearing different clothes.**
+  With the colour right, what was left was a wide empty band under the page
+  foot. Same cause: iOS hands an installed app the screen less the status bar —
+  894 of 956 on the phone, 712 of 744 on the iPad — leaves the rest at the
+  foot, and *still* reports a 34px bottom inset for a home indicator that is
+  sitting in that leftover rather than over the app. Padding for it reserved
+  clearance from something the app never reaches, so the foot floated 116pt off
+  the bottom: 20 of its own, 34 for an indicator that isn't there, and 62 of
+  screen that was never ours. `--outside-bottom` is that leftover, measured in
+  `viewport.ts` (the only place that can see `screen.height`), and
+  `--safe-bottom` now subtracts it — capped at 120px, because in landscape
+  `screen.height` keeps answering in portrait and the subtraction is nonsense.
+  `--safe-bottom` is built from `--raw-inset-bottom` rather than from `env()`
+  directly, which is what lets the suite substitute an inset a desktop browser
+  will never report.
+
   `public/probe.html` is the probe, and it is kept deliberately. Six rounds of this were spent reasoning about a device nobody could look at; the next round should start by loading `/probe.html` on the phone and reading the colour off it.
 
   What finally cracked it was **four other apps.** Tally, the tea timer, the trivia deck and the classroom dashboard all fill the screen on the same phone, and their `body` rules say why: `min-height: 100vh` (or `100svh`), the insets carried as *padding on `body`*, and the app's own colour as `body`'s background. In those apps the strip cannot be a different colour from the content, because it is the same element painting both, and there is no moment at which a repaint could be missed. Ours had the app's colour on `html` and the frame's colour on `body`, and only `body` was ever read.

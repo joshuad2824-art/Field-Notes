@@ -36,6 +36,10 @@ const KEYBOARD_THRESHOLD = 120
    screen would be worse than the band. */
 const MAX_OVERLAY = 160
 
+/* A strip below the app deeper than this is not a strip — it is `screen.height`
+   still answering in portrait while the device is on its side. */
+const MAX_OUTSIDE = 120
+
 let keyboardOpen = false
 const listeners = new Set<() => void>()
 
@@ -79,6 +83,20 @@ export function trackViewport(): void {
       clear('--app-top')
       const overlay = window.innerHeight - height - top
       set('--browser-bottom', `${Math.max(0, Math.min(MAX_OVERLAY, Math.round(overlay)))}px`)
+
+      /* And how much of the screen is below the app entirely. An installed app
+         that covers the status bar is handed the screen less the status bar —
+         894 of 956 on a phone, 712 of 744 on an iPad — and the leftover is at
+         the foot. iOS reports a bottom inset anyway, for an indicator sitting
+         in that leftover rather than over us, and padding for it puts a wide
+         empty band under the page foot.
+
+         Capped at MAX_OUTSIDE because in landscape `screen.height` keeps
+         reporting the portrait figure, so the subtraction is meaningless and
+         hundreds of pixels wide; past that it is a misreading and the inset is
+         left to stand on its own. */
+      const outside = window.screen.height - window.innerHeight
+      set('--outside-bottom', outside > 0 && outside <= MAX_OUTSIDE ? `${Math.round(outside)}px` : '0px')
     }
 
     if (open !== keyboardOpen) {

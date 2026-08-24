@@ -648,6 +648,68 @@ await atWidth(1440, 900, async (view) => {
   )
 })
 
+/* ── the strip below the app ─────────────────────────────────────────────
+   An installed app that covers the status bar is handed the screen less the
+   status bar, and the leftover is at the foot: 894 of 956 measured on a phone,
+   712 of 744 on an iPad. iOS reports a bottom inset anyway — for a home
+   indicator that is sitting in that leftover rather than over the app — and
+   padding for it put a wide empty band under the page foot, which is what the
+   metadata row "sitting way too high" turned out to be.
+
+   `env()` answers 0 in a desktop browser, so the inset is substituted through
+   `--raw-inset-bottom`, which is the token `--safe-bottom` is built from. */
+
+for (const [label, viewH, screenH, expectOutside, expectSafe] of [
+  ['a phone: 894 of 956, the indicator is below us', 894, 956, '62px', 0],
+  ['a device that fills its screen keeps the inset', 900, 900, '0px', 34],
+  ['landscape, where screen.height still answers in portrait', 430, 956, '0px', 34],
+]) {
+  const context = await browser.newContext({ viewport: { width: 440, height: viewH } })
+  await context.addInitScript(settledZoom)
+  await context.addInitScript((h) => {
+    Object.defineProperty(window.screen, 'height', { get: () => h, configurable: true })
+  }, screenH)
+  const view = await context.newPage()
+  view.on('pageerror', (e) => problems.push(`outside: ${e.message}`))
+  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.waitForTimeout(900)
+  await view.addStyleTag({ content: ':root { --raw-inset-bottom: 34px; }' })
+  await view.evaluate(() => window.dispatchEvent(new Event('resize')))
+  await view.waitForTimeout(300)
+
+  const got = await view.evaluate(() => {
+    const probe = document.createElement('div')
+    probe.style.cssText = 'position:absolute;visibility:hidden;height:var(--safe-bottom)'
+    document.body.appendChild(probe)
+    const safe = Math.round(probe.getBoundingClientRect().height)
+    probe.remove()
+    return {
+      outside: getComputedStyle(document.documentElement).getPropertyValue('--outside-bottom').trim(),
+      safe,
+    }
+  })
+  ok(label, got.outside === expectOutside && got.safe === expectSafe, JSON.stringify(got))
+  await context.close()
+}
+
+/* And the consequence, which is the thing that was actually complained about:
+   with the strip below us, the page foot has nothing left to clear and sits on
+   the app's own bottom edge. */
+await atWidth(440, 894, async (view) => {
+  await view.evaluate(() => {
+    Object.defineProperty(window.screen, 'height', { get: () => 956, configurable: true })
+    window.dispatchEvent(new Event('resize'))
+  })
+  await view.addStyleTag({ content: ':root { --raw-inset-bottom: 34px; }' })
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(900)
+  const gap = await view.evaluate(() => {
+    const foot = document.querySelector('.pagefoot-measure')
+    return Math.round(window.innerHeight - foot.getBoundingClientRect().bottom)
+  })
+  ok('the page foot sits on the bottom edge rather than above a band', gap === 0, `${gap}px short`)
+})
+
 /* ── what the shell points at ───────────────────────────────────────────
    The icons are cache-first out of the service worker's SHELL cache, so a path
    that 404s is not a broken picture — it is a worker that never installs and
@@ -686,7 +748,7 @@ await atWidth(1440, 900, async (view) => {
   )
   ok(
     'and the worker was bumped, or none of the above reaches a phone',
-    shell.version === 'v7',
+    shell.version === 'v8',
     shell.version,
   )
 })

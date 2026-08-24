@@ -5,7 +5,7 @@
 /* Bump this to land a change to anything in the shell — the manifest is
    cached cache-first and is only re-fetched when this worker reinstalls, so a
    manifest edit on an unchanged version never reaches a phone at all. */
-const VERSION = 'v7'
+const VERSION = 'v8'
 const SHELL = `shell-${VERSION}`
 const ASSETS = `assets-${VERSION}`
 const FONTS = `fonts-${VERSION}`
