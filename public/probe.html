@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>edge probe</title>
+    <style>
+      /* Three loud, unmistakable colours. Whatever ends up in the strip the
+         system keeps names the element it was sampled from. */
+      html { background: #ff0000; }            /* RED   = the canvas / html   */
+      body { background: #0000ff; margin: 0; } /* BLUE  = body                */
+      html, body { height: 100%; overflow: hidden; }
+      body { position: fixed; inset: 0; width: 100%; }
+      #root {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: #00b140;                   /* GREEN = the app             */
+        font: 15px ui-monospace, Menlo, monospace;
+        color: #fff;
+        padding: 8px 10px;
+        overflow: hidden;
+      }
+      b { color: #ffe000; }
+    </style>
+  </head>
+  <body>
+    <div id="root"><pre id="out">reading…</pre></div>
+    <script>
+      function px(name) {
+        const probe = document.createElement('div')
+        probe.style.cssText = 'position:absolute;visibility:hidden;height:' + name
+        document.body.appendChild(probe)
+        const h = Math.round(probe.getBoundingClientRect().height)
+        probe.remove()
+        return h
+      }
+      function paint(el) { return getComputedStyle(el).backgroundColor }
+      function render() {
+        const vv = window.visualViewport
+        const standalone =
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true
+        document.getElementById('out').textContent = [
+          'RED   = html',
+          'BLUE  = body',
+          'GREEN = the app',
+          '',
+          'innerHeight      ' + window.innerHeight,
+          'visualViewport   ' + (vv ? Math.round(vv.height) : '-'),
+          'client           ' + document.documentElement.clientHeight,
+          'screen.height    ' + window.screen.height,
+          'outside the view ' + Math.max(0, window.screen.height - window.innerHeight),
+          '',
+          'inset TOP        ' + px('env(safe-area-inset-top,0px)'),
+          'inset BOTTOM     ' + px('env(safe-area-inset-bottom,0px)'),
+          '',
+          'html bg          ' + paint(document.documentElement),
+          'body bg          ' + paint(document.body),
+          '#root reaches    ' + Math.round(document.getElementById('root').getBoundingClientRect().bottom),
+          'body reaches     ' + Math.round(document.body.getBoundingClientRect().bottom),
+          '',
+          'standalone       ' + standalone,
+        ].join('\n')
+      }
+      render()
+      addEventListener('resize', render)
+      visualViewport && visualViewport.addEventListener('resize', render)
+    </script>
+  </body>
+</html>

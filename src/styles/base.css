@@ -53,21 +53,21 @@ body {
 }
 
 /* the lantern falling across the top of the room, and the corners going dark.
-   On `#root` rather than on `body`, because `body`'s background is the edge
-   colour now and the room has to be painted by something that only ever covers
-   the app. */
-#root::before {
+
+   On `.app`, which is the innermost element that still covers the whole
+   viewport. It cannot live any further out than that: `html`, `body` and
+   `#root` all carry the *edge* colour now, and a wash painted over one of them
+   would be painted over the strip as well. `z-index: -1` inside a stacking
+   context paints above the element's own background and below every child,
+   which is exactly the layer the wash wants and needs no rule on the
+   children. */
+.app::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
   background: var(--wash-lantern), var(--vignette);
-}
-/* Above the wash. The screens each render one `.app`, so this is that one. */
-#root > * {
-  position: relative;
-  z-index: 1;
 }
 
 /* Pinned to the visible region rather than the layout viewport, so the tools
@@ -92,14 +92,23 @@ body {
   bottom: 0;
   z-index: 1;
   height: var(--app-height, auto);
-  /* The room. This used to be `body`'s, and it moved here so that `body` could
-     be free to carry the edge colour instead — see the note on the canvas
-     above. `#root` covers exactly the viewport, so nothing about the look
-     changed by moving it. */
+  /* The edge colour, like `html` and `body` — not the room. Measured on a real
+     iPhone with a three-colour probe: paint `html` red, `body` blue and this
+     element green, and the strip the system keeps comes out **green**. iOS
+     samples the topmost opaque background that spans the app, which is this
+     one. That is why the band was `#142a2b` for five attempts: whichever
+     element happened to be outermost-and-opaque was carrying `--frame-bg`.
+     The room moved inward to `.app`, which covers exactly the viewport and so
+     is never sampled. `lib/themecolor.ts` drives all three. */
   background: var(--frame-bg);
 }
 
+/* The room. It covers exactly the viewport and never a pixel more, which is
+   what makes it safe to be the one opaque thing wearing the frame's colour. */
 .app {
+  position: relative;
+  z-index: 0;
+  background: var(--frame-bg);
   height: 100%;
   display: flex;
   flex-direction: column;

@@ -37,7 +37,7 @@ export function setEdgeColor(color: string): void {
   if (next === painted) return
   painted = next
 
-  /* Both, and this is the whole correction. `html` is what the CSS spec says
+  /* All three, and this is the whole correction. `html` is what the CSS spec says
      paints the canvas, and setting it alone is what three previous goes at
      this did — correctly, and to no effect, because the strip WebKit keeps
      below an installed app on a phone is painted from `body`. Measured: on a
@@ -46,6 +46,11 @@ export function setEdgeColor(color: string): void {
      be wrong whichever one the system decides to read. */
   document.documentElement.style.backgroundColor = next
   if (document.body) document.body.style.backgroundColor = next
+  /* And `#root`, which is the one the system actually reads — see the note in
+     base.css. All three, because which of them is outermost-and-opaque is not
+     a thing worth depending on, and setting three costs nothing. */
+  const root = document.getElementById('root')
+  if (root) root.style.backgroundColor = next
 
   const meta = tag()
   if (meta && meta.content !== next) meta.content = next

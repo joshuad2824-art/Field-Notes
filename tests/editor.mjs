@@ -686,7 +686,7 @@ await atWidth(1440, 900, async (view) => {
   )
   ok(
     'and the worker was bumped, or none of the above reaches a phone',
-    shell.version === 'v6',
+    shell.version === 'v7',
     shell.version,
   )
 })
@@ -823,17 +823,34 @@ await atWidth(390, 844, async (view) => {
      that used to paint it has to still be painting it — otherwise this fix
      would have traded a band at the bottom for a cream screen behind a
      half-transparent list. */
+  /* The room is `.app` now — the innermost element that still covers the whole
+     viewport, and therefore the outermost one the system will never sample.
+     `#root` carries the edge colour with `html` and `body`. */
   ok(
-    'and the room is still painted, by the app rather than by the document',
+    'the room is painted by the app, not by anything the system can sample',
+    await view.evaluate(() => {
+      const app = getComputedStyle(document.querySelector('.app')).backgroundColor
+      const root = getComputedStyle(document.getElementById('root')).backgroundColor
+      return app === 'rgb(20, 42, 43)' && root !== app
+    }),
+    await view.evaluate(
+      () =>
+        `app ${getComputedStyle(document.querySelector('.app')).backgroundColor} / root ${
+          getComputedStyle(document.getElementById('root')).backgroundColor
+        }`,
+    ),
+  )
+  ok(
+    'and `#root` carries the edge colour along with the other two',
     await view.evaluate(() => {
       const root = getComputedStyle(document.getElementById('root')).backgroundColor
-      return root !== 'rgba(0, 0, 0, 0)' && root !== ''
+      return root === getComputedStyle(document.body).backgroundColor
     }),
   )
   ok(
-    'with the lantern still falling across it',
+    'with the lantern still falling across the room',
     await view.evaluate(() => {
-      const wash = getComputedStyle(document.getElementById('root'), '::before').backgroundImage
+      const wash = getComputedStyle(document.querySelector('.app'), '::before').backgroundImage
       return wash.includes('gradient')
     }),
   )
