@@ -700,7 +700,7 @@ await atWidth(440, 894, async (view) => {
     Object.defineProperty(window.screen, 'height', { get: () => 956, configurable: true })
     window.dispatchEvent(new Event('resize'))
   })
-  await view.addStyleTag({ content: ':root { --raw-inset-bottom: 34px; }' })
+  await view.addStyleTag({ content: ':root { --safe-top: 62px; --raw-inset-bottom: 34px; }' })
   await view.locator('.list-row').first().click()
   await view.waitForTimeout(900)
   const gap = await view.evaluate(() => {
@@ -708,6 +708,64 @@ await atWidth(440, 894, async (view) => {
     return Math.round(window.innerHeight - foot.getBoundingClientRect().bottom)
   })
   ok('the page foot sits on the bottom edge rather than above a band', gap === 0, `${gap}px short`)
+  const clear = await view.evaluate(() => {
+    const foot = document.querySelector('.pagefoot-measure')
+    const pad = parseFloat(getComputedStyle(foot).paddingBottom)
+    return Math.round(window.innerHeight - (foot.getBoundingClientRect().bottom - pad))
+  })
+  ok('with the metadata row close under it', clear === 10, `${clear}px of air`)
+
+  /* ── the band behind the status bar ──────────────────────────────────
+     It exists so white status text stays legible over a cream leaf, so it can
+     only take the page's colour on the stock that is dark enough to carry
+     white text. Night matches and the screen is one colour top to bottom;
+     paper keeps the frame, because iOS draws the clock in white and there is
+     no asking it not to. */
+  const bandOn = async () =>
+    view.evaluate(() => ({
+      stock: document.querySelector('.leaf').dataset.stock,
+      band: getComputedStyle(document.querySelector('.statusband')).backgroundColor,
+      leaf: getComputedStyle(document.querySelector('.leaf')).backgroundColor,
+      height: Math.round(document.querySelector('.statusband').getBoundingClientRect().height),
+    }))
+
+  const onPaper = await bandOn()
+  ok(
+    'on a cream page the band stays dark, or the clock is unreadable',
+    onPaper.stock === 'paper' && onPaper.band !== onPaper.leaf && onPaper.band === 'rgb(20, 42, 43)',
+    JSON.stringify(onPaper),
+  )
+
+  await view.locator('.mark-button[aria-label="Page options"]').click()
+  await view.waitForTimeout(300)
+  await view.locator('.sheet-item', { hasText: 'Stock' }).click()
+  await view.waitForTimeout(500)
+  await view.keyboard.press('Escape')
+  await view.waitForTimeout(400)
+  const onNight = await bandOn()
+  ok(
+    'on a night page it takes the stock and the screen is one colour',
+    onNight.stock === 'night' && onNight.band === onNight.leaf,
+    JSON.stringify(onNight),
+  )
+  ok('and it is still the height of the inset', onNight.height === 62, `${onNight.height}px`)
+})
+
+/* On a desk the leaf is inset and the band reads as one piece with the desk
+   above it, which is what decision 11 argued and is still right there. */
+await atWidth(1440, 900, async (view) => {
+  await view.addStyleTag({ content: ':root { --safe-top: 24px; }' })
+  await view.locator('.list-row').first().click()
+  await view.waitForTimeout(800)
+  const wide = await view.evaluate(() => ({
+    band: getComputedStyle(document.querySelector('.statusband')).backgroundColor,
+    leaf: getComputedStyle(document.querySelector('.leaf')).backgroundColor,
+  }))
+  ok(
+    'and on a desk it keeps the frame whatever the stock',
+    wide.band === 'rgb(20, 42, 43)' && wide.band !== wide.leaf,
+    JSON.stringify(wide),
+  )
 })
 
 /* ── what the shell points at ───────────────────────────────────────────
@@ -748,7 +806,7 @@ await atWidth(1440, 900, async (view) => {
   )
   ok(
     'and the worker was bumped, or none of the above reaches a phone',
-    shell.version === 'v8',
+    shell.version === 'v9',
     shell.version,
   )
 })
@@ -788,7 +846,10 @@ await atWidth(1194, 834, async (view) => {
     pad: getComputedStyle(el).paddingBottom,
     bottom: Math.round(window.innerHeight - el.getBoundingClientRect().bottom),
   }))
-  ok('the page foot clears the home indicator', foot.pad === '40px', foot.pad)
+  /* 10 of its own plus the 20 this test tells the device to report. It was 20
+     of its own until the metadata row was moved down to sit closer to the
+     edge; the inset half is the part that matters here. */
+  ok('the page foot clears the home indicator', foot.pad === '30px', foot.pad)
   ok('and the leaf runs to the bottom edge', foot.bottom === 0, `${foot.bottom}px short`)
 })
 

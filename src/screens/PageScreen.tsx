@@ -217,7 +217,10 @@ export function PageScreen({ id }: { id: string }) {
 
   return (
     <div className="app">
-      <div className="statusband" />
+      {/* The stock rides on the band itself rather than on `.app`, so the one
+          custom property it needs resolves here and nothing else in the tree
+          inherits a leaf's text colours. */}
+      <div className="statusband" data-stock={stock} />
 
       <Shell notebook={book.id} activeId={page.id}>
         {({ toggle, hidden }) => (

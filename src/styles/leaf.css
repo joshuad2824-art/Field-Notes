@@ -1,13 +1,32 @@
 /* The lit page. A cream leaf set into the dark room, and everything on it. */
 
 /* A thin band behind the status bar. The page runs to the top of the screen
-   otherwise, and white status text on a cream leaf is unreadable. It is the
-   frame's own teal, so on a tablet it reads as one band with the desk above
-   the leaf rather than a brown stripe and then a teal one. */
+   otherwise, and white status text on a cream leaf is unreadable.
+
+   The frame's own teal by default, so on a desk it reads as one band with the
+   desk above the leaf rather than a brown stripe and then a teal one — which
+   is what decision 11 argued and is still right wherever the leaf is inset.
+
+   Below 1120 the leaf is the whole screen, and there the same argument runs
+   the other way: a band in a colour that appears nowhere else is the only seam
+   left once the strip at the foot has stopped being one. So on a phone it
+   wears the page's own stock — and **only on night stock**, which is the whole
+   of why this band exists in the first place. iOS draws the clock and the
+   battery in white and there is no way to ask it not to, so a cream band is a
+   status bar you cannot read. Night is dark enough to carry white text, cream
+   is not, and matching the screen is not worth losing the time of day.
+
+   Only where a `data-stock` was put on it, which is the page screen; the
+   calendar and the day view keep the frame. */
 .statusband {
   flex: 0 0 auto;
   height: var(--safe-top);
   background: var(--frame-bg);
+}
+@media (max-width: 1119px) {
+  .statusband[data-stock='night'] {
+    background: var(--surface-page);
+  }
 }
 
 .desk {
@@ -689,7 +708,11 @@
   width: 100%;
   max-width: min(100%, var(--measure-max));
   margin: 0 var(--page-margin-x);
-  padding: 14px 0 calc(20px + var(--safe-bottom));
+  /* 10 below rather than 20: with the indicator's clearance gone on a phone
+     — see `--outside-bottom` — what was left under this row was its own
+     padding, and a metadata line does not need as much beneath it as the
+     writing above it needs above it. */
+  padding: 14px 0 calc(10px + var(--safe-bottom));
   border-top: 1px solid var(--border-hairline);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
