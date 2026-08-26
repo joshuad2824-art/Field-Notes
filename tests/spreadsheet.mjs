@@ -308,6 +308,81 @@ await desk(1440, 900, async (page) => {
       'The tent held through the night',
     ))
 
+  /* 9c. The other half of it, and the one that needed no press inside
+         anything. CodeMirror asks whether a press landed in the selection by
+         measuring the *browser's* selection rectangles, and when the browser
+         has no selection at all it answers "yes" rather than "no" — so every
+         press on the page reads as the start of a text drag and no drag
+         anywhere picks anything. That state is ordinary on Windows, where
+         Chrome and Edge drop the selection when the editor loses the focus.
+         Headless Chromium keeps it, so it is made here deliberately: this is
+         a real branch of the code either way, and the only one a Mac never
+         reaches. */
+  /* A few more lines, so a press can land on one the caret was never on. */
+  await page.locator('.cm-content').click()
+  await page.keyboard.press('ControlOrMeta+End')
+  for (const line of [
+    'Rope and canvas and rain across the whole ridge line at dawn together.',
+    'Third line of writing here, long enough to drag a good way across it.',
+  ]) {
+    await page.keyboard.press('Enter')
+    await page.keyboard.type(line, { delay: 2 })
+  }
+  await page.waitForTimeout(300)
+
+  const forget = async () => {
+    await page.evaluate(() => {
+      const view = document.querySelector('.cm-content').cmTile.view
+      view.dispatch({ selection: { anchor: 4, head: 20 } })
+      view.contentDOM.blur()
+      window.getSelection().removeAllRanges()
+    })
+    await page.waitForTimeout(200)
+  }
+
+  await forget()
+  ok('the browser can hold no selection while the editor holds one',
+    await page.evaluate(() => {
+      const view = document.querySelector('.cm-content').cmTile.view
+      return !view.state.selection.main.empty && window.getSelection().rangeCount === 0
+    }))
+  const other = await page.locator('.cm-line').nth(1).boundingBox()
+  await page.mouse.move(other.x + 20, other.y + other.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(other.x + 240, other.y + other.height / 2, { steps: 14 })
+  await page.mouse.up()
+  await page.waitForTimeout(200)
+  ok('a drag still picks writing with a selection the browser has forgotten',
+    (await page.evaluate(() => window.getSelection().toString())).length > 5,
+    JSON.stringify(await page.evaluate(() => window.getSelection().toString())))
+
+  /* And a press must not need a click on that line first, which was the
+     shape the report took. */
+  await forget()
+  const far = await page.locator('.cm-line').nth(2).boundingBox()
+  await page.mouse.move(far.x + 15, far.y + far.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(far.x + 200, far.y + far.height / 2, { steps: 12 })
+  await page.mouse.up()
+  await page.waitForTimeout(200)
+  ok('on a line the caret was never on, without clicking it first',
+    (await page.evaluate(() => window.getSelection().toString())).length > 5,
+    JSON.stringify(await page.evaluate(() => window.getSelection().toString())))
+
+  /* A right press must be left alone — it opens a menu about the selection,
+     and collapsing first would empty the thing the menu is about. */
+  await page.mouse.move(wide.x + 10, wide.y + wide.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(wide.x + 240, wide.y + wide.height / 2, { steps: 12 })
+  await page.mouse.up()
+  await page.waitForTimeout(200)
+  const held = await page.evaluate(() => window.getSelection().toString())
+  await page.mouse.click(wide.x + 100, wide.y + wide.height / 2, { button: 'right' })
+  await page.waitForTimeout(200)
+  ok('a right press leaves the selection alone',
+    (await page.evaluate(() => window.getSelection().toString())) === held,
+    JSON.stringify(await page.evaluate(() => window.getSelection().toString())))
+
   /* And shift-click must still extend a selection rather than start one. */
   await page.mouse.click(wide.x + 10, wide.y + wide.height / 2)
   await page.waitForTimeout(120)
