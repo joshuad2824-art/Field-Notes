@@ -1376,17 +1376,17 @@ await atWidth(1440, 900, async (view) => {
 
   /* rows and columns */
   await cells.nth(3).click()
-  await view.locator('.md-table-control[aria-label="Add a row"]').click()
+  await view.locator('.md-table-control[aria-label^="Add a row"]').click()
   await view.waitForTimeout(400)
   ok('a row can be added', (await view.locator('.md-table tr').count()) === 4)
 
   await view.locator('.md-table td').nth(3).click()
-  await view.locator('.md-table-control[aria-label="Add a column"]').click()
+  await view.locator('.md-table-control[aria-label^="Add a column"]').click()
   await view.waitForTimeout(400)
   ok('a column can be added', (await view.locator('.md-table tr').first().locator('td').count()) === 4)
 
   await view.locator('.md-table td').nth(4).click()
-  await view.locator('.md-table-control[aria-label="Remove this column"]').click()
+  await view.locator('.md-table-control[aria-label="Remove these columns"]').click()
   await view.waitForTimeout(400)
   ok(
     'and taken away again',
@@ -1395,7 +1395,7 @@ await atWidth(1440, 900, async (view) => {
 
   /* merging is per row — that is the whole point of it */
   await view.locator('.md-table td').nth(4).click()
-  await view.locator('.md-table-control[aria-label="Join this cell to the one on its right"]').click()
+  await view.locator('.md-table-control[aria-label="Merge the picked cells, or join this one to its right"]').click()
   await view.waitForTimeout(400)
   const spans = await view
     .locator('.md-table tr')
@@ -1409,7 +1409,7 @@ await atWidth(1440, 900, async (view) => {
     (await view.locator('.md-table tr').first().locator('td').count()) === 3,
   )
 
-  await view.locator('.md-table-control[aria-label="Give the merged column back"]').click()
+  await view.locator('.md-table-control[aria-label="Give the merged cells back"]').click()
   await view.waitForTimeout(400)
   ok(
     'and it can be given back',
@@ -1812,10 +1812,10 @@ await atWidth(1440, 900, async (view) => {
     (await cells.nth(0).evaluate((el) => getComputedStyle(el).textTransform)) === 'none',
   )
 
-  await view.locator('.md-table-control[aria-label="Join this cell to the one on its right"]').click()
+  await view.locator('.md-table-control[aria-label="Merge the picked cells, or join this one to its right"]').click()
   await view.waitForTimeout(300)
   await view.locator('.md-table td').nth(0).click()
-  await view.locator('.md-table-control[aria-label="Join this cell to the one on its right"]').click()
+  await view.locator('.md-table-control[aria-label="Merge the picked cells, or join this one to its right"]').click()
   await view.waitForTimeout(400)
   ok(
     'a title can be merged clean across the head row',

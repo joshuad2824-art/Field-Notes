@@ -1,26 +1,37 @@
 import { Decoration, EditorView, WidgetType } from '@codemirror/view'
+import { redo, undo } from '@codemirror/commands'
 import type { Text } from '@codemirror/state'
 import {
+  type Align,
   type Cell,
   FULL_WIDTH,
   MIN_TABLE_WIDTH,
+  type Placed,
+  type Rect,
   type Table,
   addColumn,
   addRow,
+  cellAt,
   clampWidth,
-  columnOf,
+  clearRect,
+  columnCount,
   emptyTable,
   isDelimiterRow,
   isTableAttr,
   isTableRow,
-  mergeAt,
+  mergeRect,
+  normaliseRect,
   parseTable,
+  placement,
   removeColumn,
   removeRow,
+  rowCount,
   serializeTable,
+  setAlign,
   setTableWidth,
   setWidths,
-  splitAt,
+  splitRect,
+  writeBlock,
 } from '../lib/table'
 
 /* A table is the one thing on the page that can't be decorated text.
@@ -40,6 +51,8 @@ const MIN_WIDTH = 6
 /* Every row is a whole number of 28px lines, so the dot grid never drifts out
    from under a table the way it would under an arbitrary border. */
 export const ROW_PITCH = 28
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
 
 export interface TableRun {
   from: number
@@ -120,7 +133,7 @@ function pair(
     ['ink', 0],
     ['felt', 1.1],
   ] as const) {
-    const el = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    const el = document.createElementNS(SVG_NS, 'path')
     el.setAttribute('d', drawn(x1, y1, x2, y2, seed, amp))
     el.setAttribute('class', `${cls} md-hand-${hand}`)
     svg.appendChild(el)
@@ -344,7 +357,63 @@ export function capsInCell(): boolean {
   return true
 }
 
+/* ── the caret, kept where it was ────────────────────────────────────────
+   `render` used to refuse to write over whichever cell had the focus, which
+   is right while you are typing in it and wrong the moment anything else
+   changes what that cell should say. Take a row out from under the caret and
+   the cell it was in kept the deleted row's writing — the file was correct,
+   the drawing was not, and the only way back was to close the page and open
+   it again.
+
+   So the cell is written over like any other, and the caret is put back by
+   counting characters. Typing is unaffected, because a cell that has just
+   sent its own text to the file already agrees with it and is never
+   rewritten. */
+function caretOffset(cell: HTMLElement): number | null {
+  const selection = window.getSelection()
+  if (!selection?.focusNode || !cell.contains(selection.focusNode)) return null
+  const range = document.createRange()
+  range.selectNodeContents(cell)
+  try {
+    range.setEnd(selection.focusNode, selection.focusOffset)
+  } catch {
+    return null
+  }
+  return range.toString().length
+}
+
+function placeCaret(cell: HTMLElement, offset: number): void {
+  const selection = window.getSelection()
+  if (!selection) return
+  const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT)
+  let left = offset
+  let node = walker.nextNode()
+  while (node) {
+    const length = node.textContent?.length ?? 0
+    if (left <= length) {
+      const range = document.createRange()
+      range.setStart(node, left)
+      range.collapse(true)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      return
+    }
+    left -= length
+    node = walker.nextNode()
+  }
+  const range = document.createRange()
+  range.selectNodeContents(cell)
+  range.collapse(false)
+  selection.removeAllRanges()
+  selection.addRange(range)
+}
+
 /* ── the widget ─────────────────────────────────────────────────────── */
+
+interface Spot {
+  top: number
+  column: number
+}
 
 interface Live {
   from: number
@@ -352,7 +421,15 @@ interface Live {
   table: Table
 }
 
-type Host = HTMLElement & { live?: Live }
+type Host = HTMLElement & {
+  live?: Live
+  /* Where a range of cells was picked from, and where it runs to. Both null
+     when nothing but a caret is in the table. */
+  anchor?: Spot | null
+  head?: Spot | null
+  dragging?: boolean
+  watch?: ResizeObserver
+}
 
 export class TableWidget extends WidgetType {
   constructor(
@@ -373,6 +450,8 @@ export class TableWidget extends WidgetType {
     host.className = 'md-table'
     host.contentEditable = 'false'
     host.live = { from: this.from, to: this.to, table: this.table }
+    host.anchor = null
+    host.head = null
 
     const frame = document.createElement('div')
     frame.className = 'md-table-frame'
@@ -384,7 +463,7 @@ export class TableWidget extends WidgetType {
     table.appendChild(body)
     frame.appendChild(table)
 
-    const rules = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    const rules = document.createElementNS(SVG_NS, 'svg')
     rules.setAttribute('class', 'md-table-rules')
     rules.setAttribute('aria-hidden', 'true')
     frame.appendChild(rules)
@@ -397,6 +476,20 @@ export class TableWidget extends WidgetType {
     host.appendChild(controlsFor(host, view))
 
     render(host, view)
+    pickHandlers(host, view)
+
+    /* The rules are drawn from where the cells actually landed, which means
+       they are wrong the instant anything moves a cell that isn't an edit:
+       folding a column, turning a tablet, stepping the zoom dial, switching
+       to the felt pen — none of which change the document, so none of which
+       redraw anything. That is most of "it doesn't look right until I reload
+       the page", and the table is the only block on the leaf that can suffer
+       from it, because it is the only one drawing over itself. */
+    host.watch = new ResizeObserver(() => {
+      drawRules(host)
+      placeGrips(host)
+    })
+    host.watch.observe(table)
 
     /* The controls belong to whoever is writing in the table, and go when they
        leave. The delay is so that pressing one of them doesn't count as
@@ -407,7 +500,10 @@ export class TableWidget extends WidgetType {
       host.classList.add('active')
     })
     host.addEventListener('focusout', () => {
-      leaving = window.setTimeout(() => host.classList.remove('active'), 120)
+      leaving = window.setTimeout(() => {
+        host.classList.remove('active')
+        setPick(host, null, null)
+      }, 120)
     })
 
     return host
@@ -423,17 +519,25 @@ export class TableWidget extends WidgetType {
     return true
   }
 
+  destroy(dom: HTMLElement) {
+    ;(dom as Host).watch?.disconnect()
+  }
+
   ignoreEvent() {
     return true
   }
 }
 
 /* Write the table back into the document as markdown. */
-function commit(host: Host, view: EditorView, next: Table) {
+function commit(host: Host, view: EditorView, next: Table, focus?: Spot | null) {
   const live = host.live
   if (!live) return
   const text = serializeTable(next)
+  if (!text) return
   view.dispatch({ changes: { from: live.from, to: live.to, insert: text } })
+  /* CodeMirror updates the DOM inside `dispatch`, so by here the cells have
+     already been redrawn and the one worth standing in can be found. */
+  if (focus) focusSpot(host, focus)
 }
 
 /* Read what's in the cells right now and put it back in the file. */
@@ -447,20 +551,236 @@ function commitCells(host: Host, view: EditorView) {
       cells.push({
         text: htmlToCell(td).trim(),
         span: Number(td.getAttribute('colspan') ?? 1),
+        rows: Number(td.getAttribute('rowspan') ?? 1),
       })
     }
     rows.push(cells)
   }
   const text = serializeTable({ ...live.table, rows })
-  if (text === view.state.sliceDoc(live.from, live.to)) return
+  if (!text || text === view.state.sliceDoc(live.from, live.to)) return
   view.dispatch({ changes: { from: live.from, to: live.to, insert: text } })
+}
+
+/* ── picking cells ───────────────────────────────────────────────────────
+   A merge used to be a direction — "join this cell to the one on its right" —
+   which is why it could only ever go one way. It is a rectangle now, and a
+   rectangle has no direction: a range dragged from the right is the same
+   three cells as one dragged from the left, and a range dragged downward is
+   the same as one dragged up. Everything the controls do to more than one
+   cell reads this. */
+
+function spotOf(td: Element): Spot | null {
+  const el = td as HTMLElement
+  if (el.dataset.top == null) return null
+  return { top: Number(el.dataset.top), column: Number(el.dataset.column) }
+}
+
+export function pickedRect(host: Host): Rect | null {
+  if (!host.anchor || !host.head) return null
+  return normaliseRect(host.anchor, host.head)
+}
+
+function setPick(host: Host, anchor: Spot | null, head: Spot | null) {
+  host.anchor = anchor
+  host.head = head
+  paintPick(host)
+}
+
+function paintPick(host: Host) {
+  const rect = pickedRect(host)
+  const single = rect && rect.top === rect.bottom && rect.left === rect.right
+  for (const td of host.querySelectorAll('td')) {
+    const spot = spotOf(td)
+    const span = Number(td.getAttribute('colspan') ?? 1)
+    const rows = Number(td.getAttribute('rowspan') ?? 1)
+    const hit =
+      !!rect &&
+      !single &&
+      !!spot &&
+      spot.top <= rect.bottom &&
+      spot.top + rows - 1 >= rect.top &&
+      spot.column <= rect.right &&
+      spot.column + span - 1 >= rect.left
+    td.classList.toggle('picked', hit)
+  }
+  host.classList.toggle('picking', !!rect && !single)
+}
+
+/* A range worth calling a range: more than the one cell the caret is in.
+   Clicking a cell sets an anchor so that a later shift-click has somewhere to
+   measure from, and that anchor is not a selection — asking otherwise is how
+   shift-arrowing to pick three letters inside a cell turned into a cell
+   range. */
+function wideRect(host: Host): Rect | null {
+  const rect = pickedRect(host)
+  if (!rect) return null
+  return rect.top !== rect.bottom || rect.left !== rect.right ? rect : null
+}
+
+/* The rectangle the controls act on: the picked range if there is one, and
+   otherwise the one cell the caret is in. */
+function target(host: Host): Rect | null {
+  const rect = wideRect(host)
+  if (rect) return rect
+  const cell = focusedIn(host)
+  if (!cell) return null
+  return {
+    top: cell.top,
+    bottom: cell.top + cell.rows - 1,
+    left: cell.column,
+    right: cell.column + cell.span - 1,
+  }
+}
+
+/* Whichever cell was last written in, as the table itself understands it. */
+function focusedIn(host: Host): Placed | null {
+  const el = document.activeElement
+  const table = host.live?.table
+  if (!table) return null
+  if (el instanceof HTMLElement && el.tagName === 'TD' && host.contains(el)) {
+    const spot = spotOf(el)
+    if (spot) return cellAt(table, spot.top, spot.column)
+  }
+  return null
+}
+
+function tdAt(host: Host, spot: Spot): HTMLElement | null {
+  for (const td of host.querySelectorAll('td')) {
+    const at = spotOf(td)
+    if (!at) continue
+    const span = Number(td.getAttribute('colspan') ?? 1)
+    const rows = Number(td.getAttribute('rowspan') ?? 1)
+    if (
+      spot.top >= at.top &&
+      spot.top < at.top + rows &&
+      spot.column >= at.column &&
+      spot.column < at.column + span
+    ) {
+      return td as HTMLElement
+    }
+  }
+  return null
+}
+
+function focusSpot(host: Host, spot: Spot) {
+  const table = host.live?.table
+  if (!table) return
+  const top = Math.min(Math.max(0, spot.top), rowCount(table) - 1)
+  const column = Math.min(Math.max(0, spot.column), columnCount(table) - 1)
+  tdAt(host, { top, column })?.focus()
+}
+
+/* Dragging across the cells with a mouse. Only with a mouse or a pen: on a
+   touch screen the same gesture is how the page is scrolled, and taking that
+   away to gain a selection nobody can see themselves making is the wrong
+   trade. A finger merges with the two merge controls instead, which need no
+   gesture at all. */
+function pickHandlers(host: Host, view: EditorView) {
+  host.addEventListener('pointerdown', (event) => {
+    const td = (event.target as Element | null)?.closest?.('td')
+    if (!td || !host.contains(td)) return
+    const spot = spotOf(td)
+    if (!spot) return
+
+    if (event.shiftKey && host.anchor) {
+      event.preventDefault()
+      setPick(host, host.anchor, spot)
+      return
+    }
+
+    setPick(host, spot, spot)
+    if (event.pointerType === 'touch') return
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    host.dragging = true
+  })
+
+  host.addEventListener('pointermove', (event) => {
+    if (!host.dragging) return
+    const td = (event.target as Element | null)?.closest?.('td')
+    if (!td || !host.contains(td)) return
+    const spot = spotOf(td)
+    if (!spot || !host.anchor) return
+    if (spot.top === host.head?.top && spot.column === host.head?.column) return
+    /* The moment the drag leaves the cell it started in, it stops being a
+       drag through words and becomes a drag through cells. */
+    if (spot.top !== host.anchor.top || spot.column !== host.anchor.column) {
+      window.getSelection()?.removeAllRanges()
+    }
+    setPick(host, host.anchor, spot)
+  })
+
+  const done = () => {
+    host.dragging = false
+  }
+  host.addEventListener('pointerup', done)
+  host.addEventListener('pointercancel', done)
+  host.addEventListener('pointerleave', done)
+
+  /* A picked range leaves the same way a block arrives: tab-separated rows,
+     which is what every spreadsheet reads. The range is ours rather than the
+     browser's — the cells are not a DOM selection — so the clipboard has to
+     be filled by hand or the copy takes nothing at all. */
+  for (const kind of ['copy', 'cut'] as const) {
+    host.addEventListener(kind, (event) => {
+      const rect = wideRect(host)
+      const table = host.live?.table
+      if (!rect || !table) return
+      const clip = (event as ClipboardEvent).clipboardData
+      if (!clip) return
+      event.preventDefault()
+      const rows: string[] = []
+      for (let r = rect.top; r <= rect.bottom; r++) {
+        const line: string[] = []
+        for (let c = rect.left; c <= rect.right; c++) {
+          const cell = cellAt(table, r, c)
+          /* A merged cell says its writing once, under its own corner, and
+             leaves the rest of the block empty — which is what a spreadsheet
+             puts on the clipboard for a merged cell too. */
+          const mine =
+            cell && cell.top === r && cell.column === c
+              ? (table.rows[cell.row]?.[cell.index]?.text ?? '')
+              : ''
+          line.push(mine.replace(/\t/g, ' '))
+        }
+        rows.push(line.join('\t'))
+      }
+      clip.setData('text/plain', rows.join('\n'))
+      if (kind === 'cut') commit(host, view, clearRect(table, rect), { top: rect.top, column: rect.left })
+    })
+  }
+}
+
+/* ── what a spreadsheet puts on the clipboard ────────────────────────────
+   Excel, Numbers and Sheets all put two things there: a real <table> in
+   text/html, and tab-separated rows in text/plain. Either is a block, and a
+   block pasted into a cell should fill the cells it came from rather than
+   landing as one long string in the one cell that had the caret. */
+export function clipboardTable(html: string, text: string): string[][] | null {
+  if (html && /<table/i.test(html)) {
+    const doc = new DOMParser().parseFromString(html, 'text/html')
+    const rows = [...doc.querySelectorAll('tr')]
+      .map((tr) =>
+        [...tr.querySelectorAll('td, th')].map((td) =>
+          (td.textContent ?? '').replace(/\s+/g, ' ').trim(),
+        ),
+      )
+      .filter((row) => row.length)
+    if (rows.length && (rows.length > 1 || rows[0].length > 1)) return rows
+  }
+
+  if (!text) return null
+  const lines = text.replace(/\r\n?/g, '\n').replace(/\n+$/, '').split('\n')
+  if (lines.length === 1 && !lines[0].includes('\t')) return null
+  const rows = lines.map((line) => line.split('\t').map((cell) => cell.trim()))
+  if (rows.length === 1 && rows[0].length === 1) return null
+  return rows
 }
 
 function render(host: Host, view: EditorView) {
   const live = host.live
   if (!live) return
   const { table } = live
-  const columns = table.widths.length
+  const columns = columnCount(table)
 
   const colgroup = host.querySelector('colgroup')
   const body = host.querySelector('tbody')
@@ -482,6 +802,7 @@ function render(host: Host, view: EditorView) {
     ;(colgroup.children[i] as HTMLElement).style.width = `${w}%`
   })
 
+  const spots = placement(table)
   const active = document.activeElement
 
   while (body.children.length > table.rows.length) body.lastElementChild?.remove()
@@ -500,14 +821,33 @@ function render(host: Host, view: EditorView) {
     }
     row.forEach((cell, c) => {
       const td = tr.children[c] as HTMLTableCellElement
+      const spot = spots.find((p) => p.row === r && p.index === c)
       td.setAttribute('colspan', String(cell.span))
+      if ((cell.rows ?? 1) > 1) td.setAttribute('rowspan', String(cell.rows))
+      else td.removeAttribute('rowspan')
       td.dataset.row = String(r)
       td.dataset.cell = String(c)
-      /* Never write over the cell being typed in — that is what would move
-         the caret to the front of the word. */
-      if (td !== active && htmlToCell(td) !== cell.text) td.innerHTML = cellToHtml(cell.text)
+      td.dataset.top = String(spot?.top ?? r)
+      td.dataset.column = String(spot?.column ?? c)
+      td.style.textAlign = table.aligns?.[spot?.column ?? c] ?? 'left'
+
+      /* The cell being typed in has already told the file what it says, so it
+         agrees and is left alone. When it genuinely disagrees — a row taken
+         out from under it, a merge that pulled its neighbour in — it is
+         rewritten like any other and the caret counted back to where it
+         was. */
+      if (htmlToCell(td).trim() === cell.text) return
+      if (td !== active) {
+        td.innerHTML = cellToHtml(cell.text)
+        return
+      }
+      const offset = caretOffset(td)
+      td.innerHTML = cellToHtml(cell.text)
+      if (offset != null) placeCaret(td, Math.min(offset, cell.text.length))
     })
   })
+
+  paintPick(host)
 
   requestAnimationFrame(() => {
     drawRules(host)
@@ -519,9 +859,25 @@ function cellHandlers(td: HTMLElement, host: Host, view: EditorView) {
   td.addEventListener('input', () => commitCells(host, view))
   td.addEventListener('blur', () => commitCells(host, view))
   td.addEventListener('keydown', (event) => {
-    /* Inside a cell the browser is the editor, so the marks are its own. */
+    const spot = spotOf(td)
+    const table = host.live?.table
+    if (!table || !spot) return
+
+    /* Inside a cell the browser is the editor, so the marks are its own —
+       but the history is not. CodeMirror owns the document the table is
+       written into, so ⌘Z has to reach it; letting the browser's own
+       contenteditable undo run instead walked one character back out of one
+       cell and left the file saying something else entirely. */
     if (event.metaKey || event.ctrlKey) {
       const key = event.key.toLowerCase()
+      if (key === 'z' || key === 'y') {
+        event.preventDefault()
+        commitCells(host, view)
+        const back = key === 'y' || event.shiftKey ? redo : undo
+        back(view)
+        requestAnimationFrame(() => focusSpot(host, spot))
+        return
+      }
       const mark = key === 'b' ? 'bold' : key === 'i' ? 'italic' : null
       if (mark) {
         event.preventDefault()
@@ -530,31 +886,108 @@ function cellHandlers(td: HTMLElement, host: Host, view: EditorView) {
         return
       }
     }
+
     /* Enter would put a line break inside the cell, which the file has no way
        to say. It moves down a row instead, the way a spreadsheet does. */
     if (event.key === 'Enter') {
       event.preventDefault()
-      const tr = td.parentElement
-      const next = tr?.nextElementSibling?.children[Number(td.dataset.cell)]
-      if (next instanceof HTMLElement) next.focus()
+      const below = cellAt(table, spot.top + 1, spot.column)
+      if (below) focusSpot(host, { top: below.top, column: below.column })
       return
     }
+
     if (event.key === 'Tab') {
       event.preventDefault()
       const cells = [...host.querySelectorAll('td')]
       const at = cells.indexOf(td as HTMLTableCellElement)
       const to = cells[at + (event.shiftKey ? -1 : 1)]
-      if (to) to.focus()
+      if (to instanceof HTMLElement) {
+        to.focus()
+        return
+      }
+      /* Off the end of the last cell, which used to do nothing at all. A
+         spreadsheet grows there, and a table you can only make longer with a
+         button is a table you stop adding to. */
+      if (!event.shiftKey) {
+        const last = rowCount(table) - 1
+        commit(host, view, addRow(table, last), { top: last + 1, column: 0 })
+      }
       return
     }
+
+    /* Up and down move between rows. A cell is one line by definition, so
+       there is nowhere else for them to go, and every spreadsheet anyone has
+       used moves this way. */
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      const step = event.key === 'ArrowDown' ? 1 : -1
+      const from = cellAt(table, spot.top, spot.column) ?? { top: spot.top, rows: 1 }
+      const next = step > 0 ? from.top + from.rows : from.top - 1
+      if (event.shiftKey) {
+        event.preventDefault()
+        setPick(host, host.anchor ?? spot, { top: Math.max(0, Math.min(rowCount(table) - 1, next)), column: host.head?.column ?? spot.column })
+        return
+      }
+      const landing = cellAt(table, next, spot.column)
+      if (!landing) return
+      event.preventDefault()
+      setPick(host, null, null)
+      focusSpot(host, { top: landing.top, column: landing.column })
+      return
+    }
+
+    if (event.shiftKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight') && wideRect(host)) {
+      event.preventDefault()
+      const step = event.key === 'ArrowRight' ? 1 : -1
+      const column = Math.max(0, Math.min(columnCount(table) - 1, (host.head?.column ?? spot.column) + step))
+      setPick(host, host.anchor ?? spot, { top: host.head?.top ?? spot.top, column })
+      return
+    }
+
+    /* A picked range is cleared as one, the way a spreadsheet clears it. */
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+      const rect = wideRect(host)
+      if (rect) {
+        event.preventDefault()
+        commit(host, view, clearRect(table, rect), { top: rect.top, column: rect.left })
+        return
+      }
+    }
+
+    /* Escape lets go of the range, and then of the table — the editor still
+       has to be something a keyboard can get out of. */
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      if (wideRect(host)) {
+        setPick(host, null, null)
+        return
+      }
+      commitCells(host, view)
+      const live = host.live
+      td.blur()
+      view.focus()
+      if (live) view.dispatch({ selection: { anchor: Math.min(live.to, view.state.doc.length) } })
+      return
+    }
+
     /* Everything else stays in the cell; letting it reach CodeMirror would
        move the caret in the document behind the table. */
     event.stopPropagation()
   })
+
   td.addEventListener('paste', (event) => {
-    /* Paste as text — a cell holds a string, not a document. */
     event.preventDefault()
-    const text = (event as ClipboardEvent).clipboardData?.getData('text/plain') ?? ''
+    const data = (event as ClipboardEvent).clipboardData
+    const text = data?.getData('text/plain') ?? ''
+    const html = data?.getData('text/html') ?? ''
+    const block = clipboardTable(html, text)
+    const spot = spotOf(td)
+    const table = host.live?.table
+
+    if (block && spot && table) {
+      commit(host, view, writeBlock(table, spot.top, spot.column, block), spot)
+      return
+    }
+    /* One cell holds a string, not a document. */
     document.execCommand('insertText', false, text.replace(/\s+/g, ' '))
   })
 }
@@ -582,30 +1015,22 @@ function drawRules(host: Host) {
   pair(svg, 0, 0, 0, h, seed++, 'md-rule-edge')
   pair(svg, w, 0, w, h, seed++, 'md-rule-edge')
 
-  /* One line under each row, and one down each seam between cells — read off
-     the cells themselves, so a merged cell simply has no line through it. */
+  /* One line under each cell and one down its right-hand side — read off the
+     cells themselves, so a cell merged either way simply has no line through
+     it. Reading the rules off the rows instead would draw a line straight
+     across a cell that had been merged downward. */
   for (const tr of host.querySelectorAll('tr')) {
-    const rowBox = tr.getBoundingClientRect()
-    const y = Math.round(rowBox.bottom - box.top)
-    if (y < h - 1) {
-      pair(
-        svg,
-        0,
-        y,
-        w,
-        y,
-        seed++,
-        tr.classList.contains('md-table-head') ? 'md-rule-head' : 'md-rule',
-      )
-    }
+    const head = tr.classList.contains('md-table-head')
     for (const td of tr.querySelectorAll('td')) {
       const cellBox = td.getBoundingClientRect()
-      const x = Math.round(cellBox.right - box.left)
-      if (x < w - 1) {
-        const top = Math.round(rowBox.top - box.top)
-        const bottom = Math.round(rowBox.bottom - box.top)
-        pair(svg, x, top, x, bottom, seed++, 'md-rule')
+      const top = Math.round(cellBox.top - box.top)
+      const bottom = Math.round(cellBox.bottom - box.top)
+      const left = Math.round(cellBox.left - box.left)
+      const right = Math.round(cellBox.right - box.left)
+      if (bottom < h - 1) {
+        pair(svg, left, bottom, right, bottom, seed++, head ? 'md-rule-head' : 'md-rule')
       }
+      if (right < w - 1) pair(svg, right, top, right, bottom, seed++, 'md-rule')
     }
   }
 }
@@ -626,7 +1051,7 @@ function layHandles(host: Host, view: EditorView) {
 
   const live = host.live
   if (!live) return
-  const columns = live.table.widths.length
+  const columns = columnCount(live.table)
   holder.replaceChildren()
 
   const at = (widths: number[], seam: number) => {
@@ -635,17 +1060,14 @@ function layHandles(host: Host, view: EditorView) {
     return (acc / 100) * table.offsetWidth
   }
 
-  /* Does this row have a real cell boundary at this seam? A merged cell runs
-     straight through one. */
-  const breaksAt = (tr: HTMLTableRowElement, seam: number) => {
-    let column = 0
-    for (const td of tr.querySelectorAll('td')) {
-      column += Number(td.getAttribute('colspan') ?? 1)
-      if (column === seam + 1) return true
-      if (column > seam + 1) return false
-    }
-    return false
-  }
+  /* Does any cell in this grid row end at this seam? A merged cell runs
+     straight through one, and with merges going down as well the answer can
+     no longer be read off a `<tr>`'s own children. */
+  const spots = placement(live.table)
+  const breaksAt = (top: number, seam: number) =>
+    spots.some(
+      (p) => top >= p.top && top < p.top + p.rows && p.column + p.span - 1 === seam,
+    )
 
   const rows = [...host.querySelectorAll('tr')] as HTMLTableRowElement[]
   const top = table.getBoundingClientRect().top
@@ -656,7 +1078,8 @@ function layHandles(host: Host, view: EditorView) {
        is exactly what happens to a title merged across the head row. So it
        hangs on the first row that still breaks here, head or not, and a seam
        no row breaks at simply has no grip. */
-    const row = rows.find((tr) => breaksAt(tr, seam))
+    const index = rows.findIndex((_, r) => breaksAt(r, seam))
+    const row = rows[index]
     if (!row) continue
 
     const grip = document.createElement('div')
@@ -669,7 +1092,7 @@ function layHandles(host: Host, view: EditorView) {
     grip.style.top = `${row.getBoundingClientRect().top - top}px`
     grip.style.height = `${row.getBoundingClientRect().height}px`
     grip.dataset.seam = String(seam)
-    grip.dataset.row = String(rows.indexOf(row))
+    grip.dataset.row = String(index)
     grip.setAttribute('role', 'separator')
     grip.setAttribute('aria-label', 'Column width')
 
@@ -802,88 +1225,236 @@ function placeGrips(host: Host) {
   }
 }
 
+/* ── the controls ────────────────────────────────────────────────────────
+   The bar under the table, which appears while somebody is writing in it.
+   Everything on it reads the picked range first and the caret's own cell
+   second, so a control does the same thing whether a range was dragged or a
+   single cell was clicked. */
+
+function alignGlyph(align: Align): SVGSVGElement {
+  const short = align === 'center' ? 4.5 : align === 'right' ? 7 : 2
+  const svg = document.createElementNS(SVG_NS, 'svg')
+  svg.setAttribute('viewBox', '0 0 16 12')
+  svg.setAttribute('aria-hidden', 'true')
+  svg.setAttribute('class', 'align-mark')
+  const bar = (x: number, y: number, w: number) => {
+    const rect = document.createElementNS(SVG_NS, 'rect')
+    rect.setAttribute('x', String(x))
+    rect.setAttribute('y', String(y))
+    rect.setAttribute('width', String(w))
+    rect.setAttribute('height', '1.5')
+    rect.setAttribute('rx', '0.75')
+    svg.appendChild(rect)
+  }
+  bar(2, 1.3, 12)
+  bar(short, 5.25, 7)
+  bar(2, 9.2, 12)
+  return svg
+}
+
 function controlsFor(host: Host, view: EditorView): HTMLElement {
   const bar = document.createElement('div')
   bar.className = 'md-table-controls'
 
-  /* Whichever cell was last written in is what the controls act on. */
-  const focused = () => {
-    const el = document.activeElement
-    if (el instanceof HTMLElement && el.dataset.row && host.contains(el)) {
-      return { row: Number(el.dataset.row), cell: Number(el.dataset.cell) }
-    }
-    return null
-  }
-
-  const control = (label: string, title: string, run: () => void) => {
+  const control = (
+    label: string | SVGSVGElement,
+    title: string,
+    run: (before: boolean) => void,
+    cls = '',
+  ) => {
     const button = document.createElement('button')
     button.type = 'button'
-    button.className = 'md-table-control'
-    button.textContent = label
+    button.className = `md-table-control${cls ? ' ' + cls : ''}`
+    if (typeof label === 'string') button.textContent = label
+    else button.appendChild(label)
     button.title = title
     button.setAttribute('aria-label', title)
     button.addEventListener('mousedown', (e) => e.preventDefault())
     button.addEventListener('click', (e) => {
       e.preventDefault()
       e.stopPropagation()
-      run()
+      /* Alt puts the new row or column on the other side. It is a modifier
+         rather than two more buttons because the bar is already twelve marks
+         wide, and because there is only one position the plain press cannot
+         reach — a new first column — against which a second row of controls
+         is far too much to pay. */
+      run(e.altKey)
     })
     bar.appendChild(button)
   }
 
+  const gap = () => {
+    const span = document.createElement('span')
+    span.className = 'md-table-control-gap'
+    bar.appendChild(span)
+  }
+
   const table = () => host.live?.table
 
-  control('+ row', 'Add a row', () => {
-    const t = table()
-    if (t) commit(host, view, addRow(t, focused()?.row ?? t.rows.length - 1))
-  })
-  control('− row', 'Remove this row', () => {
-    const t = table()
-    if (t) commit(host, view, removeRow(t, focused()?.row ?? t.rows.length - 1))
-  })
-
-  const gap = document.createElement('span')
-  gap.className = 'md-table-control-gap'
-  bar.appendChild(gap)
-
-  control('+ col', 'Add a column', () => {
+  control('+ row', 'Add a row below — with Alt, above', (before) => {
     const t = table()
     if (!t) return
-    const at = focused()
-    const column = at ? columnOf(t.rows[at.row], at.cell) : t.widths.length - 1
-    commit(host, view, addColumn(t, column))
+    const rect = target(host)
+    /* Never above the head: it is the table's spine, and a body row put over
+       it would become the head on the next read of the file. */
+    const at = before ? Math.max(0, (rect?.top ?? 1) - 1) : (rect?.bottom ?? rowCount(t) - 1)
+    commit(host, view, addRow(t, at), { top: at + 1, column: rect?.left ?? 0 })
   })
-  control('− col', 'Remove this column', () => {
+  control('− row', 'Remove these rows', () => {
     const t = table()
     if (!t) return
-    const at = focused()
-    const column = at ? columnOf(t.rows[at.row], at.cell) : t.widths.length - 1
-    commit(host, view, removeColumn(t, column))
+    const rect = target(host)
+    const from = rect?.top ?? rowCount(t) - 1
+    const to = rect?.bottom ?? from
+    let next = t
+    for (let r = to; r >= from; r--) next = removeRow(next, r)
+    setPick(host, null, null)
+    commit(host, view, next, { top: Math.max(1, from - 1), column: rect?.left ?? 0 })
   })
 
-  const gap2 = document.createElement('span')
-  gap2.className = 'md-table-control-gap'
-  bar.appendChild(gap2)
+  gap()
+
+  control('+ col', 'Add a column after — with Alt, before', (before) => {
+    const t = table()
+    if (!t) return
+    const rect = target(host)
+    const at = before ? (rect?.left ?? 0) - 1 : (rect?.right ?? columnCount(t) - 1)
+    commit(host, view, addColumn(t, at), { top: rect?.top ?? 0, column: at + 1 })
+  })
+  control('− col', 'Remove these columns', () => {
+    const t = table()
+    if (!t) return
+    const rect = target(host)
+    const from = rect?.left ?? columnCount(t) - 1
+    const to = rect?.right ?? from
+    let next = t
+    for (let c = to; c >= from; c--) next = removeColumn(next, c)
+    setPick(host, null, null)
+    commit(host, view, next, { top: rect?.top ?? 0, column: Math.max(0, from - 1) })
+  })
+
+  gap()
+
+  for (const align of ['left', 'center', 'right'] as Align[]) {
+    const name = align === 'center' ? 'centre' : align
+    control(
+      alignGlyph(align),
+      `Set this column ${name}`,
+      () => {
+        const t = table()
+        if (!t) return
+        const rect = target(host)
+        commit(host, view, setAlign(t, rect?.left ?? 0, rect?.right ?? 0, align))
+      },
+      'glyph',
+    )
+  }
+
+  gap()
+
+  /* Merging. Both of these take the picked range when there is one, so the
+     direction they name is only ever what happens from a single cell — which
+     is the only case where a direction means anything. */
+  control('merge', 'Merge the picked cells, or join this one to its right', () => {
+    const t = table()
+    if (!t) return
+    const rect = wideRect(host)
+    if (rect) {
+      setPick(host, null, null)
+      commit(host, view, mergeRect(t, rect), { top: rect.top, column: rect.left })
+      return
+    }
+    const cell = focusedIn(host)
+    if (!cell) return
+    commit(
+      host,
+      view,
+      mergeRect(t, {
+        top: cell.top,
+        bottom: cell.top + cell.rows - 1,
+        left: cell.column,
+        right: cell.column + cell.span,
+      }),
+      { top: cell.top, column: cell.column },
+    )
+  })
+  control('merge ↓', 'Merge the picked cells, or join this one to the one below', () => {
+    const t = table()
+    if (!t) return
+    const rect = wideRect(host)
+    if (rect) {
+      setPick(host, null, null)
+      commit(host, view, mergeRect(t, rect), { top: rect.top, column: rect.left })
+      return
+    }
+    const cell = focusedIn(host)
+    if (!cell) return
+    commit(
+      host,
+      view,
+      mergeRect(t, {
+        top: cell.top,
+        bottom: cell.top + cell.rows,
+        left: cell.column,
+        right: cell.column + cell.span - 1,
+      }),
+      { top: cell.top, column: cell.column },
+    )
+  })
+  control('split', 'Give the merged cells back', () => {
+    const t = table()
+    if (!t) return
+    const rect = target(host)
+    if (!rect) return
+    setPick(host, null, null)
+    commit(host, view, splitRect(t, rect), { top: rect.top, column: rect.left })
+  })
+
+  gap()
 
   control('full', 'Back to the full measure', () => {
     const t = table()
     if (t) commit(host, view, setTableWidth(t, FULL_WIDTH))
   })
 
-  const gap3 = document.createElement('span')
-  gap3.className = 'md-table-control-gap'
-  bar.appendChild(gap3)
+  gap()
 
-  control('merge', 'Join this cell to the one on its right', () => {
-    const t = table()
-    const at = focused()
-    if (t && at) commit(host, view, mergeAt(t, at.row, at.cell))
+  /* The one control that takes the whole thing away, kept at the far end and
+     behind a second press — a table is often a page's only content, and a
+     mis-aimed click on the row beside it would be the worst kind of loss. */
+  const remove = document.createElement('button')
+  remove.type = 'button'
+  remove.className = 'md-table-control danger'
+  remove.textContent = 'delete'
+  remove.title = 'Delete this table'
+  remove.setAttribute('aria-label', 'Delete this table')
+  let armed = false
+  let disarm: number | undefined
+  remove.addEventListener('mousedown', (e) => e.preventDefault())
+  remove.addEventListener('click', (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!armed) {
+      armed = true
+      remove.textContent = 'sure?'
+      remove.classList.add('armed')
+      disarm = window.setTimeout(() => {
+        armed = false
+        remove.textContent = 'delete'
+        remove.classList.remove('armed')
+      }, 2600)
+      return
+    }
+    clearTimeout(disarm)
+    const live = host.live
+    if (!live) return
+    view.dispatch({
+      changes: { from: live.from, to: live.to, insert: '' },
+      selection: { anchor: live.from },
+    })
+    view.focus()
   })
-  control('split', 'Give the merged column back', () => {
-    const t = table()
-    const at = focused()
-    if (t && at) commit(host, view, splitAt(t, at.row, at.cell))
-  })
+  bar.appendChild(remove)
 
   return bar
 }

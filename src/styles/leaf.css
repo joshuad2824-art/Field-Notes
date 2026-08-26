@@ -991,6 +991,18 @@
 .leaf[data-stock='night'] .md-table td:focus {
   background: rgba(246, 243, 236, 0.06);
 }
+/* A range of cells picked with the mouse. Louder than the focus wash, because
+   it is a thing you are holding rather than a thing you are standing in, and
+   it goes the moment anything is done with it. Still not amber: one amber
+   element per view, and inside a page that is the caret. */
+.md-table td.picked {
+  background: var(--select-wash);
+}
+/* While a range is held the caret's own cell is part of it and nothing else,
+   so the focus wash would only muddy the edge of the range. */
+.md-table.picking td:focus {
+  background: var(--select-wash);
+}
 /* The head row reads as a head by weight and colour, not by being shouted.
    Forcing uppercase meant a header could only ever be all caps however it was
    typed — and there is now an All caps mark for when that is what's wanted. */
@@ -1088,6 +1100,34 @@
   gap: 2px;
   align-items: center;
   padding-top: 6px;
+  /* The bar carries twelve marks now — rows, columns, the three alignments,
+     the two merges, split, the measure and delete. Past the width it has it
+     scrolls sideways rather than becoming the second row the tray is not
+     allowed to become either. */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.md-table-controls::-webkit-scrollbar {
+  display: none;
+}
+.md-table-control {
+  flex: none;
+}
+/* The alignment marks are drawn, not typed — there is no character that means
+   "centred", and these are the same three bars the tray uses. */
+.md-table-control.glyph {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px;
+}
+/* Delete asks twice. A table is often the whole of a page, and a mis-aimed
+   click on the control beside it would be the worst kind of loss. Armed, it
+   is said by the word changing and by the mark stepping out of quiet into the
+   page's own heading ink — there is no light oxblood in the palette and this
+   is not the place to invent one. */
+.md-table-control.armed {
+  color: var(--text-heading);
+  background: var(--select-wash);
 }
 .md-table.active .md-table-controls {
   display: flex;
