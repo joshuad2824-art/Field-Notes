@@ -106,6 +106,33 @@ export function Editor({
             if (update.docChanged) latest.current.onChange(update.state.doc.toString())
           }),
           EditorView.domEventHandlers({
+            /* A press inside writing that is already selected.
+
+               Every browser reads that as the start of a drag of the selected
+               text, and holds the selection still until a drag actually
+               begins. A drag that ends back inside itself changes nothing —
+               so the second attempt to pick a phrase, which is what anyone
+               does when the first pick was a word too long, quietly does
+               nothing at all. Reported as "the mouse refuses to highlight
+               text", and it is: the mouse is doing something else.
+
+               Letting go of the selection first means a press always starts a
+               new one. What it costs is dragging text about with the mouse,
+               which nothing in this app has ever advertised and which, on a
+               page of writing, is a way to move a paragraph somewhere by
+               accident. A picture is still dragged by its own plate, which
+               CodeMirror never sees. */
+            mousedown(event, view) {
+              if (event.button !== 0) return false
+              if (event.shiftKey || event.altKey || event.metaKey || event.ctrlKey) return false
+              if (event.detail > 1) return false
+              const range = view.state.selection.main
+              if (range.empty) return false
+              const at = view.posAtCoords({ x: event.clientX, y: event.clientY })
+              if (at == null || at < range.from || at > range.to) return false
+              view.dispatch({ selection: { anchor: at } })
+              return false
+            },
             /* Paste a picture straight in. Safari puts the image in
                clipboardData.files; some sources use items instead. */
             paste(event, view) {
