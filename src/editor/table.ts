@@ -488,8 +488,17 @@ export class TableWidget extends WidgetType {
     host.watch = new ResizeObserver(() => {
       drawRules(host)
       placeGrips(host)
+      /* And CodeMirror is told, because a block widget's height is something
+         it measures once and remembers. Everything below a widget that has
+         quietly changed size sits at coordinates the editor no longer agrees
+         with, and a press there lands on the wrong line. The controls bar
+         appearing when a cell takes the caret is exactly that. */
+      view.requestMeasure()
     })
+    /* The frame for the rules, the host for the height: the controls bar is
+       the host's child and does not resize the table inside it. */
     host.watch.observe(table)
+    host.watch.observe(host)
 
     /* The controls belong to whoever is writing in the table, and go when they
        leave. The delay is so that pressing one of them doesn't count as

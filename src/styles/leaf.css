@@ -956,9 +956,17 @@
    28px grid — and the felt pen wants a line that wanders, which no border can
    do. So the table itself is borderless and an SVG lies over it. */
 
+/* The gap under a table is padding and never margin, and that is load-bearing
+   rather than a matter of taste. CodeMirror measures a block widget by its
+   element's own height, which excludes margins — so a 28px margin here put
+   every line below the table 28px higher in the editor's coordinate space
+   than it is on the screen. A press on the line under a table then landed on
+   the line under *that*, and a drag across it picked the wrong text or none
+   at all. Padding is inside the measurement, so the two agree. */
 .md-table {
   position: relative;
-  margin: 0 0 28px;
+  margin: 0;
+  padding: 0 0 28px;
 }
 .md-table-frame {
   position: relative;

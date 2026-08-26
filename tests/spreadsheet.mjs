@@ -287,7 +287,7 @@ await desk(1440, 900, async (page) => {
          Every browser reads that as the start of a drag of the selected text
          and holds the selection still — so the second pick used to do nothing
          at all, which is exactly "the mouse refuses to highlight text". */
-  const wide = await page.locator('.cm-line').first().boundingBox()
+  let wide = await page.locator('.cm-line').first().boundingBox()
   await page.mouse.move(wide.x + 10, wide.y + wide.height / 2)
   await page.mouse.down()
   await page.mouse.move(wide.x + 300, wide.y + wide.height / 2, { steps: 14 })
@@ -382,6 +382,133 @@ await desk(1440, 900, async (page) => {
   ok('a right press leaves the selection alone',
     (await page.evaluate(() => window.getSelection().toString())) === held,
     JSON.stringify(await page.evaluate(() => window.getSelection().toString())))
+
+  /* 9d. And the one underneath all three reports: the browser deciding, part
+         way through a press, that this is a drag of the text rather than a
+         selection. CodeMirror's own `dragstart` handler sets `dragging` on
+         the live mouse selection, and from that moment no amount of moving
+         picks anything — which is what a dead drag actually is. Every other
+         route ends up selecting once the pointer has gone ten pixels.
+
+         Chrome and Edge start that drag far more readily when a nested
+         editing host is in play, which is why it was reported as "only when
+         there is a table on the page": a cell is a contenteditable of its
+         own. Headless Chromium will not start one on its own, so it is fired
+         by hand — the handler under test cannot tell the difference. */
+  for (const [where, word] of [['above a table', 'Above'], ['below a table', 'Below']]) {
+    await page.evaluate(() => {
+      const view = document.querySelector('.cm-content').cmTile.view
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert:
+            'Above the table, a line long enough to drag a good way across it.\n' +
+            '\n| Item | Cost |\n| --- | --- |\n| Oak | 40 |\n\n' +
+            'Below the table, a line long enough to drag a good way across it.\n',
+        },
+      })
+      window.getSelection().removeAllRanges()
+    })
+    await page.waitForTimeout(400)
+
+    /* By its writing, not its index: the table swallows a run of lines into
+       one widget, so the line numbers either side are not the file's. */
+    const index = (
+      await page.locator('.cm-line').evaluateAll((els) => els.map((e) => e.textContent))
+    ).findIndex((text) => text.startsWith(word))
+    const line = await page.locator('.cm-line').nth(index).boundingBox()
+    await page.mouse.move(line.x + 20, line.y + 12)
+    await page.mouse.down()
+    await page.mouse.move(line.x + 40, line.y + 12, { steps: 3 })
+    await page.evaluate(() => {
+      const view = document.querySelector('.cm-content').cmTile.view
+      view.contentDOM.dispatchEvent(
+        new DragEvent('dragstart', {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: new DataTransfer(),
+        }),
+      )
+    })
+    const dragging = await page.evaluate(() => {
+      const view = document.querySelector('.cm-content').cmTile.view
+      return String(view.inputState.mouseSelection?.dragging)
+    })
+    await page.mouse.move(line.x + 300, line.y + 12, { steps: 12 })
+    await page.mouse.up()
+    await page.waitForTimeout(250)
+
+    ok(`no press ${where} ever becomes a drag of the writing`, dragging === 'false', dragging)
+    ok(`and the drag ${where} picks writing`,
+      (await page.evaluate(() => window.getSelection().toString())).length > 10,
+      JSON.stringify(await page.evaluate(() => window.getSelection().toString())))
+  }
+
+  /* And the cause underneath the report, asserted where it actually lives
+     rather than through a drag: CodeMirror measures a block widget by its
+     element's own height, which excludes margins. A margin under the table
+     therefore put every line below it 28px higher in the editor's coordinate
+     space than on the screen, so a press on the line under a table landed on
+     the line under *that*. Every line must sit where the editor thinks it
+     does — the offset between the two is the content's padding and is the
+     same for every line on the page, above the table and below it. */
+  await page.evaluate(() => {
+    const view = document.querySelector('.cm-content').cmTile.view
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: view.state.doc.length,
+        insert:
+          'Above the table, a line long enough to drag a good way across it.\n' +
+          '\n| Item | Cost |\n| --- | --- |\n| Oak | 40 |\n\n' +
+          'Below the table, a line long enough to drag a good way across it.\n',
+      },
+    })
+  })
+  await page.waitForTimeout(500)
+
+  const offsets = await page.evaluate(() => {
+    const view = document.querySelector('.cm-content').cmTile.view
+    const out = []
+    for (let n = 1; n <= view.state.doc.lines; n++) {
+      const line = view.state.doc.line(n)
+      const coords = view.coordsAtPos(line.from)
+      if (!coords) continue
+      out.push(Math.round(coords.top - view.lineBlockAt(line.from).top))
+    }
+    return out
+  })
+  ok('every line sits where the editor thinks it does, table or no table',
+    offsets.length > 0 && Math.max(...offsets) - Math.min(...offsets) <= 1,
+    offsets.join(', '))
+
+  /* A press on the line under a table lands on that line and not the next. */
+  const under = (
+    await page.locator('.cm-line').evaluateAll((els) => els.map((e) => e.textContent))
+  ).findIndex((text) => text.startsWith('Below'))
+  const underBox = await page.locator('.cm-line').nth(under).boundingBox()
+  await page.mouse.click(underBox.x + 20, underBox.y + 12)
+  await page.waitForTimeout(200)
+  ok('a press on the line under a table lands on that line',
+    await page.evaluate(() => {
+      const view = document.querySelector('.cm-content').cmTile.view
+      return view.state.doc.lineAt(view.state.selection.main.head).text.startsWith('Below')
+    }))
+
+  /* Put the page back the way the rest of this section expects it. */
+  await page.evaluate(() => {
+    const view = document.querySelector('.cm-content').cmTile.view
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: view.state.doc.length,
+        insert: 'The tent held through the night and the rope stayed tight.\n',
+      },
+    })
+  })
+  await page.waitForTimeout(300)
+  wide = await page.locator('.cm-line').first().boundingBox()
 
   /* And shift-click must still extend a selection rather than start one. */
   await page.mouse.click(wide.x + 10, wide.y + wide.height / 2)

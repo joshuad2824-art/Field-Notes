@@ -157,6 +157,36 @@ export function Editor({
               view.dispatch({ selection: { anchor: at } })
               return false
             },
+            /* And no press in the writing ever becomes a drag of it.
+
+               Letting go of the selection on mousedown (above) covers the
+               ordinary case, but it is a workaround rather than the rule:
+               the browser can decide *part way through a press* that this is
+               a drag of text and fire `dragstart`, and CodeMirror's own
+               handler then sets `dragging` on the live mouse selection. From
+               that moment no amount of moving picks anything — which is what
+               a dead drag actually is. Every other route ends up selecting
+               once the pointer has gone ten pixels.
+
+               Chrome and Edge start that drag far more readily when a nested
+               editing host is in play, which is why this showed up as "only
+               when there is a table on the page": a cell is a contenteditable
+               of its own, and after writing in one the browser is holding a
+               selection inside it. The table is the company the bug keeps,
+               not its cause.
+
+               So the rule is said once, here, and matches what this app has
+               already decided it does not do. A picture is still dragged by
+               its own plate: that lives inside a widget whose `ignoreEvent`
+               is true, so CodeMirror never sees the event and neither do we —
+               and the `draggable` test stands aside for it regardless. */
+            dragstart(event, view) {
+              const target = event.target
+              if (target instanceof HTMLElement && target.draggable) return false
+              event.preventDefault()
+              void view
+              return true
+            },
             /* Paste a picture straight in. Safari puts the image in
                clipboardData.files; some sources use items instead. */
             paste(event, view) {
