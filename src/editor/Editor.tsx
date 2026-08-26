@@ -106,30 +106,54 @@ export function Editor({
             if (update.docChanged) latest.current.onChange(update.state.doc.toString())
           }),
           EditorView.domEventHandlers({
-            /* A press inside writing that is already selected.
+            /* A plain press lets go of whatever was selected before it.
 
-               Every browser reads that as the start of a drag of the selected
-               text, and holds the selection still until a drag actually
-               begins. A drag that ends back inside itself changes nothing —
-               so the second attempt to pick a phrase, which is what anyone
-               does when the first pick was a word too long, quietly does
-               nothing at all. Reported as "the mouse refuses to highlight
-               text", and it is: the mouse is doing something else.
+               Two separate things made the mouse look broken, and this one
+               handler is the answer to both.
 
-               Letting go of the selection first means a press always starts a
-               new one. What it costs is dragging text about with the mouse,
-               which nothing in this app has ever advertised and which, on a
-               page of writing, is a way to move a paragraph somewhere by
-               accident. A picture is still dragged by its own plate, which
-               CodeMirror never sees. */
+               The first: a press inside writing that is already selected is
+               read by every browser as the start of a drag of that text, and
+               the selection is held still until an HTML5 drag actually
+               begins. A drag that ends back inside itself changes nothing, so
+               the second attempt to pick a phrase — which is what anyone does
+               when the first pick was a word too long — quietly did nothing.
+
+               The second is worse, because it needs no press inside anything.
+               CodeMirror asks whether the press landed in the selection by
+               reading the *browser's* selection and measuring its rectangles;
+               when the browser has no selection at all it answers `true`
+               rather than `false`, and every press on the page is treated as
+               the start of a text drag. That state is ordinary on Windows,
+               where Chrome and Edge drop the selection when the editor loses
+               the focus — so after so much as glancing at the page list, no
+               drag anywhere in the note would pick anything. A plain click
+               still worked, which is why the way round it was to click the
+               line first and then select it. Reported exactly that way.
+
+               Letting go first makes the question moot: the selection is
+               empty when CodeMirror asks, so a press always starts a new one
+               no matter what the browser did with its own. What it costs is
+               dragging text about with the mouse, which nothing in this app
+               has ever advertised and which, on a page of writing, is mostly
+               a way to move a paragraph somewhere by accident. A picture is
+               still dragged by its own plate, which CodeMirror never sees.
+
+               Shift extends rather than starts, a second click is a word and
+               a third is a line, and anything but the left button — the right
+               one above all, which opens a menu about the selection — is left
+               alone. */
             mousedown(event, view) {
               if (event.button !== 0) return false
               if (event.shiftKey || event.altKey || event.metaKey || event.ctrlKey) return false
               if (event.detail > 1) return false
-              const range = view.state.selection.main
-              if (range.empty) return false
-              const at = view.posAtCoords({ x: event.clientX, y: event.clientY })
-              if (at == null || at < range.from || at > range.to) return false
+              if (view.state.selection.main.empty) return false
+              /* The imprecise reading never returns null, so the selection is
+                 always left genuinely empty — including for a press in the
+                 margin beside a line, which is where a drag across a
+                 paragraph usually starts. */
+              const at =
+                view.posAtCoords({ x: event.clientX, y: event.clientY }) ??
+                view.posAtCoords({ x: event.clientX, y: event.clientY }, false)
               view.dispatch({ selection: { anchor: at } })
               return false
             },
