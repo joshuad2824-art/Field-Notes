@@ -175,6 +175,47 @@ const heights = await page
 const offGrid = heights.filter((h) => h % 28 !== 0)
 ok('every block height is a multiple of 28', offGrid.length === 0, `off: ${offGrid.join(', ')}`)
 
+/* The leaf draws no scrollbar, on either stock. Asserted as the gutter rather
+   than as the declaration, because the declaration is the half a platform is
+   allowed to ignore: what matters is that no strip of the leaf is spent on a
+   bar. The scroller is squeezed so it certainly overflows — a suite that only
+   ever checks a page short enough to fit is checking nothing — and put back
+   afterwards. The control gutter is reported beside it: where a platform draws
+   overlay bars everywhere it will read 0, which is the one case where this
+   assertion passes for free and the number is there to say so. */
+const gutters = await page.evaluate(() => {
+  const el = document.querySelector('.editor .cm-scroller')
+  const was = el.style.height
+  el.style.height = '80px'
+  const leaf = {
+    gutter: el.offsetWidth - el.clientWidth,
+    overflowing: el.scrollHeight > el.clientHeight,
+    declared: getComputedStyle(el).scrollbarWidth,
+    /* The other hand, and the one that matters on the devices this actually
+       runs on: Safari and older Chromium read only the pseudo-element. An
+       unstyled scroller answers `block` here, so this is not a free pass. */
+    pseudo: getComputedStyle(el, '::-webkit-scrollbar').display,
+  }
+  el.style.height = was
+  /* A probe rather than another element of the app: at this width the page has
+     replaced the list, so there is no column on screen to read a control off,
+     and a control that isn't there is exactly the false pass this suite has
+     been caught by before. */
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:fixed;top:0;left:0;width:60px;height:60px;overflow:auto;visibility:hidden'
+  probe.innerHTML = '<div style="height:400px"></div>'
+  document.body.append(probe)
+  const control = probe.offsetWidth - probe.clientWidth
+  probe.remove()
+  return { leaf, control }
+})
+ok(
+  'the leaf spends no width on a scrollbar',
+  gutters.leaf.overflowing && gutters.leaf.gutter === 0,
+  `gutter ${gutters.leaf.gutter}px, declared ${gutters.leaf.declared}, control ${gutters.control}px`,
+)
+ok('and says so in both hands', gutters.leaf.declared === 'none' && gutters.leaf.pseudo === 'none', `scrollbar-width ${gutters.leaf.declared}, ::-webkit-scrollbar ${gutters.leaf.pseudo}`)
+
 /* the highlighter, from the tray */
 await page.keyboard.press('ControlOrMeta+End')
 await page.keyboard.press('Enter')

@@ -111,12 +111,29 @@
   outline: none;
 }
 
+/* The leaf carries no chrome, and that now includes the scrollbar. This is the
+   one scroller in the app that was never given a hand, so a page long enough to
+   overflow drew whatever slider the operating system draws — light grey down
+   the right-hand edge of a cream leaf, and the same light grey down a night
+   one, which made it the only thing on the page that never matched the stock it
+   stood on. Tinting it to the stock is half a fix: a bar the colour of the
+   paper is still a bar, and the leaf is the one surface where nothing but the
+   writing is allowed to be. Nothing is lost by taking it away — a wheel, a
+   trackpad and a finger are the three ways this app is ever scrolled, and none
+   of them touches the slider. The overflow is untouched; only the bar goes.
+   Both hands are needed: Firefox reads `scrollbar-width`, WebKit and Blink read
+   only the pseudo-element, and a browser that honours neither is one this app
+   has never run on. */
 .editor .cm-scroller {
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: var(--grid-pitch);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.editor .cm-scroller::-webkit-scrollbar {
+  display: none;
 }
 
 /* The text wraps to whatever room it has and widens with the window, up to a
