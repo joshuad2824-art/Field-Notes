@@ -236,6 +236,8 @@ What was Phase 3 gets picked over rather than built wholesale:
 
 - **The prose pass sends the whole week, and says so.** Once, in Settings, beside the key. There is no per-send confirmation, because a line that appears every time is a line nobody reads by the third week.
 
+- **The leaf draws no scrollbar, and it is the only surface in the app that draws none.** It was the only scroller that had never been given a hand, so a page long enough to overflow got whatever the operating system draws — a light grey slider down the right-hand edge of a cream leaf, and the same light grey down a night one, which made it the one thing on the page that never matched the stock it stood on. Tinting it to the stock was the obvious fix and is half a fix: a bar the colour of the paper is still a bar, and the leaf is the surface where nothing but the writing is allowed to be — no chrome bar, no banner, no syntax. Nothing is lost by taking it away: a wheel, a trackpad and a finger are the three ways this app is ever scrolled and none of them touches the slider, and the overflow itself is untouched. The frame is the opposite case and keeps its bar — the manager and the sheet scroll on their own rather than through `.scroll`, so they were drawing the system's grey too, and they now borrow the columns' cream-on-transparent hand rather than growing a second one. It takes **both** hands to say: Firefox reads `scrollbar-width`, Safari and Chromium read only `::-webkit-scrollbar`. `npm run check` asserts the gutter is zero *and* both declarations, because the gutter alone is a free pass on any platform drawing overlay bars — headless Chromium is one, and the control probe beside the assertion reports its width so a vacuous pass says so out loud.
+
 - **The iOS keyboard accessory bar** — the up/down arrows and the Done tick — cannot be removed from a web app. It's the strongest concrete argument for the native path and should be weighed at the end of Phase 1. It's also the reason the formatting row sits at the top of the page rather than docked above the keyboard: two bars stacked on the keyboard would be worse than one bar at the top. If the accessory bar ever goes, the strip should move down.
 
 ---
@@ -266,7 +268,7 @@ does not generalise to this. A key typed into one device by the one person who u
 app, deletable in a tap, is not in public.
 
 `npm run check` drives a real browser and is the fastest way to know nothing has
-rotted: **513 assertions in six files**, all green. `tests/editor.mjs` has 275 covering the editor,
+rotted: **515 assertions in six files**, all green. `tests/editor.mjs` has 277 covering the editor,
 the grid, indent, tables and how wide they sit, the calendar, the keyboard, zoom, the
 three widths, the folding columns, the safe-area bands, the bottom edge of the screen,
 the underline, line alignment, the notebook manager (recolouring included), the
