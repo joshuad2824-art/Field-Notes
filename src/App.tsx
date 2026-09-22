@@ -13,6 +13,7 @@ import { SettingsScreen } from './screens/SettingsScreen'
 import { CalendarScreen } from './screens/CalendarScreen'
 import { DayScreen } from './screens/DayScreen'
 import { OAuthConsentScreen } from './screens/OAuthConsentScreen'
+import { OverviewScreen } from './screens/OverviewScreen'
 
 export function App() {
   const route = useRoute()
@@ -51,6 +52,8 @@ export function App() {
   switch (route.name) {
     case 'oauth-consent':
       return <OAuthConsentScreen />
+    case 'overview':
+      return <OverviewScreen notebook={remembered} />
     case 'notebook':
       return <HomeScreen notebook={notebookOf(route.notebook)?.id ?? remembered} />
     case 'page':

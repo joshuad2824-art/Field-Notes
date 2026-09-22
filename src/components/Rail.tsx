@@ -80,6 +80,11 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
 
       <div className="rail-rule" />
 
+      <button className="rail-overview" onClick={() => navigate(to.overview())}>
+        <span>Overview</span>
+        <span aria-hidden="true">↗</span>
+      </button>
+
       <div className="scroll rail-books">
         <div className="rail-books-head">
           <span className="section-label">Notebooks</span>

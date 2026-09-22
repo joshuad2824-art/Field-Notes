@@ -1,0 +1,150 @@
+/* Overview keeps the app's night stock and makes the next action the focal point. */
+.rail-overview {
+  width: calc(100% - 24px);
+  margin: 12px 12px 0;
+  padding: 12px 10px;
+  border: 1px solid var(--frame-hairline);
+  border-radius: 3px;
+  background: var(--frame-hover);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--cream-100);
+  font: 600 12px var(--font-ui);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.rail-overview:hover { background: var(--frame-on); }
+.rail-overview span:last-child { color: var(--brass-400); }
+.overview-entry {
+  color: var(--cream-100);
+}
+.overview-entry:hover { color: var(--brass-300); }
+
+.overview-screen { width: 100%; }
+.overview-wrap { max-width: 1120px; margin: 0 auto; padding: 28px 32px 64px; }
+.overview-top { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.overview-back,
+.overview-siena button {
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--brass-300);
+  font: 600 13px var(--font-ui);
+  cursor: pointer;
+}
+.overview-back:hover,
+.overview-siena button:hover { color: var(--cream-100); }
+.overview-sync { color: var(--teal-200); font: 12px var(--font-mono); }
+.overview-intro { margin: 34px 0 26px; }
+.overview-intro .section-label { color: var(--brass-400); }
+.overview-intro h1 {
+  margin: 3px 0 7px;
+  color: var(--cream-100);
+  font: 700 clamp(36px, 5vw, 58px)/1.12 var(--font-editorial);
+}
+.overview-intro p { margin: 0; color: var(--teal-200); font-size: 18px; line-height: 1.5; }
+.overview-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.overview-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22px;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--frame-hairline);
+  border-radius: 3px;
+  background: var(--teal-900);
+  color: var(--cream-100);
+  font: 600 13px var(--font-ui);
+  cursor: pointer;
+}
+.overview-action:hover { background: var(--teal-850); }
+.overview-action.primary { background: var(--cream-100); color: var(--teal-900); }
+.overview-action.primary:hover { background: var(--cream-050); }
+.overview-action span { opacity: .72; }
+.overview-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 34px 0 24px;
+  border-top: 1px solid var(--frame-hairline);
+  border-bottom: 1px solid var(--frame-hairline);
+}
+.overview-stats div { display: flex; align-items: baseline; gap: 10px; padding: 15px 22px 15px 0; margin-right: 22px; }
+.overview-stats strong { color: var(--cream-100); font: 700 27px var(--font-editorial); }
+.overview-stats span { color: var(--teal-200); font: 12px var(--font-ui); }
+.overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.overview-card {
+  min-width: 0;
+  padding: 20px 22px 8px;
+  border: 1px solid var(--frame-hairline);
+  border-radius: 4px;
+  background: var(--teal-900);
+}
+.overview-card-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; padding-bottom: 12px; }
+.overview-card h2,
+.overview-siena h2 { margin: 0; color: var(--cream-100); font: 700 23px var(--font-editorial); }
+.overview-card-head span { color: var(--teal-200); font: 11px var(--font-ui); }
+.overview-row {
+  width: 100%;
+  min-height: 51px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 2px;
+  border: 0;
+  border-top: 1px solid var(--frame-hairline-soft);
+  background: transparent;
+  color: var(--cream-100);
+  text-align: left;
+  cursor: pointer;
+}
+.overview-row:hover .overview-row-title { color: var(--brass-300); }
+.overview-row-title { display: block; min-width: 0; font: 16px/1.3 var(--font-body); overflow-wrap: anywhere; }
+.overview-row-meta { display: block; flex: 0 0 auto; color: var(--teal-200); font: 11px var(--font-mono); }
+.overview-row.task { justify-content: flex-start; align-items: flex-start; }
+.overview-row.task .overview-row-meta { margin-top: 4px; }
+.overview-task-mark { flex: 0 0 14px; width: 14px; height: 14px; margin-top: 3px; border: 1px solid var(--brass-400); border-radius: 2px; }
+.overview-row.book { justify-content: flex-start; }
+.overview-row.book .overview-row-title { flex: 1; }
+.overview-book-dot { flex: 0 0 10px; width: 10px; height: 10px; border: 1px solid var(--cream-300); border-radius: 50%; }
+.overview-empty,
+.overview-more { margin: 0; padding: 13px 0 16px; border-top: 1px solid var(--frame-hairline-soft); color: var(--teal-200); font: 14px/1.4 var(--font-body); }
+.overview-more { font: 11px var(--font-ui); }
+.overview-more { width: 100%; border-right: 0; border-bottom: 0; border-left: 0; background: transparent; text-align: left; cursor: pointer; color: var(--brass-300); }
+.overview-more:hover { color: var(--cream-100); }
+.overview-siena {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  align-items: center;
+  gap: 20px;
+  margin-top: 16px;
+  padding: 24px;
+  border: 1px solid var(--frame-hairline);
+  border-radius: 4px;
+  background: var(--teal-850);
+}
+.overview-siena .section-label { color: var(--brass-400); }
+.overview-siena h2 { margin-top: 5px; }
+.overview-siena p { margin: 0; color: var(--teal-200); font-size: 15px; line-height: 1.5; }
+.overview-back:focus-visible,
+.overview-action:focus-visible,
+.overview-row:focus-visible,
+.overview-siena button:focus-visible,
+.rail-overview:focus-visible,
+.overview-entry:focus-visible { outline: 2px solid var(--brass-300); outline-offset: 3px; }
+.overview-more:focus-visible { outline: 2px solid var(--brass-300); outline-offset: 3px; }
+
+@media (max-width: 760px) {
+  .overview-wrap { padding: 20px 18px 48px; }
+  .overview-intro { margin: 26px 0 22px; }
+  .overview-grid { grid-template-columns: 1fr; }
+  .overview-siena { grid-template-columns: 1fr; gap: 10px; }
+  .overview-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .overview-stats div { display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 12px 4px 12px 0; }
+  .overview-stats strong { font-size: 25px; }
+  .overview-action { flex: 1 1 140px; }
+  .overview-row-meta { max-width: 35%; text-align: right; }
+}

@@ -22,7 +22,7 @@ Node 20 or newer.
 
 ```
 src/editor/    the CodeMirror 6 core — live markdown, no visible syntax
-src/screens/   shelf, notebook, page, search, trash, settings
+src/screens/   overview, notebook, page, search, trash, settings
 src/lib/       Dexie storage, search index, export, router
 src/sync/      device pairing and the background mirror
 src/weather/   one line of chrome, and the only other network in the app
@@ -33,6 +33,11 @@ supabase/      sync schema and optional Siena plugin access
 Storage is IndexedDB via Dexie, and it is the primary store — not a cache. A
 page is a markdown string plus a small envelope, so export is a copy rather than
 a conversion.
+
+Overview is available at `/overview`. It summarizes pages on this device and
+links to the existing capture, search, and Siena settings flows. Product notes
+for deeper assistant interaction are in
+[`docs/overview-and-siena-roadmap.md`](docs/overview-and-siena-roadmap.md).
 
 ## Sync
 

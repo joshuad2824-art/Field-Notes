@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react'
 
 export type Route =
   | { name: 'shelf' }
+  | { name: 'overview' }
   | { name: 'notebook'; notebook: string }
   | { name: 'page'; id: string }
   | { name: 'search' }
@@ -52,6 +53,7 @@ function snapshot() {
 export function parse(path: string): Route {
   const parts = path.split('/').filter(Boolean).map(decodeURIComponent)
   if (parts.length === 0) return { name: 'shelf' }
+  if (parts[0] === 'overview') return { name: 'overview' }
   if (parts[0] === 'n' && parts[1]) return { name: 'notebook', notebook: parts[1] }
   if (parts[0] === 'p' && parts[1]) return { name: 'page', id: parts[1] }
   if (parts[0] === 'tag' && parts[1]) return { name: 'tag', tag: parts[1] }
@@ -73,6 +75,7 @@ export function useRoute(): Route {
 
 export const to = {
   shelf: () => '/',
+  overview: () => '/overview',
   notebook: (id: string) => `/n/${id}`,
   page: (id: string) => `/p/${id}`,
   tag: (tag: string) => `/tag/${encodeURIComponent(tag)}`,
