@@ -15,6 +15,7 @@ export function OAuthConsentScreen() {
   const [details, setDetails] = useState<Details | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [check, setCheck] = useState(0)
 
   useEffect(() => {
     if (!authorizationId) return
@@ -47,7 +48,7 @@ export function OAuthConsentScreen() {
       live = false
       data.subscription.unsubscribe()
     }
-  }, [authorizationId])
+  }, [authorizationId, check])
 
   const signIn = async (event: FormEvent) => {
     event.preventDefault()
@@ -99,7 +100,12 @@ export function OAuthConsentScreen() {
             </>
           ) : null}
           {signedIn && !linked ? (
-            <p>Open Settings in Field Notes on a paired device, sign in with this email, and link your archive there. Then return to this request.</p>
+            <>
+              <p>Open Settings in Field Notes on a paired device, sign in with this email, and link your archive there. Then return to this request.</p>
+              <button className="btn caps" onClick={() => setCheck((value) => value + 1)}>
+                Check connection again
+              </button>
+            </>
           ) : null}
           {details && linked ? (
             <>

@@ -120,7 +120,12 @@ export function SienaConnectPanel() {
               </button>
             </div>
           ) : linked ? (
-            <p className="meta">This account is linked to another archive. Remove that link before connecting this one.</p>
+            <>
+              <p className="meta">This account is linked to another archive.</p>
+              <button className="btn caps" disabled={busy} onClick={() => void unpair()}>
+                Remove that link
+              </button>
+            </>
           ) : (
             <button className="btn caps" disabled={!vault || busy} onClick={() => void pair()}>
               Link this archive
