@@ -239,10 +239,19 @@ export function marksIn(text: string, base = 0): MarkRun[] {
       const open = kind.open(m)
       const from = base + (m.index ?? 0) + kind.lead(m)
       const to = base + (m.index ?? 0) + m[0].length
-      /* A run found inside one already claimed is the grammar's business, not
-         ours — but a run that merely overlaps a claimed one is a false read,
-         so both are skipped the same way the decorations skip them. */
-      if (runs.some((r) => from < r.to && to > r.from && !(from >= r.from && to <= r.to))) continue
+      /* Nested marks are valid in either discovery order: a highlight can be
+         inside bold, or bold can be inside a highlight. Only a partial overlap
+         is an impossible read. */
+      if (
+        runs.some(
+          (r) =>
+            from < r.to &&
+            to > r.from &&
+            !(from >= r.from && to <= r.to) &&
+            !(r.from >= from && r.to <= to),
+        )
+      )
+        continue
       runs.push({ kind, from, to, body: [from + open.length, to - kind.close.length], open })
     }
   }
