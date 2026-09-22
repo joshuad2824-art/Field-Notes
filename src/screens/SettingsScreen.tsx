@@ -9,6 +9,7 @@ import { setSettings, useSettings } from '../lib/settings'
 import { back, navigate, to } from '../lib/router'
 import { JournalPanel } from '../components/JournalPanel'
 import { SyncPanel } from '../components/SyncPanel'
+import { SienaConnectPanel } from '../components/SienaConnectPanel'
 import { WeatherPanel } from '../components/WeatherPanel'
 
 /* What an inset actually comes out as. A custom property reports the text it
@@ -234,6 +235,8 @@ export function SettingsScreen() {
           <JournalPanel />
 
           <SyncPanel />
+
+          <SienaConnectPanel />
 
           <WeatherPanel />
 
