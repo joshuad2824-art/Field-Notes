@@ -464,6 +464,49 @@ export function deleteAround(view: EditorView, forward: boolean): boolean {
   const runs = marksIn(line.text, line.from)
   if (!runs.length) return false
 
+  /* Enter inside a marked run closes it on the first line and reopens it on
+     the second. At the first visible character of that second line, Backspace
+     should undo the split, including those temporary markers. Otherwise the
+     generic marker deletion removes formatting and leaves the line break. */
+  if (!forward && range.empty && line.number > 1) {
+    const opening = runs.filter(
+      (r) => r.from >= line.from && r.body[0] <= range.head && range.head <= r.body[1],
+    )
+    const open = opening.map((r) => r.open).join('')
+    const close = [...opening].reverse().map((r) => r.kind.close).join('')
+    const prefix = prefixOf(line.text)
+    const lead = leadOf(line.text) + alignOf(line.text) + prefix
+    if (
+      opening.length &&
+      range.head === line.from + lead.length + open.length &&
+      line.text.startsWith(lead + open)
+    ) {
+      const previous = state.doc.line(line.number - 1)
+      const previousRuns = marksIn(previous.text, previous.from)
+      const previousPrefix = prefixOf(previous.text)
+      const sameList = !prefix || (previousPrefix && !/^#{1,3}\s+$/.test(previousPrefix))
+      let trailing = 0
+      const matching = opening.every((r) => {
+        const end = previous.to - trailing
+        trailing += r.kind.close.length
+        return previousRuns.some(
+          (before) => before.to === end && before.kind.name === r.kind.name && before.open === r.open,
+        )
+      })
+      if (sameList && matching && previous.text.endsWith(close)) {
+        view.dispatch({
+          changes: {
+            from: previous.to - close.length,
+            to: line.from + lead.length + open.length,
+            insert: '',
+          },
+          selection: { anchor: previous.to - close.length },
+        })
+        return true
+      }
+    }
+  }
+
   /* A selection that takes in the whole of a run's writing takes the run: the
      markers have nothing left to hold and would show. */
   if (!range.empty) {
