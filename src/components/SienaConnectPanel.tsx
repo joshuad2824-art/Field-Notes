@@ -26,7 +26,11 @@ export function SienaConnectPanel() {
       } else setLinked(null)
     }
     void refresh()
-    const { data } = sienaClient.auth.onAuthStateChange(() => void refresh())
+    // Supabase holds its auth lock during this callback. Defer API reads until
+    // the callback returns so getUser and linkedVault cannot deadlock.
+    const { data } = sienaClient.auth.onAuthStateChange(() => {
+      setTimeout(() => void refresh(), 0)
+    })
     return () => {
       live = false
       data.subscription.unsubscribe()
