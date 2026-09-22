@@ -21,12 +21,13 @@ const cases = [
   { markdown: '- **=={brass}nestedword==**', steps: 4 },
 ]
 
+const context = await browser.newContext()
 try {
+  const page = await context.newPage()
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+  /* Netlify's review drawer covers the page in deploy previews. */
+  await page.evaluate(() => document.querySelector('[data-netlify-deploy-id]')?.remove())
   for (const { markdown, steps } of cases) {
-    const context = await browser.newContext()
-    try {
-      const page = await context.newPage()
-      await page.goto(BASE)
       await page.getByText('New page', { exact: true }).first().click()
       const editor = page.locator('.cm-content')
       await editor.click()
@@ -61,10 +62,8 @@ try {
         throw new Error(`Backspace did not restore the formatted line: ${markdown}`)
       }
       console.log(`PASS  Enter and Backspace preserve ${markdown}`)
-    } finally {
-      await context.close()
-    }
   }
 } finally {
+  await context.close()
   await browser.close()
 }
