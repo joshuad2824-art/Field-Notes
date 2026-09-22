@@ -1,6 +1,6 @@
 # Field Notes
 
-A personal notebook for one person. Local-first, offline, no login. Carries the
+A personal notebook for one person. Local-first and offline. Carries the
 Timber & Ink design system.
 
 The working brief is [`CLAUDE.md`](CLAUDE.md) — read that first. Companion
@@ -27,7 +27,7 @@ src/lib/       Dexie storage, search index, export, router
 src/sync/      device pairing and the background mirror
 src/weather/   one line of chrome, and the only other network in the app
 src/styles/    Timber & Ink tokens, the frame, the leaf
-supabase/      schema.sql — three tables and one row policy, run once
+supabase/      sync schema and optional Siena plugin access
 ```
 
 Storage is IndexedDB via Dexie, and it is the primary store — not a cache. A
@@ -44,6 +44,12 @@ Make a free Supabase project, run [`supabase/schema.sql`](supabase/schema.sql)
 in its SQL editor, then paste the project URL and anon key into Settings → Sync.
 The editor never waits on any of it — writes go to IndexedDB and return, and the
 mirror catches up on its own.
+
+## Siena plugin
+
+Optional assistant access uses a separate email sign-in and links an account to
+the existing vault from a paired device. It does not change how pages are edited
+or synced. Setup and access boundaries are in [`docs/siena-plugin.md`](docs/siena-plugin.md).
 
 ## Deploying
 

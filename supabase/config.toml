@@ -1,0 +1,3 @@
+[functions.field-notes-mcp]
+# The function itself validates OAuth tokens. Discovery must answer anonymous requests.
+verify_jwt = false

@@ -12,6 +12,7 @@ import { TrashScreen } from './screens/TrashScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { CalendarScreen } from './screens/CalendarScreen'
 import { DayScreen } from './screens/DayScreen'
+import { OAuthConsentScreen } from './screens/OAuthConsentScreen'
 
 export function App() {
   const route = useRoute()
@@ -48,6 +49,8 @@ export function App() {
   }, [remembered])
 
   switch (route.name) {
+    case 'oauth-consent':
+      return <OAuthConsentScreen />
     case 'notebook':
       return <HomeScreen notebook={notebookOf(route.notebook)?.id ?? remembered} />
     case 'page':

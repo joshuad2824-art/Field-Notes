@@ -13,6 +13,7 @@ export type Route =
   | { name: 'calendar'; month?: string }
   | { name: 'trash' }
   | { name: 'settings' }
+  | { name: 'oauth-consent' }
   /* The two that create rather than show: a new page, and a timestamped line
      on today's. Both land a live caret and replace themselves in history, so
      back never strands what they made. */
@@ -59,6 +60,7 @@ export function parse(path: string): Route {
   if (parts[0] === 'search') return { name: 'search' }
   if (parts[0] === 'trash') return { name: 'trash' }
   if (parts[0] === 'settings') return { name: 'settings' }
+  if (parts[0] === 'oauth' && parts[1] === 'consent') return { name: 'oauth-consent' }
   if (parts[0] === 'new') return { name: 'new', notebook: parts[1] }
   if (parts[0] === 'today') return { name: 'today' }
   return { name: 'shelf' }

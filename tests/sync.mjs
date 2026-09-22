@@ -418,8 +418,8 @@ await a.view.waitForTimeout(2200)
 
 ok('the first device makes a vault without signing in to anything', served > 0, `${served} calls`)
 ok(
-  'and there is no field anywhere for an email or a password',
-  (await a.view.locator('input[type=password], input[type=email]').count()) === 0,
+  'and device sync itself never asks for an email or a password',
+  (await a.view.locator('.sync-form input[type=password], .sync-form input[type=email]').count()) === 0,
 )
 
 await a.view.locator('.btn.caps', { hasText: 'Pair another device' }).click()
