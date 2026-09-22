@@ -43,7 +43,10 @@ export function OAuthConsentScreen() {
       }
     }
     void load()
-    const { data } = sienaClient.auth.onAuthStateChange(() => void load())
+    // Let Supabase release its auth lock before loading user and consent data.
+    const { data } = sienaClient.auth.onAuthStateChange(() => {
+      setTimeout(() => void load(), 0)
+    })
     return () => {
       live = false
       data.subscription.unsubscribe()
