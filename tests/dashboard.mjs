@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { forecast } from '../src/weather/open-meteo.ts'
+import { isoDay } from '../src/lib/format.ts'
 import { eventToRow, rowToEvent, sameEvent, rowToSienaItem, sienaItemToRow, sameSienaItem } from '../src/sync/wire.ts'
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5173'
@@ -82,6 +83,27 @@ try {
   await page.getByRole('button', { name: 'Open calendar' }).click()
   await page.getByText('Dashboard test meeting').waitFor()
   console.log('PASS  event saves locally and appears in Overview and calendar')
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  assert.equal(await page.locator('.calendar-masthead').evaluate((node) => node.scrollWidth <= node.clientWidth), true)
+  await page.getByRole('button', { name: 'Notebook', exact: true }).click()
+  assert.match(new URL(page.url()).pathname, /^\/n\//)
+  await page.goto(`${BASE}/calendar`, { waitUntil: 'domcontentloaded' })
+  await page.getByRole('button', { name: 'Add event' }).click()
+  assert.equal(await page.getByLabel('Date').inputValue(), isoDay())
+  await page.getByLabel('Title').fill('Calendar navigation test')
+  await page.getByRole('button', { name: 'Save event' }).click()
+  await page.getByRole('heading', { name: 'Calendar navigation test' }).waitFor()
+  assert.equal(await page.locator('.event-top').evaluate((node) => node.scrollWidth <= node.clientWidth), true)
+  await page.getByRole('button', { name: '‹ Back' }).click()
+  assert.match(new URL(page.url()).pathname, /^\/calendar/)
+  await page.locator('.calendar-grid .cal-day.today').click()
+  assert.match(new URL(page.url()).pathname, /^\/day\//)
+  assert.equal(await page.locator('.chrome').evaluate((node) => node.scrollWidth <= node.clientWidth), true)
+  await page.getByRole('button', { name: 'Notebook', exact: true }).click()
+  assert.match(new URL(page.url()).pathname, /^\/n\//)
+  console.log('PASS  calendar, event, and day have a direct notebook exit on phone')
+  await page.setViewportSize({ width: 1280, height: 900 })
 
   const now = Date.now()
   await page.evaluate(async (at) => {

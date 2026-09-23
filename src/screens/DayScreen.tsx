@@ -11,22 +11,17 @@ import type { FieldEvent } from '../lib/model'
 
 /* One day's pages. A lens, never a container — nothing is filed here, it is
    only being looked at by the day it was written on. */
-export function DayScreen({ iso }: { iso: string }) {
+export function DayScreen({ iso, notebook }: { iso: string; notebook: string }) {
   const pages = useLive<Page[]>(() => pagesOnDay(iso), [iso], [])
   const events = useLive<FieldEvent[]>(() => eventsOnDay(iso), [iso], [])
 
   return (
     <div className="app">
       <header className="chrome">
-        <button
-          className="btn glyph"
-          onClick={() => back(to.calendar(isoMonth(iso)))}
-          aria-label="Back"
-        >
-          ‹
-        </button>
+        <button className="link-caps" onClick={() => back(to.calendar(isoMonth(iso)))}>‹ Back</button>
         <span className="chrome-title">{readableDay(iso)}</span>
         <span className="grow" />
+        <button className="link-caps" onClick={() => navigate(to.notebook(notebook))}>Notebook</button>
         <button className="link-caps" onClick={() => navigate(to.newEvent(iso))}>Add event</button>
         <button className="link-caps" onClick={() => navigate(to.calendar(isoMonth(iso)))}>
           Month

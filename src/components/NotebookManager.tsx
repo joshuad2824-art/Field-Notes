@@ -21,9 +21,12 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
 
   const doomed = books.find((book) => book.id === confirm) ?? null
   const doomedCount = doomed ? (counts[doomed.id] ?? 0) : 0
+  const candidate = name.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+  const alreadyNamed = candidate && books.some((book) =>
+    book.name.trim().replace(/\s+/g, ' ').toLocaleLowerCase() === candidate)
 
   const add = async () => {
-    if (!name.trim()) return
+    if (!candidate || alreadyNamed) return
     const book = await addNotebook(name, color)
     setName('')
     onAdded(book.id)
@@ -139,13 +142,14 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
               />
             ))}
             <span className="grow" />
-            <button className="plate-button tight" disabled={!name.trim()} onClick={add}>
+            <button className="plate-button tight" disabled={!candidate || !!alreadyNamed} onClick={add}>
               Add notebook
             </button>
           </div>
-          <p className="manager-note">
-            Covers come from the palette, so a new notebook still looks like it belongs on the
-            shelf.
+          <p className="manager-note" role={alreadyNamed ? 'status' : undefined}>
+            {alreadyNamed
+              ? 'A notebook with that name is already on the shelf.'
+              : 'Covers come from the palette, so a new notebook still looks like it belongs on the shelf.'}
           </p>
         </div>
       </div>

@@ -61,9 +61,9 @@ export function App() {
     case 'from-siena':
       return <FromSienaScreen />
     case 'event-new':
-      return <EventScreen date={route.date} />
+      return <EventScreen date={route.date} notebook={remembered} />
     case 'event':
-      return <EventScreen id={route.id} />
+      return <EventScreen id={route.id} notebook={remembered} />
     case 'notebook':
       return <HomeScreen notebook={notebookOf(route.notebook)?.id ?? remembered} />
     case 'page':
@@ -73,9 +73,9 @@ export function App() {
     case 'tag':
       return <TagScreen tag={route.tag} />
     case 'day':
-      return <DayScreen key={route.iso} iso={route.iso} />
+      return <DayScreen key={route.iso} iso={route.iso} notebook={remembered} />
     case 'calendar':
-      return <CalendarScreen key={route.month ?? 'now'} month={route.month} />
+      return <CalendarScreen key={route.month ?? 'now'} month={route.month} notebook={remembered} />
     case 'trash':
       return <TrashScreen />
     case 'settings':

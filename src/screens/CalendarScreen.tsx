@@ -5,7 +5,7 @@ import { EventRow } from '../components/EventRow'
 import { daysWithEvents, eventsInMonth } from '../lib/events'
 import { daysWritten, pagesInMonth } from '../lib/db'
 import { dayOf, monthNow, monthParts, stepMonth } from '../lib/calendar'
-import { countLabel, readableDay } from '../lib/format'
+import { countLabel, isoDay, readableDay } from '../lib/format'
 import { JOURNAL_NOTEBOOK, type FieldEvent, type Page, titleOf } from '../lib/model'
 import { back, navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
@@ -15,7 +15,7 @@ import { useLive } from '../lib/useLive'
 
    Below the grid, that month's pages in the order they were written. The
    calendar is a lens over the same pages, never a place they live. */
-export function CalendarScreen({ month }: { month?: string }) {
+export function CalendarScreen({ month, notebook }: { month?: string; notebook: string }) {
   const [shown, setShown] = useState(month ?? monthNow())
   const pages = useLive<Page[]>(() => pagesInMonth(shown), [shown], [])
   const written = useLive<Set<string>>(daysWritten, [], new Set())
@@ -58,11 +58,10 @@ export function CalendarScreen({ month }: { month?: string }) {
       <div className="calendar-screen scroll">
         <div className="calendar-body">
           <div className="calendar-masthead">
-            <button className="btn glyph" onClick={() => back()} aria-label="Back">
-              ‹
-            </button>
+            <button className="link-caps" onClick={() => back(to.notebook(notebook))}>‹ Back</button>
+            <button className="link-caps" onClick={() => navigate(to.notebook(notebook))}>Notebook</button>
             <span className="grow" />
-            <button className="link-caps" onClick={() => navigate(to.newEvent(`${shown}-01`))}>Add event</button>
+            <button className="link-caps" onClick={() => navigate(to.newEvent(shown === monthNow() ? isoDay() : `${shown}-01`))}>Add event</button>
             <button
               className="link-caps"
               onClick={() => step(-1)}

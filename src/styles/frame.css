@@ -1254,7 +1254,8 @@ mark.hit {
 .calendar-masthead {
   display: flex;
   align-items: center;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 12px;
   padding: 14px 20px 0;
 }
 .calendar-masthead .grow {
