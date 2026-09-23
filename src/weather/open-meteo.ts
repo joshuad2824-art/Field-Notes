@@ -18,6 +18,14 @@ import type { Place } from './place'
 
 export type Unit = 'C' | 'F'
 
+export interface DailyForecast {
+  date: string
+  code: number
+  high: number
+  low: number
+  rainChance?: number
+}
+
 export interface Reading {
   temp: number
   high: number
@@ -33,6 +41,7 @@ export interface Reading {
   /* When this was fetched, so staleness is the store's business and not a
      guess made at render time. */
   at: number
+  daily: DailyForecast[]
 }
 
 const FORECAST = 'https://api.open-meteo.com/v1/forecast'
@@ -57,15 +66,15 @@ export async function forecast(
     latitude: String(place.lat),
     longitude: String(place.lon),
     current: 'temperature_2m,weather_code,is_day',
-    daily: 'temperature_2m_max,temperature_2m_min',
+    daily: 'temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max',
     timezone: 'auto',
-    forecast_days: '1',
+    forecast_days: '7',
   })
   if (unit === 'F') query.set('temperature_unit', 'fahrenheit')
 
   const body = (await ask(`${FORECAST}?${query}`, signal)) as {
     current?: { temperature_2m?: unknown; weather_code?: unknown; is_day?: unknown }
-    daily?: { temperature_2m_max?: unknown[]; temperature_2m_min?: unknown[] }
+    daily?: { time?: unknown[]; temperature_2m_max?: unknown[]; temperature_2m_min?: unknown[]; weather_code?: unknown[]; precipitation_probability_max?: unknown[] }
   }
 
   const temp = num(body.current?.temperature_2m)
@@ -76,6 +85,17 @@ export async function forecast(
      range is allowed to be absent — some places, some hours — and the line
      simply says less rather than nothing. */
   if (temp === null || code === null) return null
+
+  const daily: DailyForecast[] = []
+  for (let i = 0; i < 7; i++) {
+    const date = body.daily?.time?.[i]
+    const dayCode = num(body.daily?.weather_code?.[i])
+    const dayHigh = num(body.daily?.temperature_2m_max?.[i])
+    const dayLow = num(body.daily?.temperature_2m_min?.[i])
+    if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || dayCode === null || dayHigh === null || dayLow === null) continue
+    const rainChance = num(body.daily?.precipitation_probability_max?.[i])
+    daily.push({ date, code: dayCode, high: dayHigh, low: dayLow, ...(rainChance === null ? {} : { rainChance }) })
+  }
 
   return {
     temp,
@@ -88,6 +108,7 @@ export async function forecast(
     low: low ?? temp,
     unit,
     at: Date.now(),
+    daily,
   }
 }
 

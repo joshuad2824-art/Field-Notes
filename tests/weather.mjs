@@ -158,7 +158,7 @@ async function device({ width, height, locale = 'en-GB' }) {
   })
   const view = await context.newPage()
   view.on('pageerror', (e) => problems.push(`${width}px: ${e.message}`))
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1800)
   return { context, view }
 }
@@ -370,7 +370,7 @@ async function device({ width, height, locale = 'en-GB' }) {
   })
   const view = await context.newPage()
   view.on('pageerror', (e) => problems.push(`stale: ${e.message}`))
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1200)
 
   const line = view.locator('.rail .weather')
@@ -407,7 +407,7 @@ async function device({ width, height, locale = 'en-GB' }) {
   })
   const view = await context.newPage()
   view.on('pageerror', (e) => problems.push(`2x: ${e.message}`))
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1800)
   ok(
     'the glyph is chrome and does not take the dial with it',

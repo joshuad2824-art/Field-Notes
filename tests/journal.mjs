@@ -169,7 +169,7 @@ const browser = await chromium.launch()
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
 const view = await context.newPage()
 view.on('pageerror', (e) => problems.push(e.message))
-await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await view.waitForTimeout(1200)
 
 /* Raw IndexedDB, so the test doesn't need the app's modules to agree with it
@@ -317,7 +317,7 @@ const journalPages = () =>
   ok('and it opened the entry', (await view.locator('.cm-content').count()) === 1)
 
   /* Again. The whole point of keying on notebook plus entryDate. */
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1000)
   await view.locator('.rail-foot .rail-journal').click()
   await view.waitForTimeout(400)

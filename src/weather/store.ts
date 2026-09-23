@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { forecast, type Reading, type Unit } from './open-meteo'
+import { forecast, type DailyForecast, type Reading, type Unit } from './open-meteo'
 import { resolvePlace } from './place'
 
 /* What the chrome reads, and the schedule behind it.
@@ -58,6 +58,9 @@ function readReading(): Reading | null {
       low: typeof r.low === 'number' ? r.low : r.temp,
       unit: r.unit === 'F' ? 'F' : 'C',
       at: typeof r.at === 'number' ? r.at : 0,
+      daily: Array.isArray(r.daily) ? r.daily.filter((day): day is DailyForecast =>
+        !!day && typeof day.date === 'string' && typeof day.code === 'number' &&
+        typeof day.high === 'number' && typeof day.low === 'number') : [],
     }
   } catch {
     return null
@@ -127,7 +130,7 @@ export function setUnit(next: Unit): void {
 export async function refresh(force = false): Promise<void> {
   if (off) return
   if (inFlight) return inFlight
-  if (!force && reading && Date.now() - reading.at < STALE) return
+  if (!force && reading && reading.daily.length >= 7 && Date.now() - reading.at < STALE) return
 
   inFlight = (async () => {
     try {

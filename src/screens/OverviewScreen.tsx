@@ -1,108 +1,129 @@
 import { useState } from 'react'
-import { livePages } from '../lib/db'
-import { summarizeOverview } from '../lib/overview'
-import { type Page, titleOf } from '../lib/model'
-import { notebookForPage, useNotebooks } from '../lib/notebooks'
+import { EventRow } from '../components/EventRow'
+import { Shell } from '../components/Shell'
+import { SienaItemCard } from '../components/SienaItemCard'
+import { WeatherGlyph } from '../components/WeatherGlyph'
+import { eventsOnDay } from '../lib/events'
+import { isoDay, mastheadParts } from '../lib/format'
+import type { FieldEvent } from '../lib/model'
 import { navigate, to } from '../lib/router'
+import { allSienaItems, sienaSections } from '../lib/siena-items'
 import { useLive } from '../lib/useLive'
-import { useSyncStatus, statusLabel } from '../sync/status'
+import { degrees } from '../weather/codes'
+import { usePlace } from '../weather/place'
+import { useWeather } from '../weather/store'
+
+const dayName = new Intl.DateTimeFormat([], { weekday: 'short' })
 
 export function OverviewScreen({ notebook }: { notebook: string }) {
-  const pages = useLive<Page[]>(() => livePages(), [], [])
-  const books = useNotebooks()
-  const sync = useSyncStatus()
-  const [allTasks, setAllTasks] = useState(false)
-  const [allPinned, setAllPinned] = useState(false)
-  const overview = summarizeOverview(pages)
+  const [today] = useState(isoDay)
+  const { weekday, day, month, year } = mastheadParts()
+  const events = useLive<FieldEvent[]>(() => eventsOnDay(today), [today], [])
+  const items = useLive(allSienaItems, [], [])
+  const siena = sienaSections(items)
+  const weather = useWeather()
+  const place = usePlace()
 
   return (
     <div className="app">
       <div className="statusband" />
-      <main className="overview-screen scroll">
-        <div className="overview-wrap">
-          <div className="overview-top">
-            <button className="overview-back" onClick={() => navigate(to.notebook(notebook))}>‹ Notebooks</button>
-            <span className="overview-sync">{statusLabel(sync) || 'On this device'}</span>
-          </div>
+      <Shell notebook={notebook} overview>
+        {({ toggle }) => (
+          <main className="overview-screen scroll">
+            <div className="overview-wrap">
+              <header className="overview-head">
+                <div className="overview-top">
+                  {toggle}
+                  <span className="overview-wordmark">Field Notes</span>
+                  <span className="grow" />
+                  <button className="overview-text-link" onClick={() => navigate(to.fromSiena())}>
+                    From Siena {siena.unseen ? <span className="siena-badge">{siena.unseen}</span> : null}
+                  </button>
+                </div>
+                <div className="overview-date">
+                  <span className="overview-weekday">{weekday}</span>
+                  <span className="overview-day">{day}</span>
+                  <span className="overview-month">{month}<br />{year}</span>
+                </div>
+                <div className="overview-heading-row">
+                  <h1>Today in Field Notes</h1>
+                  <div className="overview-actions">
+                    <button className="overview-action primary" onClick={() => navigate(to.newPage(notebook))}>New page</button>
+                    <button className="overview-action" onClick={() => navigate(to.today())}>Add to today</button>
+                    <button className="overview-action" onClick={() => navigate(to.search())}>Search</button>
+                  </div>
+                </div>
+              </header>
 
-          <header className="overview-intro">
-            <div className="section-label">Field Notes</div>
-            <h1>Overview</h1>
-            <p>A place to pick up a thought, find an open loop, or begin again.</p>
-          </header>
+              <div className="overview-daily">
+                <section className="overview-events">
+                  <div className="overview-section-head">
+                    <h2>Today’s events</h2>
+                    <button className="overview-icon-button overview-add-event" aria-label="Add event" title="Add event" onClick={() => navigate(to.newEvent(today))}>
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12.3 3.5c-.5 5.6-.3 11.5-.5 17" /><path d="M3.8 12.1c5.5-.1 11.3-.2 16.5-.5" /></svg>
+                    </button>
+                  </div>
+                  {events.length ? events.map((event) => <EventRow key={event.id} event={event} />) : (
+                    <p className="overview-empty">Nothing planned here today.</p>
+                  )}
+                  <button className="overview-icon-button overview-open-calendar" aria-label="Open calendar" title="Open calendar" onClick={() => navigate(to.calendar())}>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4.1 6.4c4.9-.4 10.8-.2 15.8.1.3 4.5.2 9.7-.2 14.1-5.3.4-10.7.4-15.5-.1-.4-4.7-.4-9.5-.1-14.1zM8 3.6l-.2 4.5M16.4 3.4l.1 4.6M4.4 10.5c4.7.2 10 .2 15.2 0" /><path d="M8.4 14.3c1.6-.2 3.1-.2 4.8-.1M8.7 17.4c1.2-.1 2.5 0 3.7.1" /></svg>
+                  </button>
+                </section>
 
-          <div className="overview-actions" aria-label="Quick actions">
-            <button className="overview-action primary" onClick={() => navigate(to.newPage(notebook))}>New page <span aria-hidden="true">↗</span></button>
-            <button className="overview-action" onClick={() => navigate(to.today())}>Add to today <span aria-hidden="true">↗</span></button>
-            <button className="overview-action" onClick={() => navigate(to.search())}>Search pages <span aria-hidden="true">↗</span></button>
-          </div>
+                <section className="overview-forecast">
+                  <div className="overview-section-head">
+                    <h2>The week ahead</h2>
+                    {place?.label ? <span className="overview-place">{place.label}</span> : null}
+                  </div>
+                  {weather?.daily.length ? (
+                    <div className="forecast-days">
+                      {weather.daily.map((forecast) => {
+                        const date = new Date(`${forecast.date}T12:00:00`)
+                        const isToday = forecast.date === today
+                        return (
+                          <div key={forecast.date} className={`forecast-day${isToday ? ' today' : ''}`}>
+                            <span className="forecast-weekday">{isToday ? 'Today' : dayName.format(date)}</span>
+                            <WeatherGlyph code={forecast.code} isDay />
+                            <span className="forecast-range"><strong>{degrees(forecast.high)}</strong> / {degrees(forecast.low)}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : <p className="overview-empty">The forecast will appear when a place and a weather reading are available.</p>}
+                </section>
+              </div>
 
-          <div className="overview-stats" aria-label="Pages on this device at a glance">
-            <div><strong>{overview.pageCount}</strong><span>{overview.pageCount === 1 ? 'Page' : 'Pages'}</span></div>
-            <div><strong>{books.length}</strong><span>{books.length === 1 ? 'Notebook' : 'Notebooks'}</span></div>
-            <div><strong>{overview.taskCount}</strong><span>{overview.taskCount === 1 ? 'Open checkbox' : 'Open checkboxes'}</span></div>
-          </div>
+              <section className="overview-from-siena">
+                <div className="overview-section-head">
+                  <h2>From Siena {siena.unseen ? <span className="siena-badge">{siena.unseen}</span> : null}</h2>
+                  <button className="overview-icon-button" aria-label="All saved items" title="All saved items" onClick={() => navigate(to.fromSiena())}>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 6.6c4.7-.4 9.6-.3 14 .1.4 4.1.4 8.8.1 13.1-4.4.4-9.3.5-14.2.1-.4-4.5-.2-9 .1-13.3zM7.8 4.1c2.8-.2 5.8-.2 8.4.1M10 2.1c1.3-.1 2.6-.1 4 0M8.7 11.2c2.4-.2 4.6-.1 6.8.1M8.8 14.7c2.2-.1 4.5-.1 6.3.1" /></svg>
+                  </button>
+                </div>
 
-          <div className="overview-grid">
-            <section className="overview-card">
-              <div className="overview-card-head"><h2>Continue writing</h2><span>Recently edited</span></div>
-              {overview.recent.length ? overview.recent.map((page) => (
-                <button key={page.id} className="overview-row" onClick={() => navigate(to.page(page.id))}>
-                  <span className="overview-row-title">{titleOf(page.body)}</span>
-                  <span className="overview-row-meta">{notebookForPage(page.notebook).name}</span>
-                </button>
-              )) : <p className="overview-empty">Your recent pages will appear here.</p>}
-            </section>
+                {siena.featured ? <SienaItemCard item={siena.featured} paper /> : (
+                  <div className="siena-item paper siena-empty-letter">
+                    <span className="section-label">A note from Siena</span>
+                    <p>When Siena leaves you a note, its full message will be here. Older notes stay in From Siena.</p>
+                  </div>
+                )}
 
-            <section className="overview-card">
-              <div className="overview-card-head"><h2>Open loops</h2><span>Unchecked on your pages</span></div>
-              {overview.tasks.length ? overview.tasks.slice(0, allTasks ? undefined : 6).map((task, index) => (
-                <button key={`${task.page.id}-${index}`} className="overview-row task" onClick={() => navigate(to.page(task.page.id))}>
-                  <span className="overview-task-mark" aria-hidden="true" />
-                  <span><span className="overview-row-title">{task.text}</span><span className="overview-row-meta">{titleOf(task.page.body)}</span></span>
-                </button>
-              )) : <p className="overview-empty">No unchecked boxes in your pages.</p>}
-              {overview.taskCount > 6 ? (
-                <button className="overview-more" onClick={() => setAllTasks(!allTasks)}>
-                  {allTasks ? 'Show fewer' : `Show all ${overview.taskCount} open checkboxes`}
-                </button>
-              ) : null}
-            </section>
-
-            <section className="overview-card">
-              <div className="overview-card-head"><h2>Pinned pages</h2><span>Close at hand</span></div>
-              {overview.pinned.length ? overview.pinned.slice(0, allPinned ? undefined : 4).map((page) => (
-                <button key={page.id} className="overview-row" onClick={() => navigate(to.page(page.id))}>
-                  <span className="overview-row-title">{titleOf(page.body)}</span>
-                  <span className="overview-row-meta">{notebookForPage(page.notebook).name}</span>
-                </button>
-              )) : <p className="overview-empty">Pin a page to keep it close at hand.</p>}
-              {overview.pinned.length > 4 ? (
-                <button className="overview-more" onClick={() => setAllPinned(!allPinned)}>
-                  {allPinned ? 'Show fewer' : `Show all ${overview.pinned.length} pinned pages`}
-                </button>
-              ) : null}
-            </section>
-
-            <section className="overview-card">
-              <div className="overview-card-head"><h2>Notebooks</h2><span>Your writing, by place</span></div>
-              {books.map((book) => (
-                <button key={book.id} className="overview-row book" onClick={() => navigate(to.notebook(book.id))}>
-                  <span className="overview-book-dot" style={{ background: book.color }} />
-                  <span className="overview-row-title">{book.name}</span>
-                  <span className="overview-row-meta">{overview.notebookCounts[book.id] ?? 0}</span>
-                </button>
-              ))}
-            </section>
-          </div>
-
-          <section className="overview-siena">
-            <div><span className="section-label">Working with Siena</span><h2>Your notes, within reach</h2></div>
-            <p>Once connected, Siena can find synced pages, read them with you, capture a new thought, and revise a page you choose. Access is controlled in Settings.</p>
-            <button onClick={() => navigate(to.settings())}>Siena settings ↗</button>
-          </section>
-        </div>
-      </main>
+                <div className="overview-siena-columns">
+                  <div className="overview-siena-section">
+                    <div className="overview-section-head"><h3>Reminders</h3></div>
+                    {siena.reminders.length ? siena.reminders.map((item) => <SienaItemCard key={item.id} item={item} />) : <p className="overview-empty">Nothing is due from Siena today.</p>}
+                  </div>
+                  <div className="overview-siena-section">
+                    <div className="overview-section-head"><h3>Task updates</h3></div>
+                    {siena.updates.length ? siena.updates.map((item) => <SienaItemCard key={item.id} item={item} />) : <p className="overview-empty">No new results or decisions to review.</p>}
+                  </div>
+                </div>
+              </section>
+            </div>
+          </main>
+        )}
+      </Shell>
     </div>
   )
 }

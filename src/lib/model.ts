@@ -47,6 +47,35 @@ export interface Notebook {
   deleted?: number
 }
 
+export interface FieldEvent {
+  id: string
+  title: string
+  date: string // YYYY-MM-DD in the writer's local calendar
+  startTime?: string // HH:MM, intentionally no timezone for a personal day view
+  endTime?: string
+  location?: string
+  note?: string
+  created: number
+  updated: number
+  deleted?: number
+  conflictOf?: string
+}
+
+export type SienaItemKind = 'note' | 'reminder' | 'task_update' | 'saved'
+
+export interface SienaItem {
+  id: string
+  type: SienaItemKind
+  title?: string
+  body: string
+  sourceUrl?: string
+  sourceKey?: string // optional idempotency key for a scheduled publisher
+  created: number
+  updated: number
+  dueAt?: number // reminders use an absolute timestamp
+  seenAt?: number // set only by an explicit user action
+}
+
 /* What the shelf is seeded with on first run. After that it's whatever is in
    the notebooks table. */
 export const DEFAULT_NOTEBOOKS: Notebook[] = [

@@ -3,9 +3,11 @@ import { changed, db } from './db'
 import { isCutout } from './images'
 import {
   COVER_COLORS,
+  type FieldEvent,
   type Page,
   type PageImage,
   type Pen,
+  type SienaItem,
   type Stock,
   imageIdsIn,
 } from './model'
@@ -40,6 +42,85 @@ export interface ImportReport {
   skipped: number
   pictures: number
   notebooks: number
+  events: number
+  sienaItems: number
+}
+
+interface BackupData {
+  events: FieldEvent[]
+  sienaItems: SienaItem[]
+}
+
+function record(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function optionalString(value: unknown, max: number): value is string | undefined {
+  return value === undefined || (typeof value === 'string' && value.length <= max)
+}
+
+function optionalClock(value: unknown): value is string | undefined {
+  return value === undefined || (typeof value === 'string' && /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(value))
+}
+
+function optionalStamp(value: unknown): value is number | undefined {
+  return value === undefined || (typeof value === 'number' && Number.isFinite(value))
+}
+
+function validId(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= 100 && !/\s/.test(value)
+}
+
+/* This file is included only in a whole-shelf export. Validate its shape
+   before writing any rows: a hand-edited or unrelated zip is still welcome
+   for markdown pages, but cannot smuggle arbitrary objects into the stores. */
+function parseBackupData(text: string): BackupData {
+  const raw: unknown = JSON.parse(text)
+  if (!record(raw) || raw.format !== 'field-notes-data' || raw.version !== 1 ||
+      !Array.isArray(raw.events) || !Array.isArray(raw.sienaItems)) throw new Error('Invalid Field Notes backup data')
+
+  const events = raw.events.map((value): FieldEvent => {
+    if (!record(value) || !validId(value.id) || typeof value.title !== 'string' ||
+        !value.title.trim() || value.title.length > 240 || typeof value.date !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(value.date) || !optionalClock(value.startTime) ||
+        !optionalClock(value.endTime) || !optionalString(value.location, 500) ||
+        !optionalString(value.note, 10000) || !optionalString(value.conflictOf, 100) ||
+        typeof value.created !== 'number' || !Number.isFinite(value.created) ||
+        typeof value.updated !== 'number' || !Number.isFinite(value.updated) ||
+        !optionalStamp(value.deleted)) throw new Error('Invalid event in Field Notes backup')
+    return {
+      id: value.id, title: value.title, date: value.date,
+      ...(value.startTime ? { startTime: value.startTime } : {}),
+      ...(value.endTime ? { endTime: value.endTime } : {}),
+      ...(value.location ? { location: value.location } : {}),
+      ...(value.note ? { note: value.note } : {}),
+      created: value.created, updated: value.updated,
+      ...(value.deleted !== undefined ? { deleted: value.deleted } : {}),
+      ...(value.conflictOf ? { conflictOf: value.conflictOf } : {}),
+    }
+  })
+
+  const sienaItems = raw.sienaItems.map((value): SienaItem => {
+    if (!record(value) || !validId(value.id) ||
+        typeof value.type !== 'string' || !['note', 'reminder', 'task_update', 'saved'].includes(value.type) ||
+        !optionalString(value.title, 240) || typeof value.body !== 'string' ||
+        !value.body.trim() || value.body.length > 100000 ||
+        !optionalString(value.sourceUrl, 2000) || !optionalString(value.sourceKey, 200) ||
+        typeof value.created !== 'number' || !Number.isFinite(value.created) ||
+        typeof value.updated !== 'number' || !Number.isFinite(value.updated) ||
+        !optionalStamp(value.dueAt) || !optionalStamp(value.seenAt) ||
+        (value.type === 'reminder' && value.dueAt === undefined)) throw new Error('Invalid Siena item in Field Notes backup')
+    return {
+      id: value.id, type: value.type as SienaItem['type'], body: value.body,
+      ...(value.title ? { title: value.title } : {}),
+      ...(value.sourceUrl ? { sourceUrl: value.sourceUrl } : {}),
+      ...(value.sourceKey ? { sourceKey: value.sourceKey } : {}),
+      created: value.created, updated: value.updated,
+      ...(value.dueAt !== undefined ? { dueAt: value.dueAt } : {}),
+      ...(value.seenAt !== undefined ? { seenAt: value.seenAt } : {}),
+    }
+  })
+  return { events, sienaItems }
 }
 
 interface ParsedFile {
@@ -214,8 +295,9 @@ async function applyImages(
 }
 
 export async function importFiles(files: File[]): Promise<ImportReport> {
-  const report: ImportReport = { added: 0, replaced: 0, skipped: 0, pictures: 0, notebooks: 0 }
+  const report: ImportReport = { added: 0, replaced: 0, skipped: 0, pictures: 0, notebooks: 0, events: 0, sienaItems: 0 }
   const texts: string[] = []
+  const backups: BackupData[] = []
   const bytes = new Map<string, { data: Uint8Array; ext: string }>()
 
   for (const file of files) {
@@ -225,6 +307,7 @@ export async function importFiles(files: File[]): Promise<ImportReport> {
         if (!data.length) continue
         const image = path.match(IMAGE_PATH)
         if (image) bytes.set(image[1], { data, ext: image[2] })
+        else if (path === 'field-notes-data.json') backups.push(parseBackupData(strFromU8(data)))
         else if (/\.(md|markdown)$/i.test(path)) texts.push(strFromU8(data))
       }
     } else if (/\.(md|markdown|txt)$/i.test(file.name) || file.type.startsWith('text/')) {
@@ -238,6 +321,23 @@ export async function importFiles(files: File[]): Promise<ImportReport> {
     if (page) await applyImages(page, bytes, report)
   }
 
-  if (report.added || report.replaced || report.pictures || report.notebooks) changed()
+  for (const backup of backups) {
+    for (const event of backup.events) {
+      const standing = await db.events.get(event.id)
+      if (!standing || event.updated > standing.updated) {
+        await db.events.put(event)
+        report.events++
+      }
+    }
+    for (const item of backup.sienaItems) {
+      const standing = await db.sienaItems.get(item.id)
+      if (!standing || item.updated > standing.updated) {
+        await db.sienaItems.put(item)
+        report.sienaItems++
+      }
+    }
+  }
+
+  if (report.added || report.replaced || report.pictures || report.notebooks || report.events || report.sienaItems) changed()
   return report
 }

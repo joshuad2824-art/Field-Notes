@@ -24,7 +24,7 @@ const cases = [
 const context = await browser.newContext()
 try {
   const page = await context.newPage()
-  await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   /* Netlify's review drawer covers the page in deploy previews. */
   await page.evaluate(() => document.querySelector('[data-netlify-deploy-id]')?.remove())
   for (const { markdown, steps } of cases) {

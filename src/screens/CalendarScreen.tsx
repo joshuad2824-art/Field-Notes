@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { MonthGrid } from '../components/MonthGrid'
 import { PageRow } from '../components/PageRow'
+import { EventRow } from '../components/EventRow'
+import { daysWithEvents, eventsInMonth } from '../lib/events'
 import { daysWritten, pagesInMonth } from '../lib/db'
 import { dayOf, monthNow, monthParts, stepMonth } from '../lib/calendar'
 import { countLabel, readableDay } from '../lib/format'
-import { JOURNAL_NOTEBOOK, type Page, titleOf } from '../lib/model'
+import { JOURNAL_NOTEBOOK, type FieldEvent, type Page, titleOf } from '../lib/model'
 import { back, navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
 
@@ -17,6 +19,8 @@ export function CalendarScreen({ month }: { month?: string }) {
   const [shown, setShown] = useState(month ?? monthNow())
   const pages = useLive<Page[]>(() => pagesInMonth(shown), [shown], [])
   const written = useLive<Set<string>>(daysWritten, [], new Set())
+  const events = useLive<FieldEvent[]>(() => eventsInMonth(shown), [shown], [])
+  const eventDays = useLive<Set<string>>(daysWithEvents, [], new Set())
   const { month: name, year } = monthParts(shown)
 
   const step = (by: number) => {
@@ -33,13 +37,19 @@ export function CalendarScreen({ month }: { month?: string }) {
 
   /* Grouped by day, so a day with three pages reads as a day and not as three
      unrelated rows. */
-  const days: { iso: string; pages: Page[] }[] = []
+  const days: { iso: string; pages: Page[]; events: FieldEvent[] }[] = []
   for (const page of pages) {
     const iso = dayOf(page)
     const last = days[days.length - 1]
     if (last && last.iso === iso) last.pages.push(page)
-    else days.push({ iso, pages: [page] })
+    else days.push({ iso, pages: [page], events: [] })
   }
+  for (const event of events) {
+    const day = days.find((row) => row.iso === event.date)
+    if (day) day.events.push(event)
+    else days.push({ iso: event.date, pages: [], events: [event] })
+  }
+  days.sort((a, b) => a.iso.localeCompare(b.iso))
 
   return (
     <div className="app">
@@ -52,6 +62,7 @@ export function CalendarScreen({ month }: { month?: string }) {
               ‹
             </button>
             <span className="grow" />
+            <button className="link-caps" onClick={() => navigate(to.newEvent(`${shown}-01`))}>Add event</button>
             <button
               className="link-caps"
               onClick={() => step(-1)}
@@ -82,12 +93,13 @@ export function CalendarScreen({ month }: { month?: string }) {
             <MonthGrid
               month={shown}
               written={written}
+              events={eventDays}
               onPick={(iso) => navigate(to.day(iso))}
             />
           </div>
 
           <div className="calendar-count section-label">
-            {countLabel(pages.length, 'page')} this month
+            {countLabel(pages.length, 'page')} · {countLabel(events.length, 'event')} this month
           </div>
 
           {entries.length ? (
@@ -113,6 +125,7 @@ export function CalendarScreen({ month }: { month?: string }) {
                 {readableDay(day.iso)}
               </button>
               <div className="rows">
+                {day.events.map((event) => <EventRow key={event.id} event={event} />)}
                 {day.pages.map((page) => (
                   <PageRow key={page.id} page={page} showNotebook />
                 ))}

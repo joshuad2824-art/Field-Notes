@@ -14,6 +14,8 @@ import { CalendarScreen } from './screens/CalendarScreen'
 import { DayScreen } from './screens/DayScreen'
 import { OAuthConsentScreen } from './screens/OAuthConsentScreen'
 import { OverviewScreen } from './screens/OverviewScreen'
+import { FromSienaScreen } from './screens/FromSienaScreen'
+import { EventScreen } from './screens/EventScreen'
 
 export function App() {
   const route = useRoute()
@@ -54,6 +56,14 @@ export function App() {
       return <OAuthConsentScreen />
     case 'overview':
       return <OverviewScreen notebook={remembered} />
+    case 'shelf':
+      return <OverviewScreen notebook={remembered} />
+    case 'from-siena':
+      return <FromSienaScreen />
+    case 'event-new':
+      return <EventScreen date={route.date} />
+    case 'event':
+      return <EventScreen id={route.id} />
     case 'notebook':
       return <HomeScreen notebook={notebookOf(route.notebook)?.id ?? remembered} />
     case 'page':
@@ -75,7 +85,7 @@ export function App() {
     case 'today':
       return <CaptureScreen key="today" kind="today" />
     default:
-      return <HomeScreen notebook={remembered} />
+      return <OverviewScreen notebook={remembered} />
   }
 }
 

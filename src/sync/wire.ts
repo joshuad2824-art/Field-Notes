@@ -1,4 +1,4 @@
-import type { Notebook, Page, PageImage } from '../lib/model'
+import type { FieldEvent, Notebook, Page, PageImage, SienaItem, SienaItemKind } from '../lib/model'
 
 /* The envelope on the wire. Deliberately the same shape as the one on the
    device, in snake case because that is what Postgres wants, and with nothing
@@ -41,7 +41,32 @@ export interface ImageRow extends Row {
   bytes: string
 }
 
-export const TABLES = ['pages', 'notebooks', 'images'] as const
+export interface EventRow extends Row {
+  title: string
+  date: string
+  start_time: string | null
+  end_time: string | null
+  location: string | null
+  note: string | null
+  created: number
+  updated: number
+  deleted: number | null
+  conflict_of: string | null
+}
+
+export interface SienaItemRow extends Row {
+  kind: SienaItemKind
+  title: string | null
+  body: string
+  source_url: string | null
+  source_key: string | null
+  due_at: number | null
+  seen_at: number | null
+  created: number
+  updated: number
+}
+
+export const TABLES = ['pages', 'notebooks', 'images', 'events', 'siena_items'] as const
 export type TableName = (typeof TABLES)[number]
 
 /* ── pages ─────────────────────────────────────────────────────────────── */
@@ -111,6 +136,69 @@ export function sameNotebook(a: Notebook, b: Notebook): boolean {
   return (
     a.name === b.name && a.color === b.color && a.order === b.order && !a.deleted === !b.deleted
   )
+}
+
+/* ── events ────────────────────────────────────────────────────────────── */
+
+export function eventToRow(event: FieldEvent, vault: string): EventRow {
+  return {
+    vault, id: event.id, title: event.title, date: event.date,
+    start_time: event.startTime ?? null, end_time: event.endTime ?? null,
+    location: event.location ?? null, note: event.note ?? null,
+    created: event.created, updated: event.updated, deleted: event.deleted ?? null,
+    conflict_of: event.conflictOf ?? null,
+  }
+}
+
+export function rowToEvent(row: EventRow): FieldEvent {
+  return {
+    id: row.id, title: row.title, date: row.date,
+    created: Number(row.created), updated: Number(row.updated),
+    ...(row.start_time ? { startTime: row.start_time } : {}),
+    ...(row.end_time ? { endTime: row.end_time } : {}),
+    ...(row.location ? { location: row.location } : {}),
+    ...(row.note ? { note: row.note } : {}),
+    ...(row.deleted ? { deleted: Number(row.deleted) } : {}),
+    ...(row.conflict_of ? { conflictOf: row.conflict_of } : {}),
+  }
+}
+
+export function sameEvent(a: FieldEvent, b: FieldEvent): boolean {
+  return a.title === b.title && a.date === b.date &&
+    (a.startTime ?? '') === (b.startTime ?? '') && (a.endTime ?? '') === (b.endTime ?? '') &&
+    (a.location ?? '') === (b.location ?? '') && (a.note ?? '') === (b.note ?? '') &&
+    !!a.deleted === !!b.deleted && (a.conflictOf ?? '') === (b.conflictOf ?? '')
+}
+
+/* ── the quiet Siena inbox ─────────────────────────────────────────────── */
+
+export function sienaItemToRow(item: SienaItem, vault: string): SienaItemRow {
+  return {
+    vault, id: item.id, kind: item.type, title: item.title ?? null,
+    body: item.body, source_url: item.sourceUrl ?? null,
+    source_key: item.sourceKey ?? null,
+    due_at: item.dueAt ?? null, seen_at: item.seenAt ?? null,
+    created: item.created, updated: item.updated,
+  }
+}
+
+export function rowToSienaItem(row: SienaItemRow): SienaItem {
+  return {
+    id: row.id, type: row.kind, body: row.body,
+    created: Number(row.created), updated: Number(row.updated),
+    ...(row.title ? { title: row.title } : {}),
+    ...(row.source_url ? { sourceUrl: row.source_url } : {}),
+    ...(row.source_key ? { sourceKey: row.source_key } : {}),
+    ...(row.due_at ? { dueAt: Number(row.due_at) } : {}),
+    ...(row.seen_at ? { seenAt: Number(row.seen_at) } : {}),
+  }
+}
+
+export function sameSienaItem(a: SienaItem, b: SienaItem): boolean {
+  return a.id === b.id && a.type === b.type && a.body === b.body &&
+    (a.title ?? '') === (b.title ?? '') && (a.sourceUrl ?? '') === (b.sourceUrl ?? '') &&
+    (a.sourceKey ?? '') === (b.sourceKey ?? '') && (a.dueAt ?? 0) === (b.dueAt ?? 0) &&
+    (a.seenAt ?? 0) === (b.seenAt ?? 0) && a.created === b.created && a.updated === b.updated
 }
 
 /* ── pictures ──────────────────────────────────────────────────────────── */

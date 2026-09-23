@@ -33,6 +33,8 @@ function importLine(r: ImportReport): string {
   if (r.skipped) parts.push(`${r.skipped} already here`)
   if (r.pictures) parts.push(countLabel(r.pictures, 'picture'))
   if (r.notebooks) parts.push(`${countLabel(r.notebooks, 'notebook')} added`)
+  if (r.events) parts.push(`${countLabel(r.events, 'event')} restored`)
+  if (r.sienaItems) parts.push(`${countLabel(r.sienaItems, 'Siena item')} restored`)
   return parts.length ? parts.join(' · ') : 'nothing new'
 }
 
@@ -173,7 +175,7 @@ export function SettingsScreen() {
           <p>
             Storage is markdown, so an export is a copy rather than a conversion. Each page
             carries a short frontmatter block for the dates and attributes a filename can't
-            hold.
+            hold. Whole shelf also includes Field Notes events and saved Siena items.
           </p>
           <div className="actions">
             <button className="btn caps" onClick={() => void exportShelf()}>

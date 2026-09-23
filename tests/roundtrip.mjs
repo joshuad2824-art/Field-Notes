@@ -104,6 +104,12 @@ const NOTEBOOKS = [{ id: 'no-book', name: 'No', color: '#530a28', order: 7, upda
 const IMAGES = [
   { id: 'rtimg001', page: 'rt-gamma', type: 'image/jpeg', ext: 'jpg', added: 1755500200000, bytes: JPEG },
 ]
+const EVENTS = [
+  { id: 'rt-event', title: 'Pen show', date: '2026-09-22', startTime: '09:30', location: 'Dallas', note: 'Bring a notebook', created: 1755500400000, updated: 1755600400000 },
+]
+const SIENA_ITEMS = [
+  { id: 'rt-siena', type: 'reminder', title: 'Pack the pens', body: 'Take the blue case.', dueAt: 1755700000000, created: 1755500500000, updated: 1755600500000, seenAt: 1755600500000 },
+]
 
 async function device() {
   const context = await browser.newContext({
@@ -112,7 +118,7 @@ async function device() {
   })
   const view = await context.newPage()
   view.on('pageerror', (e) => problems.push(e.message))
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1200)
   return { context, view }
 }
@@ -133,6 +139,8 @@ const readStores = async () => {
     })
   const pages = await read('pages')
   const notebooks = await read('notebooks')
+  const events = await read('events')
+  const sienaItems = await read('sienaItems')
   const images = []
   for (const im of await read('images')) {
     images.push({
@@ -144,32 +152,34 @@ const readStores = async () => {
     })
   }
   dbi.close()
-  return { pages, notebooks, images }
+  return { pages, notebooks, images, events, sienaItems }
 }
 
 /* ── the first device writes and exports ────────────────────────────────── */
 
 const a = await device()
 
-await a.view.evaluate(async ({ pages, notebooks, images }) => {
+await a.view.evaluate(async ({ pages, notebooks, images, events, sienaItems }) => {
   const open = indexedDB.open('field-notes')
   const dbi = await new Promise((res, rej) => {
     open.onsuccess = () => res(open.result)
     open.onerror = () => rej(open.error)
   })
-  const tx = dbi.transaction(['pages', 'notebooks', 'images'], 'readwrite')
+  const tx = dbi.transaction(['pages', 'notebooks', 'images', 'events', 'sienaItems'], 'readwrite')
   for (const p of pages) tx.objectStore('pages').put(p)
   for (const n of notebooks) tx.objectStore('notebooks').put(n)
   for (const im of images) {
     const { bytes, ...rest } = im
     tx.objectStore('images').put({ ...rest, blob: new Blob([new Uint8Array(bytes)], { type: im.type }) })
   }
+  for (const event of events) tx.objectStore('events').put(event)
+  for (const item of sienaItems) tx.objectStore('sienaItems').put(item)
   await new Promise((res, rej) => {
     tx.oncomplete = res
     tx.onerror = () => rej(tx.error)
   })
   dbi.close()
-}, { pages: PAGES, notebooks: NOTEBOOKS, images: IMAGES })
+}, { pages: PAGES, notebooks: NOTEBOOKS, images: IMAGES, events: EVENTS, sienaItems: SIENA_ITEMS })
 
 await a.view.reload({ waitUntil: 'domcontentloaded' })
 await a.view.waitForTimeout(1200)
@@ -178,7 +188,7 @@ await a.view.waitForTimeout(600)
 
 const [download] = await Promise.all([
   a.view.waitForEvent('download'),
-  a.view.getByText('Whole shelf').click(),
+  a.view.getByRole('button', { name: 'Whole shelf' }).click(),
 ])
 const zipPath = join(dir, 'shelf.zip')
 await download.saveAs(zipPath)
@@ -201,6 +211,9 @@ ok(
   'the picture rides at the path the markdown says',
   names.some((n) => n.endsWith('images/rtimg001.jpg')),
 )
+const data = JSON.parse(textOf('field-notes-data.json'))
+ok('the whole-shelf backup includes events', JSON.stringify(data.events) === JSON.stringify(EVENTS))
+ok('and saved Siena items with seen state', JSON.stringify(data.sienaItems) === JSON.stringify(SIENA_ITEMS))
 const alpha = textOf('the-tent-held')
 ok(
   'the envelope crosses whole',
@@ -223,8 +236,13 @@ const firstReport = await b.view.locator('[data-import-report]').textContent()
 ok('the report says what came in', firstReport.includes('5 pages in'), firstReport)
 ok('the picture with it', firstReport.includes('1 picture'), firstReport)
 ok('and the notebook the shelf was missing', firstReport.includes('1 notebook added'), firstReport)
+ok('and the event and Siena item', firstReport.includes('1 event restored') && firstReport.includes('1 Siena item restored'), firstReport)
 
 const after = await b.view.evaluate(readStores)
+const restoredEvent = after.events.find((e) => e.id === EVENTS[0].id)
+const restoredItem = after.sienaItems.find((i) => i.id === SIENA_ITEMS[0].id)
+ok('the event restores with its details', !!restoredEvent && Object.entries(EVENTS[0]).every(([key, value]) => restoredEvent[key] === value))
+ok('the Siena item restores with its seen state', !!restoredItem && Object.entries(SIENA_ITEMS[0]).every(([key, value]) => restoredItem[key] === value))
 const bookName = (id) => after.notebooks.find((n) => n.id === id)?.name
 
 for (const wanted of PAGES) {
@@ -294,6 +312,7 @@ ok('the second restore is an upsert, not a second copy', secondReport.includes('
 
 const again = await b.view.evaluate(readStores)
 ok('nothing was added', again.pages.length === countBefore, `${again.pages.length} vs ${countBefore}`)
+ok('events and Siena items are not duplicated', again.events.length === after.events.length && again.sienaItems.length === after.sienaItems.length)
 ok(
   'and nothing was touched',
   again.pages.every((p) => {

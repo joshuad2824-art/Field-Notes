@@ -61,7 +61,7 @@ async function desk(width, height, run) {
   await ctx.addInitScript(settledZoom)
   const page = await ctx.newPage()
   page.on('pageerror', (e) => problems.push('page error: ' + e.message))
-  await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(800)
   try {
     await run(page)
