@@ -7,6 +7,7 @@ export function EventRow({ event }: { event: FieldEvent }) {
       <span className="event-row-time">{event.startTime ?? 'All day'}</span>
       <span className="event-row-main">
         <span className="event-row-title">{event.title}</span>
+        {event.calendarTarget === 'Family' ? <span className="event-row-place">Family calendar</span> : null}
         {event.location ? <span className="event-row-place">{event.location}</span> : null}
       </span>
     </button>

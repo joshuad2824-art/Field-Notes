@@ -5,7 +5,7 @@ import { eventToRow, rowToEvent, sameEvent, rowToSienaItem, sienaItemToRow, same
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5173'
 
-const event = { id: 'event-1', title: 'Lunch', date: '2026-09-22', startTime: '12:00', endTime: '13:00', location: 'Cafe', note: 'Bring notes', created: 100, updated: 101 }
+const event = { id: 'event-1', title: 'Lunch', date: '2026-09-22', startTime: '12:00', endTime: '13:00', location: 'Cafe', note: 'Bring notes', pageId: 'page-1', calendarTarget: 'Family', created: 100, updated: 101 }
 assert.deepEqual(rowToEvent(eventToRow(event, 'vault')), event)
 assert.equal(sameEvent(event, { ...event, title: 'Dinner' }), false)
 
@@ -75,13 +75,32 @@ try {
   await page.getByLabel('Location optional').fill('The Workshop')
   await page.getByRole('button', { name: 'Save event' }).click()
   await page.getByRole('heading', { name: 'Dashboard test meeting' }).waitFor()
-  const date = await page.locator('.event-detail .section-label').textContent()
+  await page.getByRole('button', { name: 'Edit event' }).click()
+  await page.getByLabel('Apple Calendar').selectOption('Family')
+  await page.getByRole('button', { name: 'Save event' }).click()
+  await page.getByText('Family · Apple Calendar handoff').waitFor()
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Send to Apple Calendar' }).click()
+  const download = await downloadPromise
+  assert.match(download.suggestedFilename(), /\.ics$/)
+  await page.locator('.event-notice').getByText(/choose Family/i).waitFor()
+  await page.getByRole('button', { name: 'Create a page' }).click()
+  await page.getByRole('button', { name: 'Page options' }).click()
+  await page.getByText('Ask Siena about this page').click()
+  await page.getByRole('heading', { name: 'Current page' }).waitFor()
+  await page.getByLabel('Paste Siena’s complete proposed page').fill('# Dashboard test meeting\n\nReviewed with Siena.')
+  await page.getByRole('button', { name: 'Apply proposed page' }).click()
+  await page.getByRole('button', { name: 'Page options' }).click()
+  await page.getByText('Dashboard test meeting', { exact: true }).last().click()
+  await page.getByRole('heading', { name: 'Dashboard test meeting' }).waitFor()
+  assert.equal(await page.locator('.event-linked').getByRole('button').count(), 1)
+  const date = await page.locator('.event-detail .section-label').first().textContent()
   assert.match(date, /\w/)
   await page.goto(BASE, { waitUntil: 'domcontentloaded' })
-  await page.getByText('Dashboard test meeting').waitFor()
+  await page.locator('.overview-events .event-row-title').getByText('Dashboard test meeting').waitFor()
   assert.equal(await page.locator('.rail .cal-day.has-event').count(), 1)
   await page.getByRole('button', { name: 'Open calendar' }).click()
-  await page.getByText('Dashboard test meeting').waitFor()
+  await page.locator('.event-row-title').getByText('Dashboard test meeting').waitFor()
   console.log('PASS  event saves locally and appears in Overview and calendar')
 
   await page.setViewportSize({ width: 390, height: 844 })
@@ -94,6 +113,7 @@ try {
   await page.getByLabel('Title').fill('Calendar navigation test')
   await page.getByRole('button', { name: 'Save event' }).click()
   await page.getByRole('heading', { name: 'Calendar navigation test' }).waitFor()
+  const savedEventPath = new URL(page.url()).pathname
   assert.equal(await page.locator('.event-top').evaluate((node) => node.scrollWidth <= node.clientWidth), true)
   await page.getByRole('button', { name: '‹ Back' }).click()
   assert.match(new URL(page.url()).pathname, /^\/calendar/)
@@ -103,6 +123,17 @@ try {
   await page.getByRole('button', { name: 'Notebook', exact: true }).click()
   assert.match(new URL(page.url()).pathname, /^\/n\//)
   console.log('PASS  calendar, event, and day have a direct notebook exit on phone')
+  await page.goto(`${BASE}${savedEventPath}`, { waitUntil: 'domcontentloaded' })
+  await page.getByRole('button', { name: 'Delete event' }).click()
+  await page.getByRole('button', { name: 'Delete it' }).click()
+  await page.waitForURL(/\/day\//)
+  await page.goto(`${BASE}/trash`, { waitUntil: 'domcontentloaded' })
+  await page.getByText('Calendar navigation test').waitFor()
+  await page.locator('.row-page').filter({ hasText: 'Calendar navigation test' }).getByRole('button', { name: 'Restore' }).click()
+  await page.getByText('Calendar navigation test').waitFor({ state: 'detached' })
+  await page.goto(`${BASE}${savedEventPath}`, { waitUntil: 'domcontentloaded' })
+  await page.getByRole('heading', { name: 'Calendar navigation test' }).waitFor()
+  console.log('PASS  deleted events can be restored')
   await page.setViewportSize({ width: 1280, height: 900 })
 
   const now = Date.now()

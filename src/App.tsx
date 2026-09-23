@@ -16,6 +16,7 @@ import { OAuthConsentScreen } from './screens/OAuthConsentScreen'
 import { OverviewScreen } from './screens/OverviewScreen'
 import { FromSienaScreen } from './screens/FromSienaScreen'
 import { EventScreen } from './screens/EventScreen'
+import { ReviewScreen } from './screens/ReviewScreen'
 
 export function App() {
   const route = useRoute()
@@ -68,6 +69,8 @@ export function App() {
       return <HomeScreen notebook={notebookOf(route.notebook)?.id ?? remembered} />
     case 'page':
       return <PageScreen key={route.id} id={route.id} />
+    case 'review':
+      return <ReviewScreen key={route.id} id={route.id} />
     case 'search':
       return <SearchScreen />
     case 'tag':

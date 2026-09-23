@@ -264,6 +264,18 @@ export async function saveBody(id: string, body: string): Promise<void> {
   changed()
 }
 
+export async function replaceBodyIfUnchanged(id: string, expectedUpdated: number, expectedBody: string, body: string): Promise<boolean> {
+  let replaced = false
+  await db.transaction('rw', db.pages, async () => {
+    const page = await db.pages.get(id)
+    if (!page || page.deleted || page.updated !== expectedUpdated || page.body !== expectedBody) return
+    await db.pages.put({ ...page, body, updated: Math.max(Date.now(), page.updated + 1) })
+    replaced = true
+  })
+  if (replaced) changed()
+  return replaced
+}
+
 export async function patchPage(id: string, patch: Partial<Page>): Promise<void> {
   const page = await db.pages.get(id)
   if (!page) return

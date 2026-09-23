@@ -105,7 +105,7 @@ const IMAGES = [
   { id: 'rtimg001', page: 'rt-gamma', type: 'image/jpeg', ext: 'jpg', added: 1755500200000, bytes: JPEG },
 ]
 const EVENTS = [
-  { id: 'rt-event', title: 'Pen show', date: '2026-09-22', startTime: '09:30', location: 'Dallas', note: 'Bring a notebook', created: 1755500400000, updated: 1755600400000 },
+  { id: 'rt-event', title: 'Pen show', date: '2026-09-22', startTime: '09:30', location: 'Dallas', note: 'Bring a notebook', pageId: 'rt-alpha', calendarTarget: 'Family', created: 1755500400000, updated: 1755600400000 },
 ]
 const SIENA_ITEMS = [
   { id: 'rt-siena', type: 'reminder', title: 'Pack the pens', body: 'Take the blue case.', dueAt: 1755700000000, created: 1755500500000, updated: 1755600500000, seenAt: 1755600500000 },
