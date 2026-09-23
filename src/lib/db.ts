@@ -118,6 +118,18 @@ class FieldNotesDB extends Dexie {
       synced: 'id',
       meta: 'key',
     })
+
+    /* v6: reminders belong to one notebook and keep their completion history.
+       The pinned Reminders page is a view; its body is not a second task list. */
+    this.version(6).stores({
+      pages: 'id, notebook, updated, created, pinned, deleted, entryDate',
+      notebooks: 'id, order',
+      images: 'id, page',
+      events: 'id, date, updated, deleted',
+      sienaItems: 'id, type, notebook, created, updated, dueAt, seenAt, completedAt',
+      synced: 'id',
+      meta: 'key',
+    })
   }
 }
 
@@ -226,7 +238,9 @@ export async function notebookCounts(): Promise<Record<string, number>> {
 
 /* Pinned first, then most recently touched. */
 function sortForShelf(rows: Page[]): Page[] {
-  return rows.sort((a, b) => b.pinned - a.pinned || b.updated - a.updated)
+  return rows.sort((a, b) =>
+    Number(b.purpose === 'reminders') - Number(a.purpose === 'reminders') ||
+    b.pinned - a.pinned || b.updated - a.updated)
 }
 
 /* ── writes ────────────────────────────────────────────────────────────── */

@@ -116,10 +116,10 @@ function uuid(): string {
   return `nb-${Math.random().toString(36).slice(2, 10)}`
 }
 
-export async function addNotebook(name: string, color: string): Promise<Notebook> {
+export async function addNotebook(name: string, color: string, preferredId?: string): Promise<Notebook> {
   const trimmed = name.trim()
   const book: Notebook = {
-    id: uuid(),
+    id: preferredId ?? uuid(),
     name: trimmed,
     color,
     /* The journal sits at 900 so it can never be in anyone's way; the next

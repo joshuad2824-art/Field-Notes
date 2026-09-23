@@ -770,6 +770,29 @@ ok('seen state crosses back to the first device',
   (await a.view.locator('.siena-item .siena-seen').count()) === 1 &&
   !!store.get(`siena_items|${eventWire?.vault}|${inboxId}`)?.seen_at)
 
+const reminderId = 'dashboard-reminder-sync'
+if (eventWire) {
+  store.set(`siena_items|${eventWire.vault}|${reminderId}`, {
+    vault: eventWire.vault, id: reminderId, kind: 'reminder', title: 'Take the folder',
+    body: 'Take the folder to church.', source_url: null, source_key: 'sync-test-reminder',
+    notebook: 'church', due_at: inboxAt, seen_at: null, completed_at: null,
+    created: inboxAt + 1, updated: inboxAt + 1, server_at: stamp(),
+  })
+}
+await syncNow(b)
+await b.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
+await b.view.locator('.siena-item').filter({ hasText: 'Take the folder' }).getByRole('button', { name: 'Mark done' }).click()
+await b.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).waitFor()
+for (let attempt = 0; attempt < 3 && !store.get(`siena_items|${eventWire?.vault}|${reminderId}`)?.completed_at; attempt++) {
+  await syncNow(b)
+}
+await syncNow(a)
+await a.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
+ok('completion reaches the first device and the mirror',
+  (await a.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).count()) === 1 &&
+  !!store.get(`siena_items|${eventWire?.vault}|${reminderId}`)?.completed_at,
+  JSON.stringify({ mirrorCompleted: store.get(`siena_items|${eventWire?.vault}|${reminderId}`)?.completed_at ?? null }))
+
 /* ── unpairing keeps the writing ────────────────────────────────────────── */
 
 const before = (await titles(b)).length

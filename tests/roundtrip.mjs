@@ -82,6 +82,11 @@ const PAGES = [
     updated: 1755600200000,
     pinned: 0,
   },
+  {
+    id: 'rt-reminders', notebook: 'no-book', body: '# Reminders',
+    created: 1755500250000, updated: 1755600250000, pinned: 1,
+    purpose: 'reminders',
+  },
   /* A journal entry. It rides along because it is an ordinary page in a
      reserved notebook and nothing about export or import was allowed to learn
      otherwise — and because a whole-shelf export that quietly left out the one
@@ -108,7 +113,7 @@ const EVENTS = [
   { id: 'rt-event', title: 'Pen show', date: '2026-09-22', startTime: '09:30', location: 'Dallas', note: 'Bring a notebook', pageId: 'rt-alpha', calendarTarget: 'Family', created: 1755500400000, updated: 1755600400000 },
 ]
 const SIENA_ITEMS = [
-  { id: 'rt-siena', type: 'reminder', title: 'Pack the pens', body: 'Take the blue case.', dueAt: 1755700000000, created: 1755500500000, updated: 1755600500000, seenAt: 1755600500000 },
+  { id: 'rt-siena', type: 'reminder', title: 'Pack the pens', body: 'Take the blue case.', notebook: 'no-book', dueAt: 1755700000000, created: 1755500500000, updated: 1755600500000, seenAt: 1755600500000, completedAt: 1755600500000 },
 ]
 
 async function device() {
@@ -215,6 +220,7 @@ const data = JSON.parse(textOf('field-notes-data.json'))
 ok('the whole-shelf backup includes events', JSON.stringify(data.events) === JSON.stringify(EVENTS))
 ok('and saved Siena items with seen state', JSON.stringify(data.sienaItems) === JSON.stringify(SIENA_ITEMS))
 const alpha = textOf('the-tent-held')
+ok('the Reminders page keeps its purpose', textOf('reminders.md').includes("purpose: 'reminders'"))
 ok(
   'the envelope crosses whole',
   alpha.includes("date: '2026-03-14'") &&
@@ -233,7 +239,7 @@ await b.view.locator('input[aria-label="Import files"]').setInputFiles(zipPath)
 await b.view.waitForSelector('[data-import-report]')
 const firstReport = await b.view.locator('[data-import-report]').textContent()
 
-ok('the report says what came in', firstReport.includes('5 pages in'), firstReport)
+ok('the report says what came in', firstReport.includes('6 pages in'), firstReport)
 ok('the picture with it', firstReport.includes('1 picture'), firstReport)
 ok('and the notebook the shelf was missing', firstReport.includes('1 notebook added'), firstReport)
 ok('and the event and Siena item', firstReport.includes('1 event restored') && firstReport.includes('1 Siena item restored'), firstReport)
@@ -271,6 +277,8 @@ ok(
   JSON.stringify(alphaBack),
 )
 const betaBack = after.pages.find((p) => p.id === 'rt-beta')
+ok('the Reminders page remains pinned and linked to its notebook',
+  after.pages.some((p) => p.id === 'rt-reminders' && p.purpose === 'reminders' && p.pinned === 1 && p.notebook === 'no-book'))
 ok(
   'No is a notebook, not a boolean',
   bookName(betaBack?.notebook) === 'No',
@@ -308,7 +316,7 @@ await b.view.waitForFunction(
   () => document.querySelector('[data-import-report]')?.textContent?.includes('already here'),
 )
 const secondReport = await b.view.locator('[data-import-report]').textContent()
-ok('the second restore is an upsert, not a second copy', secondReport.includes('5 already here'), secondReport)
+ok('the second restore is an upsert, not a second copy', secondReport.includes('6 already here'), secondReport)
 
 const again = await b.view.evaluate(readStores)
 ok('nothing was added', again.pages.length === countBefore, `${again.pages.length} vs ${countBefore}`)

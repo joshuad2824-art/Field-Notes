@@ -17,6 +17,7 @@ export interface Page {
   created: number
   updated: number
   pinned: 0 | 1 // indexed, so a number rather than a bool
+  purpose?: 'reminders' // a pinned notebook view backed by Siena reminder rows
   entryDate?: string // YYYY-MM-DD — the day this page is "about"
   pen?: Pen // unset means "follow the default"
   stock?: Stock // likewise
@@ -76,6 +77,8 @@ export interface SienaItem {
   updated: number
   dueAt?: number // reminders use an absolute timestamp
   seenAt?: number // set only by an explicit user action
+  notebook?: NotebookId // the notebook whose Reminders page shows this item
+  completedAt?: number // completion is separate from having seen an item
 }
 
 /* What the shelf is seeded with on first run. After that it's whatever is in

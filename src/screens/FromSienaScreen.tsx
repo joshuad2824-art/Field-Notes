@@ -6,6 +6,8 @@ import { useLive } from '../lib/useLive'
 export function FromSienaScreen() {
   const items = useLive(allSienaItems, [], [])
   const unseen = items.filter((item) => !item.seenAt).length
+  const active = items.filter((item) => !item.completedAt)
+  const completed = items.filter((item) => item.type === 'reminder' && item.completedAt)
   return (
     <div className="app">
       <div className="statusband" />
@@ -18,13 +20,17 @@ export function FromSienaScreen() {
           <header className="overview-intro">
             <span className="section-label">Saved in Field Notes</span>
             <h1>From Siena {unseen ? <span className="siena-badge">{unseen}</span> : null}</h1>
-            <p>Messages, reminders, and useful results remain here after you mark them seen.</p>
+            <p>Messages and active reminders stay here. Completed reminders remain in the history below.</p>
           </header>
-          {items.length ? (
+          {active.length ? (
             <div className="siena-collection-list">
-              {items.map((item) => <SienaItemCard key={item.id} item={item} paper={item.type === 'note'} />)}
+              {active.map((item) => <SienaItemCard key={item.id} item={item} paper={item.type === 'note'} />)}
             </div>
-          ) : <p className="overview-empty">Nothing from Siena has been saved here yet.</p>}
+          ) : <p className="overview-empty">No active items from Siena.</p>}
+          {completed.length ? <section className="siena-collection-list siena-history">
+            <h2>Completed reminders</h2>
+            {completed.map((item) => <SienaItemCard key={item.id} item={item} />)}
+          </section> : null}
         </div>
       </main>
     </div>

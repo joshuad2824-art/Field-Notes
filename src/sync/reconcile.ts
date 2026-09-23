@@ -67,6 +67,7 @@ export function samePage(a: Page, b: Page): boolean {
     a.body === b.body &&
     a.notebook === b.notebook &&
     a.pinned === b.pinned &&
+    (a.purpose ?? '') === (b.purpose ?? '') &&
     (a.entryDate ?? '') === (b.entryDate ?? '') &&
     (a.pen ?? '') === (b.pen ?? '') &&
     (a.stock ?? '') === (b.stock ?? '') &&

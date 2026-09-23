@@ -37,11 +37,13 @@ function frontmatter(page: Page): string {
        everything — restore twice, get one page. */
     `id: ${yamlQuote(page.id)}`,
     `notebook: ${yamlQuote(notebookForPage(page.notebook).name)}`,
+    `notebook_id: ${yamlQuote(page.notebook)}`,
     `created: ${yamlQuote(new Date(page.created).toISOString())}`,
     `updated: ${yamlQuote(new Date(page.updated).toISOString())}`,
   ]
   if (page.entryDate) lines.push(`date: ${yamlQuote(page.entryDate)}`)
   if (page.pinned) lines.push('pinned: true')
+  if (page.purpose) lines.push(`purpose: ${yamlQuote(page.purpose)}`)
   if (page.pen && page.pen !== 'ink') lines.push(`pen: ${yamlQuote(page.pen)}`)
   if (page.stock && page.stock !== 'paper') lines.push(`stock: ${yamlQuote(page.stock)}`)
   lines.push('---', '')
@@ -113,6 +115,10 @@ export async function exportNotebook(notebook: NotebookId): Promise<number> {
   const book = notebookForPage(notebook)
   const pictures = await imagesFolder(pages)
   const tree: Tree = { [slug(book.name)]: folder as Folder }
+  const reminders = (await db.sienaItems.toArray()).filter((item) => item.type === 'reminder' && item.notebook === notebook)
+  if (reminders.length) tree['field-notes-data.json'] = strToU8(JSON.stringify({
+    format: 'field-notes-data', version: 1, events: [], sienaItems: reminders,
+  }, null, 2))
   if (Object.keys(pictures).length) {
     ;(tree[slug(book.name)] as Folder)[IMAGE_DIR] = pictures
   }
@@ -158,15 +164,22 @@ export async function exportShelf(): Promise<number> {
 export async function exportPage(page: Page): Promise<void> {
   const { name, text } = fileFor(page)
   const pictures = await imagesFolder([page])
+  const reminders = page.purpose === 'reminders'
+    ? (await db.sienaItems.toArray()).filter((item) => item.type === 'reminder' && item.notebook === page.notebook)
+    : []
 
-  if (!Object.keys(pictures).length) {
+  if (!Object.keys(pictures).length && !reminders.length) {
     download(new Blob([text], { type: 'text/markdown;charset=utf-8' }), name)
     return
   }
 
   const stem = name.replace(/\.md$/, '')
+  const tree: Tree = { [stem]: { [name]: strToU8(text), ...(Object.keys(pictures).length ? { [IMAGE_DIR]: pictures } : {}) } }
+  if (reminders.length) tree['field-notes-data.json'] = strToU8(JSON.stringify({
+    format: 'field-notes-data', version: 1, events: [], sienaItems: reminders,
+  }, null, 2))
   const zip = zipSync(
-    { [stem]: { [name]: strToU8(text), [IMAGE_DIR]: pictures } } as never,
+    tree as never,
     { level: 6 },
   )
   download(new Blob([zip as BlobPart], { type: 'application/zip' }), `${stem}.zip`)

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useRoute, navigate, to } from './lib/router'
 import { captureNew, captureToday, wantCaretAtEnd } from './lib/capture'
-import { createPage } from './lib/db'
+import { createPage, getPage } from './lib/db'
 import { firstNotebookId, notebookOf, useNotebooks } from './lib/notebooks'
 import { getSettings, setSettings, useSettings } from './lib/settings'
 import { HomeScreen } from './screens/HomeScreen'
@@ -17,6 +17,9 @@ import { OverviewScreen } from './screens/OverviewScreen'
 import { FromSienaScreen } from './screens/FromSienaScreen'
 import { EventScreen } from './screens/EventScreen'
 import { ReviewScreen } from './screens/ReviewScreen'
+import { RemindersPageScreen } from './screens/RemindersPageScreen'
+import { useLive } from './lib/useLive'
+import type { Page } from './lib/model'
 
 export function App() {
   const route = useRoute()
@@ -68,7 +71,7 @@ export function App() {
     case 'notebook':
       return <HomeScreen notebook={notebookOf(route.notebook)?.id ?? remembered} />
     case 'page':
-      return <PageScreen key={route.id} id={route.id} />
+      return <PageRoute key={route.id} id={route.id} />
     case 'review':
       return <ReviewScreen key={route.id} id={route.id} />
     case 'search':
@@ -90,6 +93,14 @@ export function App() {
     default:
       return <OverviewScreen notebook={remembered} />
   }
+}
+
+function PageRoute({ id }: { id: string }) {
+  const page = useLive<Page | null | undefined>(() => getPage(id).then((found) => found ?? null), [id], undefined)
+  if (page === undefined) return <div className="app" />
+  return page?.purpose === 'reminders'
+    ? <RemindersPageScreen page={page} />
+    : <PageScreen id={id} />
 }
 
 /* The routes that create. Nothing is drawn — the page they make replaces them

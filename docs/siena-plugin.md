@@ -39,7 +39,12 @@ edits. Notes with pictures can be read as Markdown, but the first plugin
 version does not return image bytes.
 
 `create_siena_item` publishes a full message, due reminder, meaningful task
-result, or saved link into the separate From Siena inbox. It can use a
-`source_key` to avoid duplicates on retry. The linked account can read and
-create inbox rows but cannot acknowledge them. The user marks items seen in
-Field Notes. No recurring publication is configured by this code.
+result, or saved link into From Siena. For a reminder, pass the intended
+notebook ID from `list_notebooks`. The function creates or reuses that
+notebook's pinned Reminders page, and the same reminder appears on Overview.
+The page is a view of reminder rows, so checking an item off there or on
+Overview completes it in both places. Completed reminders leave the active
+list and remain in From Siena's history. Mark seen only acknowledges reading;
+it does not complete a reminder. A `source_key` avoids duplicates on retry.
+The linked account can publish but cannot acknowledge or complete reminders.
+No recurring publication is configured by this code.

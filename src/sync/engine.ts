@@ -316,9 +316,9 @@ async function syncEvents(vault: Vault): Promise<void> {
   }
 }
 
-/* Inbox bodies are immutable after creation. Only seenAt moves, and it can
-   only move forward. Two devices acknowledging the same item therefore merge
-   rather than producing a conflict copy or losing the acknowledgment. */
+/* Inbox bodies are immutable after creation. Seen and completed timestamps
+   only move forward, so a completion on one device cannot be undone by a
+   second device that was offline when it happened. */
 async function syncSienaItems(vault: Vault): Promise<void> {
   const t = transport!
   const { rows, cursor } = await pull('siena_items')
@@ -343,12 +343,14 @@ async function syncSienaItems(vault: Vault): Promise<void> {
     }
     if (!local || !remote) continue
     const seenAt = Math.max(local.seenAt ?? 0, remote.seenAt ?? 0)
+    const completedAt = Math.max(local.completedAt ?? 0, remote.completedAt ?? 0)
     const merged: SienaItem = {
       ...remote,
       ...(seenAt ? { seenAt } : {}),
-      updated: Math.max(local.updated, remote.updated, seenAt),
+      ...(completedAt ? { completedAt } : {}),
+      updated: Math.max(local.updated, remote.updated, seenAt, completedAt),
     }
-    if (seenAt > (remote.seenAt ?? 0)) {
+    if (seenAt > (remote.seenAt ?? 0) || completedAt > (remote.completedAt ?? 0)) {
       push.push(merged)
       if (!sameSienaItem(merged, local)) apply.push(merged)
     } else {
@@ -359,15 +361,52 @@ async function syncSienaItems(vault: Vault): Promise<void> {
 
   if (apply.length) {
     applying = true
-    try { await db.sienaItems.bulkPut(apply) }
+    try {
+      /* A tap can complete an item while this pull is in flight. Re-read in
+         the same write transaction before applying, or the old remote row
+         could erase that completion after it already left the screen. */
+      await db.transaction('rw', db.sienaItems, async () => {
+        for (const candidate of apply) {
+          const current = await db.sienaItems.get(candidate.id)
+          const seenAt = Math.max(current?.seenAt ?? 0, candidate.seenAt ?? 0)
+          const completedAt = Math.max(current?.completedAt ?? 0, candidate.completedAt ?? 0)
+          const next: SienaItem = {
+            ...candidate,
+            ...(seenAt ? { seenAt } : {}),
+            ...(completedAt ? { completedAt } : {}),
+            updated: Math.max(current?.updated ?? 0, candidate.updated, seenAt, completedAt),
+          }
+          await db.sienaItems.put(next)
+          const remote = remotes.get(candidate.id)
+          if (remote && (seenAt > (remote.seenAt ?? 0) || completedAt > (remote.completedAt ?? 0))) {
+            const at = push.findIndex((item) => item.id === candidate.id)
+            if (at >= 0) push[at] = next
+            else push.push(next)
+          }
+        }
+      })
+    }
     finally { applying = false }
     changed()
   }
   await markMany(agreed)
   await setCursor('siena_items', cursor)
   for (const batch of chunk(push, 100)) {
-    await t.put('siena_items', batch.map((item) => sienaItemToRow(item, vault.id)))
-    await markMany(batch.map((item) => ({ id: markFor.sienaItem(item.id), at: item.updated })))
+    const fresh = await db.sienaItems.bulkGet(batch.map((item) => item.id))
+    const outgoing = batch.map((item, index) => {
+      const current = fresh[index]
+      if (!current) return item
+      const seenAt = Math.max(item.seenAt ?? 0, current.seenAt ?? 0)
+      const completedAt = Math.max(item.completedAt ?? 0, current.completedAt ?? 0)
+      return {
+        ...item,
+        ...(seenAt ? { seenAt } : {}),
+        ...(completedAt ? { completedAt } : {}),
+        updated: Math.max(item.updated, current.updated, seenAt, completedAt),
+      }
+    })
+    await t.put('siena_items', outgoing.map((item) => sienaItemToRow(item, vault.id)))
+    await markMany(outgoing.map((item) => ({ id: markFor.sienaItem(item.id), at: item.updated })))
   }
 }
 

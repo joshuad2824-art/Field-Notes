@@ -110,9 +110,10 @@ function parseBackupData(text: string): BackupData {
         !optionalString(value.title, 240) || typeof value.body !== 'string' ||
         !value.body.trim() || value.body.length > 100000 ||
         !optionalString(value.sourceUrl, 2000) || !optionalString(value.sourceKey, 200) ||
+        !optionalString(value.notebook, 100) ||
         typeof value.created !== 'number' || !Number.isFinite(value.created) ||
         typeof value.updated !== 'number' || !Number.isFinite(value.updated) ||
-        !optionalStamp(value.dueAt) || !optionalStamp(value.seenAt) ||
+        !optionalStamp(value.dueAt) || !optionalStamp(value.seenAt) || !optionalStamp(value.completedAt) ||
         (value.type === 'reminder' && value.dueAt === undefined)) throw new Error('Invalid Siena item in Field Notes backup')
     return {
       id: value.id, type: value.type as SienaItem['type'], body: value.body,
@@ -122,6 +123,8 @@ function parseBackupData(text: string): BackupData {
       created: value.created, updated: value.updated,
       ...(value.dueAt !== undefined ? { dueAt: value.dueAt } : {}),
       ...(value.seenAt !== undefined ? { seenAt: value.seenAt } : {}),
+      ...(value.notebook ? { notebook: value.notebook } : {}),
+      ...(value.completedAt !== undefined ? { completedAt: value.completedAt } : {}),
     }
   })
   return { events, sienaItems }
@@ -206,12 +209,25 @@ const MIME_FOR: Record<string, string> = {
    coloured from the palette like any other. */
 async function resolveNotebook(
   name: string | undefined,
+  preferredId: string | undefined,
   cache: Map<string, string>,
   report: ImportReport,
 ): Promise<string> {
   const fallback = shelfNotebooks()[0]?.id ?? 'field-notes'
   const trimmed = name?.trim()
   if (!trimmed) return fallback
+  /* A backup can contain two notebooks with the same name. The stable id in
+     newer exports keeps their pages and reminders together on restore. */
+  if (preferredId && validId(preferredId)) {
+    const byId = await db.notebooks.get(preferredId)
+    if (byId && !byId.deleted) return byId.id
+    if (!byId) {
+      const book = await addNotebook(trimmed, COVER_COLORS[cache.size % COVER_COLORS.length], preferredId)
+      if (!cache.has(trimmed.toLowerCase())) cache.set(trimmed.toLowerCase(), book.id)
+      report.notebooks++
+      return book.id
+    }
+  }
   const known = cache.get(trimmed.toLowerCase())
   if (known) return known
   const book = await addNotebook(trimmed, COVER_COLORS[cache.size % COVER_COLORS.length])
@@ -232,12 +248,13 @@ async function applyPage(
 
   const incoming: Page = {
     id,
-    notebook: await resolveNotebook(meta.get('notebook'), books, report),
+    notebook: await resolveNotebook(meta.get('notebook'), meta.get('notebook_id'), books, report),
     body,
     created: parseStamp(meta.get('created'), now),
     updated: parseStamp(meta.get('updated'), now),
     pinned: meta.get('pinned') === 'true' ? 1 : 0,
   }
+  if (meta.get('purpose') === 'reminders') incoming.purpose = 'reminders'
   const date = meta.get('date')
   if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) incoming.entryDate = date
   const pen = meta.get('pen')

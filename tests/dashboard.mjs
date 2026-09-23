@@ -181,6 +181,58 @@ try {
   await page.getByRole('button', { name: '‹ Overview' }).click()
   await page.getByRole('heading', { name: 'Today in Field Notes' }).waitFor()
   await page.getByText('No new results or decisions to review.').waitFor()
+
+  /* A pinned Reminders page and Overview read one item. Completion from
+     either surface removes it from both, while From Siena keeps the history. */
+  await page.evaluate(async () => {
+    const request = indexedDB.open('field-notes')
+    const db = await new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    const tx = db.transaction(['pages', 'sienaItems'], 'readwrite')
+    tx.objectStore('pages').put({
+      id: 'dashboard-reminders-page', notebook: 'church', body: '# Reminders',
+      purpose: 'reminders', pinned: 1, created: Date.now(), updated: Date.now(),
+    })
+    tx.objectStore('pages').put({
+      id: 'dashboard-other-pinned', notebook: 'church', body: '# Other pinned page',
+      pinned: 1, created: Date.now(), updated: Date.now() + 1000,
+    })
+    const store = tx.objectStore('sienaItems')
+    const existing = await new Promise((resolve, reject) => {
+      const read = store.get('dashboard-reminder')
+      read.onsuccess = () => resolve(read.result)
+      read.onerror = () => reject(read.error)
+    })
+    store.put({ ...existing, notebook: 'church', sourceUrl: '/p/dashboard-reminders-page', updated: Date.now() })
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = resolve
+      tx.onerror = () => reject(tx.error)
+    })
+    db.close()
+  })
+  await page.reload()
+  await page.locator('.overview-from-siena .siena-item').filter({ hasText: 'Remember this' }).getByRole('button', { name: 'Mark done' }).click()
+  await page.locator('.overview-from-siena').getByText('Remember this').waitFor({ state: 'detached' })
+  await page.goto(`${BASE}/n/church`, { waitUntil: 'domcontentloaded' })
+  assert.match(await page.locator('.list-row').first().textContent(), /Reminders/)
+  await page.locator('.list-row').filter({ hasText: 'Reminders' }).click()
+  await page.getByRole('heading', { name: 'Reminders' }).waitFor()
+  await page.getByText('No active reminders.').waitFor()
+  const due = new Date(Date.now() + 60 * 60 * 1000)
+  const localDue = `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}T${String(due.getHours()).padStart(2, '0')}:${String(due.getMinutes()).padStart(2, '0')}`
+  await page.getByLabel('Reminder', { exact: true }).fill('Bring the folder')
+  await page.getByLabel('Due', { exact: true }).fill(localDue)
+  await page.getByRole('button', { name: 'Add reminder' }).click()
+  await page.getByText('Bring the folder').waitFor()
+  await page.getByRole('button', { name: 'Mark Bring the folder done' }).click()
+  await page.getByText('Bring the folder').waitFor({ state: 'detached' })
+  await page.getByRole('button', { name: /Completed history/ }).click()
+  await page.getByRole('heading', { name: 'Completed reminders' }).waitFor()
+  await page.locator('.siena-history').getByText('Remember this').waitFor()
+  await page.locator('.siena-history').getByRole('heading', { name: 'Bring the folder' }).waitFor()
+  console.log('PASS  pinned Reminders page and dashboard share completion state and retain history')
   assert.deepEqual(errors, [])
   console.log('PASS  From Siena retains full items and explicit seen state')
   await context.close()

@@ -18,6 +18,7 @@ export interface PageRow extends Row {
   created: number
   updated: number
   pinned: number
+  purpose: string | null
   entry_date: string | null
   pen: string | null
   stock: string | null
@@ -64,6 +65,8 @@ export interface SienaItemRow extends Row {
   source_key: string | null
   due_at: number | null
   seen_at: number | null
+  notebook: string | null
+  completed_at: number | null
   created: number
   updated: number
 }
@@ -82,6 +85,7 @@ export function pageToRow(page: Page, vault: string): PageRow {
     created: page.created,
     updated: page.updated,
     pinned: page.pinned,
+    purpose: page.purpose ?? null,
     entry_date: page.entryDate ?? null,
     pen: page.pen ?? null,
     stock: page.stock ?? null,
@@ -98,6 +102,7 @@ export function rowToPage(row: PageRow): Page {
     updated: Number(row.updated),
     pinned: row.pinned ? 1 : 0,
   }
+  if (row.purpose === 'reminders') page.purpose = 'reminders'
   /* Absent rather than null, because "unset" is what makes a page follow the
      app default for pen and stock. A null stored on the page would be a third
      state nothing reads. */
@@ -185,6 +190,7 @@ export function sienaItemToRow(item: SienaItem, vault: string): SienaItemRow {
     body: item.body, source_url: item.sourceUrl ?? null,
     source_key: item.sourceKey ?? null,
     due_at: item.dueAt ?? null, seen_at: item.seenAt ?? null,
+    notebook: item.notebook ?? null, completed_at: item.completedAt ?? null,
     created: item.created, updated: item.updated,
   }
 }
@@ -198,6 +204,8 @@ export function rowToSienaItem(row: SienaItemRow): SienaItem {
     ...(row.source_key ? { sourceKey: row.source_key } : {}),
     ...(row.due_at ? { dueAt: Number(row.due_at) } : {}),
     ...(row.seen_at ? { seenAt: Number(row.seen_at) } : {}),
+    ...(row.notebook ? { notebook: row.notebook } : {}),
+    ...(row.completed_at ? { completedAt: Number(row.completed_at) } : {}),
   }
 }
 
@@ -205,7 +213,8 @@ export function sameSienaItem(a: SienaItem, b: SienaItem): boolean {
   return a.id === b.id && a.type === b.type && a.body === b.body &&
     (a.title ?? '') === (b.title ?? '') && (a.sourceUrl ?? '') === (b.sourceUrl ?? '') &&
     (a.sourceKey ?? '') === (b.sourceKey ?? '') && (a.dueAt ?? 0) === (b.dueAt ?? 0) &&
-    (a.seenAt ?? 0) === (b.seenAt ?? 0) && a.created === b.created && a.updated === b.updated
+    (a.seenAt ?? 0) === (b.seenAt ?? 0) && (a.notebook ?? '') === (b.notebook ?? '') &&
+    (a.completedAt ?? 0) === (b.completedAt ?? 0) && a.created === b.created && a.updated === b.updated
 }
 
 /* ── pictures ──────────────────────────────────────────────────────────── */

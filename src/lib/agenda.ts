@@ -18,7 +18,7 @@ export function weekAhead(today: string, events: FieldEvent[], items: SienaItem[
       iso,
       events: events.filter((event) => !event.deleted && event.date === iso)
         .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? '') || a.title.localeCompare(b.title)),
-      reminders: items.filter((item) => item.type === 'reminder' && item.dueAt !== undefined &&
+      reminders: items.filter((item) => item.type === 'reminder' && !item.completedAt && item.dueAt !== undefined &&
         isoDay(item.dueAt) === iso).sort((a, b) => (a.dueAt ?? 0) - (b.dueAt ?? 0)),
     }
   }).filter((entry) => entry.events.length || entry.reminders.length)
