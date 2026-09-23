@@ -370,7 +370,7 @@ async function device(label) {
   await context.route('**/rest/v1/**', handler(label))
   const view = await context.newPage()
   view.on('pageerror', (e) => problems.push(`${label}: ${e.message}`))
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(900)
   return { label, context, view }
 }
@@ -383,11 +383,12 @@ const settings = async (d) => {
 const syncNow = async (d) => {
   await settings(d)
   await d.view.locator('.btn.caps', { hasText: 'Sync now' }).click()
-  await d.view.waitForTimeout(1100)
+  await d.view.waitForFunction(() => document.querySelector('[data-sync-state]')?.textContent?.includes('syncing'))
+  await d.view.waitForFunction(() => document.querySelector('[data-sync-state]')?.textContent?.trim().startsWith('paired'))
 }
 
 const titles = async (d) => {
-  await d.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await d.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await d.view.waitForTimeout(550)
   return d.view.locator('.list-row-title').allTextContents()
 }
@@ -398,7 +399,7 @@ const write = async (d, text) => {
   await d.view.keyboard.type(text, { delay: 8 })
   await d.view.waitForTimeout(400)
   /* Leaving the page flushes the save, which is what a real hand does too. */
-  await d.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await d.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await d.view.waitForTimeout(700)
 }
 
@@ -443,7 +444,7 @@ ok(
 
 /* ── a page written on one device turns up on the other ─────────────────── */
 
-await a.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+await a.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await a.view.waitForTimeout(600)
 await a.view.getByText('New page', { exact: true }).first().click()
 await a.view.waitForTimeout(700)
@@ -461,7 +462,7 @@ ok(
 /* ── the mirror going away changes nothing about writing ────────────────── */
 
 offline.add('B')
-await b.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+await b.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await b.view.waitForTimeout(600)
 await b.view.getByText('New page', { exact: true }).first().click()
 await b.view.waitForTimeout(700)
@@ -473,7 +474,7 @@ ok('a page still opens and takes text with the mirror gone', typed < 4000, `${ty
 /* Long enough for the local save's own debounce and nothing longer — the
    point being measured above is that the keystrokes never waited on it. */
 await b.view.waitForTimeout(500)
-await b.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+await b.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await b.view.waitForTimeout(900)
 ok(
   'and the writing is on the device regardless',
@@ -533,14 +534,14 @@ const target = (await titles(a)).find((t) => t.includes('Ryedale in October'))
 ok('both devices are holding the same page', !!target && (await titles(b)).includes(target))
 
 offline.add('A')
-await a.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+await a.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await a.view.waitForTimeout(600)
 await a.view.locator('.list-row', { hasText: 'Ryedale in October' }).first().click()
 await a.view.waitForTimeout(700)
 await write(a, '\nthe beck was full')
 
 /* B edits the same page afterwards, and reaches the mirror first. */
-await b.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+await b.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await b.view.waitForTimeout(600)
 await b.view.locator('.list-row', { hasText: 'Ryedale in October' }).first().click()
 await b.view.waitForTimeout(700)
@@ -587,7 +588,7 @@ ok(
 
 /* ── a deletion crosses, and does not walk back in ──────────────────────── */
 
-await a.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+await a.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await a.view.waitForTimeout(600)
 await a.view.locator('.list-row', { hasText: 'Written with the wifi off' }).first().click()
 await a.view.waitForTimeout(700)
@@ -599,10 +600,21 @@ await a.view.waitForTimeout(900)
 await syncNow(a)
 await syncNow(b)
 const afterDelete = await titles(b)
+const deletedOnA = await a.view.evaluate(async () => {
+  const request = indexedDB.open('field-notes')
+  const db = await new Promise((resolve) => { request.onsuccess = () => resolve(request.result) })
+  const rows = await new Promise((resolve) => {
+    const get = db.transaction('pages').objectStore('pages').getAll()
+    get.onsuccess = () => resolve(get.result)
+  })
+  return rows.find((row) => row.body.includes('Written with the wifi off'))?.deleted ?? null
+})
+const deletedOnMirror = [...store.values()].find((row) => row.body?.includes('Written with the wifi off') && row.id)?.deleted ?? null
 ok(
   'a page deleted on one device leaves the other',
   !afterDelete.some((t) => t.includes('Written with the wifi off')),
-  afterDelete.join(' / '),
+  afterDelete.some((t) => t.includes('Written with the wifi off'))
+    ? `${afterDelete.join(' / ')}; A=${deletedOnA} mirror=${deletedOnMirror}` : '',
 )
 ok(
   'and it is in the trash there rather than gone',
@@ -660,7 +672,7 @@ const pngPath = await (async () => {
   return path
 })()
 
-await a.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+await a.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await a.view.waitForTimeout(600)
 await a.view.getByText('New page', { exact: true }).first().click()
 await a.view.waitForTimeout(700)
@@ -670,7 +682,7 @@ await a.view.locator('.mark-button[aria-label="Style"]').click()
 await a.view.waitForTimeout(250)
 await a.view.locator('.tray input[type=file]').setInputFiles(pngPath)
 await a.view.waitForTimeout(1200)
-await a.view.goto(BASE, { waitUntil: 'domcontentloaded' })
+await a.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await a.view.waitForTimeout(700)
 
 await syncNow(a)
@@ -712,6 +724,51 @@ ok(
     .evaluate((el) => el.complete && el.naturalWidth > 0)
     .catch(() => false),
 )
+
+/* ── dashboard rows cross the same mirror ──────────────────────────────── */
+
+const eventDay = new Date()
+const eventDate = `${eventDay.getFullYear()}-${String(eventDay.getMonth() + 1).padStart(2, '0')}-${String(eventDay.getDate()).padStart(2, '0')}`
+await a.view.goto(`${BASE}/event/new/${eventDate}`, { waitUntil: 'domcontentloaded' })
+await a.view.getByLabel('Title').fill('Across both devices')
+await a.view.getByRole('button', { name: 'Save event' }).click()
+await a.view.getByRole('heading', { name: 'Across both devices' }).waitFor()
+await syncNow(a)
+await syncNow(b)
+const copiedEvents = await b.view.evaluate(async () => {
+  const request = indexedDB.open('field-notes')
+  const db = await new Promise((resolve) => { request.onsuccess = () => resolve(request.result) })
+  return new Promise((resolve) => {
+    const rows = db.transaction('events').objectStore('events').getAll()
+    rows.onsuccess = () => resolve(rows.result)
+  })
+})
+ok('an event crosses to the paired device', copiedEvents.some((row) => row.title === 'Across both devices'))
+
+const eventWire = [...store.entries()].find(([key, row]) => key.startsWith('events|') && row.title === 'Across both devices')?.[1]
+const inboxId = 'dashboard-siena-sync'
+const inboxAt = Date.now()
+if (eventWire) {
+  store.set(`siena_items|${eventWire.vault}|${inboxId}`, {
+    vault: eventWire.vault, id: inboxId, kind: 'note', title: 'A synced letter',
+    body: 'A complete message arrives from Siena.', source_url: null,
+    source_key: 'sync-test-letter', due_at: null, seen_at: null,
+    created: inboxAt, updated: inboxAt, server_at: stamp(),
+  })
+}
+await syncNow(b)
+await b.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
+await b.view.getByText('A complete message arrives from Siena.').waitFor()
+ok('a published Siena item reaches the paired device', (await b.view.locator('.siena-item').count()) === 1)
+await b.view.getByRole('button', { name: 'Mark seen' }).click()
+await b.view.getByText('Seen', { exact: true }).waitFor()
+await syncNow(b)
+await syncNow(a)
+await a.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
+await a.view.getByText('A complete message arrives from Siena.').waitFor()
+ok('seen state crosses back to the first device',
+  (await a.view.locator('.siena-item .siena-seen').count()) === 1 &&
+  !!store.get(`siena_items|${eventWire?.vault}|${inboxId}`)?.seen_at)
 
 /* ── unpairing keeps the writing ────────────────────────────────────────── */
 

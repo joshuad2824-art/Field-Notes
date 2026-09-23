@@ -81,7 +81,7 @@ const lastLine = () =>
     .last()
     .evaluate((el) => el.textContent)
 
-await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+await page.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(700)
 
 /* The type is self-hosted. If Spectral or Playfair ever come off a CDN
@@ -361,7 +361,7 @@ ok(
 
 /* local storage is the primary store, not a cache */
 await page.waitForTimeout(400)
-await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+await page.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(700)
 const titles = await page.locator('.list-row-title').allTextContents()
 ok(
@@ -379,7 +379,7 @@ ok('search finds the new page', (await page.locator('.row-page').count()) >= 1)
 
 /* ── the keyboard ───────────────────────────────────────────────────── */
 
-await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+await page.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(600)
 await page.locator('.list-row').first().click()
 await page.waitForTimeout(700)
@@ -445,7 +445,7 @@ await ctx.close()
   })
   const view = await inset.newPage()
   view.on('pageerror', (e) => problems.push('home indicator: ' + e.message))
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(700)
 
   const covered = await view.evaluate(() => {
@@ -505,7 +505,7 @@ await ctx.close()
   })
   const view = await lying.newPage()
   view.on('pageerror', (e) => problems.push('short window: ' + e.message))
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(700)
 
   const reach = await view.evaluate(() => {
@@ -557,7 +557,7 @@ async function atWidth(width, height, run) {
   await context.addInitScript(settledZoom)
   const view = await context.newPage()
   view.on('pageerror', (e) => problems.push(`${width}px: ${e.message}`))
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(700)
   await run(view, context)
   await context.close()
@@ -712,7 +712,7 @@ for (const [label, viewH, screenH, expectOutside, expectSafe] of [
   }, screenH)
   const view = await context.newPage()
   view.on('pageerror', (e) => problems.push(`outside: ${e.message}`))
-  await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+  await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(900)
   await view.addStyleTag({ content: ':root { --raw-inset-bottom: 34px; }' })
   await view.evaluate(() => window.dispatchEvent(new Event('resize')))
@@ -847,7 +847,7 @@ await atWidth(1440, 900, async (view) => {
   )
   ok(
     'and the worker was bumped, or none of the above reaches a phone',
-    shell.version === 'v9',
+    shell.version === 'v10',
     shell.version,
   )
 })
@@ -1350,11 +1350,12 @@ await atWidth(1440, 900, async (view) => {
       const db = await new Promise((r) => {
         request.onsuccess = () => r(request.result)
       })
-      const rows = await new Promise((r) => {
-        const q = db.transaction('pages').objectStore('pages').getAll()
+      const id = location.pathname.split('/').pop()
+      const row = await new Promise((r) => {
+        const q = db.transaction('pages').objectStore('pages').get(id)
         q.onsuccess = () => r(q.result)
       })
-      return rows.sort((a, b) => b.updated - a.updated)[0]?.body ?? ''
+      return row?.body ?? ''
     })
 
   await view.locator('.plate-button', { hasText: 'New page' }).click()
@@ -1492,11 +1493,13 @@ await atWidth(1440, 900, async (view) => {
   const wanted = await stored()
   await view.reload({ waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(900)
-  ok('the table survived a reload', (await stored()) === wanted)
+  const reloaded = await stored()
+  ok('the table survived a reload', reloaded === wanted,
+    reloaded === wanted ? '' : JSON.stringify({ before: wanted.slice(0, 160), after: reloaded.slice(0, 160) }))
   ok('and drew itself again', (await view.locator('.md-table').count()) === 1)
 
   /* a table is structure, not prose */
-  const title = await view.locator('.list-row-title').first().textContent()
+  const title = await view.locator('.list-row.active .list-row-title').textContent()
   ok('a table never becomes the page title', !title?.includes('|'), title)
 
   /* the felt pen draws its rules by hand. Both hands are in the SVG and the
@@ -1570,11 +1573,12 @@ await atWidth(1440, 900, async (view) => {
       const db = await new Promise((r) => {
         request.onsuccess = () => r(request.result)
       })
-      const rows = await new Promise((r) => {
-        const q = db.transaction('pages').objectStore('pages').getAll()
+      const id = location.pathname.split('/').pop()
+      const row = await new Promise((r) => {
+        const q = db.transaction('pages').objectStore('pages').get(id)
         q.onsuccess = () => r(q.result)
       })
-      return rows.sort((a, b) => b.updated - a.updated)[0]?.body ?? ''
+      return row?.body ?? ''
     })
 
   /* A detail is printed on the same line as the result, so a whole body —
@@ -1715,11 +1719,12 @@ await atWidth(1440, 900, async (view) => {
       const db = await new Promise((r) => {
         request.onsuccess = () => r(request.result)
       })
-      const rows = await new Promise((r) => {
-        const q = db.transaction('pages').objectStore('pages').getAll()
+      const id = location.pathname.split('/').pop()
+      const row = await new Promise((r) => {
+        const q = db.transaction('pages').objectStore('pages').get(id)
         q.onsuccess = () => r(q.result)
       })
-      return rows.sort((a, b) => b.updated - a.updated)[0]?.body ?? ''
+      return row?.body ?? ''
     })
 
   await view.locator('.plate-button', { hasText: 'New page' }).click()
@@ -1769,12 +1774,14 @@ await atWidth(1440, 900, async (view) => {
   const wanted = await stored()
   await view.reload({ waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(900)
-  ok('the width survived a reload', (await stored()) === wanted)
+  const reloaded = await stored()
+  ok('the width survived a reload', reloaded === wanted,
+    reloaded === wanted ? '' : JSON.stringify({ before: wanted.slice(0, 160), after: reloaded.slice(0, 160) }))
   ok('and the table drew itself narrow again', Math.abs((await frameWidth()) - pulled) <= 2, `${await frameWidth()}px`)
   ok(
     'the width line is never read as writing',
-    (await view.locator('.list-row-title').first().textContent()) === 'Cut list',
-    await view.locator('.list-row-title').first().textContent(),
+    (await view.locator('.list-row.active .list-row-title').textContent()) === 'Cut list',
+    await view.locator('.list-row.active .list-row-title').textContent(),
   )
 
   /* and a way back that isn't a drag to the exact edge */
@@ -2246,7 +2253,7 @@ await atWidth(1440, 900, async (view) => {
   const pitchOn = async (context, open) => {
     const view = await context.newPage()
     view.on('pageerror', (e) => problems.push('dial: ' + e.message))
-    await view.goto(BASE, { waitUntil: 'domcontentloaded' })
+    await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
     await view.waitForTimeout(900)
     await open(view)
     await view.waitForTimeout(900)

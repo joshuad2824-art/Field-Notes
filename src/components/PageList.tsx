@@ -179,6 +179,9 @@ export function PageList({
 
       {/* New page belongs under the pages it makes, at every width. */}
       <div className="list-foot" ref={footRef}>
+        <button className="link-signage overview-entry" onClick={() => navigate(to.overview())}>
+          Overview
+        </button>
         <button className="link-signage" onClick={() => navigate(to.search())}>
           Search
         </button>

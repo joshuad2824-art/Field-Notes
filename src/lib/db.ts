@@ -8,6 +8,8 @@ import {
   type Notebook,
   type NotebookId,
   type Page,
+  type FieldEvent,
+  type SienaItem,
   type Pen,
   type PageImage,
   type Stock,
@@ -33,12 +35,16 @@ export const markFor = {
   page: (id: string) => `p:${id}`,
   notebook: (id: string) => `n:${id}`,
   image: (id: string) => `i:${id}`,
+  event: (id: string) => `e:${id}`,
+  sienaItem: (id: string) => `s:${id}`,
 }
 
 class FieldNotesDB extends Dexie {
   pages!: Table<Page, string>
   notebooks!: Table<Notebook, string>
   images!: Table<PageImage, string>
+  events!: Table<FieldEvent, string>
+  sienaItems!: Table<SienaItem, string>
   synced!: Table<SyncMark, string>
   meta!: Table<{ key: string; value: unknown }, string>
 
@@ -100,6 +106,18 @@ class FieldNotesDB extends Dexie {
             book.updated ??= 0
           }),
       )
+
+    /* v5: events and the quiet Siena inbox are independent local-first rows.
+       Existing pages, notebooks and images keep their keys and contents. */
+    this.version(5).stores({
+      pages: 'id, notebook, updated, created, pinned, deleted, entryDate',
+      notebooks: 'id, order',
+      images: 'id, page',
+      events: 'id, date, updated, deleted',
+      sienaItems: 'id, type, created, updated, dueAt, seenAt',
+      synced: 'id',
+      meta: 'key',
+    })
   }
 }
 

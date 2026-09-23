@@ -12,7 +12,7 @@ import {
   subscribe,
 } from '../lib/db'
 import { isoDay, readableDay } from '../lib/format'
-import { imageIdsIn, isBlank, type Notebook, type Page } from '../lib/model'
+import { imageIdsIn, isBlank, type FieldEvent, type Notebook, type Page, type SienaItem } from '../lib/model'
 import { reloadNotebooks } from '../lib/notebooks'
 import { conflictBody, decide, samePage } from './reconcile'
 import { setStatus } from './status'
@@ -21,16 +21,24 @@ import { getVault, setVault } from './vault'
 import type { Vault } from './pairing'
 import {
   imageToRow,
+  eventToRow,
   notebookToRow,
   pageToRow,
+  rowToEvent,
   rowToImage,
   rowToNotebook,
   rowToPage,
+  rowToSienaItem,
+  sameEvent,
   sameNotebook,
+  sameSienaItem,
+  sienaItemToRow,
+  type EventRow,
   type ImageRow,
   type NotebookRow,
   type PageRow,
   type Row,
+  type SienaItemRow,
   type TableName,
 } from './wire'
 
@@ -251,6 +259,118 @@ async function syncNotebooks(vault: Vault): Promise<void> {
   }
 }
 
+/* ── events ────────────────────────────────────────────────────────────── */
+
+async function syncEvents(vault: Vault): Promise<void> {
+  const t = transport!
+  const { rows, cursor } = await pull('events')
+  const marks = await allMarks()
+  const locals = new Map((await db.events.toArray()).map((event) => [event.id, event]))
+  const remotes = new Map(rows.map((row) => [row.id, rowToEvent(row as EventRow)]))
+  const apply: FieldEvent[] = []
+  const push: FieldEvent[] = []
+  const copies: FieldEvent[] = []
+
+  const keepCopy = (loser: FieldEvent) => {
+    if (loser.deleted) return
+    copies.push({
+      ...loser, id: uuid(), title: `${loser.title} (conflict copy)`,
+      created: Date.now(), updated: Date.now(), conflictOf: loser.id,
+    })
+  }
+
+  for (const id of new Set([...locals.keys(), ...remotes.keys()])) {
+    const local = locals.get(id)
+    const remote = remotes.get(id)
+    const verdict = decide({
+      hasLocal: !!local, hasRemote: !!remote,
+      localUpdated: local?.updated ?? 0, remoteUpdated: remote?.updated ?? 0,
+      marked: marks.get(markFor.event(id)),
+      identical: !!local && !!remote && sameEvent(local, remote),
+      remoteDeleted: !!remote?.deleted,
+    })
+    if (verdict === 'apply' && remote) apply.push(remote)
+    else if (verdict === 'push' && local) push.push(local)
+    else if (verdict === 'keep-local' && local && remote) {
+      push.push(local)
+      keepCopy(remote)
+    } else if (verdict === 'keep-remote' && local && remote) {
+      apply.push(remote)
+      keepCopy(local)
+    }
+  }
+
+  if (apply.length || copies.length) {
+    applying = true
+    try {
+      await db.events.bulkPut([...apply, ...copies])
+      await markMany(apply.map((event) => ({ id: markFor.event(event.id), at: event.updated })))
+    } finally { applying = false }
+    changed()
+  }
+  await setCursor('events', cursor)
+
+  for (const batch of chunk([...push, ...copies], 100)) {
+    await t.put('events', batch.map((event) => eventToRow(event, vault.id)))
+    await markMany(batch.map((event) => ({ id: markFor.event(event.id), at: event.updated })))
+  }
+}
+
+/* Inbox bodies are immutable after creation. Only seenAt moves, and it can
+   only move forward. Two devices acknowledging the same item therefore merge
+   rather than producing a conflict copy or losing the acknowledgment. */
+async function syncSienaItems(vault: Vault): Promise<void> {
+  const t = transport!
+  const { rows, cursor } = await pull('siena_items')
+  const marks = await allMarks()
+  const locals = new Map((await db.sienaItems.toArray()).map((item) => [item.id, item]))
+  const remotes = new Map(rows.map((row) => [row.id, rowToSienaItem(row as SienaItemRow)]))
+  const apply: SienaItem[] = []
+  const push: SienaItem[] = []
+  const agreed: { id: string; at: number }[] = []
+
+  for (const id of new Set([...locals.keys(), ...remotes.keys()])) {
+    const local = locals.get(id)
+    const remote = remotes.get(id)
+    if (!local && remote) {
+      apply.push(remote)
+      agreed.push({ id: markFor.sienaItem(id), at: remote.updated })
+      continue
+    }
+    if (local && !remote) {
+      if (marks.get(markFor.sienaItem(id)) !== local.updated) push.push(local)
+      continue
+    }
+    if (!local || !remote) continue
+    const seenAt = Math.max(local.seenAt ?? 0, remote.seenAt ?? 0)
+    const merged: SienaItem = {
+      ...remote,
+      ...(seenAt ? { seenAt } : {}),
+      updated: Math.max(local.updated, remote.updated, seenAt),
+    }
+    if (seenAt > (remote.seenAt ?? 0)) {
+      push.push(merged)
+      if (!sameSienaItem(merged, local)) apply.push(merged)
+    } else {
+      if (!sameSienaItem(merged, local)) apply.push(merged)
+      agreed.push({ id: markFor.sienaItem(id), at: remote.updated })
+    }
+  }
+
+  if (apply.length) {
+    applying = true
+    try { await db.sienaItems.bulkPut(apply) }
+    finally { applying = false }
+    changed()
+  }
+  await markMany(agreed)
+  await setCursor('siena_items', cursor)
+  for (const batch of chunk(push, 100)) {
+    await t.put('siena_items', batch.map((item) => sienaItemToRow(item, vault.id)))
+    await markMany(batch.map((item) => ({ id: markFor.sienaItem(item.id), at: item.updated })))
+  }
+}
+
 /* ── pictures ──────────────────────────────────────────────────────────── */
 
 /* A picture is written once and never edited, so there is no last-write-wins
@@ -316,6 +436,8 @@ export async function syncNow(): Promise<void> {
   try {
     await syncNotebooks(vault)
     await syncPages(vault)
+    await syncEvents(vault)
+    await syncSienaItems(vault)
     await syncImages(vault)
     setStatus({ state: 'idle', lastSyncedAt: Date.now(), error: null })
   } catch (error) {

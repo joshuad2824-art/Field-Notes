@@ -10,6 +10,7 @@ import { Rail } from './Rail'
 
 interface Props {
   notebook: string
+  overview?: boolean
   /* The open page, if there is one. Below 1120 its presence is what decides
      whether the list or the leaf has the screen. */
   activeId?: string
@@ -25,9 +26,13 @@ interface Props {
    window, and the rail slides over as a drawer that starts closed. Crossing
    the boundary reconciles the drawer, because one that survived a resize into
    the docked layout would be a second, invisible state. */
-export function Shell({ notebook, activeId, children }: Props) {
+export function Shell({ notebook, overview = false, activeId, children }: Props) {
   const available = useMediaQuery(SIDEBAR_AVAILABLE)
-  const docked = useMediaQuery(SIDEBAR_DOCKED)
+  const regularDocked = useMediaQuery(SIDEBAR_DOCKED)
+  /* Overview needs only the rail and the desk, so the familiar sidebar can
+     dock sooner than it can on the three-column writing screen. */
+  const overviewDocked = useMediaQuery('(min-width: 1000px)')
+  const docked = overview ? overviewDocked : regularDocked
   const settings = useSettings()
   const books = useNotebooks()
 
@@ -44,8 +49,8 @@ export function Shell({ notebook, activeId, children }: Props) {
   const railOver = !docked && railDrawer
 
   /* Below the boundary the leaf replaces the list rather than joining it. */
-  const showList = compact ? !activeId : listDocked
-  const showLeaf = compact ? !!activeId : true
+  const showList = overview ? false : compact ? !activeId : listDocked
+  const showLeaf = overview || (compact ? !!activeId : true)
   /* Nothing to the left saying where we are, so the leaf says it itself. */
   const hidden = docked && !listDocked && !railDocked
 
@@ -64,7 +69,13 @@ export function Shell({ notebook, activeId, children }: Props) {
     navigate(to.page(page.id))
   }
 
-  const toggle = (
+  const toggle = overview ? (
+    <button
+      className="mark-button"
+      onClick={() => docked ? setSettings({ rail: !settings.rail }) : setRailDrawer(true)}
+      aria-label={railDocked ? 'Hide the notebooks' : 'Show the notebooks'}
+    >☰</button>
+  ) : (
     <button
       className={`mark-button${listDocked && available ? ' on' : ''}`}
       onClick={() => {
@@ -87,7 +98,7 @@ export function Shell({ notebook, activeId, children }: Props) {
       {railDocked || railOver ? (
         <div className={railOver ? 'rail-drawer' : 'rail-slot'}>
           <Rail
-            activeId={notebook}
+            activeId={overview ? '' : notebook}
             onPick={pickNotebook}
             onManage={() => setManage(true)}
             onFold={() => (docked ? setSettings({ rail: false }) : setRailDrawer(false))}

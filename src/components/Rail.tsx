@@ -5,6 +5,8 @@ import { JOURNAL_NOTEBOOK } from '../lib/model'
 import { journalBook, useNotebooks } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
+import { allSienaItems } from '../lib/siena-items'
+import { daysWithEvents } from '../lib/events'
 import { MonthGrid } from './MonthGrid'
 import { SyncMark } from './SyncMark'
 import { WeatherLine } from './WeatherLine'
@@ -22,6 +24,9 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
   const books = useNotebooks()
   const counts = useLive<Record<string, number>>(notebookCounts, [], {})
   const written = useLive<Set<string>>(daysWritten, [], new Set())
+  const eventDays = useLive<Set<string>>(daysWithEvents, [], new Set())
+  const sienaItems = useLive(allSienaItems, [], [])
+  const unseen = sienaItems.filter((item) => !item.seenAt).length
   const { weekday, day, month, year } = mastheadParts()
 
   return (
@@ -70,6 +75,7 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
         <MonthGrid
           month={monthNow()}
           written={written}
+          events={eventDays}
           onPick={(iso) => navigate(to.day(iso))}
         />
       </div>
@@ -79,6 +85,14 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
       <WeatherLine />
 
       <div className="rail-rule" />
+
+      <button className={`rail-overview${location.pathname === '/overview' || location.pathname === '/' ? ' active' : ''}`} onClick={() => navigate(to.overview())}>
+        <span>Overview</span>
+      </button>
+      <button className={`rail-overview rail-siena-link${location.pathname === '/from-siena' ? ' active' : ''}`} onClick={() => navigate(to.fromSiena())}>
+        <span>From Siena</span>
+        {unseen ? <span className="siena-badge" aria-label={`${unseen} unseen`}>{unseen}</span> : null}
+      </button>
 
       <div className="scroll rail-books">
         <div className="rail-books-head">

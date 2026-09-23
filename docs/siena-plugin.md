@@ -1,12 +1,14 @@
 # Siena plugin
 
 The Field Notes plugin connects ChatGPT and Codex to the existing Supabase sync
-mirror. It exposes seven narrow actions: connection status, notebooks, recent
-pages, search, read, create, and edit. It does not expose deletion or raw SQL.
+mirror. It exposes nine narrow actions: connection status, notebooks, recent
+pages, search, read, create, edit, list From Siena items, and publish a From
+Siena item. It does not expose deletion or raw SQL.
 
 ## One-time setup
 
-1. Apply `supabase/assistant-access.sql` after the base schema.
+1. Apply `supabase/assistant-access.sql` after the base schema, then the migration
+   in `supabase/migrations/` that creates events and Siena items.
 2. Deploy `supabase/functions/field-notes-mcp` with `verify_jwt = false` from
    `supabase/config.toml`. The function verifies OAuth tokens itself; its
    discovery request must be available before sign-in.
@@ -35,3 +37,9 @@ stale edit fails, allowing the assistant to reread and reconcile the text. The
 app's normal sync still preserves conflict copies for simultaneous offline
 edits. Notes with pictures can be read as Markdown, but the first plugin
 version does not return image bytes.
+
+`create_siena_item` publishes a full message, due reminder, meaningful task
+result, or saved link into the separate From Siena inbox. It can use a
+`source_key` to avoid duplicates on retry. The linked account can read and
+create inbox rows but cannot acknowledge them. The user marks items seen in
+Field Notes. No recurring publication is configured by this code.

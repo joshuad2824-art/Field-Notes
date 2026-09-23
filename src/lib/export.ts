@@ -140,6 +140,12 @@ export async function exportShelf(): Promise<number> {
       tree[slug(book.name)] = branch
     }
   }
+  tree['field-notes-data.json'] = strToU8(JSON.stringify({
+    format: 'field-notes-data',
+    version: 1,
+    events: await db.events.toArray(),
+    sienaItems: await db.sienaItems.toArray(),
+  }, null, 2))
   const zip = zipSync(tree as never, { level: 6 })
   download(
     new Blob([zip as BlobPart], { type: 'application/zip' }),

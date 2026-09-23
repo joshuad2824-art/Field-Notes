@@ -69,6 +69,7 @@ export function PageScreen({ id }: { id: string }) {
 
   const color = useRef('brass')
   const bodyRef = useRef('')
+  const loaded = useRef(false)
   const openedBlank = useRef(false)
   const timer = useRef<number | null>(null)
 
@@ -79,6 +80,7 @@ export function PageScreen({ id }: { id: string }) {
     getPage(id).then((found) => {
       if (!live) return
       if (!found) return setMissing(true)
+      loaded.current = true
       setPage(found)
       setBody(found.body)
       bodyRef.current = found.body
@@ -91,24 +93,28 @@ export function PageScreen({ id }: { id: string }) {
 
   /* Writes go to local storage and return immediately. The debounce only
      batches keystrokes; anything that could take the tab away flushes first. */
-  const flush = useRef(() => {})
-  flush.current = () => {
+  const flush = useRef<() => Promise<void>>(async () => {})
+  flush.current = async () => {
+    /* StrictMode tears down its first effect pass before the page has loaded.
+       Flushing that empty initial ref would erase an existing page. */
+    if (!loaded.current) return
     if (timer.current) {
       clearTimeout(timer.current)
       timer.current = null
     }
-    void saveBody(id, bodyRef.current)
+    await saveBody(id, bodyRef.current)
   }
 
   useEffect(() => {
-    const onHide = () => flush.current()
+    const onHide = () => void flush.current()
     window.addEventListener('pagehide', onHide)
     document.addEventListener('visibilitychange', onHide)
     return () => {
       window.removeEventListener('pagehide', onHide)
       document.removeEventListener('visibilitychange', onHide)
+      if (!loaded.current) return
       if (openedBlank.current && isBlank(bodyRef.current)) void deletePage(id)
-      else flush.current()
+      else void flush.current()
       void pruneImages(id, bodyRef.current)
     }
   }, [id])
@@ -463,9 +469,15 @@ export function PageScreen({ id }: { id: string }) {
             label="Delete page"
             danger
             onClick={() => {
-              void deletePage(page.id)
               setMenu(false)
-              navigate(to.notebook(book.id), { replace: true })
+              void (async () => {
+                /* Finish any pending edit before the tombstone. Navigating
+                   first lets the unmount flush race the deletion and can
+                   restore the page on this device. */
+                await flush.current()
+                await deletePage(page.id)
+                navigate(to.notebook(book.id), { replace: true })
+              })()
             }}
           />
         </Sheet>

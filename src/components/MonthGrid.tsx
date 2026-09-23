@@ -5,6 +5,7 @@ interface Props {
   month: string
   /* The days that have pages on them. */
   written: Set<string>
+  events?: Set<string>
   selected?: string
   onPick: (iso: string) => void
 }
@@ -13,7 +14,7 @@ interface Props {
    has it large. The marks are written once here so the two can't drift:
    an unfilled ring on a day with pages, and the one filled brass dot on today.
    A day can carry both, and today with nothing written on it still lights. */
-export function MonthGrid({ month, written, selected, onPick }: Props) {
+export function MonthGrid({ month, written, events, selected, onPick }: Props) {
   const today = isoDay()
 
   return (
@@ -30,6 +31,7 @@ export function MonthGrid({ month, written, selected, onPick }: Props) {
           const marks = [
             day.inMonth ? '' : 'outside',
             written.has(day.iso) ? 'written' : '',
+            events?.has(day.iso) ? 'has-event' : '',
             day.iso === today ? 'today' : '',
             day.iso === selected ? 'on' : '',
           ]

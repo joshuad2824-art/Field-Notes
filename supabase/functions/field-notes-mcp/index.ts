@@ -174,6 +174,61 @@ Deno.serve(
           return data ? result(data) : failure('This page changed since it was read. Call get_page and reconcile before editing again.')
         })
 
+        server.registerTool('list_siena_items', {
+          title: 'List From Siena items',
+          description: 'Read recently published From Siena messages, reminders, and task updates, including whether the user marked them seen. Opening an item does not mark it seen.',
+          inputSchema: z.object({ limit: z.number().int().min(1).max(50).default(20) }),
+          annotations: { readOnlyHint: true, openWorldHint: false },
+        }, async ({ limit }) => {
+          const vault = await vaultForUser()
+          if (!vault) return failure('Link a Field Notes archive in Settings first.')
+          const { data, error } = await supabase.from('siena_items')
+            .select('id,kind,title,body,source_url,source_key,due_at,seen_at,created,updated')
+            .eq('vault', vault).order('created', { ascending: false }).limit(limit)
+          if (error) return failure(error.message)
+          return result(data ?? [])
+        })
+
+        server.registerTool('create_siena_item', {
+          title: 'Publish a From Siena item',
+          description: 'Save a meaningful note, due reminder, completed-task update, or useful link in the connected Field Notes archive. Do not publish routine runs with nothing new. A source_key makes retries idempotent. Seen state belongs to the user and cannot be set here.',
+          inputSchema: z.object({
+            kind: z.enum(['note', 'reminder', 'task_update', 'saved']),
+            title: z.string().trim().min(1).max(240).optional(),
+            body: z.string().trim().min(1).max(100000),
+            due_at: z.number().int().positive().optional(),
+            source_url: z.string().max(2000).refine((value) => /^https:\/\//.test(value) || /^\/p\/[0-9a-f-]{36}$/.test(value), 'Use an HTTPS URL or a Field Notes page path.').optional(),
+            source_key: z.string().trim().min(1).max(200).optional(),
+          }),
+          annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        }, async ({ kind, title, body, due_at, source_url, source_key }) => {
+          const vault = await vaultForUser()
+          if (!vault) return failure('Link a Field Notes archive in Settings first.')
+          if (kind === 'reminder' && !due_at) return failure('A reminder needs due_at in milliseconds since the Unix epoch.')
+          if (source_key) {
+            const { data: existing, error: lookupError } = await supabase.from('siena_items')
+              .select('id,kind,created').eq('vault', vault).eq('source_key', source_key).maybeSingle()
+            if (lookupError) return failure(lookupError.message)
+            if (existing) return result({ ...existing, already_exists: true })
+          }
+          const now = Date.now()
+          const { data, error } = await supabase.from('siena_items').insert({
+            vault, id: crypto.randomUUID(), kind, title: title ?? null, body,
+            due_at: due_at ?? null, source_url: source_url ?? null,
+            source_key: source_key ?? null, seen_at: null,
+            created: now, updated: now,
+          }).select('id,kind,created').single()
+          if (error) {
+            if (source_key && error.code === '23505') {
+              const { data: existing } = await supabase.from('siena_items')
+                .select('id,kind,created').eq('vault', vault).eq('source_key', source_key).maybeSingle()
+              if (existing) return result({ ...existing, already_exists: true })
+            }
+            return failure(error.message)
+          }
+          return result(data)
+        })
+
         return server
       })
       return handler.fetch(req)
