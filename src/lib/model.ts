@@ -55,6 +55,8 @@ export interface FieldEvent {
   endTime?: string
   location?: string
   note?: string
+  pageId?: string // one linked preparation or follow-up page
+  calendarTarget?: 'Joshua' | 'Family' // intended Apple Calendar destination
   created: number
   updated: number
   deleted?: number

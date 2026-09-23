@@ -48,6 +48,8 @@ export interface EventRow extends Row {
   end_time: string | null
   location: string | null
   note: string | null
+  page_id: string | null
+  calendar_target: string | null
   created: number
   updated: number
   deleted: number | null
@@ -145,6 +147,7 @@ export function eventToRow(event: FieldEvent, vault: string): EventRow {
     vault, id: event.id, title: event.title, date: event.date,
     start_time: event.startTime ?? null, end_time: event.endTime ?? null,
     location: event.location ?? null, note: event.note ?? null,
+    page_id: event.pageId ?? null, calendar_target: event.calendarTarget ?? null,
     created: event.created, updated: event.updated, deleted: event.deleted ?? null,
     conflict_of: event.conflictOf ?? null,
   }
@@ -158,6 +161,9 @@ export function rowToEvent(row: EventRow): FieldEvent {
     ...(row.end_time ? { endTime: row.end_time } : {}),
     ...(row.location ? { location: row.location } : {}),
     ...(row.note ? { note: row.note } : {}),
+    ...(row.page_id ? { pageId: row.page_id } : {}),
+    ...(row.calendar_target === 'Joshua' || row.calendar_target === 'Family'
+      ? { calendarTarget: row.calendar_target } : {}),
     ...(row.deleted ? { deleted: Number(row.deleted) } : {}),
     ...(row.conflict_of ? { conflictOf: row.conflict_of } : {}),
   }
@@ -167,6 +173,7 @@ export function sameEvent(a: FieldEvent, b: FieldEvent): boolean {
   return a.title === b.title && a.date === b.date &&
     (a.startTime ?? '') === (b.startTime ?? '') && (a.endTime ?? '') === (b.endTime ?? '') &&
     (a.location ?? '') === (b.location ?? '') && (a.note ?? '') === (b.note ?? '') &&
+    (a.pageId ?? '') === (b.pageId ?? '') && (a.calendarTarget ?? '') === (b.calendarTarget ?? '') &&
     !!a.deleted === !!b.deleted && (a.conflictOf ?? '') === (b.conflictOf ?? '')
 }
 

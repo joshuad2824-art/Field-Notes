@@ -1,23 +1,30 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { eventDetails, getEvent, saveEvent, type EventDraft } from '../lib/events'
+import { eventDetails, getEvent, saveEvent, deleteEvent, type EventDraft } from '../lib/events'
+import { createPage, livePages, patchPage } from '../lib/db'
 import { isoDay, readableDay } from '../lib/format'
-import type { FieldEvent } from '../lib/model'
+import { handoffToAppleCalendar } from '../lib/ical'
+import { titleOf, type FieldEvent, type Page } from '../lib/model'
+import { notebookForPage } from '../lib/notebooks'
 import { back, navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
 
-const emptyDraft = (date?: string): EventDraft => ({ title: '', date: date ?? isoDay() })
+const emptyDraft = (date?: string): EventDraft => ({ title: '', date: date ?? isoDay(), calendarTarget: 'Joshua' })
 
 export function EventScreen({ id, date, notebook }: { id?: string; date?: string; notebook: string }) {
   const event = useLive<FieldEvent | undefined>(() => id ? getEvent(id) : Promise.resolve(undefined), [id], undefined)
+  const pages = useLive<Page[]>(livePages, [], [])
   const [editing, setEditing] = useState(!id)
   const [draft, setDraft] = useState<EventDraft>(() => emptyDraft(date))
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const linkedPage = pages.find((page) => page.id === event?.pageId)
 
   useEffect(() => {
     if (event && !editing) setDraft({
       title: event.title, date: event.date, startTime: event.startTime,
       endTime: event.endTime, location: event.location, note: event.note,
+      pageId: event.pageId, calendarTarget: event.calendarTarget ?? 'Joshua',
     })
   }, [event, editing])
 
@@ -45,6 +52,43 @@ export function EventScreen({ id, date, notebook }: { id?: string; date?: string
     } catch { setNotice('Could not copy the details on this device.') }
   }
 
+  const makePage = async () => {
+    if (!event) return
+    setBusy(true)
+    setNotice('')
+    try {
+      const page = await createPage(notebook, `# ${event.title}\n\n`)
+      await patchPage(page.id, { entryDate: event.date })
+      await saveEvent({ ...event, pageId: page.id }, event.id)
+      navigate(to.page(page.id))
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not make a page for this event.')
+    } finally { setBusy(false) }
+  }
+
+  const remove = async () => {
+    if (!event) return
+    setBusy(true)
+    try {
+      await deleteEvent(event.id)
+      navigate(to.day(event.date), { replace: true })
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not delete the event.')
+      setBusy(false)
+    }
+  }
+
+  const exportIcs = async () => {
+    if (!event) return
+    try {
+      const result = await handoffToAppleCalendar(event)
+      setNotice(`${result === 'shared' ? 'Event file shared' : 'Event file downloaded'}. When Apple Calendar asks, choose ${event.calendarTarget ?? 'Joshua'}. Changes in Field Notes will not update Apple Calendar automatically.`)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      setNotice('Could not prepare the Apple Calendar event file.')
+    }
+  }
+
   return (
     <div className="app">
       <div className="statusband" />
@@ -67,6 +111,18 @@ export function EventScreen({ id, date, notebook }: { id?: string; date?: string
               </div>
               <label>Location <span>optional</span><input maxLength={500} value={draft.location ?? ''} onChange={(e) => setDraft({ ...draft, location: e.target.value })} /></label>
               <label>Note <span>optional</span><textarea maxLength={10000} rows={5} value={draft.note ?? ''} onChange={(e) => setDraft({ ...draft, note: e.target.value })} /></label>
+              <label>Apple Calendar
+                <select value={draft.calendarTarget ?? 'Joshua'} onChange={(e) => setDraft({ ...draft, calendarTarget: e.target.value as 'Joshua' | 'Family' })}>
+                  <option value="Joshua">Joshua · personal</option>
+                  <option value="Family">Family · shared</option>
+                </select>
+              </label>
+              <label>Linked page <span>optional</span>
+                <select value={draft.pageId ?? ''} onChange={(e) => setDraft({ ...draft, pageId: e.target.value || undefined })}>
+                  <option value="">No linked page</option>
+                  {pages.map((page) => <option key={page.id} value={page.id}>{notebookForPage(page.notebook).name} · {titleOf(page.body)}</option>)}
+                </select>
+              </label>
               {notice ? <p className="event-notice" role="status">{notice}</p> : null}
               <div className="event-form-actions">
                 <button className="overview-action primary" type="submit" disabled={busy}>Save event</button>
@@ -82,9 +138,27 @@ export function EventScreen({ id, date, notebook }: { id?: string; date?: string
               <dl>
                 <div><dt>When</dt><dd>{event.startTime ? `${event.startTime}${event.endTime ? `–${event.endTime}` : ''}` : 'All day'}</dd></div>
                 {event.location ? <div><dt>Where</dt><dd>{event.location}</dd></div> : null}
+                <div><dt>Calendar</dt><dd>{event.calendarTarget ?? 'Joshua'} · Apple Calendar handoff</dd></div>
               </dl>
               {event.note ? <p className="event-detail-note">{event.note}</p> : null}
-              <button className="overview-back" onClick={() => navigate(to.day(event.date))}>See the day ↗</button>
+              <div className="event-linked">
+                <span className="section-label">Page for this event</span>
+                {linkedPage ? <button className="overview-back" onClick={() => navigate(to.page(linkedPage.id))}>{titleOf(linkedPage.body)} ↗</button> : (
+                  <button className="overview-action" disabled={busy} onClick={() => void makePage()}>Create a page</button>
+                )}
+              </div>
+              <div className="event-detail-actions">
+                <button className="overview-action event-ics" onClick={() => void exportIcs()}>Send to Apple Calendar</button>
+                <button className="overview-back" onClick={() => navigate(to.day(event.date))}>See the day ↗</button>
+                <button className="event-delete" onClick={() => setConfirmDelete(true)}>Delete event</button>
+              </div>
+              <p className="event-handoff-note">Choose <strong>{event.calendarTarget ?? 'Joshua'}</strong> when importing into Apple Calendar. This is a one-time handoff; later edits need another import. {event.startTime && !event.endTime ? 'With no end time set, the file uses one hour.' : ''}</p>
+              {confirmDelete ? <div className="event-delete-confirm">
+                <p>Delete this event? You can restore it from Deleted.</p>
+                <button className="event-delete" disabled={busy} onClick={() => void remove()}>Delete it</button>
+                <button className="event-copy" onClick={() => setConfirmDelete(false)}>Keep it</button>
+              </div> : null}
+              {notice ? <p className="event-notice" role="status">{notice}</p> : null}
             </article>
           ) : <p className="overview-empty">This event is not available on this device.</p>}
         </div>

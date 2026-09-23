@@ -11,6 +11,7 @@ export type Route =
   | { name: 'event'; id: string }
   | { name: 'notebook'; notebook: string }
   | { name: 'page'; id: string }
+  | { name: 'review'; id: string }
   | { name: 'search' }
   | { name: 'tag'; tag: string }
   | { name: 'day'; iso: string }
@@ -62,6 +63,7 @@ export function parse(path: string): Route {
   if (parts[0] === 'event' && parts[1]) return { name: 'event', id: parts[1] }
   if (parts[0] === 'n' && parts[1]) return { name: 'notebook', notebook: parts[1] }
   if (parts[0] === 'p' && parts[1]) return { name: 'page', id: parts[1] }
+  if (parts[0] === 'review' && parts[1]) return { name: 'review', id: parts[1] }
   if (parts[0] === 'tag' && parts[1]) return { name: 'tag', tag: parts[1] }
   if (parts[0] === 'day' && parts[1]) return { name: 'day', iso: parts[1] }
   if (parts[0] === 'calendar') return { name: 'calendar', month: parts[1] }
@@ -87,6 +89,7 @@ export const to = {
   newEvent: (date?: string) => date ? `/event/new/${date}` : '/event/new',
   notebook: (id: string) => `/n/${id}`,
   page: (id: string) => `/p/${id}`,
+  review: (id: string) => `/review/${id}`,
   tag: (tag: string) => `/tag/${encodeURIComponent(tag)}`,
   day: (iso: string) => `/day/${iso}`,
   calendar: (month?: string) => (month ? `/calendar/${month}` : '/calendar'),

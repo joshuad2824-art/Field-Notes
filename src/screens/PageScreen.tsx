@@ -20,6 +20,7 @@ import {
 } from '../lib/db'
 import { caretAtEndFor } from '../lib/capture'
 import { exportPage } from '../lib/export'
+import { eventsForPage } from '../lib/events'
 import { addImage, isImage, pruneImages } from '../lib/images'
 import { editedStamp, countLabel, todayLine } from '../lib/format'
 import { collectWeek } from '../lib/journal'
@@ -27,6 +28,7 @@ import {
   JOURNAL_NOTEBOOK,
   type NotebookId,
   type Page,
+  type FieldEvent,
   type Placement,
   effectivePen,
   effectiveStock,
@@ -43,6 +45,7 @@ import { useKeyboardOpen } from '../lib/viewport'
 import { resetEdgeColor, setEdgeColor, tokenColor } from '../lib/themecolor'
 import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { back, navigate, to } from '../lib/router'
+import { useLive } from '../lib/useLive'
 
 const SAVE_DELAY = 250
 
@@ -51,6 +54,7 @@ export function PageScreen({ id }: { id: string }) {
   const books = useNotebooks()
   const keyboardOpen = useKeyboardOpen()
   const docked = useMediaQuery(SIDEBAR_DOCKED)
+  const linkedEvents = useLive<FieldEvent[]>(() => eventsForPage(id), [id], [])
 
   const [page, setPage] = useState<Page | null>(null)
   const [missing, setMissing] = useState(false)
@@ -367,6 +371,22 @@ export function PageScreen({ id }: { id: string }) {
 
           <div className="sheet-rule" />
           <div className="sheet-label">Page</div>
+          <SheetItem
+            label="Ask Siena about this page"
+            state="review before applying"
+            onClick={() => {
+              setMenu(false)
+              void flush.current().then(() => navigate(to.review(page.id)))
+            }}
+          />
+          {linkedEvents.map((event) => (
+            <SheetItem
+              key={event.id}
+              label={event.title}
+              state="calendar event"
+              onClick={() => { setMenu(false); navigate(to.event(event.id)) }}
+            />
+          ))}
           <SheetItem
             label={page.pinned ? 'Unpin' : 'Pin'}
             state={page.pinned ? 'pinned' : undefined}

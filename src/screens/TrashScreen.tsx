@@ -1,5 +1,7 @@
 import { deletedPages, purgePage, restorePage } from '../lib/db'
-import { TOMBSTONE_DAYS, type Page, snippetOf, titleOf } from '../lib/model'
+import { deletedEvents, purgeEvent, restoreEvent } from '../lib/events'
+import { readableDay } from '../lib/format'
+import { TOMBSTONE_DAYS, type FieldEvent, type Page, snippetOf, titleOf } from '../lib/model'
 import { back } from '../lib/router'
 import { useLive } from '../lib/useLive'
 
@@ -10,6 +12,7 @@ function daysLeft(deleted: number): number {
 
 export function TrashScreen() {
   const pages = useLive<Page[]>(deletedPages, [], [])
+  const events = useLive<FieldEvent[]>(deletedEvents, [], [])
 
   return (
     <div className="app">
@@ -21,10 +24,11 @@ export function TrashScreen() {
       </header>
 
       <div className="scroll">
-        {pages.length === 0 ? (
+        {pages.length === 0 && events.length === 0 ? (
           <div className="empty">Nothing deleted.</div>
         ) : (
           <div className="rows">
+            {pages.length ? <div className="section-label">Pages</div> : null}
             {pages.map((page) => (
               <div key={page.id} className="row-page" style={{ cursor: 'default' }}>
                 <div className="row-title">
@@ -39,6 +43,18 @@ export function TrashScreen() {
                   <button className="btn caps danger" onClick={() => void purgePage(page.id)}>
                     Delete now
                   </button>
+                </div>
+              </div>
+            ))}
+            {events.length ? <div className="section-label">Events</div> : null}
+            {events.map((event) => (
+              <div key={event.id} className="row-page" style={{ cursor: 'default' }}>
+                <div className="row-title"><span>{event.title}</span></div>
+                <div className="row-snippet">{readableDay(event.date)} · {event.startTime ?? 'All day'}</div>
+                <div className="row-meta">
+                  <span>{daysLeft(event.deleted ?? 0)} days left</span>
+                  <button className="btn caps" onClick={() => void restoreEvent(event.id)}>Restore</button>
+                  <button className="btn caps danger" onClick={() => void purgeEvent(event.id)}>Delete now</button>
                 </div>
               </div>
             ))}

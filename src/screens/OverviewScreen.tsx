@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { EventRow } from '../components/EventRow'
 import { Shell } from '../components/Shell'
 import { SienaItemCard } from '../components/SienaItemCard'
 import { WeatherGlyph } from '../components/WeatherGlyph'
-import { eventsOnDay } from '../lib/events'
-import { isoDay, mastheadParts } from '../lib/format'
-import type { FieldEvent } from '../lib/model'
+import { weekAhead } from '../lib/agenda'
+import { liveEvents } from '../lib/events'
+import { livePages } from '../lib/db'
+import { isoDay, mastheadParts, readableDay } from '../lib/format'
+import { snippetOf, titleOf, type FieldEvent, type Page, type SienaItem } from '../lib/model'
+import { pageToRevisit } from '../lib/resurface'
 import { navigate, to } from '../lib/router'
 import { allSienaItems, sienaSections } from '../lib/siena-items'
 import { useLive } from '../lib/useLive'
@@ -16,11 +19,19 @@ import { useWeather } from '../weather/store'
 const dayName = new Intl.DateTimeFormat([], { weekday: 'short' })
 
 export function OverviewScreen({ notebook }: { notebook: string }) {
-  const [today] = useState(isoDay)
+  const [today, setToday] = useState(isoDay)
+  useEffect(() => {
+    const timer = window.setInterval(() => setToday(isoDay()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const { weekday, day, month, year } = mastheadParts()
-  const events = useLive<FieldEvent[]>(() => eventsOnDay(today), [today], [])
+  const allEvents = useLive<FieldEvent[]>(liveEvents, [], [])
+  const pages = useLive<Page[]>(livePages, [], [])
+  const revisit = pageToRevisit(pages, today)
+  const events = allEvents.filter((event) => event.date === today)
   const items = useLive(allSienaItems, [], [])
   const siena = sienaSections(items)
+  const upcoming = weekAhead(today, allEvents, items)
   const weather = useWeather()
   const place = usePlace()
 
@@ -93,6 +104,37 @@ export function OverviewScreen({ notebook }: { notebook: string }) {
                   ) : <p className="overview-empty">The forecast will appear when a place and a weather reading are available.</p>}
                 </section>
               </div>
+
+              <section className="overview-upcoming">
+                <div className="overview-section-head">
+                  <h2>Coming up</h2>
+                  <button className="overview-text-link" onClick={() => navigate(to.calendar())}>Calendar ↗</button>
+                </div>
+                <p className="overview-upcoming-intro">The next seven days</p>
+                {upcoming.length ? upcoming.map((entry) => (
+                  <div className="overview-agenda-day" key={entry.iso}>
+                    <button className="overview-agenda-date" onClick={() => navigate(to.day(entry.iso))}>{readableDay(entry.iso)}</button>
+                    <div className="overview-agenda-items">
+                      {entry.events.map((event) => <EventRow key={event.id} event={event} />)}
+                      {entry.reminders.map((item: SienaItem) => (
+                        <button className="overview-agenda-reminder" key={item.id} onClick={() => navigate(to.fromSiena())}>
+                          <span className="section-label">Reminder</span>
+                          <span>{item.title ?? item.body}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )) : <p className="overview-empty">Nothing else planned in the next seven days.</p>}
+              </section>
+
+              {revisit ? <section className="overview-revisit">
+                <div className="overview-section-head"><h2>From an earlier page</h2></div>
+                <button className="overview-revisit-page" onClick={() => navigate(to.page(revisit.id))}>
+                  <span>{titleOf(revisit.body)}</span>
+                  {snippetOf(revisit.body) ? <small>{snippetOf(revisit.body)}</small> : null}
+                  <em>Open this page ↗</em>
+                </button>
+              </section> : null}
 
               <section className="overview-from-siena">
                 <div className="overview-section-head">

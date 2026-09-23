@@ -85,6 +85,8 @@ function parseBackupData(text: string): BackupData {
         !/^\d{4}-\d{2}-\d{2}$/.test(value.date) || !optionalClock(value.startTime) ||
         !optionalClock(value.endTime) || !optionalString(value.location, 500) ||
         !optionalString(value.note, 10000) || !optionalString(value.conflictOf, 100) ||
+        (value.pageId !== undefined && !validId(value.pageId)) ||
+        (value.calendarTarget !== undefined && value.calendarTarget !== 'Joshua' && value.calendarTarget !== 'Family') ||
         typeof value.created !== 'number' || !Number.isFinite(value.created) ||
         typeof value.updated !== 'number' || !Number.isFinite(value.updated) ||
         !optionalStamp(value.deleted)) throw new Error('Invalid event in Field Notes backup')
@@ -94,6 +96,8 @@ function parseBackupData(text: string): BackupData {
       ...(value.endTime ? { endTime: value.endTime } : {}),
       ...(value.location ? { location: value.location } : {}),
       ...(value.note ? { note: value.note } : {}),
+      ...(value.pageId ? { pageId: value.pageId } : {}),
+      ...(value.calendarTarget ? { calendarTarget: value.calendarTarget } : {}),
       created: value.created, updated: value.updated,
       ...(value.deleted !== undefined ? { deleted: value.deleted } : {}),
       ...(value.conflictOf ? { conflictOf: value.conflictOf } : {}),
