@@ -255,7 +255,8 @@ Deno.serve(
           let reminderPage: string | undefined
           let reminderNotebook: string | undefined
           if (kind === 'reminder') {
-            reminderNotebook = notebook ?? 'field-notes'
+            if (!notebook) return failure('Choose the appropriate notebook from list_notebooks and pass its ID.')
+            reminderNotebook = notebook
             try { reminderPage = await reminderPageFor(vault, reminderNotebook) }
             catch (error) { return failure(error instanceof Error ? error.message : String(error)) }
           }
