@@ -7,7 +7,7 @@ import { useLive } from '../lib/useLive'
 
 const emptyDraft = (date?: string): EventDraft => ({ title: '', date: date ?? isoDay() })
 
-export function EventScreen({ id, date }: { id?: string; date?: string }) {
+export function EventScreen({ id, date, notebook }: { id?: string; date?: string; notebook: string }) {
   const event = useLive<FieldEvent | undefined>(() => id ? getEvent(id) : Promise.resolve(undefined), [id], undefined)
   const [editing, setEditing] = useState(!id)
   const [draft, setDraft] = useState<EventDraft>(() => emptyDraft(date))
@@ -51,7 +51,8 @@ export function EventScreen({ id, date }: { id?: string; date?: string }) {
       <main className="event-screen scroll">
         <div className="event-wrap">
           <div className="event-top">
-            <button className="overview-back" onClick={() => back(to.overview())}>‹ Back</button>
+            <button className="overview-back" onClick={() => back(to.notebook(notebook))}>‹ Back</button>
+            <button className="overview-back" onClick={() => navigate(to.notebook(notebook))}>Notebook</button>
             {event && !editing ? <button className="overview-back" onClick={() => setEditing(true)}>Edit event</button> : null}
           </div>
           {editing ? (

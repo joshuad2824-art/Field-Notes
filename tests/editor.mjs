@@ -847,7 +847,7 @@ await atWidth(1440, 900, async (view) => {
   )
   ok(
     'and the worker was bumped, or none of the above reaches a phone',
-    shell.version === 'v10',
+    shell.version === 'v11',
     shell.version,
   )
 })
@@ -1075,6 +1075,12 @@ await atWidth(1440, 900, async (view) => {
 
   await view.locator('.link-caps', { hasText: 'Manage' }).click()
   await view.waitForTimeout(400)
+
+  await view.locator('.manager .well').fill('  THE  GARDEN  ')
+  ok('a duplicate notebook name is refused',
+    await view.locator('.plate-button', { hasText: 'Add notebook' }).isDisabled() &&
+    await view.getByText('A notebook with that name is already on the shelf.').count() === 1)
+  await view.locator('.manager .well').fill('')
 
   /* a colour is data too — the dot is the control that changes it */
   const managerRows = view.locator('.manager-row')
