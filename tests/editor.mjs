@@ -847,7 +847,7 @@ await atWidth(1440, 900, async (view) => {
   )
   ok(
     'and the worker was bumped, or none of the above reaches a phone',
-    shell.version === 'v12',
+    shell.version === 'v14',
     shell.version,
   )
 })

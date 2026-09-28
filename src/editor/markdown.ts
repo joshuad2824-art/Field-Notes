@@ -11,6 +11,7 @@ import {
 import { cachedCutout, cachedImageUrl, imageMeta } from '../lib/images'
 import { tableDecoration, tableRunAt } from './table'
 import { ALIGN_RE, movePicture, repicture } from './commands'
+import { linksIn } from './links'
 import { hideDropMarker, showDropMarker } from './dropmarker'
 import {
   Decoration,
@@ -430,6 +431,19 @@ function decorateInline(b: Build, base: number, text: string) {
     block(b, from, from + 1)
     b.marks.push(markDeco('md-code').range(from + 1, to - 1))
     block(b, to - 1, to)
+  }
+
+  /* The label stays editable and opens the destination when tapped. Hide the
+     brackets and destination without changing the Markdown kept in storage. */
+  for (const link of linksIn(text, base)) {
+    if (!free(link.from, link.to)) continue
+    mask(b, link.from, link.labelFrom)
+    b.marks.push(Decoration.mark({
+      tagName: 'a',
+      class: 'md-link',
+      attributes: { href: link.url, target: '_blank', rel: 'noopener noreferrer', title: link.url },
+    }).range(link.labelFrom, link.labelTo))
+    block(b, link.labelTo, link.to)
   }
 
   /* The highlighter leaves the run it wraps open, the way the underline below

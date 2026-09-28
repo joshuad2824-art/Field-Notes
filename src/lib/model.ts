@@ -324,6 +324,8 @@ export function stripMarkers(line: string): string {
     .replace(BLOCK_PREFIX, '')
     /* A picture reads as its caption, or as nothing. */
     .replace(/!\[([^\]]*)\]\([^)]*\)(?:\{[^}]*\})?/g, '$1')
+    /* A link reads as its label; its destination remains in the stored page. */
+    .replace(/\[([^\]\n]+)\]\(https?:\/\/[^\s)]+\)/g, '$1')
     .replace(/==(?:\{\w+\})?([^=]+)==/g, '$1')
     .replace(/<u>([^<>]+)<\/u>/g, '$1')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -387,6 +389,7 @@ const DELIMITER_ROW = /^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/
 
 export function wordCount(body: string): number {
   const t = body
+    .replace(/\[([^\]\n]+)\]\(https?:\/\/[^\s)]+\)/g, '$1')
     .split('\n')
     .filter((line) => !DELIMITER_ROW.test(line) && !isTableAttr(line))
     .map((line) => (isTableLine(line) ? line.replace(/\|/g, ' ').replace(/(^|\s)<(?=\s|$)/g, ' ') : line))

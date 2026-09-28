@@ -106,6 +106,20 @@ export function Editor({
             if (update.docChanged) latest.current.onChange(update.state.doc.toString())
           }),
           EditorView.domEventHandlers({
+            click(event, view) {
+              const target = event.target
+              const anchor = target instanceof Element ? target.closest('a.md-link') : null
+              if (!(anchor instanceof HTMLAnchorElement)) return false
+              const url = new URL(anchor.href)
+              if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
+              event.preventDefault()
+              /* Leave the caret on the linked words so Link can edit or remove
+                 the destination when the writer returns to this page. */
+              const at = view.posAtDOM(anchor, 0)
+              view.dispatch({ selection: { anchor: at } })
+              window.open(url.href, '_blank', 'noopener,noreferrer')
+              return true
+            },
             /* A plain press lets go of whatever was selected before it.
 
                Two separate things made the mouse look broken, and this one

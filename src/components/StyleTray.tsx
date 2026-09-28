@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { EditorView } from '@codemirror/view'
 import {
   type Align,
@@ -11,6 +11,7 @@ import {
   insertPicture,
 } from '../editor/commands'
 import { capsInCell, insertTable, markInCell } from '../editor/table'
+import { linkAt, removeLink, writeLink, type NoteLink } from '../editor/links'
 import { addImage, isImage } from '../lib/images'
 import { imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
 
@@ -113,6 +114,31 @@ export function StyleTray({
   onClose,
 }: Props) {
   const picker = useRef<HTMLInputElement>(null)
+  const linkInput = useRef<HTMLInputElement>(null)
+  const [linkEdit, setLinkEdit] = useState<{
+    range: { from: number; to: number }
+    existing: NoteLink | null
+    label: string
+    url: string
+  } | null>(null)
+  const [linkError, setLinkError] = useState('')
+
+  useEffect(() => {
+    if (linkEdit) linkInput.current?.focus()
+  }, [linkEdit !== null])
+
+  const openLink = () => {
+    if (!view) return
+    const range = view.state.selection.main
+    const existing = linkAt(view)
+    setLinkError('')
+    setLinkEdit({
+      range: { from: range.from, to: range.to },
+      existing,
+      label: existing?.label ?? view.state.sliceDoc(range.from, range.to),
+      url: existing?.url ?? '',
+    })
+  }
 
   const run = (fn: (v: EditorView) => void) => () => {
     if (view) fn(view)
@@ -133,6 +159,8 @@ export function StyleTray({
     <div className="tray" role="toolbar" aria-label="Style">
       <div className="tray-strip">
         <div className="tray-group">
+          <button className="tray-word" onMouseDown={hold} onClick={openLink}
+            aria-label="Link" title="Add or edit link">Link</button>
           <button
             className="tray-style serif lg"
             onMouseDown={hold}
@@ -342,6 +370,39 @@ export function StyleTray({
           e.target.value = ''
         }}
       />
+
+      {linkEdit && <div className="link-dialog-backdrop" onMouseDown={(e) => e.stopPropagation()}>
+        <form className="link-dialog" aria-label={linkEdit.existing ? 'Edit link' : 'Add link'}
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (!view) return
+            const error = writeLink(view, linkEdit.range, linkEdit.label, linkEdit.url, linkEdit.existing)
+            if (error) setLinkError(error)
+            else setLinkEdit(null)
+          }}>
+          <h2>{linkEdit.existing ? 'Edit link' : 'Add link'}</h2>
+          <label>Text
+            <input value={linkEdit.label} onChange={(e) => setLinkEdit({ ...linkEdit, label: e.target.value })}
+              autoComplete="off" />
+          </label>
+          <label>URL
+            <input ref={linkInput} type="url" inputMode="url" value={linkEdit.url}
+              onChange={(e) => setLinkEdit({ ...linkEdit, url: e.target.value })}
+              autoCapitalize="none" autoCorrect="off" spellCheck={false}
+              placeholder="https://" />
+          </label>
+          {linkError && <p className="link-dialog-error" role="alert">{linkError}</p>}
+          <div className="link-dialog-actions">
+            {linkEdit.existing && <button type="button" onClick={() => {
+              if (view) removeLink(view, linkEdit.existing!)
+              setLinkEdit(null)
+            }}>Remove link</button>}
+            <span className="grow" />
+            <button type="button" onClick={() => setLinkEdit(null)}>Cancel</button>
+            <button type="submit" className="primary">Save link</button>
+          </div>
+        </form>
+      </div>}
     </div>
   )
 }
