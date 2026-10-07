@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import type { EditorView } from '@codemirror/view'
 import {
   type Align,
@@ -16,6 +16,7 @@ import { addImage, isImage } from '../lib/images'
 import { imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
 
 interface Props {
+  toggleRef: RefObject<HTMLButtonElement | null>
   view: EditorView | null
   pageId: string
   pen: Pen
@@ -93,13 +94,10 @@ const HIGHLIGHTS: { name: string; color: string }[] = [
   { name: 'brass', color: '#a15200' },
 ]
 
-/* One strip, not a box.
-
-   It opens along the top of the leaf rather than dropping a tall rectangle
-   over the writing, so the page being shaped stays in view while it is
-   shaped. Past the width it has, the strip scrolls sideways rather than
-   wrapping into the second row it was trying not to be. */
+/* Each group keeps its tools on one scrolling row. Group switches preserve
+   the editor selection so formatting also works inside table cells. */
 export function StyleTray({
+  toggleRef,
   view,
   pageId,
   pen,
@@ -113,6 +111,9 @@ export function StyleTray({
   onZoom,
   onClose,
 }: Props) {
+  const [section, setSection] = useState<'Text' | 'Insert' | 'Appearance'>('Text')
+  const trayRef = useRef<HTMLDivElement>(null)
+  const linkBackdrop = useRef<HTMLDivElement>(null)
   const picker = useRef<HTMLInputElement>(null)
   const linkInput = useRef<HTMLInputElement>(null)
   const [linkEdit, setLinkEdit] = useState<{
@@ -122,6 +123,22 @@ export function StyleTray({
     url: string
   } | null>(null)
   const [linkError, setLinkError] = useState('')
+
+  useEffect(() => {
+    const dismissOutside = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Node)) return
+      if (toggleRef.current?.contains(target)) return
+      if (trayRef.current?.contains(target) && target !== linkBackdrop.current) return
+      onClose()
+    }
+    /* A click follows both mouse and touch activation. Waiting until then
+       lets the editor finish placing its caret/selection before the strip
+       disappears and moves the writing upward. Nested controls stay inside
+       this boundary, and Aa keeps its own open/close toggle. */
+    document.addEventListener('click', dismissOutside, true)
+    return () => document.removeEventListener('click', dismissOutside, true)
+  }, [onClose, toggleRef])
 
   useEffect(() => {
     if (linkEdit) linkInput.current?.focus()
@@ -156,11 +173,48 @@ export function StyleTray({
   }
 
   return (
-    <div className="tray" role="toolbar" aria-label="Style">
+    <div ref={trayRef} className="tray" role="toolbar" aria-label="Style">
+      <div className="tray-sections" aria-label="Formatting groups">
+        {(['Text', 'Insert', 'Appearance'] as const).map(name => (
+          <button key={name} aria-label={`${name} tools`} aria-pressed={section === name}
+            onMouseDown={hold} onClick={() => setSection(name)}>{name}</button>
+        ))}
+        <span className="grow" />
+        <button className="tray-close" onMouseDown={hold} onClick={onClose} aria-label="Close">×</button>
+      </div>
       <div className="tray-strip">
+        {section === 'Text' && <>
         <div className="tray-group">
+          {MARKS.map(({ mark, open, close, label, cls, cell }) => (
+            <button
+              key={label}
+              className={`tray-mark ${cls}`}
+              onMouseDown={hold}
+              /* Inside a table the browser is the editor, so a mark goes to
+                 the cell rather than to CodeMirror. */
+              onClick={run((v) => markInCell(cell) || applyWrap(v, open, close ?? open))}
+              aria-label={label}
+              title={label}
+            >
+              {mark}
+            </button>
+          ))}
+          <button
+            className="tray-mark shout"
+            onMouseDown={hold}
+            onClick={run((v) => capsInCell() || applyCaps(v))}
+            aria-label="All caps"
+            title="All caps"
+          >
+            AA
+          </button>
           <button className="tray-word" onMouseDown={hold} onClick={openLink}
             aria-label="Link" title="Add or edit link">Link</button>
+        </div>
+
+        <span className="tray-divider" />
+
+        <div className="tray-group">
           <button
             className="tray-style serif lg"
             onMouseDown={hold}
@@ -239,36 +293,8 @@ export function StyleTray({
           </button>
         </div>
 
-        <span className="tray-divider" />
-
-        <div className="tray-group">
-          {MARKS.map(({ mark, open, close, label, cls, cell }) => (
-            <button
-              key={label}
-              className={`tray-mark ${cls}`}
-              onMouseDown={hold}
-              /* Inside a table the browser is the editor, so a mark goes to
-                 the cell rather than to CodeMirror. */
-              onClick={run((v) => markInCell(cell) || applyWrap(v, open, close ?? open))}
-              aria-label={label}
-              title={label}
-            >
-              {mark}
-            </button>
-          ))}
-          <button
-            className="tray-mark shout"
-            onMouseDown={hold}
-            onClick={run((v) => capsInCell() || applyCaps(v))}
-            aria-label="All caps"
-            title="All caps"
-          >
-            AA
-          </button>
-        </div>
-
-        <span className="tray-divider" />
-
+        </>}
+        {section === 'Appearance' && <>
         <div className="tray-group">
           {HIGHLIGHTS.map(({ name, color }) => (
             <button
@@ -297,8 +323,8 @@ export function StyleTray({
           </button>
         </div>
 
-        <span className="tray-divider" />
-
+        </>}
+        {section === 'Insert' && <>
         <div className="tray-group">
           <button className="tray-word" onMouseDown={hold} onClick={run(insertTable)}>
             Table
@@ -312,8 +338,9 @@ export function StyleTray({
           </button>
         </div>
 
+        </>}
+        {section === 'Appearance' && <>
         <span className="tray-divider" />
-
         <div className="tray-group">
           <button
             className={`tray-word${pen === 'felt' ? ' pen' : ''}`}
@@ -353,11 +380,7 @@ export function StyleTray({
           </button>
         </div>
 
-        <span className="grow" />
-
-        <button className="tray-close" onMouseDown={hold} onClick={onClose} aria-label="Close">
-          ×
-        </button>
+        </>}
       </div>
 
       <input
@@ -371,7 +394,7 @@ export function StyleTray({
         }}
       />
 
-      {linkEdit && <div className="link-dialog-backdrop" onMouseDown={(e) => e.stopPropagation()}>
+      {linkEdit && <div ref={linkBackdrop} className="link-dialog-backdrop" onMouseDown={(e) => e.stopPropagation()}>
         <form className="link-dialog" aria-label={linkEdit.existing ? 'Edit link' : 'Add link'}
           onSubmit={(e) => {
             e.preventDefault()
@@ -398,7 +421,10 @@ export function StyleTray({
               setLinkEdit(null)
             }}>Remove link</button>}
             <span className="grow" />
-            <button type="button" onClick={() => setLinkEdit(null)}>Cancel</button>
+            <button type="button" onClick={() => {
+              setLinkEdit(null)
+              view?.focus()
+            }}>Cancel</button>
             <button type="submit" className="primary">Save link</button>
           </div>
         </form>

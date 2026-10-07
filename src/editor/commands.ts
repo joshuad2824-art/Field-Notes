@@ -1,5 +1,6 @@
 import type { ChangeSpec, EditorState } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { linksIn } from './links'
 import {
   INDENT_UNIT,
   MAX_INDENT,
@@ -365,7 +366,19 @@ export interface Break {
 
 export function breakAt(state: EditorState, pos: number): Break {
   const line = state.doc.lineAt(pos)
-  const runs = marksIn(line.text, line.from).filter((r) => pos > r.from && pos < r.to)
+  const links = linksIn(line.text, line.from)
+  /* A link's hidden destination must never be split by a line break. Its
+     label behaves like other marked writing: Enter at an edge exits it;
+     Enter inside closes and reopens it with the same destination. */
+  const runs = [
+    ...marksIn(line.text, line.from)
+      .filter(r => !links.some(link => r.from >= link.labelTo && r.to <= link.to))
+      .map(r => ({ ...r, close: r.kind.close })),
+    ...links.map(link => ({
+      from: link.from, to: link.to, body: [link.labelFrom, link.labelTo],
+      open: '[', close: `](${link.url})`,
+    })),
+  ].filter(r => pos > r.from && pos < r.to).sort((a, b) => a.from - b.from || b.to - a.to)
   if (!runs.length) return { from: pos, close: '', open: '', moved: false }
 
   /* Sorted outermost first, so the innermost run is the one the caret is
@@ -377,7 +390,7 @@ export function breakAt(state: EditorState, pos: number): Break {
 
   return {
     from: pos,
-    close: runs.map((r) => r.kind.close).reverse().join(''),
+    close: runs.map((r) => r.close).reverse().join(''),
     open: runs.map((r) => r.open).join(''),
     moved: true,
   }

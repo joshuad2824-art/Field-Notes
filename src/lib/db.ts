@@ -1,5 +1,7 @@
 import Dexie, { type Table } from 'dexie'
 import { dayOf } from './calendar'
+import { isoDay, readableDay } from './format'
+import { conflictBody } from '../sync/reconcile'
 import {
   DEFAULT_NOTEBOOK,
   DEFAULT_NOTEBOOKS,
@@ -276,6 +278,46 @@ export async function saveBody(id: string, body: string): Promise<void> {
   if (!page || page.body === body) return
   await db.pages.put({ ...page, body, updated: Date.now() })
   changed()
+}
+
+/* An open editor must name the body it started from. A received update can
+   land during the keystroke debounce; preserve that version before saving a
+   genuinely changed draft. The comparison and both writes are one transaction.
+   An idle editor never authors an edit, even if its old body is now stale. */
+export async function saveEditorBody(base: Page, body: string): Promise<Page> {
+  if (body === base.body) return base
+  let saved = base
+  let wrote = false
+  await db.transaction('rw', db.pages, async () => {
+    const current = await db.pages.get(base.id)
+    const now = Math.max(Date.now(), (current?.updated ?? base.updated) + 1)
+    const copy = (page: Page, writing: string): Page => {
+      const { deleted: _deleted, ...attributes } = page
+      return {
+        ...attributes, id: uuid(), body: conflictBody(writing, readableDay(isoDay())),
+        updated: now, pinned: 0,
+      }
+    }
+    if (!current || current.deleted) {
+      // Keep a draft whose original was removed; never resurrect a tombstone.
+      saved = copy(base, body)
+      await db.pages.put(saved)
+      wrote = true
+      return
+    }
+    if (current.body === body) {
+      saved = current
+      return
+    }
+    if (current.body !== base.body && !isBlank(current.body)) {
+      await db.pages.put(copy(current, current.body))
+    }
+    saved = { ...current, body, updated: now }
+    await db.pages.put(saved)
+    wrote = true
+  })
+  if (wrote) changed()
+  return saved
 }
 
 export async function replaceBodyIfUnchanged(id: string, expectedUpdated: number, expectedBody: string, body: string): Promise<boolean> {

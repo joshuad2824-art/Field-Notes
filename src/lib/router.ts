@@ -6,12 +6,15 @@ import { useSyncExternalStore } from 'react'
 export type Route =
   | { name: 'shelf' }
   | { name: 'overview' }
+  | { name: 'plans' }
+  | { name: 'workshop' }
   | { name: 'from-siena' }
   | { name: 'event-new'; date?: string }
   | { name: 'event'; id: string }
   | { name: 'notebook'; notebook: string }
   | { name: 'page'; id: string }
   | { name: 'review'; id: string }
+  | { name: 'plan'; id: string }
   | { name: 'search' }
   | { name: 'tag'; tag: string }
   | { name: 'day'; iso: string }
@@ -19,6 +22,7 @@ export type Route =
   | { name: 'trash' }
   | { name: 'settings' }
   | { name: 'oauth-consent' }
+  | { name: 'davis-callback' }
   /* The two that create rather than show: a new page, and a timestamped line
      on today's. Both land a live caret and replace themselves in history, so
      back never strands what they made. */
@@ -57,6 +61,8 @@ function snapshot() {
 export function parse(path: string): Route {
   const parts = path.split('/').filter(Boolean).map(decodeURIComponent)
   if (parts.length === 0) return { name: 'shelf' }
+  if (parts[0] === 'plans') return { name: 'plans' }
+  if (parts[0] === 'workshop') return { name: 'workshop' }
   if (parts[0] === 'overview') return { name: 'overview' }
   if (parts[0] === 'from-siena') return { name: 'from-siena' }
   if (parts[0] === 'event' && parts[1] === 'new') return { name: 'event-new', date: parts[2] }
@@ -64,6 +70,7 @@ export function parse(path: string): Route {
   if (parts[0] === 'n' && parts[1]) return { name: 'notebook', notebook: parts[1] }
   if (parts[0] === 'p' && parts[1]) return { name: 'page', id: parts[1] }
   if (parts[0] === 'review' && parts[1]) return { name: 'review', id: parts[1] }
+  if (parts[0] === 'plan' && parts[1]) return { name: 'plan', id: parts[1] }
   if (parts[0] === 'tag' && parts[1]) return { name: 'tag', tag: parts[1] }
   if (parts[0] === 'day' && parts[1]) return { name: 'day', iso: parts[1] }
   if (parts[0] === 'calendar') return { name: 'calendar', month: parts[1] }
@@ -71,6 +78,7 @@ export function parse(path: string): Route {
   if (parts[0] === 'trash') return { name: 'trash' }
   if (parts[0] === 'settings') return { name: 'settings' }
   if (parts[0] === 'oauth' && parts[1] === 'consent') return { name: 'oauth-consent' }
+  if (parts.length === 3 && parts[0] === 'oauth' && parts[1] === 'davis' && parts[2] === 'callback') return { name: 'davis-callback' }
   if (parts[0] === 'new') return { name: 'new', notebook: parts[1] }
   if (parts[0] === 'today') return { name: 'today' }
   return { name: 'shelf' }
@@ -84,12 +92,15 @@ export function useRoute(): Route {
 export const to = {
   shelf: () => '/',
   overview: () => '/overview',
+  plans: () => '/plans',
+  workshop: () => '/workshop',
   fromSiena: () => '/from-siena',
   event: (id: string) => `/event/${id}`,
   newEvent: (date?: string) => date ? `/event/new/${date}` : '/event/new',
   notebook: (id: string) => `/n/${id}`,
   page: (id: string) => `/p/${id}`,
   review: (id: string) => `/review/${id}`,
+  plan: (id: string) => `/plan/${encodeURIComponent(id)}`,
   tag: (tag: string) => `/tag/${encodeURIComponent(tag)}`,
   day: (iso: string) => `/day/${iso}`,
   calendar: (month?: string) => (month ? `/calendar/${month}` : '/calendar'),

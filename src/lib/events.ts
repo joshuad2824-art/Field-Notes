@@ -1,8 +1,10 @@
+import { eventDaysInMonth, eventOnDay, eventRangeError } from './event-range'
+import { monthNow } from './calendar'
 import { db, changed, markFor } from './db'
 import type { FieldEvent } from './model'
 
 export type EventDraft = Pick<FieldEvent, 'title' | 'date'> &
-  Partial<Pick<FieldEvent, 'startTime' | 'endTime' | 'location' | 'note' | 'pageId' | 'calendarTarget'>>
+  Partial<Pick<FieldEvent, 'endDate' | 'startTime' | 'endTime' | 'location' | 'note' | 'pageId' | 'calendarTarget'>>
 
 export async function liveEvents(): Promise<FieldEvent[]> {
   return (await db.events.toArray())
@@ -11,17 +13,16 @@ export async function liveEvents(): Promise<FieldEvent[]> {
 }
 
 export async function eventsOnDay(date: string): Promise<FieldEvent[]> {
-  return (await db.events.where('date').equals(date).toArray())
-    .filter((event) => !event.deleted)
+  return (await liveEvents()).filter((event) => eventOnDay(event, date))
     .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? '') || a.title.localeCompare(b.title))
 }
 
 export async function eventsInMonth(month: string): Promise<FieldEvent[]> {
-  return (await liveEvents()).filter((event) => event.date.startsWith(month))
+  return (await liveEvents()).filter((event) => eventDaysInMonth(event, month).length > 0)
 }
 
-export async function daysWithEvents(): Promise<Set<string>> {
-  return new Set((await liveEvents()).map((event) => event.date))
+export async function daysWithEvents(month = monthNow()): Promise<Set<string>> {
+  return new Set((await liveEvents()).flatMap((event) => eventDaysInMonth(event, month)))
 }
 
 export async function getEvent(id: string): Promise<FieldEvent | undefined> {
@@ -39,6 +40,8 @@ export async function deletedEvents(): Promise<FieldEvent[]> {
 }
 
 export async function saveEvent(draft: EventDraft, id?: string): Promise<FieldEvent> {
+  const error = eventRangeError(draft)
+  if (error) throw new Error(error)
   const previous = id ? await db.events.get(id) : undefined
   if (id && (!previous || previous.deleted)) throw new Error('This event is no longer available.')
   if (draft.pageId) {
@@ -50,6 +53,7 @@ export async function saveEvent(draft: EventDraft, id?: string): Promise<FieldEv
     id: previous?.id ?? crypto.randomUUID(),
     title: draft.title.trim(),
     date: draft.date,
+    ...(draft.endDate && draft.endDate !== draft.date ? { endDate: draft.endDate } : {}),
     ...(draft.startTime ? { startTime: draft.startTime } : {}),
     ...(draft.endTime ? { endTime: draft.endTime } : {}),
     ...(draft.location?.trim() ? { location: draft.location.trim() } : {}),
@@ -93,7 +97,7 @@ export function eventDetails(draft: EventDraft): string {
     .format(new Date(year, month - 1, day, 12))
   return [
     draft.title.trim(),
-    `Date: ${date}`,
+    `Date: ${date}${draft.endDate && draft.endDate !== draft.date ? ` through ${draft.endDate} (inclusive)` : ''}`,
     draft.startTime ? `Time: ${draft.startTime}${draft.endTime ? `–${draft.endTime}` : ''}` : null,
     draft.location?.trim() ? `Location: ${draft.location.trim()}` : null,
     draft.note?.trim() ? `Notes: ${draft.note.trim()}` : null,

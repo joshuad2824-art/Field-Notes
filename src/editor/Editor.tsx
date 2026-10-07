@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
-import { EditorState } from '@codemirror/state'
+import { useEffect, useLayoutEffect, useRef } from 'react'
+import { Annotation, EditorState, Transaction } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { liveMarkdown } from './markdown'
+import { linkTyping } from './links'
 import {
   applyBlock,
   applyHighlight,
@@ -17,6 +18,8 @@ import { hideDropMarker, showDropMarker } from './dropmarker'
 
 interface Props {
   initialBody: string
+  externalBody?: string
+  onCompositionEnd?: () => void
   onChange: (body: string) => void
   onView: (view: EditorView | null) => void
   highlightColor: () => string
@@ -26,8 +29,12 @@ interface Props {
   autofocus?: boolean | 'end'
 }
 
+const receivedBody = Annotation.define<boolean>()
+
 export function Editor({
   initialBody,
+  externalBody,
+  onCompositionEnd,
   onChange,
   onView,
   highlightColor,
@@ -35,8 +42,9 @@ export function Editor({
   autofocus,
 }: Props) {
   const host = useRef<HTMLDivElement>(null)
-  const latest = useRef({ onChange, highlightColor, onDropFile })
-  latest.current = { onChange, highlightColor, onDropFile }
+  const editor = useRef<EditorView | null>(null)
+  const latest = useRef({ onChange, highlightColor, onDropFile, onCompositionEnd })
+  latest.current = { onChange, highlightColor, onDropFile, onCompositionEnd }
 
   useEffect(() => {
     if (!host.current) return
@@ -96,6 +104,7 @@ export function Editor({
           ]),
           keymap.of([...historyKeymap, ...defaultKeymap]),
           liveMarkdown(),
+          linkTyping,
           EditorView.contentAttributes.of({
             spellcheck: 'true',
             autocorrect: 'on',
@@ -103,9 +112,19 @@ export function Editor({
             'aria-label': 'Page',
           }),
           EditorView.updateListener.of((update) => {
-            if (update.docChanged) latest.current.onChange(update.state.doc.toString())
+            if (update.docChanged && !update.transactions.some((tr) => tr.annotation(receivedBody))) {
+              latest.current.onChange(update.state.doc.toString())
+            }
           }),
           EditorView.domEventHandlers({
+            compositionend(_event, view) {
+              // Let CodeMirror finish the browser composition before accepting
+              // a received body; the final local draft must be considered first.
+              window.setTimeout(() => {
+                if (editor.current === view) latest.current.onCompositionEnd?.()
+              }, 50)
+              return false
+            },
             click(event, view) {
               const target = event.target
               const anchor = target instanceof Element ? target.closest('a.md-link') : null
@@ -274,6 +293,7 @@ export function Editor({
       }),
     })
 
+    editor.current = view
     onView(view)
     if (autofocus === 'end') {
       view.dispatch({ selection: { anchor: view.state.doc.length }, scrollIntoView: true })
@@ -281,6 +301,7 @@ export function Editor({
     if (autofocus) view.focus()
 
     return () => {
+      editor.current = null
       onView(null)
       view.destroy()
     }
@@ -288,6 +309,24 @@ export function Editor({
     // so a new page means a new instance rather than a doc swap under the caret.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useLayoutEffect(() => {
+    const view = editor.current
+    if (!view || externalBody === undefined) return
+    const before = view.state.doc.toString()
+    if (before === externalBody) return
+    // Map the existing selection through the smallest change, keep scroll and
+    // undo history, and do not echo a received document through autosave.
+    let from = 0
+    while (from < before.length && from < externalBody.length && before[from] === externalBody[from]) from++
+    let to = before.length
+    let end = externalBody.length
+    while (to > from && end > from && before[to - 1] === externalBody[end - 1]) { to--; end-- }
+    view.dispatch({
+      changes: { from, to, insert: externalBody.slice(from, end) },
+      annotations: [receivedBody.of(true), Transaction.addToHistory.of(false)],
+    })
+  }, [externalBody])
 
   return <div className="editor" ref={host} />
 }

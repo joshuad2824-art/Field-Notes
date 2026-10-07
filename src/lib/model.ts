@@ -52,6 +52,7 @@ export interface FieldEvent {
   id: string
   title: string
   date: string // YYYY-MM-DD in the writer's local calendar
+  endDate?: string // Inclusive final day; absent for a single-day event
   startTime?: string // HH:MM, intentionally no timezone for a personal day view
   endTime?: string
   location?: string

@@ -199,10 +199,10 @@ const notebookIds = () =>
     journal?.updated === 0,
     String(journal?.updated),
   )
-  ok('and it is not on the shelf', (await view.locator('.rail-books .book-row:not(.book-add)').count()) === 4)
-  ok('it is below the rule instead', (await view.locator('.rail-foot .rail-journal').count()) === 1)
+  ok('the four regular notebooks remain on the shelf', (await view.locator(".fn-sidebar-books .fn-book-spine:not([href='/n/journal'])").count()) === 4)
+  ok('Journal sits with content, away from Trash', (await view.locator(".fn-sidebar-books [href='/n/journal']").count()) === 1 && (await view.locator('.rail-foot .rail-journal').count()) === 0)
 
-  await view.locator('.rail-books-head .link-caps').click()
+  await view.getByRole('button', { name: 'Manage notebooks', exact: true }).click()
   await view.waitForTimeout(300)
   ok(
     'and the manager does not offer to rename, recolour or delete it',
@@ -297,11 +297,11 @@ const journalPages = () =>
   await view.reload({ waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1200)
 
-  await view.locator('.rail-foot .rail-journal').click()
+  await view.locator(".fn-sidebar-books [href='/n/journal']").click()
   await view.waitForTimeout(400)
   ok(
     'the journal opens with its own button at the foot, not New page',
-    (await view.locator('.list-foot .plate-button').textContent()) === 'Collect last week',
+    (await view.locator('.list-foot .plate-button').textContent()) === 'Review last week',
   )
 
   await view.locator('.list-foot .plate-button').click()
@@ -316,16 +316,24 @@ const journalPages = () =>
   )
   ok('and it opened the entry', (await view.locator('.cm-content').count()) === 1)
 
+  // Personal reflections must survive reopening the same week's review.
+  await view.locator('.cm-content').click()
+  await view.keyboard.press('ControlOrMeta+End')
+  await view.keyboard.press('Enter')
+  await view.keyboard.type('My reflection should remain.')
+  await view.waitForTimeout(900)
+
   /* Again. The whole point of keying on notebook plus entryDate. */
   await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1000)
-  await view.locator('.rail-foot .rail-journal').click()
+  await view.locator(".fn-sidebar-books [href='/n/journal']").click()
   await view.waitForTimeout(400)
   await view.locator('.list-foot .plate-button').click()
   await view.waitForTimeout(1400)
   const second = await journalPages()
   ok('collecting the same week twice leaves one entry', second.length === 1, `${second.length}`)
   ok('and it is the same page, not a replacement', second[0]?.id === first[0]?.id)
+  ok('reopening preserves personal edits', second[0]?.body.includes('My reflection should remain.'))
 }
 
 /* ── in the calendar ────────────────────────────────────────────────────── */
@@ -358,6 +366,31 @@ const journalPages = () =>
     }, entry.entryDate),
     entry.entryDate,
   )
+}
+
+// Explicit refresh creates another review and preserves the edited original.
+{
+  const before = (await journalPages())[0]
+  await view.goto(`${BASE}/p/${before.id}`, { waitUntil: 'domcontentloaded' })
+  await view.locator('.cm-content').waitFor()
+  await view.evaluate(async () => {
+    const request = indexedDB.open('field-notes')
+    const db = await new Promise(resolve => { request.onsuccess = () => resolve(request.result) })
+    const tx = db.transaction('pages', 'readwrite')
+    const store = tx.objectStore('pages')
+    const read = store.get('jrnl-source')
+    read.onsuccess = () => store.put({ ...read.result, body: '# The kiln\n\nNew firing details.', updated: Date.now() })
+    await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error) })
+    db.close()
+  })
+  await view.getByRole('button', { name: 'Page options' }).click()
+  await view.getByRole('button', { name: /Gather a fresh copy/ }).click()
+  await view.waitForURL(url => url.pathname.startsWith('/p/') && !url.pathname.endsWith(before.id))
+  await view.locator('.cm-content').getByText('New firing details.', { exact: true }).waitFor()
+  const after = await journalPages()
+  ok('fresh collection creates a separate review', after.length === 2)
+  ok('the edited original is preserved exactly', after.find(p => p.id === before.id)?.body === before.body)
+  ok('the fresh copy includes changed source notes', after.find(p => p.id !== before.id)?.body.includes('New firing details.'))
 }
 
 await context.close()

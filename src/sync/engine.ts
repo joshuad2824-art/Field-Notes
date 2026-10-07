@@ -128,8 +128,6 @@ async function syncPages(vault: Vault): Promise<void> {
   const t = transport!
   const { rows, cursor } = await pull('pages')
 
-  const marks = await allMarks()
-  const locals = new Map((await db.pages.toArray()).map((p) => [p.id, p]))
   const remotes = new Map(rows.map((r) => [r.id, rowToPage(r as PageRow)]))
 
   const apply: Page[] = []
@@ -154,42 +152,47 @@ async function syncPages(vault: Vault): Promise<void> {
     })
   }
 
-  for (const id of new Set([...locals.keys(), ...remotes.keys()])) {
-    const local = locals.get(id)
-    const remote = remotes.get(id)
-    const verdict = decide({
-      hasLocal: !!local,
-      hasRemote: !!remote,
-      localUpdated: local?.updated ?? 0,
-      remoteUpdated: remote?.updated ?? 0,
-      marked: marks.get(markFor.page(id)),
-      identical: !!local && !!remote && samePage(local, remote),
-      remoteDeleted: !!remote?.deleted,
+  /* Read, decide and apply under the same lock as editor saves. Otherwise a
+     keystroke saved after the read could be replaced by a decision about the
+     earlier snapshot, with neither version kept as a copy. No network is
+     awaited in this transaction. */
+  applying = true
+  try {
+    await db.transaction('rw', db.pages, db.synced, async () => {
+      const marks = await allMarks()
+      const locals = new Map((await db.pages.toArray()).map((p) => [p.id, p]))
+      for (const id of new Set([...locals.keys(), ...remotes.keys()])) {
+        const local = locals.get(id)
+        const remote = remotes.get(id)
+        const verdict = decide({
+          hasLocal: !!local,
+          hasRemote: !!remote,
+          localUpdated: local?.updated ?? 0,
+          remoteUpdated: remote?.updated ?? 0,
+          marked: marks.get(markFor.page(id)),
+          identical: !!local && !!remote && samePage(local, remote),
+          remoteDeleted: !!remote?.deleted,
+        })
+
+        if (verdict === 'apply' && remote) apply.push(remote)
+        else if (verdict === 'push' && local) push.push(local)
+        else if (verdict === 'keep-local' && local && remote) {
+          push.push(local)
+          keepCopy(remote)
+        } else if (verdict === 'keep-remote' && local && remote) {
+          apply.push(remote)
+          keepCopy(local)
+        }
+      }
+      if (apply.length || copies.length) {
+        await db.pages.bulkPut([...apply, ...copies])
+        await markMany(apply.map((p) => ({ id: markFor.page(p.id), at: p.updated })))
+      }
     })
-
-    if (verdict === 'apply' && remote) apply.push(remote)
-    else if (verdict === 'push' && local) push.push(local)
-    else if (verdict === 'keep-local' && local && remote) {
-      push.push(local)
-      keepCopy(remote)
-    } else if (verdict === 'keep-remote' && local && remote) {
-      apply.push(remote)
-      keepCopy(local)
-    }
+  } finally {
+    applying = false
   }
-
-  /* Local first, always. If the push below never happens the device has still
-     gained everything the mirror had, and nothing it had is gone. */
-  if (apply.length || copies.length) {
-    applying = true
-    try {
-      await db.pages.bulkPut([...apply, ...copies])
-      await markMany(apply.map((p) => ({ id: markFor.page(p.id), at: p.updated })))
-    } finally {
-      applying = false
-    }
-    changed()
-  }
+  if (apply.length || copies.length) changed()
   await setCursor('pages', cursor)
 
   const outgoing = [...push, ...copies]

@@ -45,6 +45,7 @@ export interface ImageRow extends Row {
 export interface EventRow extends Row {
   title: string
   date: string
+  end_date?: string | null
   start_time: string | null
   end_time: string | null
   location: string | null
@@ -149,7 +150,7 @@ export function sameNotebook(a: Notebook, b: Notebook): boolean {
 
 export function eventToRow(event: FieldEvent, vault: string): EventRow {
   return {
-    vault, id: event.id, title: event.title, date: event.date,
+    vault, id: event.id, title: event.title, date: event.date, end_date: event.endDate ?? null,
     start_time: event.startTime ?? null, end_time: event.endTime ?? null,
     location: event.location ?? null, note: event.note ?? null,
     page_id: event.pageId ?? null, calendar_target: event.calendarTarget ?? null,
@@ -161,6 +162,7 @@ export function eventToRow(event: FieldEvent, vault: string): EventRow {
 export function rowToEvent(row: EventRow): FieldEvent {
   return {
     id: row.id, title: row.title, date: row.date,
+    ...(row.end_date ? { endDate: row.end_date } : {}),
     created: Number(row.created), updated: Number(row.updated),
     ...(row.start_time ? { startTime: row.start_time } : {}),
     ...(row.end_time ? { endTime: row.end_time } : {}),
@@ -175,7 +177,7 @@ export function rowToEvent(row: EventRow): FieldEvent {
 }
 
 export function sameEvent(a: FieldEvent, b: FieldEvent): boolean {
-  return a.title === b.title && a.date === b.date &&
+  return a.title === b.title && a.date === b.date && (a.endDate ?? a.date) === (b.endDate ?? b.date) &&
     (a.startTime ?? '') === (b.startTime ?? '') && (a.endTime ?? '') === (b.endTime ?? '') &&
     (a.location ?? '') === (b.location ?? '') && (a.note ?? '') === (b.note ?? '') &&
     (a.pageId ?? '') === (b.pageId ?? '') && (a.calendarTarget ?? '') === (b.calendarTarget ?? '') &&

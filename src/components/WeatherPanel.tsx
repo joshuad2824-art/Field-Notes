@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { geocode, type Found } from '../weather/open-meteo'
-import { forgetRefusal, setPlace, usePlace, wasRefused } from '../weather/place'
+import { forgetRefusal, locate, setPlace, usePlace, wasRefused } from '../weather/place'
 import { getUnit, isOff, refresh, setOff, setUnit, useWeather } from '../weather/store'
 import { conditionWord, degrees } from '../weather/codes'
 
@@ -16,6 +16,7 @@ export function WeatherPanel() {
   const [query, setQuery] = useState('')
   const [found, setFound] = useState<Found[] | null>(null)
   const [busy, setBusy] = useState(false)
+  const [locating, setLocating] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
 
   const search = async () => {
@@ -32,13 +33,35 @@ export function WeatherPanel() {
     }
   }
 
+  const useDevice = async () => {
+    setProblem(null)
+    setLocating(true)
+    forgetRefusal()
+    try {
+      const here = await locate()
+      if (!here) {
+        setProblem('Could not get this device’s location. You can try again or choose a town. Location permission is controlled by your browser and device.')
+        return
+      }
+      /* Keep the previous place until a new location succeeds. */
+      setPlace(here)
+      setFound(null)
+      setQuery('')
+      await refresh(true)
+    } catch {
+      setProblem('Could not get this device’s location. You can choose a town instead.')
+    } finally {
+      setLocating(false)
+    }
+  }
+
   return (
     <>
       <h2>Weather</h2>
       <p>
         One line under the month, and on the date at the top of the list where the notebooks
-        column is a drawer. It is the only thing in the app that asks this device for anything —
-        once, for where it is. Refusing costs the line and nothing else.
+        column is a drawer. Weather uses your saved place when the app opens.
+        Device location is requested only when you press Use this device below.
       </p>
 
       {reading ? (
@@ -77,24 +100,15 @@ export function WeatherPanel() {
         <button className="btn caps" disabled={off} onClick={() => void refresh(true)}>
           Check now
         </button>
-        {wasRefused() ? (
-          <button
-            className="btn caps"
-            onClick={() => {
-              forgetRefusal()
-              void refresh(true)
-            }}
-          >
-            Ask again
-          </button>
-        ) : null}
+        <button className="btn caps" disabled={off || locating || busy} onClick={() => void useDevice()}>
+          {locating ? 'Locating' : place?.chosen ? 'Use this device instead' : wasRefused() ? 'Ask again' : 'Use this device'}
+        </button>
       </div>
 
       <div className="weather-form">
         <p>
-          If this device can't place itself, or you'd rather it didn't try, name somewhere
-          instead. A chosen place wins over the device, so this is also how you pin the weather
-          to home while you're away from it.
+          Choose a town or use this device once to save its location. It stays the weather
+          place until you change it here, including when you travel.
         </p>
         <label className="panel-label" htmlFor="weather-place">
           Somewhere
@@ -109,22 +123,9 @@ export function WeatherPanel() {
           autoComplete="off"
         />
         <div className="actions">
-          <button className="btn caps" disabled={busy || query.trim().length < 2} onClick={() => void search()}>
+          <button className="btn caps" disabled={busy || locating || query.trim().length < 2} onClick={() => void search()}>
             {busy ? 'Looking' : 'Find it'}
           </button>
-          {place?.chosen ? (
-            <button
-              className="btn caps"
-              onClick={() => {
-                setPlace(null)
-                setFound(null)
-                setQuery('')
-                void refresh(true)
-              }}
-            >
-              Use this device instead
-            </button>
-          ) : null}
         </div>
 
         {found?.length ? (
@@ -133,6 +134,7 @@ export function WeatherPanel() {
               <button
                 key={`${option.lat},${option.lon}`}
                 className="book-row"
+                disabled={locating}
                 onClick={() => {
                   setPlace(option)
                   setFound(null)

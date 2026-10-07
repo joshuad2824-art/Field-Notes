@@ -226,6 +226,7 @@ await page.keyboard.up('Shift')
 await page.locator('.mark-button[aria-label="Style"]').click()
 await page.waitForTimeout(200)
 ok('the tray opens from Aa', (await page.locator('.tray').count()) === 1)
+await page.getByRole('button', { name: 'Appearance tools', exact: true }).click()
 await page.locator('.tray .sw[aria-label="forest"]').click()
 await page.waitForTimeout(250)
 ok('the highlighter marks the selection', (await page.locator('.md-hl-forest').count()) === 1)
@@ -237,23 +238,28 @@ await page.keyboard.press('Enter')
 await type('a line to shape')
 
 const wasDots = await page.locator('.md-dot').count()
+await page.getByRole('button', { name: 'Text tools', exact: true }).click()
 await page.locator('.tray-block[aria-label="Bullet"]').click()
 await page.waitForTimeout(200)
 ok('the tray writes a bullet', (await page.locator('.md-dot').count()) === wasDots + 1)
 
+await page.getByRole('button', { name: 'Text tools', exact: true }).click()
 await page.locator('.tray-block[aria-label="Dash"]').click()
 await page.waitForTimeout(200)
 ok('and swaps it for a dash', (await page.locator('.md-dash').count()) === 1)
 
+await page.getByRole('button', { name: 'Text tools', exact: true }).click()
 await page.locator('.tray-block[aria-label="Numbers"]').click()
 await page.waitForTimeout(200)
 ok('and numbers it', (await page.locator('.md-num').count()) === 1)
 
 const wasBoxes = await page.locator('.md-box').count()
+await page.getByRole('button', { name: 'Text tools', exact: true }).click()
 await page.locator('.tray-block[aria-label="Checkbox"]').click()
 await page.waitForTimeout(200)
 ok('and gives it a box', (await page.locator('.md-box').count()) === wasBoxes + 1)
 
+await page.getByRole('button', { name: 'Text tools', exact: true }).click()
 await page.locator('.tray-block[aria-label="Quote"]').click()
 await page.waitForTimeout(200)
 ok('and turns it into a quote', (await page.locator('.md-quote').count()) === 1)
@@ -266,6 +272,7 @@ await page.keyboard.press('Enter')
 await page.keyboard.press('Enter')
 await type('emphasis')
 const wasStrong = await page.locator('.md-strong').count()
+await page.getByRole('button', { name: 'Text tools', exact: true }).click()
 await page.locator('.tray-mark[aria-label^="Bold"]').click()
 await page.waitForTimeout(250)
 ok(
@@ -524,9 +531,10 @@ await ctx.close()
   await view.waitForTimeout(600)
   const leaf = await view.evaluate(() => {
     const box = document.querySelector('.leaf').getBoundingClientRect()
-    return Math.round(1133 - box.bottom)
+    const navigation = document.querySelector('.fn-mobile-navigation')?.getBoundingClientRect()
+    return Math.round((navigation?.top ?? 1133) - box.bottom)
   })
-  ok('and the leaf runs to the bottom with it', leaf === 0, `${leaf}px short`)
+  ok('and the leaf reaches the mobile navigation without a gap', leaf === 0, `${leaf}px short`)
 
   /* the invariant behind all of it: the app is not sized, it is pinned to the
      room it sits in, so the two cannot disagree */
@@ -581,13 +589,13 @@ await atWidth(1440, 900, async (view) => {
      first alpha at which all six covers clear 3:1. The ring is load-bearing:
      a future chip must never ship as a bare fill. */
   ok(
-    'the book dot keeps its hairline',
+    'the book spine keeps its hairline',
     await view
-      .locator('.rail .book-dot')
+      .locator('.fn-rail .fn-book-spine')
       .first()
       .evaluate((el) => {
         const s = getComputedStyle(el)
-        return s.borderTopWidth === '1px' && s.borderTopColor === 'rgba(246, 243, 236, 0.34)'
+        return s.borderTopWidth === '1px' && s.borderTopColor === 'rgba(246, 243, 236, 0.2)'
       }),
   )
   /* Folding on an empty desk must not be a one-way door. */
@@ -689,21 +697,13 @@ await atWidth(1440, 900, async (view) => {
   )
 })
 
-/* ── the strip below the app ─────────────────────────────────────────────
-   An installed app that covers the status bar is handed the screen less the
-   status bar, and the leftover is at the foot: 894 of 956 measured on a phone,
-   712 of 744 on an iPad. iOS reports a bottom inset anyway — for a home
-   indicator that is sitting in that leftover rather than over the app — and
-   padding for it put a wide empty band under the page foot, which is what the
-   metadata row "sitting way too high" turned out to be.
+/* Screen B proves that screen/window height differences can belong above
+   the app. The home-indicator inset must survive those differences. */
 
-   `env()` answers 0 in a desktop browser, so the inset is substituted through
-   `--raw-inset-bottom`, which is the token `--safe-bottom` is built from. */
-
-for (const [label, viewH, screenH, expectOutside, expectSafe] of [
-  ['a phone: 894 of 956, the indicator is below us', 894, 956, '62px', 0],
-  ['a device that fills its screen keeps the inset', 900, 900, '0px', 34],
-  ['landscape, where screen.height still answers in portrait', 430, 956, '0px', 34],
+for (const [label, viewH, screenH, expectSafe] of [
+  ['a phone with a separate status bar keeps its home-indicator clearance', 894, 956, 34],
+  ['a device that fills its screen keeps the inset', 900, 900, 34],
+  ['landscape, where screen.height still answers in portrait', 430, 956, 34],
 ]) {
   const context = await browser.newContext({ viewport: { width: 440, height: viewH } })
   await context.addInitScript(settledZoom)
@@ -725,11 +725,10 @@ for (const [label, viewH, screenH, expectOutside, expectSafe] of [
     const safe = Math.round(probe.getBoundingClientRect().height)
     probe.remove()
     return {
-      outside: getComputedStyle(document.documentElement).getPropertyValue('--outside-bottom').trim(),
       safe,
     }
   })
-  ok(label, got.outside === expectOutside && got.safe === expectSafe, JSON.stringify(got))
+  ok(label, got.safe === expectSafe, JSON.stringify(got))
   await context.close()
 }
 
@@ -746,15 +745,15 @@ await atWidth(440, 894, async (view) => {
   await view.waitForTimeout(900)
   const gap = await view.evaluate(() => {
     const foot = document.querySelector('.pagefoot-measure')
-    return Math.round(window.innerHeight - foot.getBoundingClientRect().bottom)
+    return Math.round((document.querySelector('.fn-mobile-navigation')?.getBoundingClientRect().top ?? window.innerHeight) - foot.getBoundingClientRect().bottom)
   })
-  ok('the page foot sits on the bottom edge rather than above a band', gap === 0, `${gap}px short`)
+  ok('the page foot reaches the persistent navigation', gap === 0, `${gap}px short`)
   const clear = await view.evaluate(() => {
     const foot = document.querySelector('.pagefoot-measure')
     const pad = parseFloat(getComputedStyle(foot).paddingBottom)
-    return Math.round(window.innerHeight - (foot.getBoundingClientRect().bottom - pad))
+    return Math.round(document.querySelector('.fn-mobile-navigation').getBoundingClientRect().top - (foot.getBoundingClientRect().bottom - pad))
   })
-  ok('with the metadata row close under it', clear === 10, `${clear}px of air`)
+  ok('with metadata clear of the navigation and its home-indicator inset', clear === 10, `${clear}px above navigation`)
 
   /* ── the band behind the status bar ──────────────────────────────────
      It exists so white status text stays legible over a cream leaf, so it can
@@ -847,7 +846,7 @@ await atWidth(1440, 900, async (view) => {
   )
   ok(
     'and the worker was bumped, or none of the above reaches a phone',
-    shell.version === 'v14',
+    /^v\d+$/.test(shell.version) && Number(shell.version.slice(1)) >= 12,
     shell.version,
   )
 })
@@ -914,12 +913,12 @@ await atWidth(390, 844, async (view) => {
 
   const footAt = () =>
     view.locator('.list-foot').evaluate((el) => ({
-      short: Math.round(window.innerHeight - el.getBoundingClientRect().bottom),
+      short: Math.round(document.querySelector('.fn-mobile-navigation').getBoundingClientRect().top - el.getBoundingClientRect().bottom),
       pad: getComputedStyle(el).paddingBottom,
     }))
 
   const rest = await footAt()
-  ok('the New page bar sits on the bottom edge', rest.short === 0, `${rest.short}px short`)
+  ok('the New page bar reaches the mobile navigation', rest.short === 0, `${rest.short}px short`)
   ok('and nothing pads it there', rest.pad === '22px', rest.pad)
 
   /* A browser holding a toolbar over the foot. viewport.ts writes this on the
@@ -927,8 +926,8 @@ await atWidth(390, 844, async (view) => {
   await view.evaluate(() => document.documentElement.style.setProperty('--browser-bottom', '44px'))
   await view.waitForTimeout(120)
   const ducked = await footAt()
-  ok('a browser toolbar pads the foot clear of itself', ducked.pad === '66px', ducked.pad)
-  ok('and the app still runs to the bottom edge', ducked.short === 0, `${ducked.short}px short`)
+  ok('the navigation owns browser clearance without padding the foot twice', ducked.pad === '22px', ducked.pad)
+  ok('and the foot still reaches the mobile navigation', ducked.short === 0, `${ducked.short}px short`)
 
   /* And the strip the system keeps for itself.
 
@@ -957,8 +956,8 @@ await atWidth(390, 844, async (view) => {
     .evaluate((el) => getComputedStyle(el).backgroundColor)
   ok('the canvas is not left to propagate from the frame', (await canvas()) !== 'rgba(0, 0, 0, 0)')
   ok(
-    'under the list it is the foot, not the frame',
-    (await canvas()) === 'rgb(6, 28, 29)',
+    'under the list it matches the mobile navigation',
+    (await canvas()) === 'rgb(5, 27, 28)',
     `${await canvas()} under ${footColor}`,
   )
   await agree('under the list')
@@ -968,7 +967,7 @@ await atWidth(390, 844, async (view) => {
   const leafColor = await view
     .locator('.leaf')
     .evaluate((el) => getComputedStyle(el).backgroundColor)
-  ok('and under a page it is the leaf', (await canvas()) === leafColor, `${await canvas()} vs ${leafColor}`)
+  ok('and under a page it remains the navigation', (await canvas()) === 'rgb(5, 27, 28)', `${await canvas()} vs ${leafColor}`)
   await agree('under a page')
 
   /* the stock is the page's, so the canvas has to follow it changing */
@@ -979,7 +978,7 @@ await atWidth(390, 844, async (view) => {
   const flipped = await view
     .locator('.leaf')
     .evaluate((el) => getComputedStyle(el).backgroundColor)
-  ok('the other stock takes it with it', (await canvas()) === flipped, `${await canvas()} vs ${flipped}`)
+  ok('changing stock retains the navigation edge', (await canvas()) === 'rgb(5, 27, 28)', `${await canvas()} vs ${flipped}`)
   ok('which is a different colour than before', flipped !== leafColor, `${leafColor} → ${flipped}`)
   await agree('when the stock changes')
 
@@ -991,15 +990,15 @@ await atWidth(390, 844, async (view) => {
      viewport, and therefore the outermost one the system will never sample.
      `#root` carries the edge colour with `html` and `body`. */
   ok(
-    'the room is painted by the app, not by anything the system can sample',
+    'the shared frame paints the room while the root carries its edge',
     await view.evaluate(() => {
-      const app = getComputedStyle(document.querySelector('.app')).backgroundColor
+      const app = getComputedStyle(document.querySelector('.approved-application')).backgroundColor
       const root = getComputedStyle(document.getElementById('root')).backgroundColor
       return app === 'rgb(20, 42, 43)' && root !== app
     }),
     await view.evaluate(
       () =>
-        `app ${getComputedStyle(document.querySelector('.app')).backgroundColor} / root ${
+        `app ${getComputedStyle(document.querySelector('.approved-application')).backgroundColor} / root ${
           getComputedStyle(document.getElementById('root')).backgroundColor
         }`,
     ),
@@ -1012,10 +1011,10 @@ await atWidth(390, 844, async (view) => {
     }),
   )
   ok(
-    'with the lantern still falling across the room',
+    'with the approved postal background across the room',
     await view.evaluate(() => {
-      const wash = getComputedStyle(document.querySelector('.app'), '::before').backgroundImage
-      return wash.includes('gradient')
+      const wash = getComputedStyle(document.querySelector('.approved-application')).backgroundImage
+      return wash.includes('woodland-postal-background')
     }),
   )
 })
@@ -1055,8 +1054,8 @@ await atWidth(390, 844, async (view) => {
 /* ── notebooks are data ─────────────────────────────────────────────── */
 
 await atWidth(1440, 900, async (view) => {
-  const before = await view.locator('.book-row').count()
-  await view.locator('.link-caps', { hasText: 'Manage' }).click()
+  const before = await view.locator('.fn-book-spine').count()
+  await view.getByRole('button', { name: 'Manage notebooks', exact: true }).click()
   await view.waitForTimeout(400)
   ok('the manager opens', (await view.locator('.manager').count()) === 1)
 
@@ -1064,16 +1063,16 @@ await atWidth(1440, 900, async (view) => {
   await view.locator('.cover-swatch').nth(4).click()
   await view.locator('.plate-button', { hasText: 'Add notebook' }).click()
   await view.waitForTimeout(700)
-  ok('a notebook can be added', (await view.locator('.book-row').count()) === before + 1)
+  ok('a notebook can be added', (await view.locator('.fn-book-spine').count()) === before + 1)
 
   await view.reload({ waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(800)
   ok(
     'and it survives a reload',
-    (await view.locator('.book-name', { hasText: 'The Garden' }).count()) === 1,
+    (await view.locator('.fn-book-spine span', { hasText: 'The Garden' }).count()) === 1,
   )
 
-  await view.locator('.link-caps', { hasText: 'Manage' }).click()
+  await view.getByRole('button', { name: 'Manage notebooks', exact: true }).click()
   await view.waitForTimeout(400)
 
   await view.locator('.manager .well').fill('  THE  GARDEN  ')
@@ -1093,8 +1092,7 @@ await atWidth(1440, 900, async (view) => {
   ok(
     'and the rail wears the new colour',
     await view
-      .locator('.book-row', { hasText: 'The Garden' })
-      .locator('.book-dot')
+      .locator('.fn-book-spine', { hasText: 'The Garden' })
       .evaluate((el) => getComputedStyle(el).backgroundColor === 'rgb(83, 10, 40)'),
   )
 
@@ -1105,7 +1103,7 @@ await atWidth(1440, 900, async (view) => {
   ok('deleting asks first', (await view.locator('.manager-confirm').count()) === 1)
   await view.locator('.outline.danger').click()
   await view.waitForTimeout(600)
-  ok('and then removes it', (await view.locator('.book-row').count()) === before)
+  ok('and then removes it', (await view.locator('.fn-book-spine').count()) === before)
 })
 
 /* ── pictures ───────────────────────────────────────────────────────── */
@@ -1372,6 +1370,7 @@ await atWidth(1440, 900, async (view) => {
 
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
+  await view.getByRole('button', { name: 'Insert tools', exact: true }).click()
   await view.locator('.tray-word', { hasText: 'Table' }).click()
   await view.waitForTimeout(500)
   await view.locator('.mark-button[aria-label="Style"]').click()
@@ -1527,6 +1526,7 @@ await atWidth(1440, 900, async (view) => {
   const wandering = await felt.getAttribute('d')
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await view.locator('.tray-word[title="Pen"]').click()
   await view.waitForTimeout(500)
   ok('the felt pen takes the rules over', await shown('felt'))
@@ -1611,6 +1611,7 @@ await atWidth(1440, 900, async (view) => {
   await view.waitForTimeout(250)
 
   /* the underline */
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="Underline — ⌘U"]').click()
   await view.waitForTimeout(350)
 
@@ -1634,15 +1635,18 @@ await atWidth(1440, 900, async (view) => {
     await strokeNow(),
   )
 
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await view.locator('.tray-word[title="Pen"]').click()
   await view.waitForTimeout(350)
   ok('the felt pen underlines with a drawn stroke', (await strokeNow()).includes('svg+xml'))
   ok('which is still a background, so it costs no height', await pitchHolds())
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await view.locator('.tray-word[title="Pen"]').click()
   await view.waitForTimeout(300)
 
   /* it nests both ways, because the tray can produce either — U then B puts
      the tags outside, B then U puts them inside */
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="Bold — ⌘B"]').click()
   await view.waitForTimeout(350)
   ok('the tags outside a bold word still hide', (await lastLineIn(view)) === 'for Ruth', await lastLineIn(view))
@@ -1653,25 +1657,32 @@ await atWidth(1440, 900, async (view) => {
     await bodyLine('Ruth'),
   )
 
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="Bold — ⌘B"]').click()
   await view.waitForTimeout(300)
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="Underline — ⌘U"]').click()
   await view.waitForTimeout(300)
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="Bold — ⌘B"]').click()
   await view.waitForTimeout(300)
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="Underline — ⌘U"]').click()
   await view.waitForTimeout(350)
   ok('the tags inside a bold word hide too', (await lastLineIn(view)) === 'for Ruth', await lastLineIn(view))
   ok('which is the other order the tray produces', (await bodyLine('Ruth')).includes('**<u>Ruth</u>**'), await bodyLine('Ruth'))
 
   /* tapping it again takes it off, which is the only way back */
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="Underline — ⌘U"]').click()
   await view.waitForTimeout(300)
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="Bold — ⌘B"]').click()
   await view.waitForTimeout(350)
   ok('a second tap takes each off', !(await stored()).includes('<u>') && !(await stored()).includes('**'), await bodyLine('Ruth'))
 
   /* where the line sits */
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-block[aria-label="Centre the line"]').click()
   await view.waitForTimeout(350)
   ok('a line can be centred', (await view.locator('.md-align-center').count()) === 1)
@@ -1685,6 +1696,7 @@ await atWidth(1440, 900, async (view) => {
   ok('the file says so in a brace tag', (await stored()).includes('{center}for Ruth'), await bodyLine('Ruth'))
   ok('and nothing moved off the 28px grid', await pitchHolds())
 
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-block[aria-label="Line to the right"]').click()
   await view.waitForTimeout(350)
   ok(
@@ -1694,6 +1706,7 @@ await atWidth(1440, 900, async (view) => {
   )
   ok('and it swaps rather than stacking', !(await stored()).includes('{center}'), await bodyLine('Ruth'))
 
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-block[aria-label="Line to the right"]').click()
   await view.waitForTimeout(350)
   ok('tapping it again puts the line back to the margin', !(await stored()).includes('{right}'))
@@ -1702,6 +1715,8 @@ await atWidth(1440, 900, async (view) => {
   /* alignment sits in front of the block prefix, so a heading is both */
   await view.locator('.cm-content').click()
   await view.keyboard.press('ControlOrMeta+Home')
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-block[aria-label="Centre the line"]').click()
   await view.waitForTimeout(400)
   ok(
@@ -1740,6 +1755,7 @@ await atWidth(1440, 900, async (view) => {
   await view.keyboard.press('Enter')
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
+  await view.getByRole('button', { name: 'Insert tools', exact: true }).click()
   await view.locator('.tray-word', { hasText: 'Table' }).click()
   await view.waitForTimeout(500)
   await view.locator('.mark-button[aria-label="Style"]').click()
@@ -1832,6 +1848,7 @@ await atWidth(1440, 900, async (view) => {
   await view.keyboard.up('Shift')
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await view.locator('.tray .sw[aria-label="brass"]').click()
   await view.waitForTimeout(400)
 
@@ -1854,6 +1871,8 @@ await atWidth(1440, 900, async (view) => {
   await view.locator('.cm-content').click()
   await view.keyboard.press('ControlOrMeta+End')
   await view.keyboard.press('Enter')
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.getByRole('button', { name: 'Insert tools', exact: true }).click()
   await view.locator('.tray-word', { hasText: 'Table' }).click()
   await view.waitForTimeout(500)
 
@@ -1907,6 +1926,8 @@ await atWidth(1440, 900, async (view) => {
   await view.keyboard.down('Shift')
   for (let i = 0; i < 3; i++) await view.keyboard.press('ArrowLeft')
   await view.keyboard.up('Shift')
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label^="Bold"]').click()
   await view.waitForTimeout(500)
   /* Either tag: the file says `**` for both, and the mark is wrapped by hand
@@ -1950,9 +1971,12 @@ await atWidth(1800, 950, async (view) => {
   await view.keyboard.type('shouted', { delay: 6 })
   await view.waitForTimeout(200)
   const line = () => view.locator('.cm-line').last().evaluate((el) => el.textContent)
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="All caps"]').click()
   await view.waitForTimeout(300)
   ok('All caps shouts the word under the caret', (await line()) === 'SHOUTED', await line())
+  await view.getByRole('button', { name: 'Text tools', exact: true }).click()
   await view.locator('.tray-mark[aria-label="All caps"]').click()
   await view.waitForTimeout(300)
   ok('and puts it back down again', (await line()) === 'shouted', await line())
@@ -1968,10 +1992,14 @@ await atWidth(1800, 950, async (view) => {
   /* zoom, for a page on a big screen in front of a room */
   const pitchOf = () =>
     view.locator('.cm-line').last().evaluate((el) => Math.round(el.getBoundingClientRect().height))
+  await view.locator('.mark-button[aria-label="Style"]').click()
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   ok('the page starts at 100%', (await view.locator('.tray-zoom').textContent()) === '100%')
   ok('one line is 28px', (await pitchOf()) === 28, String(await pitchOf()))
 
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await view.locator('.tray-step[aria-label="Larger"]').click()
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await view.locator('.tray-step[aria-label="Larger"]').click()
   await view.waitForTimeout(400)
   ok('zoom steps up', (await view.locator('.tray-zoom').textContent()) === '150%')
@@ -1992,9 +2020,12 @@ await atWidth(1800, 950, async (view) => {
   await view.waitForTimeout(900)
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(400)
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   ok('zoom is remembered', (await view.locator('.tray-zoom').textContent()) === '150%')
 
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await view.locator('.tray-step[aria-label="Smaller"]').click()
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await view.locator('.tray-step[aria-label="Smaller"]').click()
   await view.waitForTimeout(400)
   ok('and comes back down', (await view.locator('.tray-zoom').textContent()) === '100%')
@@ -2022,6 +2053,7 @@ await atWidth(1440, 900, async (view) => {
 
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
+  await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await view.locator('.tray-word[title="Stock"]').click()
   await view.waitForTimeout(500)
   const onNight = await theme()
@@ -2041,7 +2073,7 @@ await atWidth(430, 900, async (view) => {
   const theme = async () =>
     (await view.locator('meta[name="theme-color"]').getAttribute('content')).toLowerCase()
 
-  const footColour = await view.locator('.list-foot').evaluate((el) => {
+  const footColour = await view.locator('.fn-mobile-navigation').evaluate((el) => {
     const [r, g, b, a = 1] = getComputedStyle(el)
       .backgroundColor.match(/[\d.]+/g)
       .map(Number)
@@ -2060,7 +2092,7 @@ await atWidth(430, 900, async (view) => {
   })
 
   ok(
-    'the strip below a phone takes the foot\'s own colour',
+    'the strip below a phone matches the navigation',
     (await theme()) === footColour,
     `theme ${await theme()} vs foot ${footColour}`,
   )
@@ -2074,11 +2106,11 @@ await atWidth(430, 900, async (view) => {
   await view.locator('.list-row').first().click()
   await view.waitForTimeout(700)
   const onPage = await theme()
-  ok('a page still takes the strip', onPage !== footColour, onPage)
+  ok('a page retains the navigation strip', onPage === footColour, onPage)
 
   await view.goBack()
   await view.waitForTimeout(700)
-  ok('and the list takes it back', (await theme()) === footColour, await theme())
+  ok('and returning to the list keeps the same strip', (await theme()) === footColour, await theme())
 })
 
 /* ── the calendar ───────────────────────────────────────────────────── */
@@ -2093,31 +2125,31 @@ await atWidth(1440, 900, async (view) => {
     await view
       .locator('.rail .cal-day.written .cal-day-n')
       .first()
-      .evaluate((el) => getComputedStyle(el).boxShadow.includes('inset')),
+      .evaluate((el) => getComputedStyle(el.parentElement).borderTopStyle === 'solid' && getComputedStyle(el.parentElement).borderTopWidth === '1px'),
   )
 
   /* the masthead opens the month, whole */
   await view.locator('.rail-datum').click()
   await view.waitForTimeout(600)
-  ok('the masthead opens the calendar', view.url().endsWith('/calendar'), view.url())
+  ok('the masthead opens the calendar', new URL(view.url()).pathname.startsWith('/calendar'), view.url())
   ok('which is six weeks of seven', (await view.locator('.calendar-grid .cal-day').count()) === 42)
   ok('with no chrome bar', (await view.locator('.calendar-screen .chrome').count()) === 0)
 
-  const heading = () => view.locator('.calendar-name').textContent()
+  const heading = () => view.locator('.fn-calendar-large .fn-reference-date h2').textContent()
   const thisMonth = await heading()
 
-  await view.locator('.link-caps[aria-label="The month after"]').click()
+  await view.locator('.fn-calendar-large').getByRole('button', { name: 'The month after', exact: true }).click()
   await view.waitForTimeout(400)
   const next = await heading()
   ok('it steps to the month after', next !== thisMonth, `${thisMonth} → ${next}`)
   ok('and says so in the address', /\/calendar\/\d{4}-\d{2}$/.test(view.url()), view.url())
 
-  await view.locator('.link-caps[aria-label="The month before"]').click()
-  await view.locator('.link-caps[aria-label="The month before"]').click()
+  await view.locator('.fn-calendar-large').getByRole('button', { name: 'The month before', exact: true }).click()
+  await view.locator('.fn-calendar-large').getByRole('button', { name: 'The month before', exact: true }).click()
   await view.waitForTimeout(400)
   ok('and to the month before', (await heading()) !== thisMonth && (await heading()) !== next)
 
-  await view.locator('.link-caps', { hasText: 'Today' }).click()
+  await view.locator('.fn-calendar-large').getByRole('button', { name: 'Return to today' }).click()
   await view.waitForTimeout(400)
   ok('Today comes back', (await heading()) === thisMonth)
   ok(

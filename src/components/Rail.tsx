@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import { daysWritten, notebookCounts } from '../lib/db'
 import { mastheadParts } from '../lib/format'
 import { monthNow } from '../lib/calendar'
@@ -86,20 +87,23 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
 
       <div className="rail-rule" />
 
-      <button className={`rail-overview${location.pathname === '/overview' || location.pathname === '/' ? ' active' : ''}`} onClick={() => navigate(to.overview())}>
-        <span>Overview</span>
-      </button>
-      <button className={`rail-overview rail-siena-link${location.pathname === '/from-siena' ? ' active' : ''}`} onClick={() => navigate(to.fromSiena())}>
-        <span>From Siena</span>
-        {unseen ? <span className="siena-badge" aria-label={`${unseen} unseen`}>{unseen}</span> : null}
-      </button>
+      <div className="rail-destinations">
+        <button className={`rail-overview${location.pathname === '/overview' || location.pathname === '/' ? ' active' : ''}`} aria-current={location.pathname === '/overview' || location.pathname === '/' ? 'page' : undefined} aria-label="Overview" title="Overview" onClick={() => navigate(to.overview())}>
+          <Icon name="overview" />
+        </button>
+        <button className={`rail-overview rail-siena-link${location.pathname === '/from-siena' ? ' active' : ''}`} aria-label={`From Siena${unseen ? `, ${unseen} unseen` : ''}`} aria-current={location.pathname === '/from-siena' ? 'page' : undefined} title="From Siena" onClick={() => navigate(to.fromSiena())}>
+          <Icon name="from-siena" />
+          {unseen ? <span className="siena-badge" aria-label={`${unseen} unseen`}>{unseen}</span> : null}
+        </button>
+
+      </div>
 
       <div className="scroll rail-books">
         <div className="rail-books-head">
           <span className="section-label">Notebooks</span>
           <span className="grow" />
-          <button className="link-caps" onClick={onManage}>
-            Manage
+          <button className="icon-control" aria-label="Manage notebooks" title="Manage notebooks" onClick={onManage}>
+            <Icon name="manage-notebooks" />
           </button>
         </div>
 
@@ -116,18 +120,6 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
           </button>
         ))}
 
-        <button className="book-row book-add" onClick={onManage}>
-          <span className="book-dot dashed" />
-          <span className="book-name">Add a notebook</span>
-        </button>
-      </div>
-
-      <div className="rail-foot">
-        {/* Below the rule with Trash and Settings rather than in the notebook
-            list. It is an ordinary notebook in the file and a reserved one in
-            the interface: nothing is written into it by hand, so it does not
-            belong on the shelf you pick from — but it is somewhere you go, so
-            it sits above the two back rooms rather than among them. */}
         <button
           className={`book-row rail-journal${activeId === JOURNAL_NOTEBOOK ? ' active' : ''}`}
           onClick={() => onPick(JOURNAL_NOTEBOOK)}
@@ -138,12 +130,19 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
           <span className="book-count">{counts[JOURNAL_NOTEBOOK] ?? 0}</span>
         </button>
 
+        <button className="book-row book-add" onClick={onManage}>
+          <span className="book-dot dashed" />
+          <span className="book-name">Add a notebook</span>
+        </button>
+      </div>
+
+      <div className="rail-foot">
         <div className="rail-foot-line">
-          <button className="link-quiet" onClick={() => navigate(to.trash())}>
-            Trash
+          <button className="icon-control" aria-label="Trash" title="Trash" onClick={() => navigate(to.trash())}>
+            <Icon name="trash" />
           </button>
-          <button className="link-quiet" onClick={() => navigate(to.settings())}>
-            Settings
+          <button className="icon-control" aria-label="Settings" title="Settings" onClick={() => navigate(to.settings())}>
+            <Icon name="settings" />
           </button>
         </div>
         {/* The foot is still Trash and Settings and nothing else — this is a

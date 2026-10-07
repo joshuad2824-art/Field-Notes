@@ -13,10 +13,11 @@ import {
   getPage,
   moveTo,
   patchPage,
-  saveBody,
+  saveEditorBody,
   setPen,
   setPinned,
   setStock,
+  subscribe,
 } from '../lib/db'
 import { caretAtEndFor } from '../lib/capture'
 import { exportPage } from '../lib/export'
@@ -60,12 +61,16 @@ export function PageScreen({ id }: { id: string }) {
   const [missing, setMissing] = useState(false)
   const [body, setBody] = useState('')
   const [view, setView] = useState<EditorView | null>(null)
+  const viewRef = useRef<EditorView | null>(null)
   const [tray, setTray] = useState(false)
+  const trayToggle = useRef<HTMLButtonElement>(null)
   const [menu, setMenu] = useState(false)
   /* The prose pass, which is the only thing in this app that can be busy or
      can fail out loud. Both states live here rather than in the sheet, because
      the sheet closes and the request does not. */
   const [writing, setWriting] = useState(false)
+  const [gathering, setGathering] = useState(false)
+  const [reviewProblem, setReviewProblem] = useState('')
   const [wroteUp, setWroteUp] = useState<string | null>(null)
   /* Where a newly dropped or inserted picture sits. The plate carries its own
      controls once it is on the page, so this is only ever the starting side. */
@@ -73,6 +78,10 @@ export function PageScreen({ id }: { id: string }) {
 
   const color = useRef('brass')
   const bodyRef = useRef('')
+  const baseRef = useRef<Page | null>(null)
+  const saves = useRef<Promise<void>>(Promise.resolve())
+  const mounted = useRef(false)
+  const refresh = useRef<() => void>(() => {})
   const loaded = useRef(false)
   const openedBlank = useRef(false)
   const timer = useRef<number | null>(null)
@@ -81,32 +90,77 @@ export function PageScreen({ id }: { id: string }) {
 
   useEffect(() => {
     let live = true
+    mounted.current = true
     getPage(id).then((found) => {
       if (!live) return
       if (!found) return setMissing(true)
       loaded.current = true
       setPage(found)
+      baseRef.current = found
       setBody(found.body)
       bodyRef.current = found.body
       openedBlank.current = isBlank(found.body)
+      refresh.current()
     })
     return () => {
       live = false
+      mounted.current = false
     }
+  }, [id])
+
+  useEffect(() => {
+    let live = true
+    let request = 0
+    const run = () => {
+      const serial = ++request
+      void getPage(id).then((found) => {
+        const base = baseRef.current
+        if (!live || serial !== request || !found || found.deleted || !base || base.id !== id) return
+        if (viewRef.current?.composing) return
+        // A pending local draft stays in the editor until its guarded save.
+        if (bodyRef.current !== base.body && bodyRef.current !== found.body) return
+        baseRef.current = found
+        bodyRef.current = found.body
+        setPage(found)
+        setBody(found.body)
+      })
+    }
+    refresh.current = run
+    const off = subscribe(run)
+    return () => { live = false; refresh.current = () => {}; off() }
   }, [id])
 
   /* Writes go to local storage and return immediately. The debounce only
      batches keystrokes; anything that could take the tab away flushes first. */
   const flush = useRef<() => Promise<void>>(async () => {})
-  flush.current = async () => {
+  flush.current = () => {
     /* StrictMode tears down its first effect pass before the page has loaded.
        Flushing that empty initial ref would erase an existing page. */
-    if (!loaded.current) return
+    if (!loaded.current) return Promise.resolve()
     if (timer.current) {
       clearTimeout(timer.current)
       timer.current = null
     }
-    await saveBody(id, bodyRef.current)
+    // Serialize saves so a second keystroke cannot compare against an old
+    // baseline and mistake this editor's own preceding save for a conflict.
+    const save = saves.current.then(async () => {
+      const base = baseRef.current
+      const draft = bodyRef.current
+      if (!base || draft === base.body) return
+      const saved = await saveEditorBody(base, draft)
+      baseRef.current = saved
+      if (saved.id !== base.id) {
+        const prefix = saved.body.slice(0, saved.body.length - draft.length)
+        bodyRef.current = prefix + bodyRef.current
+        if (mounted.current) {
+          setBody(bodyRef.current)
+          setPage(saved)
+          navigate(to.page(saved.id))
+        }
+      } else if (mounted.current) setPage(saved)
+    })
+    saves.current = save.catch(() => {})
+    return save
   }
 
   useEffect(() => {
@@ -141,7 +195,7 @@ export function PageScreen({ id }: { id: string }) {
     if (timer.current) clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
       timer.current = null
-      void saveBody(id, next)
+      void flush.current()
     }, SAVE_DELAY)
   }
 
@@ -149,9 +203,9 @@ export function PageScreen({ id }: { id: string }) {
     setPage((current) => (current ? { ...current, ...patch } : current))
   }
 
-  /* ── the journal's two buttons ──────────────────────────────────────
-     Both replace the whole document, and both do it by dispatching into the
-     editor rather than by writing to Dexie behind its back. The editor owns
+  /* The optional prose rewrite goes through the editor so undo can restore
+     the previous writing. Gathering changed notes creates a separate review.
+     The rewrite dispatches into the editor rather than writing behind it. The editor owns
      its document once created — a save made underneath it would be undone by
      the next keystroke — and going through a dispatch means CodeMirror's
      history still owns undo, so a prose pass you don't like is one ⌘Z away.
@@ -162,12 +216,17 @@ export function PageScreen({ id }: { id: string }) {
   }
 
   const recollect = async () => {
-    if (!page?.entryDate) return
-    /* Midday of the entry's own Sunday, so no timezone can nudge it into the
-       week before. */
-    const digest = await collectWeek(new Date(`${page.entryDate}T12:00:00`).getTime())
-    const fresh = await getPage(digest.id)
-    if (fresh) replaceDocument(fresh.body)
+    if (!page?.entryDate || gathering) return
+    setGathering(true)
+    setReviewProblem('')
+    try {
+      await flush.current()
+      const review = await collectWeek(new Date(`${page.entryDate}T12:00:00`).getTime(), true)
+      setMenu(false)
+      navigate(to.page(review.id))
+    } catch (error) {
+      setReviewProblem(error instanceof Error ? error.message : 'Could not gather the review.')
+    } finally { setGathering(false) }
   }
 
   const runWriteUp = async () => {
@@ -273,6 +332,7 @@ export function PageScreen({ id }: { id: string }) {
                     ↷
                   </button>
                   <button
+                    ref={trayToggle}
                     className={`mark-button wide${tray ? ' on' : ''}`}
                     /* Opening the tray must not take the focus off what the
                        tray is about to shape. CodeMirror keeps its selection
@@ -281,6 +341,7 @@ export function PageScreen({ id }: { id: string }) {
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => setTray((open) => !open)}
                     aria-label="Style"
+                    aria-expanded={tray}
                   >
                     Aa
                   </button>
@@ -296,6 +357,7 @@ export function PageScreen({ id }: { id: string }) {
 
               {tray ? (
                 <StyleTray
+                  toggleRef={trayToggle}
                   view={view}
                   pageId={page.id}
                   pen={pen}
@@ -316,8 +378,10 @@ export function PageScreen({ id }: { id: string }) {
               <Editor
                 key={page.id}
                 initialBody={page.body}
+                externalBody={body}
                 onChange={onChange}
-                onView={setView}
+                onView={(next) => { viewRef.current = next; setView(next) }}
+                onCompositionEnd={() => refresh.current()}
                 highlightColor={() => color.current}
                 onDropFile={onDropFile}
                 autofocus={caretAtEndFor(id) ? 'end' : isBlank(page.body)}
@@ -433,11 +497,10 @@ export function PageScreen({ id }: { id: string }) {
             <>
               <div className="sheet-rule" />
               <div className="sheet-label">Journal</div>
-              {/* Gathering the week again is the one thing here that is not a
-                  page attribute, and it belongs on the page it rewrites. */}
+              <p className="sheet-review-note">Gather a fresh copy to include changed notes. This review and your edits will be kept.</p>
               <SheetItem
-                label="Collect this week again"
-                state={page.entryDate ?? undefined}
+                label={gathering ? 'Gathering review' : 'Gather a fresh copy'}
+                state={reviewProblem || page.entryDate || undefined}
                 onClick={() => void recollect()}
               />
               {/* Off unless a key has been pasted and the line beside it in

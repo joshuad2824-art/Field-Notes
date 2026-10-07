@@ -1,4 +1,4 @@
-import type { EditorView } from '@codemirror/view'
+import { EditorView } from '@codemirror/view'
 
 /* Links stay in the page's existing Markdown body. No page or sync conversion is
    needed, and a URL already written as plain text is never rewritten. */
@@ -45,6 +45,22 @@ export function linkAt(view: EditorView): NoteLink | null {
   ) ?? null
 }
 
+/* The visible end of a label is before its hidden Markdown destination.
+   A separating space there belongs to the following prose. Ordinary letters
+   within the label remain editable, including spaces between its words. */
+export const linkTyping = EditorView.inputHandler.of((view, from, to, text) => {
+  if (from !== to || !/^[ \t]/.test(text)) return false
+  const line = view.state.doc.lineAt(from)
+  const link = linksIn(line.text, line.from).find(link => from >= link.labelTo && from < link.to)
+  if (!link) return false
+  view.dispatch({
+    changes: { from: link.to, insert: text },
+    selection: { anchor: link.to + text.length },
+    userEvent: 'input.type',
+  })
+  return true
+})
+
 export function writeLink(
   view: EditorView,
   range: { from: number; to: number },
@@ -60,7 +76,9 @@ export function writeLink(
   const to = existing?.to ?? range.to
   if (from < 0 || to > view.state.doc.length) return 'Select the text again.'
   const insert = `[${label}](${destination})`
-  view.dispatch({ changes: { from, to, insert }, selection: { anchor: from + 1, head: from + 1 + label.length } })
+  /* The next keystroke is writing after the link, rather than replacing its
+     selected label or extending it before the invisible closing marker. */
+  view.dispatch({ changes: { from, to, insert }, selection: { anchor: from + insert.length } })
   view.focus()
   return null
 }

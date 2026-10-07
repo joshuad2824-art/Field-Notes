@@ -33,7 +33,11 @@ function tag(): HTMLMetaElement | null {
 let painted = ''
 
 export function setEdgeColor(color: string): void {
-  const next = color.trim() || FALLBACK
+  // The approved mobile navigation is the bottom surface while visible.
+  // Editor/list stock resumes ownership when the soft keyboard hides it.
+  const navigation = document.querySelector('.fn-mobile-navigation')
+  const next = navigation && getComputedStyle(navigation).display !== 'none'
+    ? surfaceColor(navigation) : color.trim() || FALLBACK
   if (next === painted) return
   painted = next
 

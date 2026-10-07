@@ -394,14 +394,11 @@
   color: rgba(156, 177, 178, 0.7);
 }
 
-/* The journal, below the rule rather than on the shelf. It is a notebook row
-   in every respect — same dot, same mark, same count — because that is what it
-   is; only where it sits says it is reserved. The negative margin pulls it out
-   to the foot's own edges so its hover reaches as wide as a book row's does in
-   the list above. */
-.rail-journal {
-  margin: -4px -10px 10px;
-  width: calc(100% + 20px);
+/* Journal stays with notebook content while retaining its reserved workflow. */
+.rail-books .rail-journal {
+  margin: 10px 0 0;
+  width: 100%;
+  border-top: 1px solid var(--frame-hairline-soft);
 }
 
 /* ── the weather ────────────────────────────────────────────────────────
@@ -1244,8 +1241,7 @@ mark.hit {
   min-height: 0;
   padding: 0 0 var(--safe-bottom);
 }
-/* Everything on this screen keeps one column, so the grid, the month name and
-   the pages under them all start on the same edge. */
+/* Compact screens keep the month and its entries in one reading column. */
 .calendar-body {
   width: 100%;
   max-width: 760px;
@@ -1413,3 +1409,33 @@ mark.hit {
   white-space: pre;
   overflow-x: auto;
 }
+
+/* The month and its entries share the desk instead of a narrow center strip. */
+.calendar-agenda-heading { margin: 22px 20px 12px; color: var(--cream-100); font: 700 28px/1.2 var(--font-editorial); }
+.calendar-empty { margin: 16px 20px; color: var(--frame-quiet); font: 18px/1.5 var(--font-body); }
+.calendar-month-panel, .calendar-agenda { min-width: 0; }
+@media (min-width: 1120px) {
+  .calendar-body { max-width: 2400px; padding: 18px clamp(24px, 4vw, 100px) 48px; }
+  .calendar-masthead { padding: 0 20px 24px; }
+  .calendar-layout { display: grid; grid-template-columns: minmax(380px, .9fr) minmax(0, 1.1fr); gap: clamp(28px, 4vw, 96px); align-items: start; }
+  .calendar-month-panel { position: sticky; top: 24px; }
+  .calendar-name { font-size: clamp(52px, 4vw, 84px); }
+  .calendar-grid { max-width: none; --cal-cell: clamp(52px, 5vw, 92px); --cal-mark: 42px; }
+  .calendar-agenda { border-left: 1px solid var(--frame-hairline); padding-left: clamp(12px, 2vw, 40px); }
+  .calendar-agenda-heading { margin-top: 6px; }
+  .calendar-agenda .row-snippet { max-width: 70ch; }
+}
+@media (min-width: 1120px) {
+  .calendar-grid { --cal-cell: clamp(52px, min(5vw, 9vh), 92px); }
+  .calendar-grid .cal-day-n { font-size: 16px; }
+  .calendar-grid .cal-letter { font-size: 12px; }
+}
+
+.calendar-month-navigation { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+@media (max-width: 700px) {
+  .calendar-masthead { gap: 4px; }
+  .calendar-month-navigation { gap: 0; }
+}
+
+.journal-intro { margin: 16px 20px; color: var(--frame-quiet); font-size: 13px; line-height: 1.6; }
+.sheet-review-note { margin: 8px 16px; color: var(--frame-quiet); font-size: 13px; line-height: 1.5; }

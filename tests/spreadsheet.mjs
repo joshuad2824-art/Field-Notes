@@ -138,6 +138,7 @@ const newTable = async (page) => {
   await page.keyboard.press('Enter')
   await page.locator('.mark-button[aria-label="Style"]').click()
   await page.waitForTimeout(250)
+  await page.getByRole('button', { name: 'Insert tools', exact: true }).click()
   await page.locator('.tray-word', { hasText: 'Table' }).click()
   await page.waitForTimeout(500)
   await page.locator('.mark-button[aria-label="Style"]').click()
@@ -737,6 +738,7 @@ await desk(1440, 900, async (page) => {
      together. */
   await page.locator('.mark-button[aria-label="Style"]').click()
   await page.waitForTimeout(250)
+  await page.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   await page.locator('.tray [aria-label="Larger"], .tray [aria-label="Zoom in"]').first().click()
   await page.waitForTimeout(500)
   ok('and after the writing is made larger',

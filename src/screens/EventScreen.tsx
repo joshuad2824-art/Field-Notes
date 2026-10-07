@@ -1,3 +1,4 @@
+import { eventRangeError } from '../lib/event-range'
 import { useEffect, useState, type FormEvent } from 'react'
 import { eventDetails, getEvent, saveEvent, deleteEvent, type EventDraft } from '../lib/events'
 import { createPage, livePages, patchPage } from '../lib/db'
@@ -22,7 +23,7 @@ export function EventScreen({ id, date, notebook }: { id?: string; date?: string
 
   useEffect(() => {
     if (event && !editing) setDraft({
-      title: event.title, date: event.date, startTime: event.startTime,
+      title: event.title, date: event.date, endDate: event.endDate, startTime: event.startTime,
       endTime: event.endTime, location: event.location, note: event.note,
       pageId: event.pageId, calendarTarget: event.calendarTarget ?? 'Joshua',
     })
@@ -31,9 +32,8 @@ export function EventScreen({ id, date, notebook }: { id?: string; date?: string
   const save = async (e: FormEvent) => {
     e.preventDefault()
     if (!draft.title.trim()) return setNotice('Give the event a title.')
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.date)) return setNotice('Choose a date.')
-    if (draft.endTime && !draft.startTime) return setNotice('Add a start time before an end time.')
-    if (draft.startTime && draft.endTime && draft.endTime < draft.startTime) return setNotice('End time must follow start time.')
+    const rangeError = eventRangeError(draft)
+    if (rangeError) return setNotice(rangeError)
     setBusy(true)
     setNotice('')
     try {
@@ -104,7 +104,9 @@ export function EventScreen({ id, date, notebook }: { id?: string; date?: string
               <span className="section-label">Field Notes calendar</span>
               <h1>{id ? 'Edit event' : 'New event'}</h1>
               <label>Title<input required maxLength={240} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label>
-              <label>Date<input required type="date" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} /></label>
+              <label>Start date<input required type="date" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} /></label>
+              <label>End date <span>optional</span><input aria-describedby="event-end-date-help" type="date" min={draft.date} value={draft.endDate ?? ''} onChange={(e) => setDraft({ ...draft, endDate: e.target.value || undefined })} /></label>
+              <p id="event-end-date-help" className="event-date-help">The end date is the last day included. Leave it blank for a single-day event.</p>
               <div className="event-form-times">
                 <label>Start time <span>optional</span><input type="time" value={draft.startTime ?? ''} onChange={(e) => setDraft({ ...draft, startTime: e.target.value || undefined })} /></label>
                 <label>End time <span>optional</span><input type="time" value={draft.endTime ?? ''} onChange={(e) => setDraft({ ...draft, endTime: e.target.value || undefined })} /></label>
@@ -132,7 +134,7 @@ export function EventScreen({ id, date, notebook }: { id?: string; date?: string
             </form>
           ) : event && !event.deleted ? (
             <article className="event-detail">
-              <span className="section-label">{readableDay(event.date)}</span>
+              <span className="section-label">{readableDay(event.date)}{event.endDate ? ` – ${readableDay(event.endDate)}` : ''}</span>
               <h1>{event.title}</h1>
               {event.conflictOf ? <p className="event-conflict">A conflicting edit was kept as this copy. Review both events.</p> : null}
               <dl>

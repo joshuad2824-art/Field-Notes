@@ -5,6 +5,7 @@ import { firstNotebookId, isReserved, useNotebooks } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
 import { setSettings, useSettings } from '../lib/settings'
 import { NotebookManager } from './NotebookManager'
+import { useExternalRail } from './ApprovedFrame'
 import { PageList } from './PageList'
 import { Rail } from './Rail'
 
@@ -27,6 +28,7 @@ interface Props {
    the boundary reconciles the drawer, because one that survived a resize into
    the docked layout would be a second, invisible state. */
 export function Shell({ notebook, overview = false, activeId, children }: Props) {
+  const externalRail = useExternalRail()
   const available = useMediaQuery(SIDEBAR_AVAILABLE)
   const regularDocked = useMediaQuery(SIDEBAR_DOCKED)
   /* Overview needs only the rail and the desk, so the familiar sidebar can
@@ -44,7 +46,7 @@ export function Shell({ notebook, overview = false, activeId, children }: Props)
   }, [docked])
 
   const compact = !docked
-  const railDocked = docked && settings.rail
+  const railDocked = !externalRail && docked && settings.rail
   const listDocked = docked && settings.list
   const railOver = !docked && railDrawer
 
@@ -52,7 +54,7 @@ export function Shell({ notebook, overview = false, activeId, children }: Props)
   const showList = overview ? false : compact ? !activeId : listDocked
   const showLeaf = overview || (compact ? !!activeId : true)
   /* Nothing to the left saying where we are, so the leaf says it itself. */
-  const hidden = docked && !listDocked && !railDocked
+  const hidden = docked && !listDocked && !railDocked && !(externalRail && settings.rail)
 
   const pickNotebook = (id: string) => {
     /* The journal is somewhere you go, not where you live. Remembering it as

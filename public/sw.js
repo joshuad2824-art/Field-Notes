@@ -5,7 +5,7 @@
 /* Bump this to land a change to anything in the shell — the manifest is
    cached cache-first and is only re-fetched when this worker reinstalls, so a
    manifest edit on an unchanged version never reaches a phone at all. */
-const VERSION = 'v14'
+const VERSION = 'v24'
 const SHELL = `shell-${VERSION}`
 const ASSETS = `assets-${VERSION}`
 const FONTS = `fonts-${VERSION}`
@@ -60,6 +60,12 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
 
   const url = new URL(request.url)
+
+  // OAuth callbacks and protected Davis reads never enter a shell/data cache.
+  if (url.pathname === '/oauth/davis/callback' || url.origin === 'https://davis-at-home.netlify.app' || url.origin === 'https://bsyupmesvqwxboncwgeg.supabase.co') return
+
+  // The standalone screen fixtures have their own manifests and no app data.
+  if (url.origin === location.origin && url.pathname.startsWith('/screen-check/')) return
 
   if (request.mode === 'navigate') {
     event.respondWith(shellFor(request))

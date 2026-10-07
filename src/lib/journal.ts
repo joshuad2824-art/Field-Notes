@@ -1,4 +1,4 @@
-import { createPage, db, patchPage, saveBody } from './db'
+import { createPage, db, patchPage } from './db'
 import { digestOf, weekStart } from './digest'
 import { JOURNAL_NOTEBOOK, type Page } from './model'
 import { notebookForPage } from './notebooks'
@@ -14,9 +14,9 @@ import { notebookForPage } from './notebooks'
 
 export { lastWeekAt, weekStart } from './digest'
 
-/* The one entry for a week, if there is one. Keyed on notebook plus
-   `entryDate`, which is what makes collecting the same week twice update the
-   page rather than make a second one — the same discipline as `once()` in
+/* The most recently edited review for a week, if there is one. Keyed on notebook plus
+   `entryDate`, which is what makes opening the same week twice preserve the
+   existing review rather than replace its writing — the same discipline as `once()` in
    `capture.ts` and "restore twice, get one page" in `export.ts`. */
 export async function entryForWeek(week: string): Promise<Page | undefined> {
   const rows = await db.pages.toArray()
@@ -29,24 +29,27 @@ export interface Collected {
   id: string
   week: string
   pages: number
-  replaced: boolean
+  openedExisting: boolean
 }
 
-/* Manual, and it stays manual until it has been lived with. Nothing in this
+/* Reopening preserves edits. Gathering a fresh copy preserves the old review.
+   Manual, and it stays manual until it has been lived with. Nothing in this
    app writes to your pages because a clock said so. */
-export async function collectWeek(ts: number = Date.now()): Promise<Collected> {
+export async function collectWeek(ts: number = Date.now(), freshCopy = false): Promise<Collected> {
   const digest = digestOf(ts, await db.pages.toArray(), (id) => notebookForPage(id).name)
   const standing = await entryForWeek(digest.week)
 
-  if (standing) {
-    await saveBody(standing.id, digest.body)
-    return { id: standing.id, week: digest.week, pages: digest.pages, replaced: true }
+  if (standing && !freshCopy) {
+    return { id: standing.id, week: digest.week, pages: digest.pages, openedExisting: true }
   }
 
   /* Created and then stamped, rather than a row assembled here: `createPage`
      is the one place a page is made and its uuid is not this file's business.
      The `entryDate` is what the next collection will find it by. */
-  const page = await createPage(JOURNAL_NOTEBOOK, digest.body)
+  const body = standing && freshCopy
+    ? digest.body.replace(/^(# .+)$/m, '$1 · updated notes')
+    : digest.body
+  const page = await createPage(JOURNAL_NOTEBOOK, body)
   await patchPage(page.id, { entryDate: weekStart(ts) })
-  return { id: page.id, week: digest.week, pages: digest.pages, replaced: false }
+  return { id: page.id, week: digest.week, pages: digest.pages, openedExisting: false }
 }

@@ -1,3 +1,4 @@
+import { eventOnDay } from './event-range.ts'
 import { isoDay } from './format.ts'
 import type { FieldEvent, SienaItem } from './model.ts'
 
@@ -16,7 +17,7 @@ export function weekAhead(today: string, events: FieldEvent[], items: SienaItem[
     const iso = isoDay(at.getTime())
     return {
       iso,
-      events: events.filter((event) => !event.deleted && event.date === iso)
+      events: events.filter((event) => !event.deleted && eventOnDay(event, iso))
         .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? '') || a.title.localeCompare(b.title)),
       reminders: items.filter((item) => item.type === 'reminder' && !item.completedAt && item.dueAt !== undefined &&
         isoDay(item.dueAt) === iso).sort((a, b) => (a.dueAt ?? 0) - (b.dueAt ?? 0)),

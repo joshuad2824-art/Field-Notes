@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import type { SienaItem } from '../lib/model'
 import { navigate } from '../lib/router'
 import { completeReminder, markSienaItemSeen } from '../lib/siena-items'
@@ -9,30 +10,57 @@ const labels: Record<SienaItem['type'], string> = {
   saved: 'Saved from Siena',
 }
 
-export function SienaItemCard({ item, paper = false }: { item: SienaItem; paper?: boolean }) {
+export function SienaItemCard({ item, paper = false, journal = false }: { item: SienaItem; paper?: boolean; journal?: boolean }) {
   const source = item.sourceUrl
   const safeSource = source && (/^https:\/\//.test(source) || /^\/p\/[0-9a-f-]{36}$/.test(source)) ? source : null
   const date = new Intl.DateTimeFormat([], { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(item.created))
+  const sourceLink = safeSource?.startsWith('/')
+    ? <button className="icon-control" aria-label="Open source" title="Open source" onClick={() => navigate(safeSource)}><Icon name="source" /></button>
+    : safeSource ? <a className="icon-control" aria-label="Open source" title="Open source" href={safeSource} target="_blank" rel="noopener noreferrer"><Icon name="source" /></a> : null
+  const seenControl = item.seenAt
+    ? <span className="icon-control siena-seen" role="img" aria-label="Seen" title="Seen"><Icon name="seen" /></span>
+    : <button className="icon-control siena-mark-seen" aria-label="Mark seen" title="Mark seen" onClick={() => void markSienaItemSeen(item.id)}><Icon name="unseen" /></button>
+  if (item.type === 'reminder') {
+    const title = item.title?.trim()
+    const summary = title || item.body
+    const extra = title && item.body.trim() && title !== item.body.trim()
+    return (
+      <article className={`siena-item reminder-compact${paper ? ' paper' : ''}`}>
+        <div className="reminder-line">
+          {item.completedAt
+            ? <span className="icon-control" role="img" aria-label="Completed" title="Completed"><Icon name="done" /></span>
+            : <button className="icon-control reminder-mark" aria-label="Mark done" title="Mark done" onClick={() => void completeReminder(item.id)}><Icon name="circle" /></button>}
+          <div className="reminder-copy">
+            <h3>{summary}</h3>
+            {item.dueAt ? <p className="siena-item-due">Due {new Intl.DateTimeFormat([], { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.dueAt))}</p> : null}
+            {item.completedAt ? <p className="siena-seen">Completed {new Intl.DateTimeFormat([], { dateStyle: 'medium' }).format(new Date(item.completedAt))}</p> : null}
+          </div>
+        </div>
+        {extra || sourceLink || !item.completedAt ? <details className="reminder-details">
+          <summary>Details</summary>
+          {extra ? <p className="siena-item-body">{item.body}</p> : null}
+          <div className="siena-item-foot">{sourceLink}<span className="grow" />{!item.completedAt ? seenControl : null}</div>
+        </details> : null}
+      </article>
+    )
+  }
   return (
     <article className={`siena-item${paper ? ' paper' : ''}`}>
-      <div className="siena-item-top">
+      {!journal ? <div className="siena-item-top">
         <span className="section-label">{labels[item.type]}</span>
         <time dateTime={new Date(item.created).toISOString()}>{date}</time>
       </div>
+      : null}
       {item.title ? <h3>{item.title}</h3> : null}
       <p className="siena-item-body">{item.body}</p>
       {item.dueAt ? <p className="siena-item-due">Due {new Intl.DateTimeFormat([], { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.dueAt))}</p> : null}
       <div className="siena-item-foot">
-        {safeSource?.startsWith('/') ? <button onClick={() => navigate(safeSource)}>Open source ↗</button> : null}
-        {safeSource?.startsWith('https://') ? <a href={safeSource} target="_blank" rel="noopener noreferrer">Open source ↗</a> : null}
+        {journal ? <time dateTime={new Date(item.created).toISOString()}>{date}</time> : null}
+        {sourceLink}
         <span className="grow" />
         {item.completedAt ? <span className="siena-seen">Completed {new Intl.DateTimeFormat([], { dateStyle: 'medium' }).format(new Date(item.completedAt))}</span> : (
           <>
-            {item.type === 'reminder' ? <button className="reminder-mark" onClick={() => void completeReminder(item.id)}>
-              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="M10 2.6c4.3-.5 7.7 3.2 7.4 7.5-.2 4.2-3.5 7.5-7.7 7.3C5.4 17.2 2.3 13.8 2.7 9.6 3 5.8 6.1 2.9 10 2.6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              Mark done
-            </button> : null}
-            {item.seenAt ? <span className="siena-seen">Seen</span> : <button className="siena-mark-seen" onClick={() => void markSienaItemSeen(item.id)}>Mark seen</button>}
+            {seenControl}
           </>
         )}
       </div>

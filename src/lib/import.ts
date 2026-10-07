@@ -1,3 +1,4 @@
+import { eventRangeError } from './event-range'
 import { unzipSync, strFromU8 } from 'fflate'
 import { changed, db } from './db'
 import { isCutout } from './images'
@@ -83,15 +84,20 @@ function parseBackupData(text: string): BackupData {
     if (!record(value) || !validId(value.id) || typeof value.title !== 'string' ||
         !value.title.trim() || value.title.length > 240 || typeof value.date !== 'string' ||
         !/^\d{4}-\d{2}-\d{2}$/.test(value.date) || !optionalClock(value.startTime) ||
-        !optionalClock(value.endTime) || !optionalString(value.location, 500) ||
+        !optionalClock(value.endTime) || !optionalString(value.endDate, 10) ||
+        !optionalString(value.location, 500) ||
         !optionalString(value.note, 10000) || !optionalString(value.conflictOf, 100) ||
         (value.pageId !== undefined && !validId(value.pageId)) ||
         (value.calendarTarget !== undefined && value.calendarTarget !== 'Joshua' && value.calendarTarget !== 'Family') ||
         typeof value.created !== 'number' || !Number.isFinite(value.created) ||
         typeof value.updated !== 'number' || !Number.isFinite(value.updated) ||
         !optionalStamp(value.deleted)) throw new Error('Invalid event in Field Notes backup')
+    if (value.endDate !== undefined && eventRangeError({
+      date: value.date, endDate: value.endDate, startTime: value.startTime, endTime: value.endTime,
+    })) throw new Error('Invalid event date range in Field Notes backup')
     return {
       id: value.id, title: value.title, date: value.date,
+      ...(value.endDate ? { endDate: value.endDate } : {}),
       ...(value.startTime ? { startTime: value.startTime } : {}),
       ...(value.endTime ? { endTime: value.endTime } : {}),
       ...(value.location ? { location: value.location } : {}),

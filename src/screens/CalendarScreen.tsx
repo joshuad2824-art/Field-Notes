@@ -1,10 +1,13 @@
-import { useState } from 'react'
-import { MonthGrid } from '../components/MonthGrid'
+import { eventDaysInMonth } from '../lib/event-range'
+import { Icon } from '../components/Icon'
+import { CalendarPanel } from '../components/CalendarPanel'
+import { DeskHeader } from '../components/DeskHeader'
+import { useCalendarView } from '../lib/calendar-view'
 import { PageRow } from '../components/PageRow'
 import { EventRow } from '../components/EventRow'
-import { daysWithEvents, eventsInMonth } from '../lib/events'
-import { daysWritten, pagesInMonth } from '../lib/db'
-import { dayOf, monthNow, monthParts, stepMonth } from '../lib/calendar'
+import { eventsInMonth } from '../lib/events'
+import { pagesInMonth } from '../lib/db'
+import { dayOf, monthNow, monthParts } from '../lib/calendar'
 import { countLabel, isoDay, readableDay } from '../lib/format'
 import { JOURNAL_NOTEBOOK, type FieldEvent, type Page, titleOf } from '../lib/model'
 import { back, navigate, to } from '../lib/router'
@@ -16,18 +19,11 @@ import { useLive } from '../lib/useLive'
    Below the grid, that month's pages in the order they were written. The
    calendar is a lens over the same pages, never a place they live. */
 export function CalendarScreen({ month, notebook }: { month?: string; notebook: string }) {
-  const [shown, setShown] = useState(month ?? monthNow())
+  const { month: shown } = useCalendarView()
+  void month
   const pages = useLive<Page[]>(() => pagesInMonth(shown), [shown], [])
-  const written = useLive<Set<string>>(daysWritten, [], new Set())
   const events = useLive<FieldEvent[]>(() => eventsInMonth(shown), [shown], [])
-  const eventDays = useLive<Set<string>>(daysWithEvents, [], new Set())
-  const { month: name, year } = monthParts(shown)
-
-  const step = (by: number) => {
-    const next = stepMonth(shown, by)
-    setShown(next)
-    navigate(to.calendar(next), { replace: true })
-  }
+  const { month: name } = monthParts(shown)
 
   /* The month's journal entries, read off the pages already loaded rather
      than asked for a second time. They are also down in their own day groups
@@ -45,62 +41,32 @@ export function CalendarScreen({ month, notebook }: { month?: string; notebook: 
     else days.push({ iso, pages: [page], events: [] })
   }
   for (const event of events) {
-    const day = days.find((row) => row.iso === event.date)
-    if (day) day.events.push(event)
-    else days.push({ iso: event.date, pages: [], events: [event] })
+    for (const iso of eventDaysInMonth(event, shown)) {
+      const day = days.find((row) => row.iso === iso)
+      if (day) day.events.push(event)
+      else days.push({ iso, pages: [], events: [event] })
+    }
   }
   days.sort((a, b) => a.iso.localeCompare(b.iso))
 
   return (
-    <div className="app">
-      <div className="statusband" />
+    <div className="app fn-app">
 
-      <div className="calendar-screen scroll">
+      <div className="calendar-screen fn-shell scroll">
         <div className="calendar-body">
-          <div className="calendar-masthead">
-            <button className="link-caps" onClick={() => back(to.notebook(notebook))}>‹ Back</button>
-            <button className="link-caps" onClick={() => navigate(to.notebook(notebook))}>Notebook</button>
+          <DeskHeader title="Your month." notebook={notebook} pages={pages} />
+          <div className="fn-calendar-page">
+          <div className="calendar-masthead fn-calendar-page-toolbar">
+            <button className="icon-control" aria-label="Back" title="Back" onClick={() => back(to.overview())}><Icon name="back" /></button>
+            <button className="icon-control" aria-label="Notebook" title="Notebook" onClick={() => navigate(to.notebook(notebook))}><Icon name="notebook" /></button>
             <span className="grow" />
             <button className="link-caps" onClick={() => navigate(to.newEvent(shown === monthNow() ? isoDay() : `${shown}-01`))}>Add event</button>
-            <button
-              className="link-caps"
-              onClick={() => step(-1)}
-              aria-label="The month before"
-            >
-              ‹
-            </button>
-            <button
-              className="link-caps"
-              onClick={() => {
-                setShown(monthNow())
-                navigate(to.calendar(monthNow()), { replace: true })
-              }}
-            >
-              Today
-            </button>
-            <button className="link-caps" onClick={() => step(1)} aria-label="The month after">
-              ›
-            </button>
           </div>
-
-          <div className="calendar-datum">
-            <span className="calendar-name">{name}</span>
-            <span className="calendar-year">{year}</span>
-          </div>
-
-          <div className="calendar-grid">
-            <MonthGrid
-              month={shown}
-              written={written}
-              events={eventDays}
-              onPick={(iso) => navigate(to.day(iso))}
-            />
-          </div>
-
-          <div className="calendar-count section-label">
-            {countLabel(pages.length, 'page')} · {countLabel(events.length, 'event')} this month
-          </div>
-
+          <CalendarPanel large />
+          <div className="calendar-count section-label">{countLabel(pages.length, 'page')} · {countLabel(events.length, 'event')} this month</div>
+          <section className="calendar-agenda" aria-label="This month’s pages and events">
+          <h1 className="calendar-agenda-heading">In {name}</h1>
+          {days.length === 0 ? <p className="calendar-empty">No pages or events this month.</p> : null}
           {entries.length ? (
             <div className="calendar-journal">
               <div className="section-label">Journal</div>
@@ -131,6 +97,8 @@ export function CalendarScreen({ month, notebook }: { month?: string; notebook: 
               </div>
             </div>
           ))}
+          </section>
+          </div>
         </div>
       </div>
     </div>

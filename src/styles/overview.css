@@ -273,3 +273,65 @@
   .event-form-times { grid-template-columns: 1fr; gap: 0; }
   .review-columns { grid-template-columns: 1fr; }
 }
+
+/* Shared original icon artwork, with full-size controls around small marks. */
+.fn-icon { width: 24px; height: 24px; flex: 0 0 24px; }
+.icon-control { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; text-decoration: none; }
+.icon-control:hover { background: var(--frame-hover); }
+.icon-control:focus-visible, .rail-overview:focus-visible, .reminder-details > summary:focus-visible { outline: 2px solid var(--brass-300); outline-offset: 3px; }
+.rail-destinations { display: flex; gap: 10px; padding: 8px 20px 12px; }
+.rail-destinations .rail-overview { width: auto; min-width: 44px; min-height: 44px; margin: 0; padding: 9px; justify-content: center; gap: 8px; border-radius: 12px; }
+.rail-foot .icon-control { color: var(--frame-quiet); }
+.siena-item-foot .icon-control { min-width: 44px; min-height: 44px; padding: 8px; }
+.siena-item.reminder-compact { padding: 10px 12px; border-radius: 20px; }
+.reminder-line { display: flex; align-items: flex-start; gap: 8px; }
+.reminder-copy { flex: 1; min-width: 0; padding: 7px 0 0; }
+.siena-item.reminder-compact h3 { margin: 0; font: 18px/1.4 var(--font-body); overflow-wrap: anywhere; white-space: pre-wrap; }
+.reminder-compact .siena-item-due { margin: 5px 0 0; line-height: 1.5; }
+.reminder-details { margin-left: 52px; }
+.reminder-details > summary { width: fit-content; min-height: 44px; display: list-item; align-content: center; padding: 12px 6px 10px 0; cursor: pointer; color: var(--brass-300); font: 12px/1.5 var(--font-ui); }
+.reminder-compact.paper .reminder-details > summary { color: var(--brass-700); }
+.reminder-details .siena-item-body { font: 16px/1.5 var(--font-body); }
+.reminder-details .siena-item-foot { gap: 8px; }
+
+.overview-action.primary, .list-foot .plate-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.icon-control[role="img"] { cursor: default; }
+.siena-item.paper .icon-control:focus-visible,
+.siena-item.paper .reminder-details > summary:focus-visible { outline-color: var(--teal-900); }
+
+/* Use available desk space for related information, keeping the phone order. */
+.overview-screen > .overview-wrap { max-width: none; }
+.overview-layout { margin-top: 18px; }
+.overview-planning, .overview-layout > .overview-from-siena { min-width: 0; }
+.overview-planning .overview-daily { margin-top: 0; }
+@media (min-width: 1500px) {
+  .overview-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: clamp(24px, 2vw, 48px); }
+  .overview-layout > .overview-from-siena { border-top: 0; padding-top: 0; }
+  .overview-planning .overview-daily { grid-template-columns: 1fr; }
+  .overview-layout .overview-siena-columns { grid-template-columns: 1fr; }
+  .overview-layout .siena-item-body, .overview-layout .overview-revisit-page small { max-width: 70ch; }
+}
+@media (min-width: 2300px) {
+  .overview-planning .overview-daily { grid-template-columns: minmax(240px, .8fr) minmax(0, 1.2fr); }
+  .overview-layout .overview-siena-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Dark brass artwork; utility controls stay quiet until approached. */
+.fn-icon,
+.overview-icon-button,
+.forecast-day .weather-glyph { color: var(--brass-600); }
+.siena-item.paper .fn-icon,
+.overview-events .fn-icon,
+.overview-events .overview-icon-button,
+.overview-action.primary .fn-icon,
+.list-foot .plate-button .fn-icon { color: var(--brass-700); }
+.rail-foot .icon-control .fn-icon { color: var(--teal-300); opacity: .65; }
+.rail-foot .icon-control:is(:hover, :focus-visible) .fn-icon { color: var(--brass-600); opacity: 1; }
+.overview-icon-button:hover { color: var(--brass-600); }
+.overview-events .overview-icon-button:hover { color: var(--brass-700); }
+
+.overview-tools { border-top: 1px solid var(--frame-hairline); padding-top: 16px; }
+.overview-tools > summary { cursor: pointer; color: var(--frame-quiet); padding: 10px 0; }
+.overview-tools[open] > summary { margin-bottom: 10px; }
+
+.event-date-help { margin: -8px 0 20px; font-size: 13px; color: var(--cream-quiet-ink); }

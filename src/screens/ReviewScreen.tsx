@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getPage, replaceBodyIfUnchanged } from '../lib/db'
 import { imageIdsIn, titleOf, type Page } from '../lib/model'
-import { notebookForPage } from '../lib/notebooks'
+import { sienaRequest } from '../lib/siena-request'
 import { navigate, to } from '../lib/router'
 
 function readable(text: string): string {
@@ -17,6 +17,7 @@ function readable(text: string): string {
 export function ReviewScreen({ id }: { id: string }) {
   const [page, setPage] = useState<Page | null>(null)
   const [proposal, setProposal] = useState('')
+  const [instruction, setInstruction] = useState('Please suggest a complete revised page and explain any substantive change.')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [allowPictureRemoval, setAllowPictureRemoval] = useState(false)
@@ -30,11 +31,11 @@ export function ReviewScreen({ id }: { id: string }) {
 
   const copyRequest = async () => {
     if (!page) return
-    const request = `Siena, please help me with this Field Notes page. Suggest a complete revised page in Markdown and explain any substantive change. Do not update the saved page directly; I will review and apply it in Field Notes.\n\nNotebook: ${notebookForPage(page.notebook).name}\nPage ID: ${page.id}\nTitle: ${titleOf(page.body)}\n\nCurrent page:\n${page.body}`
+    const request = sienaRequest(instruction, page)
     try {
       await navigator.clipboard.writeText(request)
       setNotice('Request copied. Paste it into our conversation, then paste Siena’s proposed page below.')
-    } catch { setNotice('Could not copy on this device. You can still paste a proposed page below.') }
+    } catch { setNotice('Copy failed. Your request is still here; select and copy the request preview.') }
   }
 
   const apply = async () => {
@@ -58,6 +59,7 @@ export function ReviewScreen({ id }: { id: string }) {
       <span className="section-label">Work with Siena</span>
       <h1>{titleOf(page.body)}</h1>
       <p>Copy a request to discuss this page with Siena. Your saved page stays as it is until you review and apply a proposed version here.</p>
+      <div className="review-request paper-panel"><label htmlFor="review-request">What would you like Siena to help with?</label><textarea id="review-request" rows={3} value={instruction} onChange={(e) => setInstruction(e.target.value)} /><details className="request-context"><summary>Request preview</summary><pre tabIndex={0}>{sienaRequest(instruction, page)}</pre></details></div>
       <button className="overview-action primary" onClick={() => void copyRequest()}>Copy request for Siena</button>
       <div className="review-columns">
         <section><h2>Current page</h2><pre>{readable(page.body)}</pre></section>

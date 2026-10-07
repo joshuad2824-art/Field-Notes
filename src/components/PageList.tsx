@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { livePages } from '../lib/db'
 import { countLabel, groupFor, mastheadParts, shortStamp } from '../lib/format'
@@ -60,6 +61,7 @@ export function PageList({
      in the journal by hand, so New page would be the wrong offer. */
   const journal = notebook === JOURNAL_NOTEBOOK
   const [collecting, setCollecting] = useState(false)
+  const [collectionProblem, setCollectionProblem] = useState('')
 
   /* iOS keeps a strip below the app and paints it from the page's own canvas
      background, so that colour has to be whatever is at the bottom of the screen.
@@ -131,7 +133,7 @@ export function PageList({
           <span className="book-dot" style={{ background: book.color }} />
           <span className="list-title">{book.name}</span>
           <span className="grow" />
-          <span className="list-count">{countLabel(pages.length, 'page')}</span>
+          <span className="list-count">{countLabel(pages.length, journal ? 'review' : 'page')}</span>
         </div>
         <input
           className="well"
@@ -146,9 +148,11 @@ export function PageList({
       </div>
 
       <div className="scroll list-body">
+        {journal ? <p className="journal-intro">Weekly reviews assembled from your notebook pages. Review last week gathers its notes, or opens your existing review with your edits intact.</p> : null}
+        {collectionProblem ? <p className="journal-intro" role="alert">{collectionProblem}</p> : null}
         {groups.length === 0 ? (
           <div className="empty">
-            {query.trim() ? 'No pages match.' : 'Nothing here yet. Plenty of time.'}
+            {query.trim() ? 'No pages match.' : journal ? 'Your weekly reviews will appear here.' : 'Nothing here yet. Plenty of time.'}
           </div>
         ) : (
           groups.map((section) => (
@@ -179,11 +183,11 @@ export function PageList({
 
       {/* New page belongs under the pages it makes, at every width. */}
       <div className="list-foot" ref={footRef}>
-        <button className="link-signage overview-entry" onClick={() => navigate(to.overview())}>
-          Overview
+        <button className="icon-control overview-entry" aria-label="Overview" title="Overview" onClick={() => navigate(to.overview())}>
+          <Icon name="overview" />
         </button>
-        <button className="link-signage" onClick={() => navigate(to.search())}>
-          Search
+        <button className="icon-control" aria-label="Search" title="Search" onClick={() => navigate(to.search())}>
+          <Icon name="search" />
         </button>
         <span className="grow" />
         {journal ? (
@@ -192,23 +196,26 @@ export function PageList({
             disabled={collecting}
             /* Last week, not this one: on a Sunday morning the week you want
                is the one that just finished. Collecting the same week twice
-               updates the entry rather than making a second. */
+               opens the existing review without replacing edits. */
             onClick={async () => {
               setCollecting(true)
+              setCollectionProblem('')
               try {
                 const done = await collectWeek(lastWeekAt())
                 navigate(to.page(done.id))
                 onPick?.()
+              } catch (error) {
+                setCollectionProblem(error instanceof Error ? error.message : 'Could not open the weekly review.')
               } finally {
                 setCollecting(false)
               }
             }}
           >
-            {collecting ? 'Collecting' : 'Collect last week'}
+            {collecting ? 'Opening review' : 'Review last week'}
           </button>
         ) : (
           <button className="plate-button tight" onClick={onNewPage} title="⌘⇧N">
-            New page
+            <Icon name="new-page" /> New page
           </button>
         )}
       </div>

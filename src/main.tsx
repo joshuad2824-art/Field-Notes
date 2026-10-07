@@ -5,6 +5,7 @@ import './styles/base.css'
 import './styles/frame.css'
 import './styles/overview.css'
 import './styles/leaf.css'
+import './styles/desk.css'
 import { App } from './App'
 import { purgeExpiredTombstones, requestPersistence, seedIfEmpty } from './lib/db'
 import { loadNotebooks } from './lib/notebooks'
@@ -48,3 +49,5 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
     void navigator.serviceWorker.register('/sw.js')
   })
 }
+
+import './styles/approved-desk.css'

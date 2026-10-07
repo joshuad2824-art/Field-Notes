@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
-import { useRoute, navigate, to } from './lib/router'
+import { useRoute, navigate, to, type Route } from './lib/router'
+import { ApprovedFrame } from './components/ApprovedFrame'
+import { DeskScreen } from './screens/DeskScreen'
 import { captureNew, captureToday, wantCaretAtEnd } from './lib/capture'
 import { createPage, getPage } from './lib/db'
 import { firstNotebookId, notebookOf, useNotebooks } from './lib/notebooks'
@@ -17,6 +19,8 @@ import { OverviewScreen } from './screens/OverviewScreen'
 import { FromSienaScreen } from './screens/FromSienaScreen'
 import { EventScreen } from './screens/EventScreen'
 import { ReviewScreen } from './screens/ReviewScreen'
+import { PlanScreen } from './screens/PlanScreen'
+import { DavisCallbackScreen } from './screens/DavisCallbackScreen'
 import { RemindersPageScreen } from './screens/RemindersPageScreen'
 import { useLive } from './lib/useLive'
 import type { Page } from './lib/model'
@@ -55,9 +59,21 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [remembered])
 
+  if (route.name === 'oauth-consent') return <OAuthConsentScreen />
+  if (route.name === 'davis-callback') return <DavisCallbackScreen />
+  return <ApprovedFrame notebook={remembered}><Screen route={route} remembered={remembered} /></ApprovedFrame>
+}
+
+function Screen({ route, remembered }: { route: Route; remembered: string }) {
   switch (route.name) {
     case 'oauth-consent':
       return <OAuthConsentScreen />
+    case 'davis-callback':
+      return <DavisCallbackScreen />
+    case 'plans':
+      return <DeskScreen key="plans" kind="plans" notebook={remembered} />
+    case 'workshop':
+      return <DeskScreen key="workshop" kind="workshop" notebook={remembered} />
     case 'overview':
       return <OverviewScreen notebook={remembered} />
     case 'shelf':
@@ -74,6 +90,8 @@ export function App() {
       return <PageRoute key={route.id} id={route.id} />
     case 'review':
       return <ReviewScreen key={route.id} id={route.id} />
+    case 'plan':
+      return <PlanScreen key={route.id} id={route.id} />
     case 'search':
       return <SearchScreen />
     case 'tag':

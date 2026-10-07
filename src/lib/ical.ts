@@ -31,6 +31,7 @@ function nextDay(iso: string): string {
 
 export function eventIcs(event: FieldEvent): string {
   const date = event.date.replace(/-/g, '')
+  const end = (event.endDate ?? event.date).replace(/-/g, '')
   const stamp = new Date(event.updated).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
   const lines = [
     'BEGIN:VCALENDAR',
@@ -44,10 +45,10 @@ export function eventIcs(event: FieldEvent): string {
   ]
   if (event.startTime) {
     lines.push(`DTSTART:${date}T${event.startTime.replace(':', '')}00`)
-    if (event.endTime) lines.push(`DTEND:${date}T${event.endTime.replace(':', '')}00`)
+    if (event.endTime) lines.push(`DTEND:${end}T${event.endTime.replace(':', '')}00`)
     else lines.push('DURATION:PT1H')
   } else {
-    lines.push(`DTSTART;VALUE=DATE:${date}`, `DTEND;VALUE=DATE:${nextDay(event.date)}`)
+    lines.push(`DTSTART;VALUE=DATE:${date}`, `DTEND;VALUE=DATE:${nextDay(event.endDate ?? event.date)}`)
   }
   if (event.location) lines.push(`LOCATION:${escapeText(event.location)}`)
   if (event.note) lines.push(`DESCRIPTION:${escapeText(event.note)}`)

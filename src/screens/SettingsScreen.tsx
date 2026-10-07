@@ -93,10 +93,8 @@ export function SettingsScreen() {
          `--browser-bottom`, and the two disagreeing is itself a finding. */
       const paint = (el: Element) => getComputedStyle(el).backgroundColor
       const insetBottom = measure('--raw-inset-bottom')
-      /* The number that ends the argument. When the app fills the view and the
-         view is still short of the screen, what is left over is not ours and
-         no colour set in this document reaches it — measured at 62 on a phone
-         in portrait and 32 on an iPad. Only the manifest can paint there. */
+      /* A useful comparison, not proof of a strip below the app: screen and
+         viewport sizes can differ for status bars, rotation, or browser UI. */
       const outside = Math.max(0, window.screen.height - window.innerHeight)
       setScreen([
         `window.innerHeight        ${window.innerHeight}`,
@@ -109,7 +107,7 @@ export function SettingsScreen() {
         `--safe-bottom             ${safe}px`,
         `env(inset-top)            ${measure('--safe-top')}px`,
         `env(inset-bottom)         ${insetBottom}px`,
-        `--outside-bottom          ${style.getPropertyValue('--outside-bottom').trim() || '—'}`,
+        `status-bar setting        ${document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.getAttribute('content') ?? '—'}`,
         `html background           ${paint(document.documentElement)}`,
         `body background           ${paint(document.body)}`,
         `#root reaches             ${root ? Math.round(root.bottom) : '—'}`,
@@ -265,12 +263,14 @@ export function SettingsScreen() {
           </p>
 
           <h2>Screen</h2>
+          <p className="meta" style={{ overflowWrap: 'anywhere' }}>
+            App address: <span style={{ textTransform: 'none' }}>{window.location.origin}</span>
+          </p>
           <p>
-            What this device says about its own window. The three heights ought to agree with
-            each other, and where they agree but fall short of the screen, the difference is a
-            strip the system keeps and no colour set in here can reach — 62 on a phone in
-            portrait, 32 on an iPad. Read rather than guessed at, which is the whole reason
-            this is on the screen.
+            These measurements help compare the app’s window with the screen. A difference
+            can come from the status bar, browser controls, keyboard, or installed-app behavior.
+            The numbers alone do not show where a visible gap comes from; compare them with
+            what is on the screen.
           </p>
           <p className="meta mono-block">
             {screen.map((line) => (

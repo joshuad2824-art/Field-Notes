@@ -731,6 +731,9 @@ const eventDay = new Date()
 const eventDate = `${eventDay.getFullYear()}-${String(eventDay.getMonth() + 1).padStart(2, '0')}-${String(eventDay.getDate()).padStart(2, '0')}`
 await a.view.goto(`${BASE}/event/new/${eventDate}`, { waitUntil: 'domcontentloaded' })
 await a.view.getByLabel('Title').fill('Across both devices')
+const eventLast = new Date(eventDay.getFullYear(), eventDay.getMonth(), eventDay.getDate() + 2)
+const eventEndDate = `${eventLast.getFullYear()}-${String(eventLast.getMonth() + 1).padStart(2, '0')}-${String(eventLast.getDate()).padStart(2, '0')}`
+await a.view.getByLabel('End date optional').fill(eventEndDate)
 await a.view.getByRole('button', { name: 'Save event' }).click()
 await a.view.getByRole('heading', { name: 'Across both devices' }).waitFor()
 await syncNow(a)
@@ -743,7 +746,7 @@ const copiedEvents = await b.view.evaluate(async () => {
     rows.onsuccess = () => resolve(rows.result)
   })
 })
-ok('an event crosses to the paired device', copiedEvents.some((row) => row.title === 'Across both devices'))
+ok('an event crosses to the paired device', copiedEvents.some((row) => row.title === 'Across both devices' && row.endDate === eventEndDate))
 
 const eventWire = [...store.entries()].find(([key, row]) => key.startsWith('events|') && row.title === 'Across both devices')?.[1]
 const inboxId = 'dashboard-siena-sync'
@@ -761,7 +764,7 @@ await b.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
 await b.view.getByText('A complete message arrives from Siena.').waitFor()
 ok('a published Siena item reaches the paired device', (await b.view.locator('.siena-item').count()) === 1)
 await b.view.getByRole('button', { name: 'Mark seen' }).click()
-await b.view.getByText('Seen', { exact: true }).waitFor()
+await b.view.getByRole('img', { name: 'Seen', exact: true }).waitFor()
 await syncNow(b)
 await syncNow(a)
 await a.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
@@ -788,6 +791,7 @@ for (let attempt = 0; attempt < 3 && !store.get(`siena_items|${eventWire?.vault}
 }
 await syncNow(a)
 await a.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
+await a.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).waitFor()
 ok('completion reaches the first device and the mirror',
   (await a.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).count()) === 1 &&
   !!store.get(`siena_items|${eventWire?.vault}|${reminderId}`)?.completed_at,

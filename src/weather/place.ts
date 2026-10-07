@@ -2,15 +2,10 @@ import { useSyncExternalStore } from 'react'
 
 /* Where the weather is being asked about.
 
-   Two ways of knowing, in order: this device, asked once; and failing that, a
-   place typed into Settings. The prompt is the only one in the app and it is
-   worth being honest about that — an app whose whole identity design exists to
-   avoid asking you for anything now asks for one thing. It asks once, it takes
-   no for an answer permanently, and refusing it costs a line of chrome and
-   nothing else.
-
-   A refusal is remembered so the prompt is not raised again on every open,
-   which is the behaviour that makes people delete apps. */
+   Settings can request this device's location or choose a named place. Both
+   are saved here. Routine weather refreshes reuse that saved place and never
+   request device location: browser permission can expire between launches,
+   and only an explicit Settings action should be able to raise its prompt. */
 
 export interface Place {
   lat: number
@@ -86,7 +81,7 @@ export function wasRefused(): boolean {
   return refused()
 }
 
-/* Ask the device, once. Resolves to null rather than throwing, because there
+/* Ask the device from an explicit Settings action. Resolves to null rather than throwing, because there
    is no caller who wants to handle "the user said no" as an exception. */
 export function locate(timeout = 8000): Promise<Place | null> {
   if (!navigator.geolocation || refused()) return Promise.resolve(null)
@@ -111,15 +106,9 @@ export function locate(timeout = 8000): Promise<Place | null> {
   })
 }
 
-/* The place the weather should use now: a deliberate choice first, then the
-   device, then nothing. */
+/* Reuse the saved place, including previously saved device coordinates.
+   Weather can refresh without asking where the device is again. */
 export async function resolvePlace(): Promise<Place | null> {
-  if (current?.chosen) return current
-  const here = await locate()
-  if (here) {
-    setPlace({ ...here, label: current?.label })
-    return getPlace()
-  }
   return current
 }
 

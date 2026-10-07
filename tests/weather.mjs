@@ -143,9 +143,10 @@ async function device({ width, height, locale = 'en-GB' }) {
   const context = await browser.newContext({
     viewport: { width, height },
     locale,
-    permissions: ['geolocation'],
-    /* Somewhere it rains enough to be worth a line about. */
-    geolocation: { latitude: 54.14, longitude: -0.8 },
+  })
+  await context.addInitScript(() => {
+    /* A saved weather place does not require device permission at launch. */
+    localStorage.setItem('field-notes.place', JSON.stringify({ lat: 54.14, lon: -0.8 }))
   })
   await context.route('**://api.open-meteo.com/**', async (route, request) => {
     asked.push(request.url())
@@ -392,16 +393,12 @@ async function device({ width, height, locale = 'en-GB' }) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     locale: 'en-GB',
-    /* Without these there is no place, so there is no reading, so there is no
-       line — and the assertion below would fail for a reason that has nothing
-       to do with what it is asking about. */
-    permissions: ['geolocation'],
-    geolocation: { latitude: 54.14, longitude: -0.8 },
   })
   await context.route('**://api.open-meteo.com/**', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FORECAST) }),
   )
   await context.addInitScript(() => {
+    localStorage.setItem('field-notes.place', JSON.stringify({ lat: 54.14, lon: -0.8 }))
     localStorage.setItem('field-notes.zoom-defaulted', '1')
     localStorage.setItem('field-notes.settings', JSON.stringify({ zoom: 2 }))
   })
