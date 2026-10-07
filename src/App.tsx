@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useFamilyRefresh } from './davis/calendar'
 import { useRoute, navigate, to, type Route } from './lib/router'
 import { ApprovedFrame } from './components/ApprovedFrame'
 import { DeskScreen } from './screens/DeskScreen'
@@ -26,6 +27,7 @@ import { useLive } from './lib/useLive'
 import type { Page } from './lib/model'
 
 export function App() {
+  useFamilyRefresh()
   const route = useRoute()
   const settings = useSettings()
   const books = useNotebooks()

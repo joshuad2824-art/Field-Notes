@@ -1,4 +1,4 @@
-# Project desk first pass
+# Project desk and Workshop
 
 The dashboard links ordinary saved pages. Add project, Add plan, and Add equipment open visible forms: select an existing source page or explicitly create a new one, fill in its details, and Save. Cancel leaves the source untouched. Gear buttons and Edit plan details reopen the same forms. A concurrent source edit blocks Save and retains the form input so it cannot silently overwrite newer writing. These actions do not seed a vault or duplicate an existing source page.
 
@@ -14,7 +14,7 @@ Examples inside fenced code do not count as metadata. Saving details preserves o
 
 Ask Siena opens a request composer. Write a request and optionally attach an existing saved page. The preview is the exact text copied to the clipboard. Paste it into the conversation manually; no conversation transport is connected. Failed copying retains the input and exposes selectable preview text. Work with Siena uses the same request builder and retains explicit review-before-apply and unchanged-page/picture-removal guards.
 
-Read-only plan pages show source text, simple headings and tables, and original image Blobs with their dimensions and file size. Open the source editor explicitly to change the page. Print / Save PDF uses the browser print dialog. Unverified physical scale remains reference material; this pass does not generate calibrated cutting templates.
+Plan pages show source text, simple headings and tables, and original image Blobs with their dimensions and file size. Use Add image to attach an original PNG, JPEG, WebP, or GIF up to 8 MB; the image and its source reference save in one local transaction guarded by the current page version. Open the source editor explicitly for writing edits. Back to Workshop returns to the complete plan list. Print / Save PDF uses the browser print dialog. Unverified physical scale remains reference material; this pass does not generate calibrated cutting templates.
 
 ## Davis connection prepared locally
 
@@ -29,3 +29,12 @@ Set `VITE_DAVIS_FIELD_NOTES_CLIENT_ID` only to the separately approved registere
 ## Local checks
 
 Run `npm run dev`, then `BASE=http://127.0.0.1:5173 npm run check`. The desk, metadata, and Davis consumer tests use Vite's local module boundary and disposable browser contexts with invented fixtures. They require the development server. Do not run them against production or an existing browser profile.
+
+
+## October 7 Workshop and shared-calendar revision
+
+The single Workshop route contains a compact Tools on hand card followed by plan cards. The former Plans route is a compatibility alias; primary navigation has Today, Notebooks, and Workshop. Plans still use the same ordinary source pages, revisions, and original image records. No live pages or owned-tool confirmations were created by this code change.
+
+Family events are merged in memory with native events on the dashboard, month calendar, day view, and calendar markers. A muted teal edge and Davis / Read only tag identify the external source. Opening one goes to Davis; it never opens a native Field Notes event editor. Stale events retain a stale tag; disconnect/revocation clears the external projection without changing native events. Family reminders share the Remember card. The separate Davis agenda panel has been removed; connection and refresh controls now live in Settings. Real connection activation remains subject to the existing prerequisites above. Only fetched date ranges can be displayed; the current Davis reader supplies today and the following six days.
+
+Local verification entrypoint: `tests/workshop-check.html` on the Vite development server. It refuses fixture actions in a paired archive and is not part of the production bundle. Its controls load invented plans/events and run image transaction, stale conflict, sync-byte, and external-calendar lifecycle checks. Manual browser checks cover image upload, return navigation, month/day views, and 390px/1485px layouts.

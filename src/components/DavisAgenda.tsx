@@ -1,7 +1,7 @@
-import { useEffect, useState, useSyncExternalStore } from 'react'
-import { davisAgenda, type AgendaEntry } from '../davis/agenda'
+import { useState, useSyncExternalStore } from 'react'
+import { davisAgenda } from '../davis/agenda'
 import { davisSession, DAVIS_CALLBACK_URL } from '../davis/oauth'
-import { DAVIS_SOURCE_URL, datesIn, shiftDate } from '../davis/wire'
+import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { Icon } from './Icon'
 
 const messages = {
@@ -13,24 +13,11 @@ const messages = {
   offline: 'You’re offline. Davis could not be refreshed; any shown items are stale.',
   stale: 'These are previously fetched items. Refresh to check for changes.',
 }
-function entryLabel(entry: AgendaEntry) {
-  return <><strong>{entry.title}</strong>{entry.location ? <span>{entry.location}</span> : null}<small>{entry.owner || ''}{entry.owner && entry.audience ? ' · ' : ''}{entry.audience === 'adults' ? 'Adults' : entry.audience === 'household' ? 'Household' : entry.audience || ''}</small></>
-}
 export function DavisAgenda() {
   const state = useSyncExternalStore(davisAgenda.subscribe, davisAgenda.getSnapshot)
-  useEffect(() => {
-    const refresh = () => { if (document.visibilityState === 'visible' && davisAgenda.getSnapshot().snapshot) void davisAgenda.refresh() }
-    const timer = window.setInterval(refresh, 5 * 60_000)
-    window.addEventListener('online', refresh); document.addEventListener('visibilitychange', refresh)
-    return () => { window.clearInterval(timer); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', refresh) }
-  }, [])
   const [notice, setNotice] = useState('')
   const [connecting, setConnecting] = useState(false)
   const snapshot = state.snapshot
-  const entries = snapshot?.entries ?? []
-  const days = snapshot ? datesIn({ from: snapshot.from ?? snapshot.today, to: snapshot.to ?? shiftDate(snapshot.today, 6) }) : []
-  const reminders = entries.filter((entry) => entry.kind === 'reminder')
-  const hasEvents = days.some((day) => entries.some((entry) => entry.kind === 'event' && entry.startDate <= day && (entry.endDate || entry.startDate) >= day))
   const canConnect = davisSession.configured() && location.origin === new URL(DAVIS_CALLBACK_URL).origin
   async function connect() {
     setConnecting(true); setNotice(''); davisAgenda.disconnect()
@@ -38,15 +25,9 @@ export function DavisAgenda() {
     catch { setNotice('Davis connection could not be started. Your notes are unchanged.'); setConnecting(false) }
   }
   return <section className="davis-agenda" aria-labelledby="davis-title" data-state={state.status}>
-    <div className="overview-section-head"><h2 id="davis-title"><Icon name="calendar" />Davis agenda</h2></div>
+    <div className="overview-section-head"><h2 id="davis-title"><Icon name="calendar" />Family calendar</h2><span className="section-label">Read only</span></div>
     {state.status !== 'ready' ? <p className="davis-status" role="status">{state.status === 'stale' && state.reason === 'refresh-failed' ? 'Davis could not be refreshed. These previously fetched items are stale.' : messages[state.status]}</p> : null}
     {snapshot ? <><p className="davis-source">{snapshot.householdName || 'Davis at Home'} · {snapshot.timezone}<br />Fetched {new Date(snapshot.fetchedAt).toLocaleString([], { timeZone: snapshot.timezone })}</p>
-      {days.map((day) => {
-        const events = entries.filter((entry) => entry.kind === 'event' && entry.startDate <= day && (entry.endDate || entry.startDate) >= day)
-        return events.length ? <div className="davis-day" key={day}><h3>{day === snapshot.today ? 'Today' : day}</h3><ol className="davis-entries">{events.map((entry) => <li key={`${entry.sourceId}:${day}`}><span className="davis-date">{entry.time || 'No time recorded'}{entry.startDate !== (entry.endDate || entry.startDate) ? ` · ${entry.startDate} – ${entry.endDate}` : ''}</span>{entryLabel(entry)}</li>)}</ol></div> : null
-      })}
-      {reminders.length ? <div className="davis-reminders"><h3>Incomplete reminders</h3><ol className="davis-entries">{reminders.map((entry) => <li key={entry.sourceId}><span className="davis-date">{entry.startDate < snapshot.today ? 'Overdue reminder' : 'Reminder'} · {entry.startDate}</span>{entryLabel(entry)}</li>)}</ol></div> : null}
-      {!hasEvents && !reminders.length && state.status === 'ready' ? <p className="desk-empty">No events or incomplete reminders in this fetched window.</p> : null}
       <div className="davis-actions"><button className="overview-back" onClick={() => void davisAgenda.refresh()}>Refresh</button><button className="overview-back" onClick={() => davisAgenda.disconnect()}>Disconnect Davis</button></div>
       <a className="davis-open" href={DAVIS_SOURCE_URL} target="_blank" rel="noopener noreferrer"><Icon name="source" />Open in Davis at Home</a>
     </> : canConnect ? <button className="overview-action" disabled={connecting} onClick={() => void connect()}>{connecting ? 'Starting connection…' : 'Connect Davis'}</button> : null}

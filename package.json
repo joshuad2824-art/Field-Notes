@@ -8,10 +8,11 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
-    "check": "node tests/overview.mjs && node tests/editor.mjs && node tests/format-join.mjs && node tests/spreadsheet.mjs && node tests/sync.mjs && node tests/weather.mjs && node tests/journal.mjs && node tests/roundtrip.mjs && node tests/experience.mjs && node tests/dashboard.mjs && node tests/event-ranges.mjs && node tests/links.mjs && node tests/tray-dismiss.mjs && node tests/link-writing.mjs && node tests/weather-location.mjs && node tests/open-editor-sync.mjs && node tests/desk.mjs && node tests/davis-consumer.mjs && node tests/desk-details.mjs && node tests/approved-navigation.mjs && node tests/dashboard-layout.mjs",
+    "check": "node tests/overview.mjs && node tests/editor.mjs && node tests/format-join.mjs && node tests/spreadsheet.mjs && node tests/sync.mjs && node tests/weather.mjs && node tests/journal.mjs && node tests/roundtrip.mjs && node tests/experience.mjs && node tests/dashboard.mjs && node tests/event-ranges.mjs && node tests/links.mjs && node tests/tray-dismiss.mjs && node tests/link-writing.mjs && node tests/weather-location.mjs && node tests/open-editor-sync.mjs && node tests/desk.mjs && node tests/davis-consumer.mjs && node tests/desk-details.mjs && node tests/approved-navigation.mjs",
     "check:screen": "node tests/screen-check.mjs",
     "check:dashboard": "node tests/dashboard.mjs",
-    "diagnose": "node tests/diagnostic.mjs"
+    "diagnose": "node tests/diagnostic.mjs",
+    "check:workshop-plugin": "node tests/workshop-plugin.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.9.0",

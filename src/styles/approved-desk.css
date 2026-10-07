@@ -387,3 +387,24 @@
  .fn-app .fn-main-column .fn-desk-projects{grid-column:1;grid-row:3;margin:0}
  .fn-app .fn-main-column .fn-plans{grid-column:1;grid-row:4;margin:0}
 }
+
+
+/* Workshop and one shared calendar, October 7. */
+.fn-app .fn-workshop-sheet { max-width: 720px; margin: 24px 0; padding: 20px 24px; }
+.fn-app .fn-workshop-sheet .overview-section-head h2 { margin: 0; font-size: 1.25rem; }
+.fn-workshop-sheet .fn-stock-row { padding: 5px 0; }
+.desk-agenda-row { display: block; }
+.event-row-davis { border-left: 3px solid #8eaeb0; background: rgba(142,174,176,.09); text-decoration: none; color: inherit; }
+.event-source-tag { display: block; color: #bdd3d4; font-size: .7rem; letter-spacing: .04em; }
+.calendar-source-status { font-size: .85rem; }
+.plan-tools { flex-wrap: wrap; }
+
+.fn-workshop-page .fn-plan-grid { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); align-items: start; }
+.fn-workshop-page .desk-thumbnail img { max-height: 220px; object-fit: contain; }
+.fn-workshop-page .fn-workshop-sheet { margin: 0 0 36px; }
+.fn-workshop-page .fn-workshop-sheet .workshop-row { display: inline-flex; width: 50%; vertical-align: top; }
+@media(max-width:600px) { .fn-workshop-page .fn-workshop-sheet .workshop-row { width: 100%; } }
+
+.fn-open-reminder .event-source-tag { color: #456468; }
+.overview-events .event-row-davis { border-left: 3px solid #66868a; background: #e1e9e5; }
+.overview-events .event-source-tag { color: #355a60; }

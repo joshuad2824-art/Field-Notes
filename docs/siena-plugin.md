@@ -1,7 +1,7 @@
 # Siena plugin
 
 The Field Notes plugin connects ChatGPT and Codex to the existing Supabase sync
-mirror. It exposes nine narrow actions: connection status, notebooks, recent
+mirror. The original release exposed nine narrow actions: connection status, notebooks, recent
 pages, search, read, create, edit, list From Siena items, and publish a From
 Siena item. It does not expose deletion or raw SQL.
 
@@ -35,8 +35,7 @@ Settings removes access immediately at the database policy layer.
 The `update_page` tool requires the exact `updated` value from `get_page`. A
 stale edit fails, allowing the assistant to reread and reconcile the text. The
 app's normal sync still preserves conflict copies for simultaneous offline
-edits. Notes with pictures can be read as Markdown, but the first plugin
-version does not return image bytes.
+edits. Notes with pictures can be read as Markdown, and the October 7 plugin release adds original raster image reading and atomic image attachment.
 
 `create_siena_item` publishes a full message, due reminder, meaningful task
 result, or saved link into From Siena. For a reminder, pass the intended
@@ -51,7 +50,7 @@ No recurring publication is configured by this code.
 
 ## Tool discovery and skill installation
 
-The server advertises nine tools. A connection exposing only the seven page
+The original server advertised nine tools. The prepared October 7 release advertises 17 after its migration and server deployment. A connection exposing only the seven page
 tools is missing `list_siena_items` and `create_siena_item`; creating an ordinary
 page is not a substitute for publishing a reminder.
 
@@ -95,3 +94,23 @@ task after reinstalling to pick up the new skill.
 For local UI regression coverage, start the development server and run
 `BASE=http://127.0.0.1:5173 npm run check:dashboard`. The suite uses a separate
 browser context and verifies shared reminder completion and retained history.
+
+
+## October 7 prepared release (0.3.0)
+
+The local Codex package at `~/plugins/field-notes` and its installed `field-notes@personal` copy are version 0.3.0. Endpoint, identity, prompts, and existing nine tools remain unchanged. ChatGPT uses the existing hosted MCP connection; there is no separately editable Field Notes account-plugin package in the current personal plugin inventory.
+
+Eight added tools:
+
+- `list_workshop`: paginated plans and owned tools, excluding fenced examples.
+- `set_workshop_details`: version-checked metadata edits preserving writing/images; explicit ownership confirmation for equipment.
+- `list_page_images`: referenced originals and missing IDs.
+- `get_page_image`: original raster content for inspection.
+- `attach_page_image`: version-checked atomic image/reference save with an identical-retry request ID; supported raster formats up to 8 MB.
+- `list_events`, `get_event`, `save_event`: native Field Notes calendar records with inclusive dates and guarded edits. Davis data stays in its own connector.
+
+Deployment order: apply `supabase/migrations/20261007163146_workshop_images_calendar.sql`, deploy `field-notes-mcp` including `workshop.ts` with the existing OAuth verification wrapper, publish the web build, then refresh the existing ChatGPT connection's tool metadata and start a fresh Codex chat. The updated skill is also available for the separate ChatGPT skill installation. Do not claim live availability until deployment and discovery are verified.
+
+The migration adds linked-account image read/create and native-event read/create/update policies, scoped to the existing vault link. It adds no deletion tool, service-role credential, public image bucket, or Davis write access. The attachment function is SECURITY INVOKER and saves bytes/reference together. A failed version check leaves both unchanged. An identical retry is idempotent; reusing an ID with different content is rejected.
+
+Checks: `npm run check:workshop-plugin`, Deno check on the MCP entrypoint, the local browser fixture described in `project-desk.md`, and `tests/workshop-sql.mjs` with `PGLITE_MODULE` pointing to an installed PGlite entrypoint. SQL tests use disposable local tables and roles, never production notes.

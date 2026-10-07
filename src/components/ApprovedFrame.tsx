@@ -38,8 +38,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
   const primary: { label: string; icon: React.ComponentProps<typeof Icon>['name']; href: string; active: boolean }[] = [
     { label: 'Today', icon: 'overview', href: to.overview(), active: route.name === 'overview' || route.name === 'shelf' },
     { label: 'Notebooks', icon: 'notebook', href: to.notebook(notebook), active: ['notebook', 'page'].includes(route.name) },
-    { label: 'Plans', icon: 'plan', href: to.plans(), active: route.name === 'plans' || route.name === 'plan' },
-    { label: 'Workshop', icon: 'workshop', href: to.workshop(), active: route.name === 'workshop' },
+    { label: 'Workshop', icon: 'workshop', href: to.workshop(), active: ['workshop', 'plans', 'plan'].includes(route.name) },
   ]
   return <FrameContext.Provider value={desktop}><div className={`approved-application${desktop ? ' with-calendar-rail' : ''}${keyboard ? ' keyboard-open' : ''}`}>
     <a className="fn-skip" href="#desk-heading" onClick={event => { event.preventDefault(); const heading = document.getElementById('desk-heading') ?? document.querySelector<HTMLElement>('main h1, .cm-content, main'); if (heading && !heading.hasAttribute('tabindex') && !heading.isContentEditable) heading.setAttribute('tabindex', '-1'); heading?.focus() }}>Skip to content</a>

@@ -61,7 +61,7 @@ function snapshot() {
 export function parse(path: string): Route {
   const parts = path.split('/').filter(Boolean).map(decodeURIComponent)
   if (parts.length === 0) return { name: 'shelf' }
-  if (parts[0] === 'plans') return { name: 'plans' }
+  if (parts[0] === 'plans') return { name: 'workshop' }
   if (parts[0] === 'workshop') return { name: 'workshop' }
   if (parts[0] === 'overview') return { name: 'overview' }
   if (parts[0] === 'from-siena') return { name: 'from-siena' }
@@ -92,7 +92,7 @@ export function useRoute(): Route {
 export const to = {
   shelf: () => '/',
   overview: () => '/overview',
-  plans: () => '/plans',
+  plans: () => '/workshop',
   workshop: () => '/workshop',
   fromSiena: () => '/from-siena',
   event: (id: string) => `/event/${id}`,

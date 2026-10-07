@@ -1,3 +1,5 @@
+import { eventOnDay } from '../lib/event-range'
+import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
 import { pagesOnDay } from '../lib/db'
 import { readableDay } from '../lib/format'
 import { isoMonth } from '../lib/calendar'
@@ -13,7 +15,9 @@ import type { FieldEvent } from '../lib/model'
    only being looked at by the day it was written on. */
 export function DayScreen({ iso, notebook }: { iso: string; notebook: string }) {
   const pages = useLive<Page[]>(() => pagesOnDay(iso), [iso], [])
-  const events = useLive<FieldEvent[]>(() => eventsOnDay(iso), [iso], [])
+  const localEvents = useLive<FieldEvent[]>(() => eventsOnDay(iso), [iso], [])
+  const family = useFamilyAgenda()
+  const events = mergeCalendarEvents(localEvents, family).filter(event => eventOnDay(event, iso))
 
   return (
     <div className="app">

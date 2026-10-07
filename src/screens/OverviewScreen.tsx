@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { eventOnDay } from '../lib/event-range'
 import { EventRow } from '../components/EventRow'
 import { SienaItemCard } from '../components/SienaItemCard'
-import { DavisAgenda } from '../components/DavisAgenda'
+import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
+import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { DeskHeader, RouteLink } from '../components/DeskHeader'
 import { DeskWeather } from '../components/DeskWeather'
 import { DeskJournal } from '../components/DeskJournal'
@@ -22,7 +23,10 @@ export function OverviewScreen({ notebook }: { notebook: string }) {
   const [today, setToday] = useState(isoDay)
   useEffect(() => { const timer = window.setInterval(() => setToday(isoDay()), 60_000); return () => window.clearInterval(timer) }, [])
   const pages = useLive<Page[]>(livePages, [], [])
-  const allEvents = useLive<FieldEvent[]>(liveEvents, [], [])
+  const localEvents = useLive<FieldEvent[]>(liveEvents, [], [])
+  const family = useFamilyAgenda()
+  const allEvents = mergeCalendarEvents(localEvents, family)
+  const familyReminders = (family.snapshot?.entries ?? []).filter(entry => entry.kind === 'reminder')
   const items = useLive(allSienaItems, [], [])
   const siena = sienaSections(items)
   const upcoming = weekAhead(today, allEvents, items)
@@ -33,16 +37,18 @@ export function OverviewScreen({ notebook }: { notebook: string }) {
     <DeskWeather />
     <div className="fn-desk-grid">
       <div className="fn-main-column">
-        <DeskJournal note={siena.featured} project={active} unseen={siena.unseen} />
-        <ProjectDesk pages={pages} notebook={notebook} />
+      <DeskJournal note={siena.featured} project={active} unseen={siena.unseen} />
+      <ProjectDesk pages={pages} notebook={notebook} />
       </div>
       <aside className="fn-side-column"><section className="fn-open-reminder"><span className="fn-reminder-tape" aria-hidden="true" /><div className="fn-open-heading"><h2>Remember</h2></div>
         <div className="fn-reminder-items" tabIndex={0} role="region" aria-label="Due reminders">
-        {siena.reminders.length ? siena.reminders.map(item => <SienaItemCard key={item.id} item={item} />) : <p className="desk-empty">Nothing is due here today.</p>}
+        {siena.reminders.length ? siena.reminders.map(item => <SienaItemCard key={item.id} item={item} />) : <>{familyReminders.length ? null : <p className="desk-empty">Nothing is due here today.</p>}</>}
+        {familyReminders.map(entry => <a key={entry.sourceId} className="event-row event-row-davis" href={DAVIS_SOURCE_URL} target="_blank" rel="noopener noreferrer"><span className="event-row-main"><strong>{entry.title}</strong><span className="event-source-tag">Davis · Read only{family.status !== 'ready' ? ' · Stale' : ''}</span><small>Due {readableDay(entry.startDate)}</small></span></a>)}
         </div>
       </section>{siena.updates.length ? <section className="desk-updates"><h2>Task updates</h2>{siena.updates.map(item => <SienaItemCard key={item.id} item={item} />)}</section> : null}</aside>
     </div>
-    <div className="desk-agenda-row"><DavisAgenda /><div className="desk-local-agenda">
+    <div className="desk-agenda-row"><div className="desk-local-agenda">
+      {['stale', 'offline', 'error', 'denied'].includes(family.status) ? <p className="calendar-source-status" role="status">{family.snapshot ? 'Family events may be out of date.' : 'Family events are unavailable.'} <RouteLink href={to.settings()}>Calendar connection</RouteLink></p> : null}
       <section className="overview-events"><div className="overview-section-head"><h2>Today’s events</h2><RouteLink className="overview-icon-button overview-add-event" href={to.newEvent(today)} aria-label="Add event" title="Add event"><Icon name="new-page" /></RouteLink></div>{events.length ? events.map(event => <EventRow key={event.id} event={event} />) : <p className="overview-empty">Nothing planned here today.</p>}</section>
       {upcoming.length ? <section className="overview-upcoming"><h2>Coming up</h2>{upcoming.map(entry => <div className="overview-agenda-day" key={entry.iso}><RouteLink className="overview-agenda-date" href={to.day(entry.iso)}>{readableDay(entry.iso)}</RouteLink><div className="overview-agenda-items">{entry.events.map(event => <EventRow key={event.id} event={event} />)}{entry.reminders.map(item => <RouteLink className="overview-agenda-reminder" key={item.id} href={to.fromSiena()}>{item.title ?? item.body}</RouteLink>)}</div></div>)}</section> : null}
     </div></div>

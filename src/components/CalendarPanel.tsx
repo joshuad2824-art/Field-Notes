@@ -1,3 +1,5 @@
+import { familyEvents, useFamilyAgenda } from '../davis/calendar'
+import { eventDaysInMonth } from '../lib/event-range'
 import { MonthGrid } from './MonthGrid'
 import { daysWritten } from '../lib/db'
 import { daysWithEvents } from '../lib/events'
@@ -11,7 +13,9 @@ import { RouteLink } from './DeskHeader'
 export function CalendarPanel({ large = false }: { large?: boolean }) {
   const view = useCalendarView()
   const written = useLive(daysWritten, [], new Set<string>())
-  const events = useLive(() => daysWithEvents(view.month), [view.month], new Set<string>())
+  const localEvents = useLive(() => daysWithEvents(view.month), [view.month], new Set<string>())
+  const family = useFamilyAgenda()
+  const events = new Set([...localEvents, ...familyEvents(family).flatMap(event => eventDaysInMonth(event, view.month))])
   const date = new Date(`${view.selected}T12:00:00`)
   const { month, year } = monthParts(view.month)
   const step = (by: number) => { const next = stepMonth(view.month, by); showCalendarMonth(next); if (location.pathname.startsWith('/calendar')) navigate(to.calendar(next), { replace: true }) }

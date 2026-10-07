@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getPage } from '../lib/db'
+import { attachPlanImage } from '../lib/plan-images'
 import { getImage, imageUrl } from '../lib/images'
 import { IMAGE_RE, titleOf, type Page } from '../lib/model'
 import { field } from '../lib/project-desk'
@@ -56,10 +57,21 @@ function PlanText({ text }: { text: string }) {
   return <div className="plan-text">{blocks}</div>
 }
 export function PlanScreen({ id }: { id: string }) {
+  const imageInput = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [notice, setNotice] = useState('')
   const page = useLive<Page | null | undefined>(() => getPage(id).then((p) => p && !p.deleted ? p : null), [id], undefined)
+  async function upload(file?: File) {
+    if (!file || !page || uploading) return
+    setUploading(true); setNotice('')
+    try { await attachPlanImage(page, file); setNotice('Image added to this plan.') }
+    catch (error) { setNotice(error instanceof Error ? error.message : 'The image could not be saved.') }
+    finally { setUploading(false); if (imageInput.current) imageInput.current.value = '' }
+  }
   return <div className="app plan-app"><div className="statusband" /><main className="plan-screen scroll"><div className="plan-wrap">
-    <div className="plan-tools"><button className="overview-back" onClick={() => navigate(to.overview())}><Icon name="back" />Desk</button>{page ? <><button className="overview-action" onClick={() => navigate(to.page(id))}><Icon name="notebook" />Open source page</button><button className="overview-action" onClick={() => window.print()}><Icon name="print" />Print / Save PDF</button></> : null}</div>
-    {page ? <article className="plan-paper"><header><span className="section-label">Project plan · Read only</span><h1>{titleOf(page.body)}</h1><p>Updated {new Intl.DateTimeFormat([], { dateStyle: 'long' }).format(page.updated)}{field(page.body, 'Version') ? ` · Version ${field(page.body, 'Version')}` : ''}</p></header>
+    <div className="plan-tools"><button className="overview-back" onClick={() => navigate(to.workshop())} aria-label="Back to Workshop"><Icon name="back" />Back to Workshop</button>{page ? <><input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden aria-label="Plan image" onChange={event => void upload(event.target.files?.[0])} /><button className="overview-action" disabled={uploading} onClick={() => imageInput.current?.click()}>{uploading ? 'Adding image…' : 'Add image'}</button><button className="overview-action" onClick={() => navigate(to.page(id))}><Icon name="notebook" />Open source page</button><button className="overview-action" onClick={() => window.print()}><Icon name="print" />Print / Save PDF</button></> : null}</div>
+    {notice ? <p role="status">{notice}</p> : null}
+    {page ? <article className="plan-paper"><header><span className="section-label">Project plan</span><h1>{titleOf(page.body)}</h1><p>Updated {new Intl.DateTimeFormat([], { dateStyle: 'long' }).format(page.updated)}{field(page.body, 'Version') ? ` · Version ${field(page.body, 'Version')}` : ''}</p></header>
       <aside className="plan-scale-note"><strong>Reference view · Print scale is unverified</strong><p>Image pixels do not establish physical dimensions. For a cutting template, record the units and physical dimensions, print at 100%, and check a measured calibration mark before cutting.</p></aside>
       <div className="plan-content">{planParts(page.body).map((part, i) => 'text' in part ? <PlanText key={i} text={part.text} /> : <PlanImage key={i} id={part.id} caption={part.caption} />)}</div>
     </article> : <p role="status" className="overview-empty">{page === undefined ? 'Loading plan…' : 'This plan is not available.'}</p>}

@@ -1,3 +1,4 @@
+import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
 import { eventDaysInMonth } from '../lib/event-range'
 import { Icon } from '../components/Icon'
 import { CalendarPanel } from '../components/CalendarPanel'
@@ -22,7 +23,9 @@ export function CalendarScreen({ month, notebook }: { month?: string; notebook: 
   const { month: shown } = useCalendarView()
   void month
   const pages = useLive<Page[]>(() => pagesInMonth(shown), [shown], [])
-  const events = useLive<FieldEvent[]>(() => eventsInMonth(shown), [shown], [])
+  const localEvents = useLive<FieldEvent[]>(() => eventsInMonth(shown), [shown], [])
+  const family = useFamilyAgenda()
+  const events = mergeCalendarEvents(localEvents, family).filter(event => eventDaysInMonth(event, shown).length)
   const { month: name } = monthParts(shown)
 
   /* The month's journal entries, read off the pages already loaded rather
