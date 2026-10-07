@@ -109,7 +109,7 @@ Eight added tools:
 - `attach_page_image`: version-checked atomic image/reference save with an identical-retry request ID; supported raster formats up to 8 MB.
 - `list_events`, `get_event`, `save_event`: native Field Notes calendar records with inclusive dates and guarded edits. Davis data stays in its own connector.
 
-Deployment order: apply `supabase/migrations/20261007163146_workshop_images_calendar.sql`, deploy `field-notes-mcp` including `workshop.ts` with the existing OAuth verification wrapper, publish the web build, then refresh the existing ChatGPT connection's tool metadata and start a fresh Codex chat. The updated skill is also available for the separate ChatGPT skill installation. Do not claim live availability until deployment and discovery are verified.
+Deployment order: apply `supabase/migrations/20261007170122_workshop_images_calendar.sql`, deploy `field-notes-mcp` including `workshop.ts` with the existing OAuth verification wrapper, publish the web build, then refresh the existing ChatGPT connection's tool metadata and start a fresh Codex chat. The updated skill is also available for the separate ChatGPT skill installation. Do not claim live availability until deployment and discovery are verified.
 
 The migration adds linked-account image read/create and native-event read/create/update policies, scoped to the existing vault link. It adds no deletion tool, service-role credential, public image bucket, or Davis write access. The attachment function is SECURITY INVOKER and saves bytes/reference together. A failed version check leaves both unchanged. An identical retry is idempotent; reusing an ID with different content is rejected.
 
