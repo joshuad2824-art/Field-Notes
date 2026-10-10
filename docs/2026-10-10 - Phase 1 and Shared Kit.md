@@ -21,5 +21,15 @@ Skip a persistent notebook spine-height field: stable notebook-ID-derived height
 - Menus contain focus and support arrows, Home/End, Enter/Space, and Escape; folds support keyboard opening/closing. Completion waits for its callback and retains a failed reminder. Touch swipe is available on the Row. Cards keep edit controls as sibling buttons, not nested interactive links.
 - Rail spines derive stable 96–128px heights from notebook IDs. Folded rail is 72px, open rail 236px; the preview tab bar has the reserved, disabled Jot slot. Room transitions preserve child identity and use a 90ms fade for reduced motion.
 - Manila metadata is darker than the prototype values because the supplied cream-paper colors only achieved about 3.9:1 on manila. This preserves the stated readability requirement.
-- Kit layout, keyboard/focus, completion, fold, stable-spine, motion, typography, and real-data preservation checks pass at 1440, 744, and 390px. The full existing regression suite is running before production release.
-- Phase 1 is on GitHub main at `e5c3241`; subsequent commits will record Phase 2 and final publication. Service worker v38 will deliver the combined release. Physical iPhone behavior remains unverified; browser touch and safe-area simulations pass.
+- Kit layout, keyboard/focus, completion, fold, stable-spine, motion, typography, and real-data preservation checks pass at 1440, 744, and 390px. All 20 suites in `npm run check` pass. A clean `npm ci` build matches the working build byte for byte.
+- Phase 1 is on GitHub main at `e5c3241`; Phase 2 is `ac42e83`. Service worker v38 delivers the combined release. Physical iPhone behavior remains unverified; browser touch and safe-area simulations pass.
+
+
+## Published verification
+
+- Production: https://timber-inkfieldnotes.netlify.app
+- Netlify deployment `6aca65a2c15d91b5423c0955`, published October 10, 2026 from the verified source on main (`ac42e83`); service worker v38.
+- All 72 hosted files match the clean-install/working build byte for byte. Netlify confirms this is the current ready deployment.
+- Live controls and reload checks passed at 1440px and 390px in isolated, unpaired browser contexts, with no page errors. No real notes, reminders, pairing, or cloud records were changed.
+- Recovery and local logs: `work/2026-10-10-phase1-kit/`. The local kit preview runs at `/kit` in development. Its JavaScript is absent from production; the shared component source and scoped stylesheet are committed for future screen work.
+- Physical iPhone and installed-app behavior are not claimed; simulated touch/safe-area and browser checks passed. The existing build-size warning remains.

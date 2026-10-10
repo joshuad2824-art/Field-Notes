@@ -3,21 +3,25 @@
 Updated October 10, 2026 for the verified production-to-GitHub synchronization.
 
 
-## October 10 refinement handoff — in progress
+## October 10 refinement release — live
 
-Joshua authorized implementation and production publication of the Phase 1 fixes and Phase 2 shared kit. Scope, decisions, and verification: `docs/2026-10-10 - Phase 1 and Shared Kit.md`. The kit stays in a development-only preview; no data-model or hosting changes are needed. Keep GitHub main current after each phase.
+- Current production: Netlify `6aca65a2c15d91b5423c0955`, service worker v38, built from GitHub main source `ac42e83`. Phase 1 is `e5c3241`; Phase 2 is `ac42e83`. Both phases and this release record are kept on main.
+- Readable notebook cards and metadata, labeled compact phone tabs, labeled desktop actions, simpler calendar marks, On my desk copy, compact event times, and overdue labels are live. The 320px notebook overflow is fixed.
+- The nine-part shared kit is implemented with a development-only `/kit` preview. It does not replace production screens yet, matching the handoff's Phase 2 boundary. Stable notebook-ID-derived spine heights avoid a database migration; sync, backups, data, and permissions are unchanged.
+- All 20 regression suites, eight phone/tablet sizes, three kit/type-audit sizes, clean-install build comparison, and live desktop/phone reload checks pass. All 72 live files match the verified build. Physical iPhone behavior remains unverified.
+- Scope, design decisions, and full evidence: `docs/2026-10-10 - Phase 1 and Shared Kit.md`. Local screenshots/logs: `work/2026-10-10-phase1-kit/`. Future screen redesigns and Jot belong to the later handoff phases.
 
 ## GitHub production synchronization — October 10
 
 - Main now includes the October 8–9 design, recurring-event, dashboard, and notebook-desk releases. The four existing remote commits and remote-only dashboard documentation/test are retained.
-- Production remains Netlify `6ac95139d2e01bfff3cc3c36`, service worker v37. All 72 files from a clean `npm ci` / `npm run build` match the live site byte for byte. Hosted MCP v14's three source files also match this checkout exactly.
+- At the earlier synchronization, production was Netlify `6ac95139d2e01bfff3cc3c36`, service worker v37. All 72 files from a clean `npm ci` / `npm run build` match the live site byte for byte. Hosted MCP v14's three source files also match this checkout exactly.
 - Dependency versions and the npm lockfile now reproduce the packages used by production. The prior local installation had Deno-managed package links that differed from the old npm lockfile; editor/React/Dexie versions and two editor transitive dependencies are pinned to the verified live versions.
 - This source synchronization uses `[skip netlify]` so it does not replace the already verified deployment. Local recovery folders, screenshots, generated builds, and private tool configuration are excluded from the commit.
 - Verification details and any outstanding regression findings: `docs/2026-10-10 - GitHub Production Sync.md`.
 
 ## St. John notebook desk — October 9
 
-- Current production release: Netlify `6ac95139d2e01bfff3cc3c36`, service worker v37, hosted MCP v14. Live HTML/assets/service worker matched the build; the work desk and filed brief were checked after reload. Screenshot: `work/2026-10-09-work-desk/live-desktop.jpg`.
+- October 9 production release: Netlify `6ac95139d2e01bfff3cc3c36`, service worker v37, hosted MCP v14. Live HTML/assets/service worker matched the build; the work desk and filed brief were checked after reload. Screenshot: `work/2026-10-09-work-desk/live-desktop.jpg`.
 
 - The existing St. John notebook now opens its work desk from the shelf: `/n/d97288df-10bc-451f-8903-82d4e0c74873/desk`. Notebook pages keeps the original editor/list one click away. Other notebook desks are available from page-list headers.
 - Navy/brass cover, paper actions and briefs, colored note cards; due/ahead/all-open reminder filters, shared completion/history, six-item preview with Show all, notebook search, and established work-resource links.
@@ -43,7 +47,7 @@ Joshua authorized implementation and production publication of the Phase 1 fixes
 
 ## Current design release
 
-- Earlier October 8 design baseline: Netlify deploy `6ac7a5e0c7939eae3b224059`, service worker v34. The current production release is listed in the St. John section above.
+- Earlier October 8 design baseline: Netlify deploy `6ac7a5e0c7939eae3b224059`, service worker v34. The current production release is listed in the October 10 section above.
 - Decisions and verification: `docs/design-implementation.md`. Workshop plans use five mixed paper colors/textures with varying tape/clips, two desktop columns and one mobile column, routine controls use icons, tape varies by item, and duplicate Workshop notebooks are hidden from the shelf without deleting records.
 - Dashboard weather stays expanded at the top: five days on phones, seven on desktop. The right-hand notebook page holds Events for the day, while reminders stay beside it on desktop. On our desk contains only the tags below, with short previews of their attached notes. All active desk items are listed; full event/reminder collections remain reachable.
 - Existing-page project forms save their displayed Active default. Joshua’s Prayer Log was previously repaired with only its missing active metadata and verified visible after refresh; later status choices remain Joshua’s own.
