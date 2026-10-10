@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { ST_JOHN_NOTEBOOK } from './notebook-desk'
 
 /* Forty lines instead of a dependency. A route is a path; the back button is
    the browser's, which is the one that matters on a phone. */
@@ -10,11 +11,12 @@ export type Route =
   | { name: 'workshop' }
   | { name: 'from-siena' }
   | { name: 'event-new'; date?: string }
-  | { name: 'event'; id: string }
+  | { name: 'event'; id: string; occurrence?: string }
   | { name: 'notebook'; notebook: string }
+  | { name: 'notebook-desk'; notebook: string }
   | { name: 'page'; id: string }
   | { name: 'review'; id: string }
-  | { name: 'plan'; id: string }
+  | { name: 'plan'; id: string; editing?: boolean }
   | { name: 'search' }
   | { name: 'tag'; tag: string }
   | { name: 'day'; iso: string }
@@ -66,11 +68,13 @@ export function parse(path: string): Route {
   if (parts[0] === 'overview') return { name: 'overview' }
   if (parts[0] === 'from-siena') return { name: 'from-siena' }
   if (parts[0] === 'event' && parts[1] === 'new') return { name: 'event-new', date: parts[2] }
-  if (parts[0] === 'event' && parts[1]) return { name: 'event', id: parts[1] }
+  if (parts[0] === 'event' && parts[1]) return { name: 'event', id: parts[1], ...(parts[2] ? { occurrence: parts[2] } : {}) }
+  if (parts[0] === 'n' && parts[1] === 'workshop') return { name: 'workshop' }
+  if (parts[0] === 'n' && parts[1] && parts[2] === 'desk') return { name: 'notebook-desk', notebook: parts[1] }
   if (parts[0] === 'n' && parts[1]) return { name: 'notebook', notebook: parts[1] }
   if (parts[0] === 'p' && parts[1]) return { name: 'page', id: parts[1] }
   if (parts[0] === 'review' && parts[1]) return { name: 'review', id: parts[1] }
-  if (parts[0] === 'plan' && parts[1]) return { name: 'plan', id: parts[1] }
+  if (parts[0] === 'plan' && parts[1]) return { name: 'plan', id: parts[1], ...(parts[2] === 'edit' ? { editing: true } : {}) }
   if (parts[0] === 'tag' && parts[1]) return { name: 'tag', tag: parts[1] }
   if (parts[0] === 'day' && parts[1]) return { name: 'day', iso: parts[1] }
   if (parts[0] === 'calendar') return { name: 'calendar', month: parts[1] }
@@ -95,12 +99,15 @@ export const to = {
   plans: () => '/workshop',
   workshop: () => '/workshop',
   fromSiena: () => '/from-siena',
-  event: (id: string) => `/event/${id}`,
+  event: (id: string, occurrence?: string) => `/event/${id}${occurrence ? `/${occurrence}` : ''}`,
   newEvent: (date?: string) => date ? `/event/new/${date}` : '/event/new',
   notebook: (id: string) => `/n/${id}`,
+  notebookDesk: (id: string) => `/n/${encodeURIComponent(id)}/desk`,
+  notebookHome: (id: string) => id === ST_JOHN_NOTEBOOK ? `/n/${encodeURIComponent(id)}/desk` : `/n/${id}`,
   page: (id: string) => `/p/${id}`,
   review: (id: string) => `/review/${id}`,
   plan: (id: string) => `/plan/${encodeURIComponent(id)}`,
+  planEdit: (id: string) => `/plan/${encodeURIComponent(id)}/edit`,
   tag: (tag: string) => `/tag/${encodeURIComponent(tag)}`,
   day: (iso: string) => `/day/${iso}`,
   calendar: (month?: string) => (month ? `/calendar/${month}` : '/calendar'),

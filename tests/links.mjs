@@ -28,7 +28,7 @@ async function run(name, options) {
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
   await page.goto(`${base}/n/field-notes`)
-  await page.getByText('New page', { exact: true }).first().click()
+  await page.getByRole('button', { name: 'New page', exact: true }).first().click()
   await page.locator('.cm-content').waitFor()
   const id = new URL(page.url()).pathname.split('/').pop()
   await page.locator('.cm-content').fill('Watercolor notebook')

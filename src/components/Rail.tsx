@@ -55,7 +55,7 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
           aria-label="Hide the notebooks"
           title="Notebooks — ⌘⇧\"
         >
-          ‹
+          <Icon name="back" />
         </button>
       </div>
 

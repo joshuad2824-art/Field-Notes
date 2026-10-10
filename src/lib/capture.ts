@@ -2,7 +2,7 @@ import { dayOf } from './calendar'
 import { createPage, db, saveBody } from './db'
 import { isoDay } from './format'
 import { JOURNAL_NOTEBOOK } from './model'
-import { firstNotebookId, loadNotebooks, notebooksReady, shelfNotebooks } from './notebooks'
+import { allNotebooks, firstNotebookId, loadNotebooks, notebooksReady, shelfNotebooks } from './notebooks'
 import { getSettings } from './settings'
 
 /* The capture path. Two routes that land a live caret — `/new` and `/today` —
@@ -33,13 +33,12 @@ function homeNotebook(): string {
 function resolveNotebook(slug: string | undefined): string {
   if (slug) {
     const wanted = slug.trim().toLowerCase()
-    /* The shelf, not every notebook: the journal is assembled, and a capture
-       route that filed a fleeting thought into it would be writing into a page
-       the next collection is going to overwrite. `/new/journal` falls back to
-       the remembered notebook like any other word the shelf doesn't know. */
+    // Keep explicit legacy Workshop capture links working, while ordinary
+    // capture stays on the visible shelf. Journal is still assembled only.
+    const writable = allNotebooks().filter(book => book.id !== JOURNAL_NOTEBOOK)
     const book =
-      shelfNotebooks().find((b) => b.id.toLowerCase() === wanted) ??
-      shelfNotebooks().find((b) => b.name.trim().toLowerCase() === wanted)
+      writable.find((b) => b.id.toLowerCase() === wanted) ??
+      writable.find((b) => b.name.trim().toLowerCase() === wanted)
     if (book) return book.id
   }
   return homeNotebook()

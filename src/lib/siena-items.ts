@@ -1,6 +1,21 @@
 import { db, changed } from './db'
 import type { SienaItem } from './model'
 
+export async function fileSienaItem(id: string, notebook: string | undefined, expectedUpdated: number): Promise<void> {
+  await db.transaction('rw', db.sienaItems, db.notebooks, async () => {
+    const item = await db.sienaItems.get(id)
+    if (!item || item.updated !== expectedUpdated) throw new Error('This message changed. Try again with its latest version.')
+    if (item.type === 'reminder') throw new Error('Reminders stay with their notebook.')
+    if (notebook) {
+      const book = await db.notebooks.get(notebook)
+      if (!book || book.deleted) throw new Error('That notebook is no longer available.')
+    }
+    if (item.notebook === notebook) return
+    await db.sienaItems.put({ ...item, notebook, updated: Math.max(Date.now(), item.updated + 1) })
+  })
+  changed()
+}
+
 export async function allSienaItems(): Promise<SienaItem[]> {
   return (await db.sienaItems.toArray()).sort((a, b) => b.created - a.created)
 }

@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { Sheet } from '../components/Sheet'
+import { Icon } from '../components/Icon'
 import { deletedPages, purgePage, restorePage } from '../lib/db'
 import { deletedEvents, purgeEvent, restoreEvent } from '../lib/events'
 import { readableDay } from '../lib/format'
@@ -11,6 +14,16 @@ function daysLeft(deleted: number): number {
 }
 
 export function TrashScreen() {
+  const [purging, setPurging] = useState<{ kind: 'page' | 'event'; id: string; title: string } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [problem, setProblem] = useState('')
+  async function confirmPurge() {
+    if (!purging || busy) return
+    setBusy(true); setProblem('')
+    try { if (purging.kind === 'page') await purgePage(purging.id); else await purgeEvent(purging.id); setPurging(null) }
+    catch { setProblem('Could not delete this item. It is still in Deleted.') }
+    finally { setBusy(false) }
+  }
   const pages = useLive<Page[]>(deletedPages, [], [])
   const events = useLive<FieldEvent[]>(deletedEvents, [], [])
 
@@ -18,7 +31,7 @@ export function TrashScreen() {
     <div className="app">
       <header className="chrome">
         <button className="btn glyph" onClick={() => back()} aria-label="Back">
-          ‹
+          <Icon name="back" />
         </button>
         <span className="chrome-title">Deleted</span>
       </header>
@@ -37,12 +50,8 @@ export function TrashScreen() {
                 <div className="row-snippet">{snippetOf(page.body)}</div>
                 <div className="row-meta">
                   <span>{daysLeft(page.deleted ?? 0)} days left</span>
-                  <button className="btn caps" onClick={() => void restorePage(page.id)}>
-                    Restore
-                  </button>
-                  <button className="btn caps danger" onClick={() => void purgePage(page.id)}>
-                    Delete now
-                  </button>
+                  <button className="btn caps" onClick={() => void restorePage(page.id)} aria-label="Restore" title="Restore"><Icon name="restore" /></button>
+                  <button className="btn caps danger" onClick={() => setPurging({ kind: 'page', id: page.id, title: titleOf(page.body) })} aria-label="Delete now" title="Delete now"><Icon name="trash" /></button>
                 </div>
               </div>
             ))}
@@ -53,14 +62,15 @@ export function TrashScreen() {
                 <div className="row-snippet">{readableDay(event.date)} · {event.startTime ?? 'All day'}</div>
                 <div className="row-meta">
                   <span>{daysLeft(event.deleted ?? 0)} days left</span>
-                  <button className="btn caps" onClick={() => void restoreEvent(event.id)}>Restore</button>
-                  <button className="btn caps danger" onClick={() => void purgeEvent(event.id)}>Delete now</button>
+                  <button className="btn caps" onClick={() => void restoreEvent(event.id)} aria-label="Restore" title="Restore"><Icon name="restore" /></button>
+                  <button className="btn caps danger" onClick={() => setPurging({ kind: 'event', id: event.id, title: event.title })} aria-label="Delete now" title="Delete now"><Icon name="trash" /></button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+      {purging ? <Sheet onClose={() => { if (!busy) setPurging(null) }}><div className="purge-confirm" role="alertdialog" aria-labelledby="purge-heading"><h2 id="purge-heading">Permanently delete “{purging.title}”?</h2><p>This item cannot be restored.</p>{problem ? <p role="status">{problem}</p> : null}<div className="actions"><button className="btn danger" disabled={busy} onClick={() => void confirmPurge()}>Delete permanently</button><button className="btn" disabled={busy} onClick={() => setPurging(null)}>Cancel</button></div></div></Sheet> : null}
     </div>
   )
 }

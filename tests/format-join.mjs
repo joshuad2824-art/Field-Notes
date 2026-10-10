@@ -28,7 +28,7 @@ try {
   /* Netlify's review drawer covers the page in deploy previews. */
   await page.evaluate(() => document.querySelector('[data-netlify-deploy-id]')?.remove())
   for (const { markdown, steps } of cases) {
-      await page.getByText('New page', { exact: true }).first().click()
+      await page.getByRole('button', { name: 'New page', exact: true }).first().click()
       const editor = page.locator('.cm-content')
       await editor.click()
       await page.keyboard.type(markdown)

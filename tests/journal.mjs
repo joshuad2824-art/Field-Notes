@@ -199,7 +199,7 @@ const notebookIds = () =>
     journal?.updated === 0,
     String(journal?.updated),
   )
-  ok('the four regular notebooks remain on the shelf', (await view.locator(".fn-sidebar-books .fn-book-spine:not([href='/n/journal'])").count()) === 4)
+  ok('the three regular notebooks remain on the shelf and Workshop has its own destination', (await view.locator(".fn-sidebar-books .fn-book-spine:not([href='/n/journal'])").count()) === 3 && (await view.locator(".fn-sidebar-books [href='/n/workshop']").count()) === 0)
   ok('Journal sits with content, away from Trash', (await view.locator(".fn-sidebar-books [href='/n/journal']").count()) === 1 && (await view.locator('.rail-foot .rail-journal').count()) === 0)
 
   await view.getByRole('button', { name: 'Manage notebooks', exact: true }).click()
@@ -301,7 +301,7 @@ const journalPages = () =>
   await view.waitForTimeout(400)
   ok(
     'the journal opens with its own button at the foot, not New page',
-    (await view.locator('.list-foot .plate-button').textContent()) === 'Review last week',
+    (await view.locator('.list-foot .plate-button').getAttribute('aria-label')) === 'Review last week',
   )
 
   await view.locator('.list-foot .plate-button').click()

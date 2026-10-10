@@ -1,3 +1,4 @@
+import { recurrenceError, type EventRecurrence } from './event-recurrence'
 import { eventRangeError } from './event-range'
 import { unzipSync, strFromU8 } from 'fflate'
 import { changed, db } from './db'
@@ -92,11 +93,13 @@ function parseBackupData(text: string): BackupData {
         typeof value.created !== 'number' || !Number.isFinite(value.created) ||
         typeof value.updated !== 'number' || !Number.isFinite(value.updated) ||
         !optionalStamp(value.deleted)) throw new Error('Invalid event in Field Notes backup')
+    if (recurrenceError(value.recurrence, value.date)) throw new Error('Invalid repeat schedule in Field Notes backup')
     if (value.endDate !== undefined && eventRangeError({
       date: value.date, endDate: value.endDate, startTime: value.startTime, endTime: value.endTime,
     })) throw new Error('Invalid event date range in Field Notes backup')
     return {
       id: value.id, title: value.title, date: value.date,
+      ...(value.recurrence ? { recurrence: value.recurrence as EventRecurrence } : {}),
       ...(value.endDate ? { endDate: value.endDate } : {}),
       ...(value.startTime ? { startTime: value.startTime } : {}),
       ...(value.endTime ? { endTime: value.endTime } : {}),

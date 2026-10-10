@@ -1,3 +1,4 @@
+import { Icon } from '../components/Icon'
 import { SienaItemCard } from '../components/SienaItemCard'
 import { allSienaItems, markAllSienaItemsSeen } from '../lib/siena-items'
 import { navigate, to } from '../lib/router'
@@ -14,23 +15,23 @@ export function FromSienaScreen() {
       <main className="siena-collection scroll">
         <div className="overview-wrap">
           <div className="overview-top">
-            <button className="overview-back" onClick={() => navigate(to.overview())}>‹ Overview</button>
-            {unseen ? <button className="overview-back" onClick={() => void markAllSienaItemsSeen()}>Mark all seen</button> : null}
+            <button className="overview-back" onClick={() => navigate(to.overview())} aria-label="‹ Overview" title="‹ Overview"><Icon name="back" /></button>
+            {unseen ? <button className="overview-back" onClick={() => void markAllSienaItemsSeen()} aria-label="Mark all seen" title="Mark all seen"><Icon name="seen" /></button> : null}
           </div>
           <header className="overview-intro">
             <span className="section-label">Saved in Field Notes</span>
             <h1>From Siena {unseen ? <span className="siena-badge">{unseen}</span> : null}</h1>
-            <p>Messages and active reminders stay here. Completed reminders remain in the history below.</p>
+            
           </header>
           {active.length ? (
             <div className="siena-collection-list">
               {active.map((item) => <SienaItemCard key={item.id} item={item} paper={item.type === 'note'} />)}
             </div>
           ) : <p className="overview-empty">No active items from Siena.</p>}
-          {completed.length ? <section className="siena-collection-list siena-history">
-            <h2>Completed reminders</h2>
+          {completed.length ? <details id="completed" open={window.location.hash === '#completed' ? true : undefined} className="siena-collection-list siena-history"><summary><h2>Completed reminders</h2><span> · {completed.length}</span></summary>
+            
             {completed.map((item) => <SienaItemCard key={item.id} item={item} />)}
-          </section> : null}
+          </details> : null}
         </div>
       </main>
     </div>

@@ -1,4 +1,17 @@
-import { tagsOf, titleOf, type Page } from './model'
+import { tagsOf, titleOf, stripMarkers, type Page } from './model'
+import { readingBlocks, type ReadingBlock } from './reading'
+
+// A short excerpt of the attached writing, never a second copy of its details.
+export function deskSummary(body: string): string {
+  function paragraphs(blocks: ReadingBlock[]): string[] {
+    return blocks.flatMap(block => block.kind === 'paragraph' ? [block.text] : block.kind === 'quote' ? paragraphs(block.blocks) : block.kind === 'list' ? block.items.flatMap(item => paragraphs(item.blocks)) : [])
+  }
+  const content = paragraphs(readingBlocks(body)).map(text => text.split('\n').filter(line => !/^\s*(?:#[\w-]+\s*)+$/.test(line) && !/^(?:\*\*)?(?:Project|Status|Owner|Where we left off|Next step|Artifact|Version|Brand|Model|Ownership):/i.test(line.trim())).map(stripMarkers).filter(Boolean).join(' ')).find(Boolean)
+  const text = (content || field(body, 'Where we left off')).replace(/\s+/g, ' ').trim()
+  if (text.length <= 180) return text
+  const end = text.slice(0, 177).replace(/\s+\S*$/, '')
+  return `${end || text.slice(0, 177)}…`
+}
 
 // Explicit marks in existing pages, rather than another mutable project store.
 // Free-text labels remain in the source page and travel with existing sync.
@@ -34,5 +47,5 @@ export function projectDesk(pages: Page[]) {
       revisions.push(page); plans.set(key, revisions)
     }
   }
-  return { active: [...projects.values()].slice(0, 3), plans: [...plans.values()].map((revisions) => revisions.sort(revisionOrder)), owned: pages.filter((page) => marked(page, 'owned')).sort((a, b) => titleOf(a.body).localeCompare(titleOf(b.body))) }
+  return { active: [...projects.values()], plans: [...plans.values()].map((revisions) => revisions.sort(revisionOrder)), owned: pages.filter((page) => marked(page, 'owned')).sort((a, b) => titleOf(a.body).localeCompare(titleOf(b.body))) }
 }

@@ -28,7 +28,7 @@ export function DavisAgenda() {
     <div className="overview-section-head"><h2 id="davis-title"><Icon name="calendar" />Family calendar</h2><span className="section-label">Read only</span></div>
     {state.status !== 'ready' ? <p className="davis-status" role="status">{state.status === 'stale' && state.reason === 'refresh-failed' ? 'Davis could not be refreshed. These previously fetched items are stale.' : messages[state.status]}</p> : null}
     {snapshot ? <><p className="davis-source">{snapshot.householdName || 'Davis at Home'} · {snapshot.timezone}<br />Fetched {new Date(snapshot.fetchedAt).toLocaleString([], { timeZone: snapshot.timezone })}</p>
-      <div className="davis-actions"><button className="overview-back" onClick={() => void davisAgenda.refresh()}>Refresh</button><button className="overview-back" onClick={() => davisAgenda.disconnect()}>Disconnect Davis</button></div>
+      <div className="davis-actions"><button className="overview-back" onClick={() => void davisAgenda.refresh()} aria-label="Refresh" title="Refresh"><Icon name="refresh" /></button><button className="overview-back" onClick={() => davisAgenda.disconnect()} aria-label="Disconnect Davis" title="Disconnect Davis"><Icon name="close" /></button></div>
       <a className="davis-open" href={DAVIS_SOURCE_URL} target="_blank" rel="noopener noreferrer"><Icon name="source" />Open in Davis at Home</a>
     </> : canConnect ? <button className="overview-action" disabled={connecting} onClick={() => void connect()}>{connecting ? 'Starting connection…' : 'Connect Davis'}</button> : null}
     {notice ? <p role="status" className="davis-status">{notice}</p> : null}

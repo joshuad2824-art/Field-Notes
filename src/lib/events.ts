@@ -1,10 +1,11 @@
-import { eventDaysInMonth, eventOnDay, eventRangeError } from './event-range'
+import { expandEvents, normalizedRecurringDate, recurrenceSummary } from './event-recurrence'
+import { eventDaysInMonth, eventRangeError } from './event-range'
 import { monthNow } from './calendar'
 import { db, changed, markFor } from './db'
 import type { FieldEvent } from './model'
 
 export type EventDraft = Pick<FieldEvent, 'title' | 'date'> &
-  Partial<Pick<FieldEvent, 'endDate' | 'startTime' | 'endTime' | 'location' | 'note' | 'pageId' | 'calendarTarget'>>
+  Partial<Pick<FieldEvent, 'recurrence' | 'endDate' | 'startTime' | 'endTime' | 'location' | 'note' | 'pageId' | 'calendarTarget'>>
 
 export async function liveEvents(): Promise<FieldEvent[]> {
   return (await db.events.toArray())
@@ -13,12 +14,12 @@ export async function liveEvents(): Promise<FieldEvent[]> {
 }
 
 export async function eventsOnDay(date: string): Promise<FieldEvent[]> {
-  return (await liveEvents()).filter((event) => eventOnDay(event, date))
+  return expandEvents(await liveEvents(), date, date)
     .sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? '') || a.title.localeCompare(b.title))
 }
 
 export async function eventsInMonth(month: string): Promise<FieldEvent[]> {
-  return (await liveEvents()).filter((event) => eventDaysInMonth(event, month).length > 0)
+  return expandEvents(await liveEvents(), `${month}-01`, `${month}-${new Date(Number(month.slice(0,4)), Number(month.slice(5)), 0).getDate()}`)
 }
 
 export async function daysWithEvents(month = monthNow()): Promise<Set<string>> {
@@ -42,6 +43,7 @@ export async function deletedEvents(): Promise<FieldEvent[]> {
 export async function saveEvent(draft: EventDraft, id?: string): Promise<FieldEvent> {
   const error = eventRangeError(draft)
   if (error) throw new Error(error)
+  draft = normalizedRecurringDate(draft)
   const previous = id ? await db.events.get(id) : undefined
   if (id && (!previous || previous.deleted)) throw new Error('This event is no longer available.')
   if (draft.pageId) {
@@ -53,6 +55,7 @@ export async function saveEvent(draft: EventDraft, id?: string): Promise<FieldEv
     id: previous?.id ?? crypto.randomUUID(),
     title: draft.title.trim(),
     date: draft.date,
+    ...(draft.recurrence ? { recurrence: JSON.parse(JSON.stringify(draft.recurrence)) } : {}),
     ...(draft.endDate && draft.endDate !== draft.date ? { endDate: draft.endDate } : {}),
     ...(draft.startTime ? { startTime: draft.startTime } : {}),
     ...(draft.endTime ? { endTime: draft.endTime } : {}),
@@ -99,6 +102,7 @@ export function eventDetails(draft: EventDraft): string {
     draft.title.trim(),
     `Date: ${date}${draft.endDate && draft.endDate !== draft.date ? ` through ${draft.endDate} (inclusive)` : ''}`,
     draft.startTime ? `Time: ${draft.startTime}${draft.endTime ? `–${draft.endTime}` : ''}` : null,
+    draft.recurrence ? `Repeats: ${recurrenceSummary(draft.recurrence)}` : null,
     draft.location?.trim() ? `Location: ${draft.location.trim()}` : null,
     draft.note?.trim() ? `Notes: ${draft.note.trim()}` : null,
   ].filter(Boolean).join('\n')

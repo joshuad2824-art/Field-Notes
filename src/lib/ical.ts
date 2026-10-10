@@ -1,3 +1,4 @@
+import { recurrenceRule } from './event-recurrence.ts'
 import type { FieldEvent } from './model.ts'
 
 function escapeText(value: string): string {
@@ -50,6 +51,7 @@ export function eventIcs(event: FieldEvent): string {
   } else {
     lines.push(`DTSTART;VALUE=DATE:${date}`, `DTEND;VALUE=DATE:${nextDay(event.endDate ?? event.date)}`)
   }
+  if (event.recurrence) lines.push(`RRULE:${recurrenceRule(event.recurrence, !!event.startTime)}`)
   if (event.location) lines.push(`LOCATION:${escapeText(event.location)}`)
   if (event.note) lines.push(`DESCRIPTION:${escapeText(event.note)}`)
   lines.push('END:VEVENT', 'END:VCALENDAR')

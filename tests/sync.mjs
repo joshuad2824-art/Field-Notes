@@ -382,7 +382,7 @@ const settings = async (d) => {
 
 const syncNow = async (d) => {
   await settings(d)
-  await d.view.locator('.btn.caps', { hasText: 'Sync now' }).click()
+  await d.view.getByRole('button', { name: 'Sync now', exact: true }).click()
   await d.view.waitForFunction(() => document.querySelector('[data-sync-state]')?.textContent?.includes('syncing'))
   await d.view.waitForFunction(() => document.querySelector('[data-sync-state]')?.textContent?.trim().startsWith('paired'))
 }
@@ -411,10 +411,10 @@ const b = await device('B')
 await settings(a)
 ok('a device with no vault says so plainly', (await a.view.locator('.sync-form').count()) === 1)
 
-await a.view.locator('.btn.caps', { hasText: 'First device' }).click()
+await a.view.getByRole('button', { name: 'First device', exact: true }).click()
 await a.view.locator('#sync-url').fill('https://mirror.supabase.co')
 await a.view.locator('#sync-anon').fill('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.public')
-await a.view.locator('.btn.caps', { hasText: 'Make the vault' }).click()
+await a.view.getByRole('button', { name: 'Make the vault', exact: true }).click()
 await a.view.waitForTimeout(2200)
 
 ok('the first device makes a vault without signing in to anything', served > 0, `${served} calls`)
@@ -423,15 +423,15 @@ ok(
   (await a.view.locator('.sync-form input[type=password], .sync-form input[type=email]').count()) === 0,
 )
 
-await a.view.locator('.btn.caps', { hasText: 'Pair another device' }).click()
+await a.view.getByRole('button', { name: 'Pair another device', exact: true }).click()
 await a.view.waitForTimeout(300)
 const pairing = (await a.view.locator('.sync-code').textContent()).trim()
 ok('it hands out a pairing code', pairing.startsWith('fn1.'), pairing.slice(0, 12))
 
 await settings(b)
-await b.view.locator('.btn.caps', { hasText: 'Already has it' }).click()
+await b.view.getByRole('button', { name: 'Already has it', exact: true }).click()
 await b.view.locator('#sync-code').fill(pairing)
-await b.view.locator('.btn.caps', { hasText: 'Pair this device' }).click()
+await b.view.getByRole('button', { name: 'Pair this device', exact: true }).click()
 await b.view.waitForTimeout(2600)
 ok('the second device pairs from the code alone', (await b.view.locator('.sync-form').count()) === 0)
 
@@ -446,7 +446,7 @@ ok(
 
 await a.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await a.view.waitForTimeout(600)
-await a.view.getByText('New page', { exact: true }).first().click()
+await a.view.getByRole('button', { name: 'New page', exact: true }).first().click()
 await a.view.waitForTimeout(700)
 await write(a, 'Ryedale in October')
 
@@ -464,7 +464,7 @@ ok(
 offline.add('B')
 await b.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await b.view.waitForTimeout(600)
-await b.view.getByText('New page', { exact: true }).first().click()
+await b.view.getByRole('button', { name: 'New page', exact: true }).first().click()
 await b.view.waitForTimeout(700)
 const started = Date.now()
 await b.view.locator('.cm-content').click()
@@ -482,7 +482,7 @@ ok(
 )
 
 await settings(b)
-await b.view.locator('.btn.caps', { hasText: 'Sync now' }).click()
+await b.view.getByRole('button', { name: 'Sync now', exact: true }).click()
 await b.view.waitForTimeout(1500)
 ok(
   'sync says it is offline rather than raising anything',
@@ -505,7 +505,7 @@ ok(
    plainer question before it decides which it was. */
 headerBlocked.add('B')
 await settings(b)
-await b.view.locator('.btn.caps', { hasText: 'Sync now' }).click()
+await b.view.getByRole('button', { name: 'Sync now', exact: true }).click()
 await b.view.waitForTimeout(1800)
 
 const verdict = await b.view.locator('[data-sync-state]').first().textContent()
@@ -594,7 +594,7 @@ await a.view.locator('.list-row', { hasText: 'Written with the wifi off' }).firs
 await a.view.waitForTimeout(700)
 await a.view.locator('[aria-label="Page options"]').click()
 await a.view.waitForTimeout(300)
-await a.view.locator('.sheet-item', { hasText: 'Delete page' }).first().click()
+await a.view.getByRole('button', { name: 'Delete page', exact: true }).first().click()
 await a.view.waitForTimeout(900)
 
 await syncNow(a)
@@ -674,7 +674,7 @@ const pngPath = await (async () => {
 
 await a.view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
 await a.view.waitForTimeout(600)
-await a.view.getByText('New page', { exact: true }).first().click()
+await a.view.getByRole('button', { name: 'New page', exact: true }).first().click()
 await a.view.waitForTimeout(700)
 await a.view.locator('.cm-content').click()
 await a.view.keyboard.type('Beck in spate', { delay: 8 })
@@ -734,6 +734,9 @@ await a.view.getByLabel('Title').fill('Across both devices')
 const eventLast = new Date(eventDay.getFullYear(), eventDay.getMonth(), eventDay.getDate() + 2)
 const eventEndDate = `${eventLast.getFullYear()}-${String(eventLast.getMonth() + 1).padStart(2, '0')}-${String(eventLast.getDate()).padStart(2, '0')}`
 await a.view.getByLabel('End date optional').fill(eventEndDate)
+await a.view.getByRole('combobox', { name: 'Schedule', exact: true }).selectOption('weekly')
+await a.view.getByRole('combobox', { name: 'Ends', exact: true }).selectOption('count')
+await a.view.getByLabel('Occurrences', { exact: true }).fill('8')
 await a.view.getByRole('button', { name: 'Save event' }).click()
 await a.view.getByRole('heading', { name: 'Across both devices' }).waitFor()
 await syncNow(a)
@@ -746,7 +749,7 @@ const copiedEvents = await b.view.evaluate(async () => {
     rows.onsuccess = () => resolve(rows.result)
   })
 })
-ok('an event crosses to the paired device', copiedEvents.some((row) => row.title === 'Across both devices' && row.endDate === eventEndDate))
+ok('an event crosses to the paired device', copiedEvents.some((row) => row.title === 'Across both devices' && row.endDate === eventEndDate && row.recurrence?.frequency === 'weekly' && row.recurrence?.count === 8))
 
 const eventWire = [...store.entries()].find(([key, row]) => key.startsWith('events|') && row.title === 'Across both devices')?.[1]
 const inboxId = 'dashboard-siena-sync'
@@ -785,12 +788,14 @@ if (eventWire) {
 await syncNow(b)
 await b.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
 await b.view.locator('.siena-item').filter({ hasText: 'Take the folder' }).getByRole('button', { name: 'Mark done' }).click()
+await b.view.locator('.siena-history>summary').click()
 await b.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).waitFor()
 for (let attempt = 0; attempt < 3 && !store.get(`siena_items|${eventWire?.vault}|${reminderId}`)?.completed_at; attempt++) {
   await syncNow(b)
 }
 await syncNow(a)
 await a.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
+await a.view.locator('.siena-history>summary').click()
 await a.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).waitFor()
 ok('completion reaches the first device and the mirror',
   (await a.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).count()) === 1 &&
@@ -801,9 +806,9 @@ ok('completion reaches the first device and the mirror',
 
 const before = (await titles(b)).length
 await settings(b)
-await b.view.locator('.btn.caps', { hasText: 'Unpair' }).click()
+await b.view.getByRole('button', { name: 'Unpair', exact: true }).click()
 await b.view.waitForTimeout(300)
-await b.view.locator('.outline.danger', { hasText: 'Unpair it' }).click()
+await b.view.getByRole('button', { name: 'Unpair it', exact: true }).click()
 await b.view.waitForTimeout(900)
 ok('unpairing puts the device back to not set up', (await b.view.locator('.sync-form').count()) === 1)
 ok('and takes none of the writing with it', (await titles(b)).length === before, `${before}`)

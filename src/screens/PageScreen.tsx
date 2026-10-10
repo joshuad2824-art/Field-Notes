@@ -3,6 +3,7 @@ import type { EditorView } from '@codemirror/view'
 import { redo, undo } from '@codemirror/commands'
 import { Editor } from '../editor/Editor'
 import { insertPicture } from '../editor/commands'
+import { Icon } from '../components/Icon'
 import { Sheet, SheetItem } from '../components/Sheet'
 import { Shell } from '../components/Shell'
 import { StyleTray } from '../components/StyleTray'
@@ -50,7 +51,7 @@ import { useLive } from '../lib/useLive'
 
 const SAVE_DELAY = 250
 
-export function PageScreen({ id }: { id: string }) {
+export function PageScreen({ id, workshop = false }: { id: string; workshop?: boolean }) {
   const settings = useSettings()
   const books = useNotebooks()
   const keyboardOpen = useKeyboardOpen()
@@ -285,13 +286,13 @@ export function PageScreen({ id }: { id: string }) {
   }
 
   return (
-    <div className="app">
+    <div className={`app${workshop ? ' workshop-editor' : ''}`}>
       {/* The stock rides on the band itself rather than on `.app`, so the one
           custom property it needs resolves here and nothing else in the tree
           inherits a leaf's text colours. */}
       <div className="statusband" data-stock={stock} />
 
-      <Shell notebook={book.id} activeId={page.id}>
+      <Shell notebook={book.id} activeId={page.id} focus={workshop}>
         {({ toggle, hidden }) => (
           <main className="desk" key="desk">
             <article
@@ -303,7 +304,7 @@ export function PageScreen({ id }: { id: string }) {
               {/* Three marks at rest, not eleven. */}
               <div className="tools">
                 <div className="row">
-                  {toggle}
+                  {workshop ? <button className="icon-control" aria-label="Back to plan" title="Back to plan" onClick={() => navigate(to.plan(id))}><Icon name="back" /></button> : toggle}
                   {hidden ? (
                     <span className="breadcrumb">
                       {book.name} · {todayLine()}
@@ -320,7 +321,7 @@ export function PageScreen({ id }: { id: string }) {
                     aria-label="Undo — ⌘Z"
                     title="Undo — ⌘Z"
                   >
-                    ↶
+                    <Icon name="undo" />
                   </button>
                   <button
                     className="mark-button"
@@ -329,7 +330,7 @@ export function PageScreen({ id }: { id: string }) {
                     aria-label="Redo — ⌘⇧Z"
                     title="Redo — ⌘⇧Z"
                   >
-                    ↷
+                    <Icon name="redo" />
                   </button>
                   <button
                     ref={trayToggle}
@@ -350,7 +351,7 @@ export function PageScreen({ id }: { id: string }) {
                     onClick={() => setMenu(true)}
                     aria-label="Page options"
                   >
-                    ⋯
+                    <Icon name="more" />
                   </button>
                 </div>
               </div>
@@ -391,9 +392,7 @@ export function PageScreen({ id }: { id: string }) {
                 <div className="pagefoot">
                   <div className="pagefoot-measure">
                     {docked ? null : (
-                      <button className="foot-back" onClick={() => back(to.notebook(book.id))}>
-                        ‹ list
-                      </button>
+                      <button className="foot-back icon-control" aria-label={workshop ? "Back to plan" : "Back to list"} onClick={() => workshop ? navigate(to.plan(id)) : back(to.notebook(book.id))}><Icon name="back" /></button>
                     )}
                     <span>{countLabel(words, 'word')}</span>
                     <span>·</span>
@@ -422,7 +421,7 @@ export function PageScreen({ id }: { id: string }) {
               start a page without leaving the one in hand. ⌘⇧N does it from
               anywhere on a desktop. */}
           <SheetItem
-            label="New page"
+            label="New page" icon="new-page"
             state="⌘⇧N"
             onClick={() => {
               setMenu(false)
@@ -436,7 +435,7 @@ export function PageScreen({ id }: { id: string }) {
           <div className="sheet-rule" />
           <div className="sheet-label">Page</div>
           <SheetItem
-            label="Ask Siena about this page"
+            label="Ask Siena about this page" icon="from-siena"
             state="review before applying"
             onClick={() => {
               setMenu(false)
@@ -452,7 +451,7 @@ export function PageScreen({ id }: { id: string }) {
             />
           ))}
           <SheetItem
-            label={page.pinned ? 'Unpin' : 'Pin'}
+            label={page.pinned ? 'Unpin' : 'Pin'} icon="pin"
             state={page.pinned ? 'pinned' : undefined}
             onClick={() => {
               void setPinned(page.id, !page.pinned)
@@ -471,7 +470,7 @@ export function PageScreen({ id }: { id: string }) {
           />
           {!follows ? (
             <SheetItem
-              label="Follow defaults"
+              label="Follow defaults" icon="restore"
               onClick={() => {
                 void clearOverrides(page.id)
                 setPage((current) =>
@@ -499,7 +498,7 @@ export function PageScreen({ id }: { id: string }) {
               <div className="sheet-label">Journal</div>
               <p className="sheet-review-note">Gather a fresh copy to include changed notes. This review and your edits will be kept.</p>
               <SheetItem
-                label={gathering ? 'Gathering review' : 'Gather a fresh copy'}
+                label={gathering ? 'Gathering review' : 'Gather a fresh copy'} icon="refresh"
                 state={reviewProblem || page.entryDate || undefined}
                 onClick={() => void recollect()}
               />
@@ -508,7 +507,7 @@ export function PageScreen({ id }: { id: string }) {
                   real entry; this is laid on top of it and is allowed to be
                   unavailable. */}
               <SheetItem
-                label={writing ? 'Writing it up' : 'Write it up'}
+                label={writing ? 'Writing it up' : 'Write it up'} icon="edit"
                 state={
                   wroteUp ??
                   (!hasModelKey()
@@ -542,14 +541,14 @@ export function PageScreen({ id }: { id: string }) {
 
           <div className="sheet-rule" />
           <SheetItem
-            label="Export as markdown"
+            label="Export as markdown" icon="download"
             onClick={() => {
               void exportPage({ ...page, body })
               setMenu(false)
             }}
           />
           <SheetItem
-            label="Delete page"
+            label="Delete page" icon="trash"
             danger
             onClick={() => {
               setMenu(false)

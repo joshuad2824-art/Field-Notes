@@ -1,3 +1,5 @@
+import type { EventRecurrence } from '../../supabase/functions/_shared/recurrence'
+
 /* Extension explicit, because `lib/digest.ts` pulls this in on node — see the
    note at the top of that file. */
 import { isTableAttr } from './table.ts'
@@ -52,6 +54,9 @@ export interface FieldEvent {
   id: string
   title: string
   date: string // YYYY-MM-DD in the writer's local calendar
+  recurrence?: EventRecurrence
+  seriesId?: string // View-only occurrence; never stored or synced
+  occurrenceDate?: string
   endDate?: string // Inclusive final day; absent for a single-day event
   startTime?: string // HH:MM, intentionally no timezone for a personal day view
   endTime?: string
@@ -78,7 +83,7 @@ export interface SienaItem {
   updated: number
   dueAt?: number // reminders use an absolute timestamp
   seenAt?: number // set only by an explicit user action
-  notebook?: NotebookId // the notebook whose Reminders page shows this item
+  notebook?: NotebookId // groups all Siena item kinds; reminders also appear on its Reminders page
   completedAt?: number // completion is separate from having seen an item
 }
 

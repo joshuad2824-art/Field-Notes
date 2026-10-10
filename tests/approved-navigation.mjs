@@ -32,8 +32,11 @@ try {
    }
   }
   const navigation = page.locator(width >= 1024 ? '.fn-rail-group' : '.fn-mobile-navigation')
-  await page.locator('.fn-step-list').getByRole('button', { name: 'A real saved step', exact: true }).waitFor()
-  assert.equal(await page.locator('.fn-step-list button').count(), 1, 'Fenced examples do not become live project steps')
+  await page.locator('.desk-note-summary').getByText('A real saved step', { exact: true }).waitFor()
+  assert.equal(await page.locator('.fn-step-list').count(), 0, 'Projects appear only as tags, without duplicate notebook controls')
+  assert.equal(await page.locator('.fn-page-right .desk-project').count(), 0)
+  assert.equal(await page.getByRole('heading', { name: 'Events for the day', exact: true }).count(), 1)
+  assert.doesNotMatch(await page.locator('.desk-note-summary').textContent(), /Example must stay hidden/)
   assert.equal(await page.locator('.overview-from-siena .siena-item-body').textContent(), 'The actual saved note body.\n\nIts second paragraph is retained.')
   assert.equal(await page.locator('.fn-app .fn-tape-label').count(), 1)
   assert.equal(await page.locator('.desk-workshop').count(), 0)
@@ -75,16 +78,14 @@ try {
    await activate(dialog.getByRole('button', { name: 'Close request' })); await dialog.waitFor({ state: 'detached' }); assert.equal(await opener.evaluate(el => el === document.activeElement), true)
   }
   assert.deepEqual(await snapshot(), original)
-  // Model an arriving source update before the UI observes its change signal.
-  const remoteBody = await page.evaluate(async () => { const { db } = await import('/src/lib/db.ts'); const p = await db.pages.get('navigation-project'); const body = p.body + '\nA newer source sentence.'; await db.pages.put({ ...p, body, updated: p.updated + 1 }); return body })
-  await activate(page.locator('.fn-step-list').getByRole('button', { name: 'A real saved step' })); await page.getByText('This project changed. Review its current steps before trying again.').waitFor()
-  assert.equal(await page.evaluate(async () => (await (await import('/src/lib/db.ts')).db.pages.get('navigation-project')).body), remoteBody)
-  await page.evaluate(async () => (await import('/src/lib/db.ts')).changed()); await page.locator('.fn-step-list').getByRole('button', { name: 'A real saved step' }).waitFor()
-  await activate(page.locator('.fn-step-list').getByRole('button', { name: 'A real saved step' })); await page.waitForFunction(async () => (await (await import('/src/lib/db.ts')).db.pages.get('navigation-project')).body.includes('- [x] A real saved step'))
-  assert.equal(await page.evaluate(async () => (await (await import('/src/lib/db.ts')).db.pages.get('navigation-project')).body), remoteBody.replace('- [ ] A real saved step', '- [x] A real saved step'))
+  // A source change refreshes the preview without any dashboard write.
+  const remoteBody = await page.evaluate(async () => { const { db, changed } = await import('/src/lib/db.ts'); const p = await db.pages.get('navigation-project'); const body = p.body + '\nA newer source sentence.'; await db.pages.put({ ...p, body, updated: p.updated + 1 }); changed(); return body })
+  await page.locator('.desk-note-summary').getByText('A real saved step', { exact: true }).waitFor()
+  await page.reload(); await page.locator('.desk-note-summary').getByText('A real saved step', { exact: true }).waitFor()
+  assert.equal(await page.evaluate(async () => (await (await import('/src/lib/db.ts')).db.pages.get('navigation-project')).body), remoteBody, 'Preview and refresh preserve checkboxes and all source writing')
   await page.locator('#desk-heading').focus(); await page.keyboard.press('PageDown'); await page.waitForFunction(() => document.querySelector('.fn-shell').scrollTop > 0)
   await fit(); assert.deepEqual(errors, [])
-  console.log(`PASS ${width}px: approved navigation, real-source mapping, calendar synchronization/direct reload/Back/Forward, keyboard date/skip/scroll, repeated/interrupted requests, guarded project step save, no horizontal overflow`)
+  console.log(`PASS ${width}px: approved navigation, real-source mapping, calendar synchronization/direct reload/Back/Forward, keyboard date/skip/scroll, repeated/interrupted requests, desk-only summaries and source preservation, no horizontal overflow`)
   await context.close()
  }
 } finally { await browser.close() }

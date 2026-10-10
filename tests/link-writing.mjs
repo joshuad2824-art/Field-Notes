@@ -36,7 +36,7 @@ async function run(name, options) {
   }
   const create = async () => {
     await page.goto(`${base}/n/field-notes`)
-    await activate(page.getByText('New page', { exact: true }).first())
+    await activate(page.getByRole('button', { name: 'New page', exact: true }).first())
     await editor.fill('Peg and Awl')
     await editor.press('Home')
     await editor.press('Shift+End')

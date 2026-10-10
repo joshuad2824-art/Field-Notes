@@ -63,10 +63,12 @@ export function CalendarScreen({ month, notebook }: { month?: string; notebook: 
             <button className="icon-control" aria-label="Back" title="Back" onClick={() => back(to.overview())}><Icon name="back" /></button>
             <button className="icon-control" aria-label="Notebook" title="Notebook" onClick={() => navigate(to.notebook(notebook))}><Icon name="notebook" /></button>
             <span className="grow" />
-            <button className="link-caps" onClick={() => navigate(to.newEvent(shown === monthNow() ? isoDay() : `${shown}-01`))}>Add event</button>
+            <button className="link-caps" onClick={() => navigate(to.newEvent(shown === monthNow() ? isoDay() : `${shown}-01`))} aria-label="Add event" title="Add event"><Icon name="add" /></button>
           </div>
+          <div className="calendar-overview">
           <CalendarPanel large />
           <div className="calendar-count section-label">{countLabel(pages.length, 'page')} · {countLabel(events.length, 'event')} this month</div>
+          </div>
           <section className="calendar-agenda" aria-label="This month’s pages and events">
           <h1 className="calendar-agenda-heading">In {name}</h1>
           {days.length === 0 ? <p className="calendar-empty">No pages or events this month.</p> : null}

@@ -1,0 +1,31 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@supabase/functions-js@*": "2.117.1"
+  },
+  "jsr": {
+    "@supabase/functions-js@2.117.1": {
+      "integrity": "48a2feec0c1217ac1762b73b91b75c3c9439625ca56d4a20257aa2abe5259c77"
+    }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@codemirror/commands@^6.9.0",
+        "npm:@codemirror/state@^6.5.2",
+        "npm:@codemirror/view@^6.39.2",
+        "npm:@supabase/supabase-js@2.117.0",
+        "npm:@types/react-dom@^19.2.0",
+        "npm:@types/react@^19.2.0",
+        "npm:@vitejs/plugin-react@5",
+        "npm:dexie@^4.2.0",
+        "npm:fflate@~0.8.2",
+        "npm:minisearch@^7.2.0",
+        "npm:react-dom@^19.2.0",
+        "npm:react@^19.2.0",
+        "npm:typescript@^5.9.0",
+        "npm:vite@^7.1.0"
+      ]
+    }
+  }
+}

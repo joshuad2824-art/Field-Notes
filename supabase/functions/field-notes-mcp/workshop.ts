@@ -1,3 +1,4 @@
+import { recurrenceError, normalizedRecurringDate, type EventRecurrence } from '../_shared/recurrence.ts'
 // Pure validation shared by MCP handlers and local checks.
 export function metadataText(body: string) {
   let fenced = false
@@ -39,8 +40,11 @@ export function validateImage(bytes: string, mime: string) {
   return { ext: formats[mime][0], byteLength: raw.length }
 }
 export function dateValid(value: string) { return /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value }
-export function validateEvent(event: { date: string; end_date?: string | null; start_time?: string | null; end_time?: string | null }) {
+export function validateEvent(event: { date: string; end_date?: string | null; start_time?: string | null; end_time?: string | null; recurrence?: EventRecurrence | null }) {
   if (!dateValid(event.date) || (event.end_date && (!dateValid(event.end_date) || event.end_date < event.date))) throw new Error('Choose valid dates with the end on or after the start.')
+  const repeat = recurrenceError(event.recurrence, event.date)
+  if (repeat) throw new Error(repeat)
+  if (event.recurrence && normalizedRecurringDate({ date: event.date, recurrence: event.recurrence }).date !== event.date) throw new Error('The start date must match the repeat schedule. Choose its first occurrence date.')
   const clock = /^([01][0-9]|2[0-3]):[0-5][0-9]$/
   if ([event.start_time, event.end_time].some(time => time && !clock.test(time))) throw new Error('Use 24-hour HH:MM times.')
   if (event.end_time && !event.start_time) throw new Error('End time requires a start time.')

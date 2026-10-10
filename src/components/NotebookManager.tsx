@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import { useState } from 'react'
 import { notebookCounts } from '../lib/db'
 import { countLabel } from '../lib/format'
@@ -39,7 +40,7 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
           <span className="manager-title">Notebooks</span>
           <span className="grow" />
           <button className="mark-button" onClick={onClose} aria-label="Close">
-            ×
+            <Icon name="close" />
           </button>
         </div>
 
@@ -68,7 +69,7 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
                   disabled={books.length === 1}
                   title={books.length === 1 ? 'The last notebook stays' : 'Delete'}
                 >
-                  ×
+                  <Icon name="trash" />
                 </button>
               </div>
               {recoloring === book.id ? (
@@ -109,12 +110,8 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
                   setConfirm(null)
                   onDeleted(doomed.id)
                 }}
-              >
-                Delete it
-              </button>
-              <button className="outline" onClick={() => setConfirm(null)}>
-                Keep it
-              </button>
+               aria-label="Delete it" title="Delete it"><Icon name="trash" /></button>
+              <button className="outline" onClick={() => setConfirm(null)} aria-label="Keep it" title="Keep it"><Icon name="close" /></button>
             </div>
           </div>
         ) : null}
@@ -122,7 +119,7 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
         <div className="manager-rule" />
 
         <div className="manager-add">
-          <div className="section-label">Add one</div>
+          <div className="section-label">New notebook</div>
           <input
             className="well"
             value={name}
@@ -142,9 +139,7 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
               />
             ))}
             <span className="grow" />
-            <button className="plate-button tight" disabled={!candidate || !!alreadyNamed} onClick={add}>
-              Add notebook
-            </button>
+            <button className="plate-button tight" disabled={!candidate || !!alreadyNamed} onClick={add} aria-label="Add notebook" title="Add notebook"><Icon name="add" /></button>
           </div>
           <p className="manager-note" role={alreadyNamed ? 'status' : undefined}>
             {alreadyNamed

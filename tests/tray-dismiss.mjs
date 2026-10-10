@@ -41,7 +41,7 @@ async function run(name, options) {
   }
   try {
     await page.goto(`${base}/n/field-notes`)
-    await activate(page.getByText('New page', { exact: true }).first())
+    await activate(page.getByRole('button', { name: 'New page', exact: true }).first())
     const content = page.locator('.cm-content')
     await content.fill('Alpha beta\nSecond line\nThird line')
     await content.press('ControlOrMeta+Home')

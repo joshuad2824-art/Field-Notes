@@ -1,3 +1,4 @@
+import { Icon } from '../components/Icon'
 import { useEffect, useRef, useState } from 'react'
 import { requestPersistence, storageEstimate } from '../lib/db'
 import { exportNotebook, exportShelf } from '../lib/export'
@@ -136,17 +137,17 @@ export function SettingsScreen() {
     <div className="app">
       <header className="chrome">
         <button className="btn glyph" onClick={() => back()} aria-label="Back">
-          ‹
+          <Icon name="back" />
         </button>
         <span className="chrome-title">Settings</span>
       </header>
 
       <div className="scroll">
-        <div className="panel-card">
+        <nav className="settings-index" aria-label="Settings sections"><a href="#settings-appearance">Appearance</a><a href="#settings-backup">Backup</a><a href="#settings-connections">Connections</a><a href="#settings-advanced">Advanced</a></nav>
+        <div className="panel-card settings-sections"><section id="settings-appearance" className="settings-card">
           <h2>Pages</h2>
           <p>
-            What a new page opens as, and what every page that hasn't been given its own answer
-            follows. Change it here and they all change with it.
+            Default paper and pen for pages without their own appearance settings.
           </p>
           <div className="actions">
             <button
@@ -170,16 +171,14 @@ export function SettingsScreen() {
             </div>
           </div>
 
-          <h2>Export</h2>
+          <details className="settings-journal"><summary>Journal</summary><JournalPanel /></details>
+          </section><section id="settings-backup" className="settings-card">
+          <h2>Backup</h2>
           <p>
-            Storage is markdown, so an export is a copy rather than a conversion. Each page
-            carries a short frontmatter block for the dates and attributes a filename can't
-            hold. Whole shelf also includes Field Notes events and saved Siena items.
+            Download a copy of your pages, images, events, and saved Siena items.
           </p>
           <div className="actions">
-            <button className="btn caps" onClick={() => void exportShelf()}>
-              Whole shelf
-            </button>
+            <button className="btn caps" onClick={() => void exportShelf()} aria-label="Whole shelf" title="Whole shelf"><Icon name="download" /></button>
             {books.map((book) => (
               <button
                 key={book.id}
@@ -193,17 +192,16 @@ export function SettingsScreen() {
 
           <h2>Import</h2>
           <p>
-            The same door, opening inward. A zip an export made restores as itself — every
-            page carries its id, so restoring twice gets one copy — and any folder of plain
-            markdown comes in as new pages.
+            Restore an exported archive or bring in Markdown files. Restoring an archive twice keeps one copy of each page.
           </p>
           <div className="actions">
             <button
               className="btn caps"
               disabled={importing}
+              aria-label={importing ? 'Reading' : 'Choose files'} title="Import files"
               onClick={() => filesRef.current?.click()}
             >
-              {importing ? 'Reading' : 'Choose files'}
+              <Icon name="upload" />
             </button>
             <input
               ref={filesRef}
@@ -233,15 +231,15 @@ export function SettingsScreen() {
             </p>
           ) : null}
 
-          <JournalPanel />
+          </section><section id="settings-connections" className="settings-card settings-connections"><h2>Connections</h2>
+          <div className="connection-grid"><div><SyncPanel /></div>
 
-          <SyncPanel />
+          <div><SienaConnectPanel /></div>
 
-          <SienaConnectPanel />
+          <div><WeatherPanel /></div>
+          <div><DavisAgenda /></div></div>
 
-          <WeatherPanel />
-          <DavisAgenda />
-
+          </section><details id="settings-advanced" className="settings-card settings-advanced"><summary>Advanced</summary>
           <h2>Storage</h2>
           <p>
             Pages live on this device in IndexedDB, and that is the primary store rather than a
@@ -249,15 +247,11 @@ export function SettingsScreen() {
             Deleted pages linger for thirty days before they go.
           </p>
           <div className="actions">
-            <button className="btn caps" onClick={() => navigate(to.trash())}>
-              Deleted pages
-            </button>
+            <button className="btn caps" onClick={() => navigate(to.trash())} aria-label="Deleted pages" title="Deleted pages"><Icon name="trash" /></button>
             <button
               className="btn caps"
               onClick={async () => setPersisted(await requestPersistence())}
-            >
-              Keep on device
-            </button>
+             aria-label="Keep on device" title="Keep on device"><Icon name="save" /></button>
           </div>
           <p className="meta" style={{ marginTop: 16 }}>
             {persisted === null ? 'checking' : persisted ? 'persistent' : 'best effort'} ·{' '}
@@ -288,7 +282,7 @@ export function SettingsScreen() {
             the archive that matters is the one on this device and the folder of markdown an
             export puts on disk.
           </p>
-        </div>
+        </details></div>
       </div>
     </div>
   )

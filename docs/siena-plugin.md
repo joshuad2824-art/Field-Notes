@@ -114,3 +114,7 @@ Deployment order: apply `supabase/migrations/20261007170122_workshop_images_cale
 The migration adds linked-account image read/create and native-event read/create/update policies, scoped to the existing vault link. It adds no deletion tool, service-role credential, public image bucket, or Davis write access. The attachment function is SECURITY INVOKER and saves bytes/reference together. A failed version check leaves both unchanged. An identical retry is idempotent; reusing an ID with different content is rejected.
 
 Checks: `npm run check:workshop-plugin`, Deno check on the MCP entrypoint, the local browser fixture described in `project-desk.md`, and `tests/workshop-sql.mjs` with `PGLITE_MODULE` pointing to an installed PGlite entrypoint. SQL tests use disposable local tables and roles, never production notes.
+
+## Recurring events, October 7, 2026
+
+Hosted `field-notes-mcp` version 12 retains its existing OAuth validation and all 17 tools. `get_event` returns optional `recurrence`; `save_event` accepts its structured rule or null to clear it. Omitting the rule during an edit preserves the current rule and validates the new start date against it. `list_events` returns matching occurrence dates with each recurring master and uses master-ID pagination, including a cursor even when a candidate page contains no matching occurrences. Update the whole series with its exact `updated` value. The frontend, server validator, projection, and calendar-file rule builder share `supabase/functions/_shared/recurrence.ts`.

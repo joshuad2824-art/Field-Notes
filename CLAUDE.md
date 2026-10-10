@@ -22,6 +22,10 @@ The app itself is at the root: `src/`, `index.html`, `netlify.toml`. `npm run de
 
 ---
 
+## October 7 Workshop and calendar update
+
+Joshua requested one Workshop destination for physical-project plans and a small owned-tools card, original images inside plans, and a return button to the plan list. Family events belong alongside native calendar events, identified by a colored Davis / Read only tag; connection controls belong in Settings. This supersedes separate Plans/Workshop navigation and the separate Davis dashboard panel. The current implementation and verification status are in `00_START_HERE.md`, `docs/project-desk.md`, and `docs/siena-plugin.md`.
+
 ## September 23 navigation and reminder revision
 
 Joshua authorized the first pass in `docs/2026-09-23 - Proposed Edit Priorities.md`.
@@ -470,3 +474,14 @@ The next move is still not a feature. It's the month.
 ## How to work in this repo
 
 Ship small and often — feel comes from fifty revisions, not one big build. When a choice is between beautiful and instant, instant wins; the slowness in this brand is aesthetic, never latency. When something in this file turns out to be wrong, say so plainly and change it here rather than working around it.
+
+
+## October 7, 2026 design decisions
+
+Joshua authorized a whole-app design implementation, then publication and routine decisions. The authoritative record is `docs/design-implementation.md`, with current release and next steps in `00_START_HERE.md`. Keep the woodland/postal/puffin identity, cream paper, handwritten accents, and original saved writing/images. Routine actions are icon-only with accessible names; headings, actual content, field labels, consent, and consequential confirmations remain clear. New distinctive icon artwork is deferred.
+
+Workshop is the sole visible home for plans and their images. Hide both seeded and custom-ID notebooks named Workshop or The Workshop from the shelf without deleting their stored records. Preserve explicit legacy capture links and ordinary Workshop writing. Plans use meaningful paper sections and accurate nested lists, merged tables, plain links, and diagrams; editing retains existing conflict and save safeguards.
+
+Weather remains expanded at the top of the dashboard, immediately below its header, with five days visible on phones and seven on desktop. The right notebook page now shows Events for the day. On our desk items appear only as tags below, with short excerpts of attached notes, and every active item remains listed. Reminders sit beside the notebook on desktop. Other priorities use content-driven heights and related side-by-side cards. Selecting an existing project page with no Status must save the displayed Active default, not an empty value. Verify save and refresh using disposable local data.
+
+Current design production release is v29, deploy `6ac695ab037b3190e98a0413`; no Git commit or push was made. The source checkout already contained substantial prior work and is preserved. A later Git deployment can replace the manual release; consult the start file before shipping.

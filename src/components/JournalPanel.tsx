@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import { useState } from 'react'
 import { consent, hasConsented, keyProblem, setModelKey, useModelKey } from '../writeup/key'
 
@@ -55,9 +56,7 @@ export function JournalPanel() {
         spellCheck={false}
       />
       <div className="actions">
-        <button className="btn caps" disabled={!draft.trim()} onClick={save}>
-          Hold it
-        </button>
+        <button className="btn caps" disabled={!draft.trim()} onClick={save} aria-label="Hold it" title="Hold it"><Icon name="save" /></button>
         {key ? (
           <button
             className="btn caps"
@@ -65,9 +64,7 @@ export function JournalPanel() {
               setModelKey('')
               setProblem(null)
             }}
-          >
-            Forget it
-          </button>
+           aria-label="Forget it" title="Forget it"><Icon name="close" /></button>
         ) : null}
       </div>
       {problem ? <p className="panel-problem">{problem}</p> : null}

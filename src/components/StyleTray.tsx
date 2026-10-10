@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import type { EditorView } from '@codemirror/view'
 import {
@@ -180,7 +181,7 @@ export function StyleTray({
             onMouseDown={hold} onClick={() => setSection(name)}>{name}</button>
         ))}
         <span className="grow" />
-        <button className="tray-close" onMouseDown={hold} onClick={onClose} aria-label="Close">×</button>
+        <button className="tray-close" onMouseDown={hold} onClick={onClose} aria-label="Close"><Icon name="close" /></button>
       </div>
       <div className="tray-strip">
         {section === 'Text' && <>
@@ -209,7 +210,7 @@ export function StyleTray({
             AA
           </button>
           <button className="tray-word" onMouseDown={hold} onClick={openLink}
-            aria-label="Link" title="Add or edit link">Link</button>
+            aria-label="Link" title="Add or edit link"><Icon name="link" /></button>
         </div>
 
         <span className="tray-divider" />
@@ -260,7 +261,7 @@ export function StyleTray({
             aria-label="Less indent — ⇧⇥"
             title="Less indent — ⇧⇥"
           >
-            ⇤
+            <Icon name="outdent" />
           </button>
           <button
             className="tray-block"
@@ -269,7 +270,7 @@ export function StyleTray({
             aria-label="More indent — ⇥"
             title="More indent — ⇥"
           >
-            ⇥
+            <Icon name="indent" />
           </button>
           {/* Tapping either a second time puts the line back to the margin,
               which is the only way back once the caret has moved on. */}
@@ -319,23 +320,19 @@ export function StyleTray({
             aria-label="Remove highlight"
             title="Remove highlight"
           >
-            ×
+            <Icon name="close" />
           </button>
         </div>
 
         </>}
         {section === 'Insert' && <>
         <div className="tray-group">
-          <button className="tray-word" onMouseDown={hold} onClick={run(insertTable)}>
-            Table
-          </button>
+          <button className="tray-word" onMouseDown={hold} onClick={run(insertTable)} aria-label="Table" title="Table"><Icon name="table" /></button>
           <button
             className="tray-word"
             onMouseDown={hold}
             onClick={() => picker.current?.click()}
-          >
-            Picture
-          </button>
+           aria-label="Picture" title="Picture"><Icon name="image" /></button>
         </div>
 
         </>}
@@ -419,13 +416,13 @@ export function StyleTray({
             {linkEdit.existing && <button type="button" onClick={() => {
               if (view) removeLink(view, linkEdit.existing!)
               setLinkEdit(null)
-            }}>Remove link</button>}
+            }} aria-label="Remove link" title="Remove link"><Icon name="close" /></button>}
             <span className="grow" />
             <button type="button" onClick={() => {
               setLinkEdit(null)
               view?.focus()
-            }}>Cancel</button>
-            <button type="submit" className="primary">Save link</button>
+            }} aria-label="Cancel" title="Cancel"><Icon name="close" /></button>
+            <button type="submit" className="primary" aria-label="Save link" title="Save link"><Icon name="save" /></button>
           </div>
         </form>
       </div>}

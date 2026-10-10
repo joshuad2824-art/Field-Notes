@@ -1,4 +1,5 @@
 import { Icon } from './Icon'
+import { RouteLink } from './DeskHeader'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { livePages } from '../lib/db'
 import { countLabel, groupFor, mastheadParts, shortStamp } from '../lib/format'
@@ -109,7 +110,7 @@ export function PageList({
               place to a numeral 76px tall. */}
           <WeatherLine compact />
           <button className="mark-button" onClick={onToggleRail} aria-label="Notebooks">
-            ☰
+            <Icon name="menu" />
           </button>
         </div>
       ) : null}
@@ -127,7 +128,7 @@ export function PageList({
               aria-label={railShown ? 'Hide the notebooks' : 'Show the notebooks'}
               title="Notebooks — ⌘⇧\"
             >
-              ☰
+              <Icon name="menu" />
             </button>
           )}
           <span className="book-dot" style={{ background: book.color }} />
@@ -135,6 +136,7 @@ export function PageList({
           <span className="grow" />
           <span className="list-count">{countLabel(pages.length, journal ? 'review' : 'page')}</span>
         </div>
+        {!journal ? <RouteLink className="notebook-desk-link" href={to.notebookDesk(notebook)}><Icon name="overview" />Notebook desk</RouteLink> : null}
         <input
           className="well"
           value={query}
@@ -148,7 +150,7 @@ export function PageList({
       </div>
 
       <div className="scroll list-body">
-        {journal ? <p className="journal-intro">Weekly reviews assembled from your notebook pages. Review last week gathers its notes, or opens your existing review with your edits intact.</p> : null}
+        {journal ? <details className="journal-help"><summary className="icon-control" aria-label="About weekly reviews" title="About weekly reviews"><Icon name="info" /></summary><p className="journal-intro">Weekly reviews assembled from your notebook pages. Review last week gathers its notes, or opens your existing review with your edits intact.</p></details> : null}
         {collectionProblem ? <p className="journal-intro" role="alert">{collectionProblem}</p> : null}
         {groups.length === 0 ? (
           <div className="empty">
@@ -193,6 +195,8 @@ export function PageList({
         {journal ? (
           <button
             className="plate-button tight"
+            aria-label={collecting ? "Opening review" : "Review last week"}
+            title="Review last week"
             disabled={collecting}
             /* Last week, not this one: on a Sunday morning the week you want
                is the one that just finished. Collecting the same week twice
@@ -211,12 +215,10 @@ export function PageList({
               }
             }}
           >
-            {collecting ? 'Opening review' : 'Review last week'}
+            <Icon name="calendar" />
           </button>
         ) : (
-          <button className="plate-button tight" onClick={onNewPage} title="⌘⇧N">
-            <Icon name="new-page" /> New page
-          </button>
+          <button className="plate-button tight" onClick={onNewPage} title="New page — ⌘⇧N" aria-label="New page"><Icon name="new-page" /></button>
         )}
       </div>
     </div>

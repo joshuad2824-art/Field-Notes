@@ -106,7 +106,7 @@ const tray = async (label) => {
 
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(800)
-await page.getByText('New page', { exact: true }).first().click()
+await page.getByRole('button', { name: 'New page', exact: true }).first().click()
 await page.waitForTimeout(700)
 await page.locator('.cm-content').click()
 

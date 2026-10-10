@@ -21,15 +21,15 @@ export function DeskHeader({ title, notebook, pages }: { title: string; notebook
   return <>
     <header className="fn-header">
       <RouteLink className="fn-wordmark" href={to.overview()} aria-label="Field Notes home"><img className="fn-rowan" src="/approved-design/rowan.png" alt="" /><span className="fn-mobile-brand">Field<br />Notes</span></RouteLink>
-      <nav className="fn-topnav" aria-label="Saved items"><RouteLink href={to.fromSiena()}>Saved</RouteLink></nav>
+      <nav className="fn-topnav" aria-label="Saved items"><RouteLink className="icon-control" href={to.fromSiena()} aria-label="Saved items" title="Saved items"><Icon name="from-siena" /></RouteLink></nav>
       <div className="fn-header-actions">
         <RouteLink className="fn-icon-button fn-desktop-search" href={to.search()} aria-label="Search" title="Search"><Icon name="search" /></RouteLink>
         <RouteLink className="fn-new" href={to.newPage(notebook)} aria-label="New page" title="New page"><Icon name="new-page" /></RouteLink>
-        <button className="fn-ask ask-siena-button" onClick={() => setAsking(true)} aria-label="Ask Siena"><Icon name="from-siena" /><span>Ask Siena</span></button>
+        <button className="fn-ask ask-siena-button" onClick={() => setAsking(true)} aria-label="Ask Siena"><Icon name="from-siena" /></button>
       </div>
     </header>
     <div className="fn-intro overview-head">
-      <div><p className="fn-eyebrow">A quieter corner of the day</p><h1 id="desk-heading" tabIndex={-1}>{title}</h1></div>
+      <div><h1 id="desk-heading" tabIndex={-1}>{title}</h1></div>
       <div className="fn-date"><RouteLink className="fn-date-link" href={to.calendar(month)} aria-label={`${date}. Open full calendar`} title="Open full calendar">{date}</RouteLink></div>
     </div>
     {asking ? <AskSiena pages={pages} onClose={() => setAsking(false)} /> : null}

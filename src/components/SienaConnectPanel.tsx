@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import { useEffect, useState, type FormEvent } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { linkedVault, sendSignInLink, sienaClient, SIENA_PUBLISHABLE_KEY, SIENA_URL } from '../siena/client'
@@ -119,21 +120,15 @@ export function SienaConnectPanel() {
           {linked === vault?.id ? (
             <div className="actions">
               <span className="meta">Archive linked</span>
-              <button className="btn caps" disabled={busy} onClick={() => void unpair()}>
-                Remove Siena access
-              </button>
+              <button className="btn caps" disabled={busy} onClick={() => void unpair()} aria-label="Remove Siena access" title="Remove Siena access"><Icon name="close" /></button>
             </div>
           ) : linked ? (
             <>
               <p className="meta">This account is linked to another archive.</p>
-              <button className="btn caps" disabled={busy} onClick={() => void unpair()}>
-                Remove that link
-              </button>
+              <button className="btn caps" disabled={busy} onClick={() => void unpair()} aria-label="Remove that link" title="Remove that link"><Icon name="close" /></button>
             </>
           ) : (
-            <button className="btn caps" disabled={!vault || busy} onClick={() => void pair()}>
-              Link this archive
-            </button>
+            <button className="btn caps" disabled={!vault || busy} onClick={() => void pair()} aria-label="Link this archive" title="Link this archive"><Icon name="link" /></button>
           )}
         </>
       ) : null}

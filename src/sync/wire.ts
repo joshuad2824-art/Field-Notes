@@ -1,3 +1,4 @@
+import { recurrenceRule } from '../lib/event-recurrence.ts'
 import type { FieldEvent, Notebook, Page, PageImage, SienaItem, SienaItemKind } from '../lib/model'
 
 /* The envelope on the wire. Deliberately the same shape as the one on the
@@ -45,6 +46,7 @@ export interface ImageRow extends Row {
 export interface EventRow extends Row {
   title: string
   date: string
+  recurrence?: FieldEvent['recurrence'] | null
   end_date?: string | null
   start_time: string | null
   end_time: string | null
@@ -150,7 +152,7 @@ export function sameNotebook(a: Notebook, b: Notebook): boolean {
 
 export function eventToRow(event: FieldEvent, vault: string): EventRow {
   return {
-    vault, id: event.id, title: event.title, date: event.date, end_date: event.endDate ?? null,
+    vault, id: event.id, title: event.title, date: event.date, end_date: event.endDate ?? null, recurrence: event.recurrence ?? null,
     start_time: event.startTime ?? null, end_time: event.endTime ?? null,
     location: event.location ?? null, note: event.note ?? null,
     page_id: event.pageId ?? null, calendar_target: event.calendarTarget ?? null,
@@ -162,6 +164,7 @@ export function eventToRow(event: FieldEvent, vault: string): EventRow {
 export function rowToEvent(row: EventRow): FieldEvent {
   return {
     id: row.id, title: row.title, date: row.date,
+    ...(row.recurrence ? { recurrence: row.recurrence } : {}),
     ...(row.end_date ? { endDate: row.end_date } : {}),
     created: Number(row.created), updated: Number(row.updated),
     ...(row.start_time ? { startTime: row.start_time } : {}),
@@ -177,7 +180,7 @@ export function rowToEvent(row: EventRow): FieldEvent {
 }
 
 export function sameEvent(a: FieldEvent, b: FieldEvent): boolean {
-  return a.title === b.title && a.date === b.date && (a.endDate ?? a.date) === (b.endDate ?? b.date) &&
+  return (a.recurrence ? recurrenceRule({ ...a.recurrence, weekdays: a.recurrence.weekdays?.slice().sort() }, false) : '') === (b.recurrence ? recurrenceRule({ ...b.recurrence, weekdays: b.recurrence.weekdays?.slice().sort() }, false) : '') && a.title === b.title && a.date === b.date && (a.endDate ?? a.date) === (b.endDate ?? b.date) &&
     (a.startTime ?? '') === (b.startTime ?? '') && (a.endTime ?? '') === (b.endTime ?? '') &&
     (a.location ?? '') === (b.location ?? '') && (a.note ?? '') === (b.note ?? '') &&
     (a.pageId ?? '') === (b.pageId ?? '') && (a.calendarTarget ?? '') === (b.calendarTarget ?? '') &&

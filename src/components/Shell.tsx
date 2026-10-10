@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPage } from '../lib/db'
 import { SIDEBAR_AVAILABLE, SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
@@ -10,6 +11,7 @@ import { PageList } from './PageList'
 import { Rail } from './Rail'
 
 interface Props {
+  focus?: boolean
   notebook: string
   overview?: boolean
   /* The open page, if there is one. Below 1120 its presence is what decides
@@ -27,7 +29,7 @@ interface Props {
    window, and the rail slides over as a drawer that starts closed. Crossing
    the boundary reconciles the drawer, because one that survived a resize into
    the docked layout would be a second, invisible state. */
-export function Shell({ notebook, overview = false, activeId, children }: Props) {
+export function Shell({ notebook, overview = false, activeId, children, focus = false }: Props) {
   const externalRail = useExternalRail()
   const available = useMediaQuery(SIDEBAR_AVAILABLE)
   const regularDocked = useMediaQuery(SIDEBAR_DOCKED)
@@ -51,7 +53,7 @@ export function Shell({ notebook, overview = false, activeId, children }: Props)
   const railOver = !docked && railDrawer
 
   /* Below the boundary the leaf replaces the list rather than joining it. */
-  const showList = overview ? false : compact ? !activeId : listDocked
+  const showList = overview || focus ? false : compact ? !activeId : listDocked
   const showLeaf = overview || (compact ? !!activeId : true)
   /* Nothing to the left saying where we are, so the leaf says it itself. */
   const hidden = docked && !listDocked && !railDocked && !(externalRail && settings.rail)
@@ -62,7 +64,7 @@ export function Shell({ notebook, overview = false, activeId, children }: Props)
        the front door. */
     if (!isReserved(id)) setSettings({ notebook: id })
     setRailDrawer(false)
-    navigate(to.notebook(id))
+    navigate(to.notebookHome(id))
   }
 
   const newPage = async () => {
@@ -76,7 +78,7 @@ export function Shell({ notebook, overview = false, activeId, children }: Props)
       className="mark-button"
       onClick={() => docked ? setSettings({ rail: !settings.rail }) : setRailDrawer(true)}
       aria-label={railDocked ? 'Hide the notebooks' : 'Show the notebooks'}
-    >☰</button>
+    ><Icon name="menu" /></button>
   ) : (
     <button
       className={`mark-button${listDocked && available ? ' on' : ''}`}
@@ -87,7 +89,7 @@ export function Shell({ notebook, overview = false, activeId, children }: Props)
       aria-label={compact ? 'The list' : listDocked ? 'Hide the list' : 'Show the list'}
       title="The list — ⌘\"
     >
-      ☰
+      <Icon name="menu" />
     </button>
   )
 
@@ -128,7 +130,7 @@ export function Shell({ notebook, overview = false, activeId, children }: Props)
           onClose={() => setManage(false)}
           onAdded={(id) => {
             setSettings({ notebook: id })
-            navigate(to.notebook(id))
+            navigate(to.notebookHome(id))
           }}
           onDeleted={(id) => {
             if (id !== notebook) return

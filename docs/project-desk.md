@@ -1,8 +1,16 @@
+# Current plan and calendar decisions — October 7, 2026
+
+This section supersedes older layout notes below. The dashboard notebook contains Siena’s note on the left and Events for the day on the right. On our desk appears only as tags below with note summaries, and lists every active item. Weather remains above the cards: five forecast days on phones, seven on desktop. Workshop shows plans before supporting tools; its duplicate shelf notebook is hidden while all content and associations remain saved.
+
+Individual plans use five paper colors with lined, dotted, gridded, and grain textures plus stable variations of tape and paper clips. Desktop shows two columns; images, wide diagrams, and wide tables keep a full row. Mobile follows the same saved section order in one column.
+
+Native repeating events use one saved series and computed occurrences on the dashboard, month calendar, day view, and month markers. Options include daily, selected weekdays, monthly date or first/second/third/fourth/fifth/last weekday, yearly, intervals, and end date or count. Months without a chosen date or fifth weekday are skipped. Editing or deleting applies to the whole recoverable series; exceptions to individual occurrences are not part of this release. Backups, sync, and Apple Calendar files retain the rule. Davis remains a read-only external projection.
+
 # Project desk and Workshop
 
 The dashboard links ordinary saved pages. Add project, Add plan, and Add equipment open visible forms: select an existing source page or explicitly create a new one, fill in its details, and Save. Cancel leaves the source untouched. Gear buttons and Edit plan details reopen the same forms. A concurrent source edit blocks Save and retains the form input so it cannot silently overwrite newer writing. These actions do not seed a vault or duplicate an existing source page.
 
-Project details include the shared project name, status, owner, where we left off, one next step, and current artifact. The desk shows up to three active projects. Plans share the project name and record a version; numeric version labels sort newest first, with source update time as the fallback. Older revisions remain linked. Equipment requires explicit confirmation that it is already owned; brand and model are optional. Missing or explicitly unknown details are omitted.
+Project details include the shared project name, status, owner, where we left off, one next step, and current artifact. The desk shows all active projects. Plans share the project name and record a version; numeric version labels sort newest first, with source update time as the fallback. Older revisions remain linked. Equipment requires explicit confirmation that it is already owned; brand and model are optional. Missing or explicitly unknown details are omitted.
 
 The forms store readable labels in the source page rather than separate project records. Existing notes can also use these markers directly:
 

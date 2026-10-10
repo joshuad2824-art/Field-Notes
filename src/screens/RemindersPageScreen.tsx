@@ -1,3 +1,4 @@
+import { Icon } from '../components/Icon'
 import { useState, type FormEvent } from 'react'
 import { Shell } from '../components/Shell'
 import type { Page, SienaItem } from '../lib/model'
@@ -50,7 +51,7 @@ export function RemindersPageScreen({ page }: { page: Page }) {
                 <header className="reminder-page-head">
                   <span className="section-label">{book.name}</span>
                   <h1>Reminders</h1>
-                  <p>Check one off here or on the dashboard. Completed reminders remain in From Siena.</p>
+                  
                 </header>
 
                 <section aria-label="Active reminders" className="reminder-page-list">
@@ -65,19 +66,19 @@ export function RemindersPageScreen({ page }: { page: Page }) {
                         {item.dueAt ? <small>Due {dueLabel.format(new Date(item.dueAt))}</small> : null}
                       </div>
                     </div>
-                  )) : <p className="reminder-page-empty">No active reminders. This page stays here for the next one.</p>}
+                  )) : <p className="reminder-page-empty">No active reminders.</p>}
                 </section>
 
-                <form className="reminder-page-form" onSubmit={(event) => void add(event)}>
-                  <h2>Add a reminder</h2>
+                <details className="reminder-create"><summary aria-label="New reminder" title="New reminder"><Icon name="add" /></summary><form className="reminder-page-form" onSubmit={(event) => void add(event)}>
+                  <h2>Reminder</h2>
                   <label>Reminder<input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={240} required /></label>
                   <label>Due<input type="datetime-local" value={due} onChange={(event) => setDue(event.target.value)} required /></label>
                   {error ? <p role="alert">{error}</p> : null}
-                  <button type="submit">Add reminder</button>
-                </form>
+                  <button type="submit" aria-label="Add reminder" title="Add reminder"><Icon name="add" /></button>
+                </form></details>
 
-                <button className="reminder-page-history" onClick={() => navigate(to.fromSiena())}>
-                  Completed history{completed.length ? ` · ${completed.length}` : ''} ↗
+                <button className="reminder-page-history icon-control" aria-label={`Completed history${completed.length ? ` · ${completed.length}` : ''}`} title="Completed history" onClick={() => navigate(`${to.fromSiena()}#completed`)}>
+                  <Icon name="restore" />
                 </button>
               </div>
             </article>

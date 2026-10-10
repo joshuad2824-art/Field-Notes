@@ -5,7 +5,7 @@ import { ApprovedFrame } from './components/ApprovedFrame'
 import { DeskScreen } from './screens/DeskScreen'
 import { captureNew, captureToday, wantCaretAtEnd } from './lib/capture'
 import { createPage, getPage } from './lib/db'
-import { firstNotebookId, notebookOf, useNotebooks } from './lib/notebooks'
+import { firstNotebookId, isWorkshopNotebook, notebookOf, useNotebooks } from './lib/notebooks'
 import { getSettings, setSettings, useSettings } from './lib/settings'
 import { HomeScreen } from './screens/HomeScreen'
 import { PageScreen } from './screens/PageScreen'
@@ -23,6 +23,7 @@ import { ReviewScreen } from './screens/ReviewScreen'
 import { PlanScreen } from './screens/PlanScreen'
 import { DavisCallbackScreen } from './screens/DavisCallbackScreen'
 import { RemindersPageScreen } from './screens/RemindersPageScreen'
+import { NotebookDeskScreen } from './screens/NotebookDeskScreen'
 import { useLive } from './lib/useLive'
 import type { Page } from './lib/model'
 
@@ -33,7 +34,7 @@ export function App() {
   const books = useNotebooks()
 
   /* The remembered notebook, unless it has been deleted out from under us. */
-  const remembered = notebookOf(settings.notebook)?.id ?? books[0]?.id ?? firstNotebookId()
+  const remembered = (!isWorkshopNotebook(settings.notebook) ? notebookOf(settings.notebook)?.id : undefined) ?? books[0]?.id ?? firstNotebookId()
 
   useEffect(() => {
     const onKey = async (e: KeyboardEvent) => {
@@ -85,15 +86,18 @@ function Screen({ route, remembered }: { route: Route; remembered: string }) {
     case 'event-new':
       return <EventScreen date={route.date} notebook={remembered} />
     case 'event':
-      return <EventScreen id={route.id} notebook={remembered} />
+      return <EventScreen id={route.id} occurrence={route.occurrence} notebook={remembered} />
     case 'notebook':
+      if (isWorkshopNotebook(route.notebook)) return <WorkshopNotebookRedirect notebook={remembered} />
       return <HomeScreen notebook={notebookOf(route.notebook)?.id ?? remembered} />
+    case 'notebook-desk':
+      return <NotebookDeskScreen key={route.notebook} notebook={route.notebook} />
     case 'page':
       return <PageRoute key={route.id} id={route.id} />
     case 'review':
       return <ReviewScreen key={route.id} id={route.id} />
     case 'plan':
-      return <PlanScreen key={route.id} id={route.id} />
+      return <PlanScreen key={`${route.id}:${route.editing}`} id={route.id} editing={route.editing} />
     case 'search':
       return <SearchScreen />
     case 'tag':
@@ -142,4 +146,9 @@ function CaptureScreen({ kind, notebook }: { kind: 'new' | 'today'; notebook?: s
     }
   }, [kind, notebook])
   return null
+}
+
+function WorkshopNotebookRedirect({ notebook }: { notebook: string }) {
+  useEffect(() => navigate(to.workshop(), { replace: true }), [])
+  return <DeskScreen kind="workshop" notebook={notebook} />
 }

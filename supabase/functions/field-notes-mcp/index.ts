@@ -1,3 +1,4 @@
+import { expandEvents } from '../_shared/recurrence.ts'
 import { hasMark, detail, workshopBody, imageReferences, validateImage, validateEvent, dateValid } from './workshop.ts'
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createMcpHandler, McpServer } from 'npm:@modelcontextprotocol/server@2.0.0'
@@ -149,17 +150,17 @@ Deno.serve(
           const { data, error } = await supabase.rpc('assistant_attach_page_image', { p_vault: vault, p_page: page_id, p_expected_updated: expected_updated, p_id: request_id.replaceAll('-', ''), p_mime: mime, p_ext: image.ext, p_bytes: base64, p_caption: caption })
           return error ? failure(error.message) : result({ ...data, byte_length: image.byteLength })
         })
-        const eventColumns = 'id,title,date,end_date,start_time,end_time,location,note,page_id,calendar_target,created,updated'
+        const eventColumns = 'id,title,date,end_date,recurrence,start_time,end_time,location,note,page_id,calendar_target,created,updated'
         server.registerTool('list_events', {
-          title: 'List Field Notes calendar events', description: 'Read native editable Field Notes events overlapping an inclusive date range, paginated by ID. Davis events remain in the separate Davis connection and must be read with its tools; do not copy them into Field Notes.',
+          title: 'List Field Notes calendar events', description: 'Read native editable Field Notes events and recurring series overlapping an inclusive date range, paginated by series ID. A recurring series includes its matching occurrence dates; edit the master id with its updated value. Davis events remain in the separate Davis connection and must be read with its tools; do not copy them into Field Notes.',
           inputSchema: z.object({ from: z.string(), to: z.string(), cursor: z.string().optional(), limit: z.number().int().min(1).max(100).default(50) }), annotations: { readOnlyHint: true, openWorldHint: false },
         }, async ({ from, to, cursor, limit }) => {
           if (!dateValid(from) || !dateValid(to) || from > to || Date.parse(to) - Date.parse(from) > 366 * 86400000) return failure('Use a valid inclusive range up to 366 days.')
           const vault = await vaultForUser(); if (!vault) return failure('Link an archive first.')
-          let query = supabase.from('events').select(eventColumns).eq('vault', vault).is('deleted', null).lte('date', to).or(`end_date.gte.${from},and(end_date.is.null,date.gte.${from})`).order('id').limit(limit)
+          let query = supabase.from('events').select(eventColumns).eq('vault', vault).is('deleted', null).lte('date', to).or(`recurrence.not.is.null,end_date.gte.${from},and(end_date.is.null,date.gte.${from})`).order('id').limit(limit)
           if (cursor) query = query.gt('id', cursor)
           const { data, error } = await query
-          return error ? failure(error.message) : result({ events: data, next_cursor: data?.length === limit ? data[data.length - 1].id : null, source: 'field-notes' })
+          return error ? failure(error.message) : result({ events: data?.flatMap(event => { if (!event.recurrence) return [event]; const occurrences = expandEvents([{ ...event, endDate: event.end_date ?? undefined }], from, to).map(e => ({ date: e.date, ...(e.endDate ? { end_date: e.endDate } : {}) })); return occurrences.length ? [{ ...event, occurrences }] : [] }), next_cursor: data?.length === limit ? data[data.length - 1].id : null, source: 'field-notes' })
         })
         server.registerTool('get_event', {
           title: 'Read a Field Notes event', description: 'Read one native calendar event and its current updated value before changing it. This does not read or edit Davis events.',
@@ -170,12 +171,18 @@ Deno.serve(
           return error ? failure(error.message) : data ? result(data) : failure('Event not found.')
         })
         server.registerTool('save_event', {
-          title: 'Create or edit a Field Notes event', description: 'Save a native Field Notes event. For creation, choose a fresh UUID id and omit expected_updated; reuse that ID after an uncertain result and read it before retrying. For editing, read get_event and pass its exact updated value and all desired fields. Dates and times are local calendar values. Never use this to edit or duplicate Davis events.',
-          inputSchema: z.object({ id: z.string().uuid(), expected_updated: z.number().int().nonnegative().optional(), title: z.string().trim().min(1).max(240), date: z.string(), end_date: z.string().nullable().optional(), start_time: z.string().nullable().optional(), end_time: z.string().nullable().optional(), location: z.string().max(500).nullable().optional(), note: z.string().max(10000).nullable().optional(), page_id: z.string().uuid().nullable().optional(), calendar_target: z.enum(['Joshua', 'Family']).nullable().optional() }),
+          title: 'Create or edit a Field Notes event', description: 'Save a native Field Notes event. For creation, choose a fresh UUID id and omit expected_updated; reuse that ID after an uncertain result and read it before retrying. For editing, read get_event and pass its exact updated value and all desired fields. Dates and times are local calendar values. A repeat rule uses local dates; start on a matching occurrence. Editing changes the whole series. Omit recurrence to preserve its current rule; use null to stop repeating. Never use this to edit or duplicate Davis events.',
+          inputSchema: z.object({ id: z.string().uuid(), expected_updated: z.number().int().nonnegative().optional(), title: z.string().trim().min(1).max(240), date: z.string(), end_date: z.string().nullable().optional(), start_time: z.string().nullable().optional(), end_time: z.string().nullable().optional(), location: z.string().max(500).nullable().optional(), note: z.string().max(10000).nullable().optional(), page_id: z.string().uuid().nullable().optional(), recurrence: z.object({ frequency: z.enum(['daily','weekly','monthly','yearly']), interval: z.number().int().min(1).max(99), weekdays: z.array(z.number().int().min(0).max(6)).optional(), monthDay: z.number().int().optional(), monthWeek: z.number().int().optional(), weekday: z.number().int().optional(), until: z.string().optional(), count: z.number().int().optional() }).nullable().optional(), calendar_target: z.enum(['Joshua', 'Family']).nullable().optional() }),
           annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
         }, async ({ id, expected_updated, ...event }) => {
           try { validateEvent(event) } catch (error) { return failure(String(error)) }
           const vault = await vaultForUser(); if (!vault) return failure('Link an archive first.')
+          if (expected_updated !== undefined && event.recurrence === undefined) {
+            const { data: current, error } = await supabase.from('events').select('recurrence').eq('vault', vault).eq('id', id).eq('updated', expected_updated).is('deleted', null).maybeSingle()
+            if (error || !current) return failure('Event changed or is unavailable. Read it again before editing.')
+            event.recurrence = current.recurrence
+            try { validateEvent(event) } catch (error) { return failure(String(error)) }
+          }
           if (event.page_id) {
             const { data, error } = await supabase.from('pages').select('id').eq('vault', vault).eq('id', event.page_id).is('deleted', null).maybeSingle()
             if (error || !data) return failure('Linked page is unavailable.')
@@ -346,7 +353,7 @@ Deno.serve(
 
         server.registerTool('create_siena_item', {
           title: 'Publish a From Siena item',
-          description: 'Save a meaningful note, due reminder, completed-task update, or useful link. For a reminder, first list notebooks and pass the appropriate notebook ID; this creates or reuses that notebook\'s pinned Reminders page and shows the same item on the dashboard. Do not create a separate checklist page. A source_key makes retries idempotent. Seen and completed state belong to the user.',
+          description: 'Save a meaningful note, due reminder, completed-task update, or useful link. Pass the appropriate existing notebook ID for any notebook-specific item, including work briefs and task updates. Reminders require a notebook and create or reuse its pinned Reminders page. Do not create a separate checklist page. A source_key makes retries idempotent. Seen and completed state belong to the user.',
           inputSchema: z.object({
             kind: z.enum(['note', 'reminder', 'task_update', 'saved']),
             title: z.string().trim().min(1).max(240).optional(),
@@ -361,31 +368,35 @@ Deno.serve(
           const vault = await vaultForUser()
           if (!vault) return failure('Link a Field Notes archive in Settings first.')
           if (kind === 'reminder' && !due_at) return failure('A reminder needs due_at in milliseconds since the Unix epoch.')
+          if (notebook) {
+            const { data: book, error: bookError } = await supabase.from('notebooks')
+              .select('id').eq('vault', vault).eq('id', notebook).is('deleted', null).maybeSingle()
+            if (bookError) return failure(bookError.message)
+            if (!book) return failure('Choose an existing notebook from list_notebooks.')
+          }
           if (source_key) {
             const { data: existing, error: lookupError } = await supabase.from('siena_items')
-              .select('id,kind,created').eq('vault', vault).eq('source_key', source_key).maybeSingle()
+              .select('id,kind,created,notebook').eq('vault', vault).eq('source_key', source_key).maybeSingle()
             if (lookupError) return failure(lookupError.message)
             if (existing) return result({ ...existing, already_exists: true })
           }
           let reminderPage: string | undefined
-          let reminderNotebook: string | undefined
           if (kind === 'reminder') {
             if (!notebook) return failure('Choose the appropriate notebook from list_notebooks and pass its ID.')
-            reminderNotebook = notebook
-            try { reminderPage = await reminderPageFor(vault, reminderNotebook) }
+            try { reminderPage = await reminderPageFor(vault, notebook) }
             catch (error) { return failure(error instanceof Error ? error.message : String(error)) }
           }
           const now = Date.now()
           const { data, error } = await supabase.from('siena_items').insert({
             vault, id: crypto.randomUUID(), kind, title: title ?? null, body,
             due_at: due_at ?? null, source_url: source_url ?? (reminderPage ? `/p/${reminderPage}` : null),
-            source_key: source_key ?? null, seen_at: null, notebook: reminderNotebook ?? null, completed_at: null,
+            source_key: source_key ?? null, seen_at: null, notebook: notebook ?? null, completed_at: null,
             created: now, updated: now,
           }).select('id,kind,created,notebook').single()
           if (error) {
             if (source_key && error.code === '23505') {
               const { data: existing } = await supabase.from('siena_items')
-                .select('id,kind,created').eq('vault', vault).eq('source_key', source_key).maybeSingle()
+                .select('id,kind,created,notebook').eq('vault', vault).eq('source_key', source_key).maybeSingle()
               if (existing) return result({ ...existing, already_exists: true })
             }
             return failure(error.message)

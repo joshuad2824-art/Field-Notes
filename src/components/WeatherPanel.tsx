@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import { useState } from 'react'
 import { geocode, type Found } from '../weather/open-meteo'
 import { forgetRefusal, locate, setPlace, usePlace, wasRefused } from '../weather/place'
@@ -59,9 +60,7 @@ export function WeatherPanel() {
     <>
       <h2>Weather</h2>
       <p>
-        One line under the month, and on the date at the top of the list where the notebooks
-        column is a drawer. Weather uses your saved place when the app opens.
-        Device location is requested only when you press Use this device below.
+        Forecasts use your saved place. The location control requests this device’s location only when you choose it.
       </p>
 
       {reading ? (
@@ -97,11 +96,9 @@ export function WeatherPanel() {
         >
           Degrees · {unit}
         </button>
-        <button className="btn caps" disabled={off} onClick={() => void refresh(true)}>
-          Check now
-        </button>
-        <button className="btn caps" disabled={off || locating || busy} onClick={() => void useDevice()}>
-          {locating ? 'Locating' : place?.chosen ? 'Use this device instead' : wasRefused() ? 'Ask again' : 'Use this device'}
+        <button className="btn caps" disabled={off} onClick={() => void refresh(true)} aria-label="Check now" title="Check now"><Icon name="refresh" /></button>
+        <button className="btn caps" disabled={off || locating || busy} aria-label={locating ? 'Locating' : place?.chosen ? 'Use this device instead' : wasRefused() ? 'Ask again' : 'Use this device'} title="Use this device’s location" onClick={() => void useDevice()}>
+          <Icon name="pin" />
         </button>
       </div>
 
@@ -123,8 +120,8 @@ export function WeatherPanel() {
           autoComplete="off"
         />
         <div className="actions">
-          <button className="btn caps" disabled={busy || locating || query.trim().length < 2} onClick={() => void search()}>
-            {busy ? 'Looking' : 'Find it'}
+          <button className="btn caps" disabled={busy || locating || query.trim().length < 2} aria-label={busy ? 'Looking' : 'Find it'} title="Find town" onClick={() => void search()}>
+            <Icon name="search" />
           </button>
         </div>
 

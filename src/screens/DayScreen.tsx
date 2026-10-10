@@ -1,3 +1,4 @@
+import { Icon } from '../components/Icon'
 import { eventOnDay } from '../lib/event-range'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
 import { pagesOnDay } from '../lib/db'
@@ -22,11 +23,11 @@ export function DayScreen({ iso, notebook }: { iso: string; notebook: string }) 
   return (
     <div className="app">
       <header className="chrome">
-        <button className="link-caps" onClick={() => back(to.calendar(isoMonth(iso)))}>‹ Back</button>
+        <button className="link-caps" onClick={() => back(to.calendar(isoMonth(iso)))} aria-label="‹ Back" title="‹ Back"><Icon name="back" /></button>
         <span className="chrome-title">{readableDay(iso)}</span>
         <span className="grow" />
-        <button className="link-caps" onClick={() => navigate(to.notebook(notebook))}>Notebook</button>
-        <button className="link-caps" onClick={() => navigate(to.newEvent(iso))}>Add event</button>
+        <button className="link-caps" onClick={() => navigate(to.notebook(notebook))} aria-label="Notebook" title="Notebook"><Icon name="notebook" /></button>
+        <button className="link-caps" onClick={() => navigate(to.newEvent(iso))} aria-label="Add event" title="Add event"><Icon name="add" /></button>
         <button className="link-caps" onClick={() => navigate(to.calendar(isoMonth(iso)))}>
           Month
         </button>

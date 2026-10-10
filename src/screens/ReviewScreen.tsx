@@ -1,18 +1,10 @@
+import { Reading } from '../components/Reading'
+import { Icon } from '../components/Icon'
 import { useEffect, useState } from 'react'
 import { getPage, replaceBodyIfUnchanged } from '../lib/db'
 import { imageIdsIn, titleOf, type Page } from '../lib/model'
 import { sienaRequest } from '../lib/siena-request'
 import { navigate, to } from '../lib/router'
-
-function readable(text: string): string {
-  return text
-    .replace(/!\[([^\]]*)\]\([^)]*\)(?:\{[^}]*\})?/g, '[Picture: $1]')
-    .replace(/^\s{0,3}#{1,3}\s+/gm, '')
-    .replace(/^\s*[-*]\s/gm, '• ')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/==(?:\{\w+\})?([^=]+)==/g, '$1')
-    .replace(/<u>([^<>]+)<\/u>/g, '$1')
-}
 
 export function ReviewScreen({ id }: { id: string }) {
   const [page, setPage] = useState<Page | null>(null)
@@ -54,20 +46,19 @@ export function ReviewScreen({ id }: { id: string }) {
   }
 
   return <div className="app"><div className="statusband" /><main className="review-screen scroll"><div className="review-wrap">
-    <button className="overview-back" onClick={() => navigate(to.page(id))}>‹ Page</button>
+    <button className="overview-back" onClick={() => navigate(to.page(id))} aria-label="‹ Page" title="‹ Page"><Icon name="back" /></button>
     {page ? <>
       <span className="section-label">Work with Siena</span>
       <h1>{titleOf(page.body)}</h1>
-      <p>Copy a request to discuss this page with Siena. Your saved page stays as it is until you review and apply a proposed version here.</p>
-      <div className="review-request paper-panel"><label htmlFor="review-request">What would you like Siena to help with?</label><textarea id="review-request" rows={3} value={instruction} onChange={(e) => setInstruction(e.target.value)} /><details className="request-context"><summary>Request preview</summary><pre tabIndex={0}>{sienaRequest(instruction, page)}</pre></details></div>
-      <button className="overview-action primary" onClick={() => void copyRequest()}>Copy request for Siena</button>
+      
+      <div className="review-request paper-panel"><div className="review-request-head"><label htmlFor="review-request">What would you like Siena to help with?</label><button className="overview-action primary" onClick={() => void copyRequest()} aria-label="Copy request for Siena" title="Copy request for Siena"><Icon name="copy" /></button></div><textarea id="review-request" rows={3} value={instruction} onChange={(e) => setInstruction(e.target.value)} /><details className="request-context"><summary>Request preview</summary><pre tabIndex={0}>{sienaRequest(instruction, page)}</pre></details></div>
       <div className="review-columns">
-        <section><h2>Current page</h2><pre>{readable(page.body)}</pre></section>
-        <section><h2>Proposed page</h2><label htmlFor="proposed-page">Paste Siena’s complete proposed page</label><textarea id="proposed-page" value={proposal} onChange={(e) => setProposal(e.target.value)} rows={12} /><pre>{proposal ? readable(proposal) : 'A preview will appear here after you paste a proposal.'}</pre></section>
+        <section><h2>Current page</h2><div className="review-reading"><Reading text={page.body} /></div></section>
+        <section><h2>Proposed page</h2><label htmlFor="proposed-page">Paste Siena’s complete proposed page</label><textarea id="proposed-page" value={proposal} onChange={(e) => setProposal(e.target.value)} rows={12} /><details className="review-preview"><summary>Preview</summary><div className="review-reading"><Reading text={proposal} /></div></details></section>
       </div>
       {removedPictures.length ? <label className="review-picture-warning"><input type="checkbox" checked={allowPictureRemoval} onChange={(e) => setAllowPictureRemoval(e.target.checked)} /> This proposal removes {removedPictures.length} picture{removedPictures.length === 1 ? '' : 's'} from the page. I have reviewed that change.</label> : null}
       {notice ? <p className="event-notice" role="status">{notice}</p> : null}
-      <div className="review-actions"><button className="overview-action primary" disabled={busy || !proposal.trim() || proposal === page.body || (removedPictures.length > 0 && !allowPictureRemoval)} onClick={() => void apply()}>Apply proposed page</button><button className="overview-back" onClick={() => navigate(to.page(id))}>Keep current page</button></div>
+      <div className="review-actions"><button className="overview-action primary" disabled={busy || !proposal.trim() || proposal === page.body || (removedPictures.length > 0 && !allowPictureRemoval)} onClick={() => void apply()} aria-label="Apply proposed page" title="Apply proposed page"><Icon name="save" /></button><button className="overview-back" onClick={() => navigate(to.page(id))} aria-label="Keep current page" title="Keep current page"><Icon name="back" /></button></div>
     </> : <p className="overview-empty">This page is not available.</p>}
   </div></main></div>
 }

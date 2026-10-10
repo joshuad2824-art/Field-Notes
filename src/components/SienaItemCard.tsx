@@ -1,7 +1,9 @@
 import { Icon } from './Icon'
+import { useState } from 'react'
+import { useNotebooks } from '../lib/notebooks'
 import type { SienaItem } from '../lib/model'
 import { navigate } from '../lib/router'
-import { completeReminder, markSienaItemSeen } from '../lib/siena-items'
+import { completeReminder, markSienaItemSeen, fileSienaItem } from '../lib/siena-items'
 
 const labels: Record<SienaItem['type'], string> = {
   note: 'A note from Siena',
@@ -11,6 +13,15 @@ const labels: Record<SienaItem['type'], string> = {
 }
 
 export function SienaItemCard({ item, paper = false, journal = false }: { item: SienaItem; paper?: boolean; journal?: boolean }) {
+  const books = useNotebooks()
+  const [filing, setFiling] = useState(false)
+  const [filingError, setFilingError] = useState('')
+  async function file(notebook: string) {
+    setFiling(true); setFilingError('')
+    try { await fileSienaItem(item.id, notebook || undefined, item.updated) }
+    catch (error) { setFilingError(error instanceof Error ? error.message : 'Could not file this message.') }
+    finally { setFiling(false) }
+  }
   const source = item.sourceUrl
   const safeSource = source && (/^https:\/\//.test(source) || /^\/p\/[0-9a-f-]{36}$/.test(source)) ? source : null
   const date = new Intl.DateTimeFormat([], { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(item.created))
@@ -37,7 +48,7 @@ export function SienaItemCard({ item, paper = false, journal = false }: { item: 
           </div>
         </div>
         {extra || sourceLink || !item.completedAt ? <details className="reminder-details">
-          <summary>Details</summary>
+          <summary aria-label="Details" title="Details"><Icon name="info" /></summary>
           {extra ? <p className="siena-item-body">{item.body}</p> : null}
           <div className="siena-item-foot">{sourceLink}<span className="grow" />{!item.completedAt ? seenControl : null}</div>
         </details> : null}
@@ -56,6 +67,7 @@ export function SienaItemCard({ item, paper = false, journal = false }: { item: 
       {item.dueAt ? <p className="siena-item-due">Due {new Intl.DateTimeFormat([], { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.dueAt))}</p> : null}
       <div className="siena-item-foot">
         {journal ? <time dateTime={new Date(item.created).toISOString()}>{date}</time> : null}
+        <label className="siena-notebook-control"><Icon name="notebook" /><select aria-label={`Notebook for ${item.title ?? labels[item.type]}`} value={item.notebook ?? ''} disabled={filing} onChange={event => void file(event.target.value)}><option value="">Unfiled</option>{item.notebook && !books.some(book => book.id === item.notebook) ? <option value={item.notebook}>Previous notebook</option> : null}{books.map(book => <option key={book.id} value={book.id}>{book.name}</option>)}</select></label>
         {sourceLink}
         <span className="grow" />
         {item.completedAt ? <span className="siena-seen">Completed {new Intl.DateTimeFormat([], { dateStyle: 'medium' }).format(new Date(item.completedAt))}</span> : (
@@ -64,6 +76,7 @@ export function SienaItemCard({ item, paper = false, journal = false }: { item: 
           </>
         )}
       </div>
+      {filingError ? <p className="siena-filing-error" role="alert">{filingError}</p> : null}
     </article>
   )
 }

@@ -26,15 +26,15 @@ export function AskSiena({ pages, onClose }: { pages: Page[]; onClose: () => voi
     finally { setBusy(false) }
   }
   return <dialog ref={dialog} className="ask-dialog" aria-labelledby="ask-title" onCancel={(e) => { e.preventDefault(); onClose() }} onClick={(e) => { if (e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) onClose() } }}>
-    <div className="ask-top"><span className="tape-label">Work with Siena</span><button className="icon-control" aria-label="Close request" title="Close request" onClick={onClose}>×</button></div>
+    <div className="ask-top"><span className="tape-label">Work with Siena</span><button className="icon-control" aria-label="Close request" title="Close request" onClick={onClose}><Icon name="close" /></button></div>
     <h2 id="ask-title">Ask Siena</h2>
     <p>Write your request, choose any page to include, then copy it into our conversation.</p>
     <label htmlFor="siena-context">Include a saved page <span>(optional)</span></label>
     <select id="siena-context" value={context} onChange={(e) => { setContext(e.target.value); setNotice('') }}><option value="">No page attached</option>{pages.filter((p) => !p.deleted && !p.purpose).map((p) => <option key={p.id} value={p.id}>{titleOf(p.body)}</option>)}</select>
     <label htmlFor="siena-request">What would you like to work on?</label>
     <textarea id="siena-request" autoFocus rows={4} value={instruction} onChange={(e) => { setInstruction(e.target.value); setNotice('') }} placeholder="A question, a plan, or a change to discuss…" />
-    <details className="request-context" open><summary>Request preview</summary><pre tabIndex={0} aria-label="Exact request preview">{request}</pre></details>
-    <div className="ask-actions"><button className="overview-action primary" disabled={busy || !instruction.trim()} onClick={() => void copy()}><Icon name="copy" />Copy request</button>{page ? <button className="overview-back" onClick={() => { onClose(); navigate(to.review(page.id)) }}>Review a proposed page <Icon name="forward" /></button> : null}</div>
+    <details className="request-context"><summary>Request preview</summary><pre tabIndex={0} aria-label="Exact request preview">{request}</pre></details>
+    <div className="ask-actions"><button className="overview-action primary" disabled={busy || !instruction.trim()} onClick={() => void copy()} aria-label="Copy request" title="Copy request"><Icon name="copy" /></button>{page ? <button className="overview-back" onClick={() => { onClose(); navigate(to.review(page.id)) }} aria-label="Review a proposed page" title="Review a proposed page"><Icon name="plan" /></button> : null}</div>
     {notice ? <p role="status" className="request-notice">{notice}</p> : null}
   </dialog>
 }

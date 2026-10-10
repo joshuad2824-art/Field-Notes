@@ -30,11 +30,18 @@ let hydrated = false
 
 function hold(rows: Notebook[]): Notebook[] {
   cache = rows
-  shelf = rows.filter((n) => n.id !== JOURNAL_NOTEBOOK)
+  shelf = rows.filter((n) => n.id !== JOURNAL_NOTEBOOK && !isWorkshopNotebook(n.id))
   return cache
 }
 
 hold([...DEFAULT_NOTEBOOKS, JOURNAL_BOOK])
+
+// Workshop has existed with both a seeded ID and imported/custom IDs.
+// Hide only its duplicate navigation destination; retain every stored row.
+export function isWorkshopNotebook(id: string): boolean {
+  const book = cache.find(book => book.id === id)
+  return id === 'workshop' || /^(?:the\s+)?workshop$/i.test(book?.name.trim() ?? '')
+}
 
 export function allNotebooks(): Notebook[] {
   return cache

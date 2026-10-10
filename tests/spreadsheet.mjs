@@ -131,7 +131,7 @@ const inFile = async (page) => {
 }
 
 const newTable = async (page) => {
-  await page.locator('.plate-button', { hasText: 'New page' }).first().click()
+  await page.getByRole('button', { name: 'New page', exact: true }).first().click()
   await page.waitForTimeout(600)
   await page.locator('.cm-content').click()
   await page.keyboard.type('# Stock', { delay: 5 })
@@ -139,7 +139,7 @@ const newTable = async (page) => {
   await page.locator('.mark-button[aria-label="Style"]').click()
   await page.waitForTimeout(250)
   await page.getByRole('button', { name: 'Insert tools', exact: true }).click()
-  await page.locator('.tray-word', { hasText: 'Table' }).click()
+  await page.getByRole('button', { name: 'Table', exact: true }).click()
   await page.waitForTimeout(500)
   await page.locator('.mark-button[aria-label="Style"]').click()
   await page.waitForTimeout(250)
@@ -269,7 +269,7 @@ await desk(1440, 900, async (page) => {
     (await drawn(page))[1].startsWith('white oak'), JSON.stringify((await drawn(page))[1]))
 
   /* 9. And out on the page, which is the other half of what was reported. */
-  await page.locator('.plate-button', { hasText: 'New page' }).first().click()
+  await page.getByRole('button', { name: 'New page', exact: true }).first().click()
   await page.waitForTimeout(600)
   await page.locator('.cm-content').click()
   await page.keyboard.type('The tent held through the night and the rope stayed tight.', { delay: 4 })
@@ -586,7 +586,7 @@ await desk(1440, 900, async (page) => {
          markdown goes in through the document rather than the keyboard,
          because the widget takes the lines over the moment the delimiter row
          is finished and the third line would be typed into a cell. */
-  await page.locator('.plate-button', { hasText: 'New page' }).first().click()
+  await page.getByRole('button', { name: 'New page', exact: true }).first().click()
   await page.waitForTimeout(600)
   await page.locator('.cm-content').click()
   await page.evaluate(() => {

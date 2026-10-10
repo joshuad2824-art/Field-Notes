@@ -9,7 +9,7 @@ export function EventRow({ event }: { event: CalendarEvent }) {
     <span className="event-row-main"><span className="event-row-title">{event.title}</span><span className="event-source-tag">Davis · Read only{event.stale ? ' · Stale' : ''}</span>{event.endDate ? <span className="event-row-place">{readableDay(event.date)} – {readableDay(event.endDate)}</span> : null}{event.location ? <span className="event-row-place">{event.location}</span> : null}</span>
   </a>
   return (
-    <button className="event-row" onClick={() => navigate(to.event(event.id))}>
+    <button className="event-row" onClick={() => navigate(to.event(event.seriesId ?? event.id, event.occurrenceDate))}>
       <span className="event-row-time">{event.endDate && event.endDate > event.date ? 'Multi-day' : event.startTime ?? 'All day'}</span>
       <span className="event-row-main">
         <span className="event-row-title">{event.title}</span>

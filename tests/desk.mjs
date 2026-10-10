@@ -36,10 +36,11 @@ async function snapshot(page) { return page.evaluate(async () => (await import('
 async function inject(page, mode) {
   await page.evaluate(async (mode) => {
     const { davisAgenda: store } = await import('/src/davis/agenda.ts')
-    const snapshot = { accountId: 'test-account', householdId: 'test-household', householdName: 'Disposable family', timezone: 'America/Chicago', today: '2026-10-02', fetchedAt: '2026-10-02T17:00:00Z', entries: mode === 'empty' ? [] : [
-      { sourceId: 'event-1-occurrence', version: '1', title: 'Family weekend', kind: 'event', startDate: '2026-10-02', endDate: '2026-10-04', owner: 'Together', audience: 'Household' },
-      { sourceId: 'reminder-1', version: '1', title: 'Return library book', kind: 'reminder', startDate: '2026-10-01', owner: 'Joshua' },
-      { sourceId: 'reminder-1', version: '1', title: 'Return library book', kind: 'reminder', startDate: '2026-10-01', owner: 'Joshua' },
+    const { isoDay } = await import('/src/lib/format.ts'); const { shiftDate } = await import('/src/davis/wire.ts'); const today = isoDay();
+    const snapshot = { accountId: 'test-account', householdId: 'test-household', householdName: 'Disposable family', timezone: 'America/Chicago', today, fetchedAt: '2026-10-02T17:00:00Z', entries: mode === 'empty' ? [] : [
+      { sourceId: 'event-1-occurrence', version: '1', title: 'Family weekend', kind: 'event', startDate: today, endDate: shiftDate(today, 2), owner: 'Together', audience: 'Household' },
+      { sourceId: 'reminder-1', version: '1', title: 'Return library book', kind: 'reminder', startDate: shiftDate(today, -1), owner: 'Joshua' },
+      { sourceId: 'reminder-1', version: '1', title: 'Return library book', kind: 'reminder', startDate: shiftDate(today, -1), owner: 'Joshua' },
     ] }
     if (mode === 'stale') { store.markStale(); return }
     if (mode === 'account-change') { store.connect('different-account', async () => ({ status: 200, snapshot })); return }
@@ -62,18 +63,18 @@ try {
       const rows = Array.from({ length: 5 }, (_, i) => ({ id: String(i), body: `# Project ${i}\n#project\nStatus: active`, notebook: 'field-notes', pinned: 0, created: 1, updated: i }))
       return projectDesk(rows).active.map((p) => p.id)
     })
-    assert.deepEqual(capped, ['4', '3', '2'])
+    assert.deepEqual(capped, ['4', '3', '2', '1', '0'], 'Every active desk item remains reachable through its tag')
     await page.locator('.desk-project').first().waitFor()
     assert.equal(await page.locator('.desk-project').count(), 2)
     assert.equal(await page.locator('.desk-plan-link').count(), 1)
     assert.equal(await page.locator('.workshop-item').count(), 0, 'Inventory moved off dashboard')
     await page.goto(`${BASE}/workshop`); await page.locator('.workshop-item').waitFor(); assert.equal(await page.locator('.workshop-item').count(), 1)
     await page.goto(BASE); await page.getByRole('heading', { name: 'At the desk.' }).waitFor()
-    assert.equal(await page.locator('.davis-agenda').getAttribute('data-state'), 'setup')
+    assert.equal(await page.locator('.davis-agenda').count(), 0)
     await inject(page, 'ready'); await page.getByText('Family weekend', { exact: true }).first().waitFor()
-    assert.equal(await page.locator('.davis-entries li').count(), 4)
-    await page.getByText('Overdue reminder · 2026-10-01', { exact: true }).waitFor()
-    assert.ok(await page.locator('.overview-forecast').evaluate(el => el.getBoundingClientRect().bottom) <= await page.locator('.overview-from-siena').evaluate(el => el.getBoundingClientRect().top), 'Forecast precedes journal')
+    assert.equal(await page.locator('.event-row-davis').count(), 4)
+    await page.getByText('Return library book', { exact: true }).waitFor()
+    assert.ok(await page.locator('.overview-events').evaluate(el => el.getBoundingClientRect().top) < await page.locator('.desk-plan-preview').evaluate(el => el.getBoundingClientRect().top), 'Today precedes supporting plan previews')
     const activate = (locator) => options.hasTouch ? locator.tap() : locator.click()
     await activate(page.getByRole('button', { name: 'Ask Siena', exact: true }))
     const dialog = page.getByRole('dialog', { name: 'Ask Siena' })
@@ -83,6 +84,7 @@ try {
       await page.keyboard.press('Tab')
       assert.equal(await dialog.evaluate((el) => el.contains(document.activeElement)), true)
     }
+    await dialog.locator('.request-context summary').click()
     const preview = await page.getByLabel('Exact request preview').textContent()
     assert.match(preview, /Check these shelf measurements with me\./)
     assert.match(preview, /Page ID: test-project/)
@@ -130,16 +132,16 @@ try {
       await page.emulateMedia({ media: 'screen' })
     }
     await page.goto(BASE)
-    await inject(page, 'loading'); assert.equal(await page.locator('.davis-agenda').getAttribute('data-state'), 'loading')
-    await inject(page, 'empty'); await page.getByText('No events or incomplete reminders in this fetched window.').waitFor()
-    await inject(page, 'ready'); await inject(page, 'stale'); await page.getByText(/previously fetched items/).waitFor()
-    await inject(page, 'offline'); await page.getByText('You’re offline. Davis could not be refreshed; any shown items are stale.').waitFor()
-    assert.equal(await page.locator('.davis-entries li').count(), 4)
-    await inject(page, 'error'); await page.getByText(/This does not mean your calendar is empty/).waitFor()
-    assert.equal(await page.getByText('No events or incomplete reminders in this fetched window.').count(), 0)
+    await inject(page, 'loading'); assert.equal(await page.locator('.event-row-davis').count(), 0)
+    await inject(page, 'empty'); assert.equal(await page.locator('.event-row-davis').count(), 0)
+    await inject(page, 'ready'); await inject(page, 'stale'); await page.getByText('Family events may be out of date.').waitFor()
+    await inject(page, 'offline'); await page.getByText('Family events may be out of date.').waitFor()
+    assert.equal(await page.locator('.event-row-davis').count(), 4)
+    await inject(page, 'error'); await page.getByText('Family events are unavailable.').waitFor()
+    assert.equal(await page.locator('.event-row-davis').count(), 0)
     await inject(page, 'ready'); await inject(page, 'account-change'); assert.equal(await page.getByText('Family weekend', { exact: true }).count(), 0)
     await inject(page, 'ready'); await inject(page, 'denied'); assert.equal(await page.getByText('Family weekend', { exact: true }).count(), 0)
-    await inject(page, 'ready'); await activate(page.getByRole('button', { name: 'Disconnect Davis' })); assert.equal(await page.getByText('Family weekend', { exact: true }).count(), 0)
+    await inject(page, 'ready'); await page.evaluate(async () => (await import('/src/davis/agenda.ts')).davisAgenda.disconnect()); assert.equal(await page.getByText('Family weekend', { exact: true }).count(), 0)
     assert.deepEqual(await snapshot(page), before.pages)
     assert.deepEqual(errors, [])
     console.log(`PASS ${name}: request failure/preview/focus, linked projects and revisions, original image bytes, read-only plan, Davis loading/empty/stale/offline/error/revocation/account change/disconnect`)

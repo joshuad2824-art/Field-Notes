@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import { useState } from 'react'
 import { shortStamp } from '../lib/format'
 import { connect, disconnect, syncNow } from '../sync/engine'
@@ -111,15 +112,11 @@ export function SyncPanel() {
             className="btn caps"
             disabled={status.state === 'syncing'}
             onClick={() => void syncNow()}
-          >
-            Sync now
+           aria-label="Sync now" title="Sync now"><Icon name="refresh" /></button>
+          <button className="btn caps" aria-label={showCode ? 'Hide the code' : 'Pair another device'} title={showCode ? 'Hide the code' : 'Pair another device'} onClick={() => setShowCode(!showCode)}>
+            <Icon name="link" />
           </button>
-          <button className="btn caps" onClick={() => setShowCode(!showCode)}>
-            {showCode ? 'Hide the code' : 'Pair another device'}
-          </button>
-          <button className="btn caps danger" onClick={() => setConfirmOff(true)}>
-            Unpair
-          </button>
+          <button className="btn caps danger" onClick={() => setConfirmOff(true)} aria-label="Unpair" title="Unpair"><Icon name="close" /></button>
         </div>
 
         {showCode ? (
@@ -133,6 +130,7 @@ export function SyncPanel() {
             <div className="actions">
               <button
                 className="btn caps"
+                aria-label={copied ? 'Copied' : 'Copy'} title="Copy pairing code"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(pairing)
@@ -143,7 +141,7 @@ export function SyncPanel() {
                   }
                 }}
               >
-                {copied ? 'Copied' : 'Copy'}
+                <Icon name="copy" />
               </button>
             </div>
           </>
@@ -164,12 +162,8 @@ export function SyncPanel() {
                   setConfirmOff(false)
                   setShowCode(false)
                 }}
-              >
-                Unpair it
-              </button>
-              <button className="outline" onClick={() => setConfirmOff(false)}>
-                Keep it paired
-              </button>
+               aria-label="Unpair it" title="Unpair it"><Icon name="close" /></button>
+              <button className="outline" onClick={() => setConfirmOff(false)} aria-label="Keep it paired" title="Keep it paired"><Icon name="close" /></button>
             </div>
           </div>
         ) : null}
@@ -193,15 +187,11 @@ export function SyncPanel() {
         <button
           className={`btn caps${mode === 'first' ? ' on' : ''}`}
           onClick={() => setMode('first')}
-        >
-          First device
-        </button>
+         aria-label="First device" title="First device"><Icon name="new-page" /></button>
         <button
           className={`btn caps${mode === 'join' ? ' on' : ''}`}
           onClick={() => setMode('join')}
-        >
-          Already has it
-        </button>
+         aria-label="Already has it" title="Already has it"><Icon name="link" /></button>
       </div>
 
       {mode === 'first' ? (
@@ -237,8 +227,8 @@ export function SyncPanel() {
             spellCheck={false}
           />
           <div className="actions">
-            <button className="btn caps" disabled={busy} onClick={() => void first()}>
-              {busy ? 'Connecting' : 'Make the vault'}
+            <button className="btn caps" disabled={busy} aria-label={busy ? 'Connecting' : 'Make the vault'} title="Make the vault" onClick={() => void first()}>
+              <Icon name="link" />
             </button>
           </div>
         </div>
@@ -265,9 +255,10 @@ export function SyncPanel() {
             <button
               className="btn caps"
               disabled={busy || !code.trim()}
+              aria-label={busy ? 'Pairing' : 'Pair this device'} title="Pair this device"
               onClick={() => void join()}
             >
-              {busy ? 'Pairing' : 'Pair this device'}
+              <Icon name="link" />
             </button>
           </div>
         </div>

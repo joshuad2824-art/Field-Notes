@@ -1,3 +1,4 @@
+import { Icon } from '../components/Icon'
 import { useEffect, useRef, useState } from 'react'
 import { allTags } from '../lib/db'
 import { search, type Hit } from '../lib/search'
@@ -29,7 +30,7 @@ export function SearchScreen() {
     <div className="app">
       <header className="chrome">
         <button className="btn glyph" onClick={() => back()} aria-label="Back">
-          ‹
+          <Icon name="back" />
         </button>
         <input
           ref={input}

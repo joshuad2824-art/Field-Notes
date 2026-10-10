@@ -105,7 +105,7 @@ ok(
   ),
 )
 
-await page.getByText('New page', { exact: true }).first().click()
+await page.getByRole('button', { name: 'New page', exact: true }).first().click()
 await page.waitForTimeout(600)
 
 const content = page.locator('.cm-content')
@@ -358,7 +358,7 @@ await page.waitForTimeout(150)
 const wasPage = page.url()
 await page.locator('.mark-button[aria-label="Page options"]').click()
 await page.waitForTimeout(250)
-await page.locator('.sheet-item', { hasText: 'New page' }).click()
+await page.getByRole('button', { name: 'New page', exact: true }).click()
 await page.waitForTimeout(700)
 ok('a page starts from inside a page', page.url() !== wasPage, page.url())
 ok(
@@ -579,7 +579,7 @@ await atWidth(1440, 900, async (view) => {
 
   const rail = await view.locator('.rail').boundingBox()
   const list = await view.locator('.listcol').boundingBox()
-  ok('the rail is 264 wide', Math.round(rail.width) === 264, String(rail.width))
+  ok('the compact rail is 216 wide', Math.round(rail.width) === 216, String(rail.width))
   ok('the list is 372 wide', Math.round(list.width) === 372, String(list.width))
   ok('the date is the masthead', (await view.locator('.rail-numeral').count()) === 1)
   ok('the rail shows a whole month', (await view.locator('.rail .cal-day').count()) === 42)
@@ -1061,7 +1061,7 @@ await atWidth(1440, 900, async (view) => {
 
   await view.locator('.manager .well').fill('The Garden')
   await view.locator('.cover-swatch').nth(4).click()
-  await view.locator('.plate-button', { hasText: 'Add notebook' }).click()
+  await view.getByRole('button', { name: 'Add notebook', exact: true }).click()
   await view.waitForTimeout(700)
   ok('a notebook can be added', (await view.locator('.fn-book-spine').count()) === before + 1)
 
@@ -1077,7 +1077,7 @@ await atWidth(1440, 900, async (view) => {
 
   await view.locator('.manager .well').fill('  THE  GARDEN  ')
   ok('a duplicate notebook name is refused',
-    await view.locator('.plate-button', { hasText: 'Add notebook' }).isDisabled() &&
+    await view.getByRole('button', { name: 'Add notebook', exact: true }).isDisabled() &&
     await view.getByText('A notebook with that name is already on the shelf.').count() === 1)
   await view.locator('.manager .well').fill('')
 
@@ -1176,7 +1176,7 @@ async function fixtures() {
 const { pngPath, clearPath, svgPath } = await fixtures()
 
 await atWidth(1440, 950, async (view) => {
-  await view.getByText('New page', { exact: true }).first().click()
+  await view.getByRole('button', { name: 'New page', exact: true }).first().click()
   await view.waitForTimeout(700)
   await view.locator('.cm-content').click()
   await view.keyboard.type('One')
@@ -1362,7 +1362,7 @@ await atWidth(1440, 900, async (view) => {
       return row?.body ?? ''
     })
 
-  await view.locator('.plate-button', { hasText: 'New page' }).click()
+  await view.getByRole('button', { name: 'New page', exact: true }).click()
   await view.waitForTimeout(600)
   await view.locator('.cm-content').click()
   await view.keyboard.type('# Stock', { delay: 6 })
@@ -1371,7 +1371,7 @@ await atWidth(1440, 900, async (view) => {
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
   await view.getByRole('button', { name: 'Insert tools', exact: true }).click()
-  await view.locator('.tray-word', { hasText: 'Table' }).click()
+  await view.getByRole('button', { name: 'Table', exact: true }).click()
   await view.waitForTimeout(500)
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
@@ -1599,7 +1599,7 @@ await atWidth(1440, 900, async (view) => {
     return heights.every((h) => h % 28 === 0)
   }
 
-  await view.locator('.plate-button', { hasText: 'New page' }).click()
+  await view.getByRole('button', { name: 'New page', exact: true }).click()
   await view.waitForTimeout(600)
   await view.locator('.cm-content').click()
   await view.keyboard.type('# A dedication', { delay: 6 })
@@ -1748,7 +1748,7 @@ await atWidth(1440, 900, async (view) => {
       return row?.body ?? ''
     })
 
-  await view.locator('.plate-button', { hasText: 'New page' }).click()
+  await view.getByRole('button', { name: 'New page', exact: true }).click()
   await view.waitForTimeout(600)
   await view.locator('.cm-content').click()
   await view.keyboard.type('# Cut list', { delay: 6 })
@@ -1756,7 +1756,7 @@ await atWidth(1440, 900, async (view) => {
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
   await view.getByRole('button', { name: 'Insert tools', exact: true }).click()
-  await view.locator('.tray-word', { hasText: 'Table' }).click()
+  await view.getByRole('button', { name: 'Table', exact: true }).click()
   await view.waitForTimeout(500)
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.waitForTimeout(250)
@@ -1832,7 +1832,7 @@ await atWidth(1440, 900, async (view) => {
       return rows.sort((a, b) => b.updated - a.updated)[0]?.body ?? ''
     })
 
-  await view.locator('.plate-button', { hasText: 'New page' }).click()
+  await view.getByRole('button', { name: 'New page', exact: true }).click()
   await view.waitForTimeout(600)
   await view.locator('.cm-content').click()
 
@@ -1873,7 +1873,7 @@ await atWidth(1440, 900, async (view) => {
   await view.keyboard.press('Enter')
   await view.locator('.mark-button[aria-label="Style"]').click()
   await view.getByRole('button', { name: 'Insert tools', exact: true }).click()
-  await view.locator('.tray-word', { hasText: 'Table' }).click()
+  await view.getByRole('button', { name: 'Table', exact: true }).click()
   await view.waitForTimeout(500)
 
   const cells = view.locator('.md-table td')
