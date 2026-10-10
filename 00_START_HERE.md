@@ -3,6 +3,10 @@
 Updated October 10, 2026 for the verified production-to-GitHub synchronization.
 
 
+## October 10 refinement handoff — in progress
+
+Joshua authorized implementation and production publication of the Phase 1 fixes and Phase 2 shared kit. Scope, decisions, and verification: `docs/2026-10-10 - Phase 1 and Shared Kit.md`. The kit stays in a development-only preview; no data-model or hosting changes are needed. Keep GitHub main current after each phase.
+
 ## GitHub production synchronization — October 10
 
 - Main now includes the October 8–9 design, recurring-event, dashboard, and notebook-desk releases. The four existing remote commits and remote-only dashboard documentation/test are retained.

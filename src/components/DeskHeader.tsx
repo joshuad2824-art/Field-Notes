@@ -24,8 +24,8 @@ export function DeskHeader({ title, notebook, pages }: { title: string; notebook
       <nav className="fn-topnav" aria-label="Saved items"><RouteLink className="icon-control" href={to.fromSiena()} aria-label="Saved items" title="Saved items"><Icon name="from-siena" /></RouteLink></nav>
       <div className="fn-header-actions">
         <RouteLink className="fn-icon-button fn-desktop-search" href={to.search()} aria-label="Search" title="Search"><Icon name="search" /></RouteLink>
-        <RouteLink className="fn-new" href={to.newPage(notebook)} aria-label="New page" title="New page"><Icon name="new-page" /></RouteLink>
-        <button className="fn-ask ask-siena-button" onClick={() => setAsking(true)} aria-label="Ask Siena"><Icon name="from-siena" /></button>
+        <RouteLink className="fn-new" href={to.newPage(notebook)} aria-label="New page" title="New page"><Icon name="new-page" /><span>New page</span></RouteLink>
+        <button className="fn-ask ask-siena-button" onClick={() => setAsking(true)} aria-label="Ask Siena"><Icon name="from-siena" /><span>Ask Siena</span></button>
       </div>
     </header>
     <div className="fn-intro overview-head">

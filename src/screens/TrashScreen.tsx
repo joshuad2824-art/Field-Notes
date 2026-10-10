@@ -3,7 +3,7 @@ import { Sheet } from '../components/Sheet'
 import { Icon } from '../components/Icon'
 import { deletedPages, purgePage, restorePage } from '../lib/db'
 import { deletedEvents, purgeEvent, restoreEvent } from '../lib/events'
-import { readableDay } from '../lib/format'
+import { readableDay, clock } from '../lib/format'
 import { TOMBSTONE_DAYS, type FieldEvent, type Page, snippetOf, titleOf } from '../lib/model'
 import { back } from '../lib/router'
 import { useLive } from '../lib/useLive'
@@ -59,7 +59,7 @@ export function TrashScreen() {
             {events.map((event) => (
               <div key={event.id} className="row-page" style={{ cursor: 'default' }}>
                 <div className="row-title"><span>{event.title}</span></div>
-                <div className="row-snippet">{readableDay(event.date)} · {event.startTime ?? 'All day'}</div>
+                <div className="row-snippet">{readableDay(event.date)} · {clock(event.startTime) || 'All day'}</div>
                 <div className="row-meta">
                   <span>{daysLeft(event.deleted ?? 0)} days left</span>
                   <button className="btn caps" onClick={() => void restoreEvent(event.id)} aria-label="Restore" title="Restore"><Icon name="restore" /></button>

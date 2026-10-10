@@ -1,3 +1,4 @@
+import { DueLabel } from '../components/DueLabel'
 import { Icon } from '../components/Icon'
 import { useState, type FormEvent } from 'react'
 import { Shell } from '../components/Shell'
@@ -7,7 +8,6 @@ import { navigate, to } from '../lib/router'
 import { completeReminder, createReminder, remindersForNotebook } from '../lib/siena-items'
 import { useLive } from '../lib/useLive'
 
-const dueLabel = new Intl.DateTimeFormat([], { dateStyle: 'medium', timeStyle: 'short' })
 
 /* A real, pinned page in the notebook, with its checklist drawn from the same
    reminder rows that Overview uses. Its Markdown body is only the title, so
@@ -63,7 +63,7 @@ export function RemindersPageScreen({ page }: { page: Page }) {
                       <div>
                         <strong>{item.title ?? item.body}</strong>
                         {item.title && item.body !== item.title ? <p>{item.body}</p> : null}
-                        {item.dueAt ? <small>Due {dueLabel.format(new Date(item.dueAt))}</small> : null}
+                        {item.dueAt ? <small><DueLabel at={item.dueAt} /></small> : null}
                       </div>
                     </div>
                   )) : <p className="reminder-page-empty">No active reminders.</p>}

@@ -143,3 +143,25 @@ export function mastheadParts(now = new Date()) {
     year: String(now.getFullYear()),
   }
 }
+
+/* Display local wall-clock values without changing the saved event time. */
+export function clock(hhmm?: string): string {
+  if (!hhmm || !/^([01]\d|2[0-3]):[0-5]\d$/.test(hhmm)) return ''
+  const [hour, minute] = hhmm.split(':').map(Number)
+  return new Intl.DateTimeFormat('en-US', { hour: 'numeric', ...(minute ? { minute: '2-digit' } : {}) }).format(new Date(2000, 0, 1, hour, minute))
+}
+
+export function dueStamp(ts: number): string {
+  const date = new Date(ts)
+  if (!Number.isFinite(date.getTime())) return ''
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short', day: 'numeric', hour: 'numeric',
+    ...(date.getMinutes() ? { minute: '2-digit' } : {}),
+    ...(date.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}),
+  }).format(date)
+}
+
+export function lateBy(ts: number, now = Date.now()): string {
+  const days = Math.floor((now - ts) / 86_400_000)
+  return Number.isFinite(days) && days >= 1 ? `${days} day${days === 1 ? '' : 's'} late` : ''
+}

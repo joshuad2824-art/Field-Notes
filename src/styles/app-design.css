@@ -369,3 +369,45 @@
 .event-form-times { grid-template-columns:repeat(2,minmax(0,1fr)); }
 @media(max-width:640px) { .event-form { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:359px) { .event-form-times,.repeat-month-weekday { grid-template-columns:minmax(0,1fr); } }
+
+/* Phase 1 — Oct 10 audit. Paper owns its ink; inherited night text made
+   notebook cards unreadable. These rules preserve the existing page layout. */
+.notebook-desk .work-note,
+.notebook-desk .work-note :is(h3,p) { color:#172c2b; }
+.notebook-desk .work-note-meta { font-size:11px; color:#43544b; }
+.rows .row-book,
+:is(.rows,.settings-card,.plan-section,.fn-open-reminder,.overview-events) .section-label { color:var(--paper-action); }
+.well::placeholder { color:rgba(156,177,178,.7); }
+.fn-reference-key>span,.fn-calendar-page .fn-reference-key>span { font-size:11px; letter-spacing:.06em; }
+.fn-reference-calendar .cal-letter,.fn-reference-calendar .cal-week { font-size:11px; }
+.fn-shelf-heading h2,.fn-calendar-page-toolbar .fn-tiny,.fn-print-meta { font-size:11px; }
+.notebook-desk :is(.work-paper-tab,.work-eyebrow,.work-counts span) { font-size:11px; }
+.fn-reference-calendar .cal-day .cal-day-n { box-shadow:none; outline:none; background:transparent; }
+.fn-reference-calendar .cal-day.today .cal-day-n { color:inherit; font-weight:700; }
+.fn-reference-calendar .cal-day.on:not(.today) { box-shadow:none; }
+.fn-reference-calendar .cal-day.has-event .cal-day-n { border-bottom:0; }
+.fn-reference-calendar .cal-day.has-event .cal-day-n::after { content:''; position:absolute; width:3px; height:3px; border-radius:50%; background:var(--brass-400); bottom:-4px; left:calc(50% - 1.5px); }
+.fn-reference-calendar .cal-day.today.has-event .cal-day-n::after { background:var(--teal-900); }
+.reminder-late { color:#eaa7bb; }
+:is(.paper,.fn-open-reminder,.work-paper,.reminder-leaf,.rows) .reminder-late { color:var(--oxblood-800); }
+/* A flex child must be able to fit its phone column, including its border. */
+.approved-content .listcol { min-width:0; max-width:100%; }
+@media(max-width:1279px) {
+ .fn-app .fn-forecast-dayname,.fn-app .fn-rain-chance,.fn-app .fn-weather-label>div>span { font-size:11px; letter-spacing:.02em; }
+}
+@media(max-width:399px) { .fn-app .fn-forecast-day:nth-child(n+5) { display:none; } }
+@media(max-width:1023px) {
+ .fn-mobile-navigation { height:calc(52px + var(--safe-bottom)); min-height:52px; padding:4px 10px calc(2px + var(--safe-bottom)); }
+ .fn-mobile-navigation a { flex-direction:column; gap:2px; font:600 11px/1.2 var(--font-ui); color:#9cb1b2; }
+ .fn-mobile-navigation a .fn-icon { width:22px; height:22px; }
+ .fn-mobile-navigation .is-active { color:#dac891; background:none; box-shadow:inset 0 2px #dac891; }
+ .approved-content { padding-bottom:calc(52px + var(--safe-bottom)); }
+ .fn-new>span,.fn-ask>span { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+}
+@media(min-width:1024px) {
+ .fn-app .fn-new,.fn-app .fn-ask { width:auto; gap:8px; padding:0 14px; font:600 13px var(--font-ui); }
+ .fn-app .fn-intro { padding-right:300px; }
+}
+.fn-app .fn-print-meta,.fn-app .forecast-range span,.fn-app .fn-tape-label,.fn-app .siena-item-foot time { font-size:11px; }
+.siena-collection .reminder-late { color:var(--oxblood-800); }
+@media(max-width:359px) { .list-masthead { gap:6px; } }

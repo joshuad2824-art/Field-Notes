@@ -1,3 +1,4 @@
+import { DueLabel } from './DueLabel'
 import { Icon } from './Icon'
 import { useState } from 'react'
 import { useNotebooks } from '../lib/notebooks'
@@ -43,7 +44,7 @@ export function SienaItemCard({ item, paper = false, journal = false }: { item: 
             : <button className="icon-control reminder-mark" aria-label="Mark done" title="Mark done" onClick={() => void completeReminder(item.id)}><Icon name="circle" /></button>}
           <div className="reminder-copy">
             <h3>{summary}</h3>
-            {item.dueAt ? <p className="siena-item-due">Due {new Intl.DateTimeFormat([], { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.dueAt))}</p> : null}
+            {item.dueAt ? <p className="siena-item-due"><DueLabel at={item.dueAt} completed={Boolean(item.completedAt)} /></p> : null}
             {item.completedAt ? <p className="siena-seen">Completed {new Intl.DateTimeFormat([], { dateStyle: 'medium' }).format(new Date(item.completedAt))}</p> : null}
           </div>
         </div>
@@ -64,7 +65,7 @@ export function SienaItemCard({ item, paper = false, journal = false }: { item: 
       : null}
       {item.title ? <h3>{item.title}</h3> : null}
       <p className="siena-item-body">{item.body}</p>
-      {item.dueAt ? <p className="siena-item-due">Due {new Intl.DateTimeFormat([], { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.dueAt))}</p> : null}
+      {item.dueAt ? <p className="siena-item-due"><DueLabel at={item.dueAt} completed={Boolean(item.completedAt)} /></p> : null}
       <div className="siena-item-foot">
         {journal ? <time dateTime={new Date(item.created).toISOString()}>{date}</time> : null}
         <label className="siena-notebook-control"><Icon name="notebook" /><select aria-label={`Notebook for ${item.title ?? labels[item.type]}`} value={item.notebook ?? ''} disabled={filing} onChange={event => void file(event.target.value)}><option value="">Unfiled</option>{item.notebook && !books.some(book => book.id === item.notebook) ? <option value={item.notebook}>Previous notebook</option> : null}{books.map(book => <option key={book.id} value={book.id}>{book.name}</option>)}</select></label>

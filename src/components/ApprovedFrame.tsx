@@ -54,7 +54,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     </aside> : null}
     <div className="approved-content">{children}</div>
     {desktop && !settings.rail && route.name !== 'page' && route.name !== 'notebook' ? <button className="approved-restore-rail" aria-label="Show the notebooks" title="Show the notebooks" onClick={() => setSettings({ rail: true })}><Icon name="menu" /></button> : null}
-    {!desktop && !keyboard ? <nav className="fn-mobile-navigation" aria-label="Primary navigation">{mobile.map(item => <RouteLink key={item.label} className={item.active ? 'is-active' : ''} href={item.href} aria-label={item.label} title={item.label} aria-current={item.active ? 'page' : undefined}><Icon name={item.icon} /></RouteLink>)}</nav> : null}
+    {!desktop && !keyboard ? <nav className="fn-mobile-navigation" aria-label="Primary navigation">{mobile.map(item => <RouteLink key={item.label} className={item.active ? 'is-active' : ''} href={item.href} aria-label={item.label} title={item.label} aria-current={item.active ? 'page' : undefined}><Icon name={item.icon} /><span>{item.label}</span></RouteLink>)}</nav> : null}
     {manage ? <NotebookManager onClose={() => setManage(false)} onAdded={id => { if (!isReserved(id)) setSettings({ notebook: id }); navigate(to.notebook(id)) }} onDeleted={id => { if (id === notebook) { const next = books.find(book => book.id !== id)?.id ?? firstNotebookId(); setSettings({ notebook: next }); navigate(to.notebook(next), { replace: true }) } }} /> : null}
   </div></FrameContext.Provider>
 }
