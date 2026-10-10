@@ -15,7 +15,8 @@
     "check:workshop-plugin": "node tests/workshop-plugin.mjs",
     "check:design": "node tests/design.mjs",
     "check:recurrence": "node tests/event-recurrence.mjs",
-    "check:mobile-tablet": "node tests/mobile-tablet.mjs"
+    "check:mobile-tablet": "node tests/mobile-tablet.mjs",
+    "check:kit": "node tests/phase1-kit.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

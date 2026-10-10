@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useFamilyRefresh } from './davis/calendar'
 import { useRoute, navigate, to, type Route } from './lib/router'
 import { ApprovedFrame } from './components/ApprovedFrame'
@@ -26,6 +26,8 @@ import { RemindersPageScreen } from './screens/RemindersPageScreen'
 import { NotebookDeskScreen } from './screens/NotebookDeskScreen'
 import { useLive } from './lib/useLive'
 import type { Page } from './lib/model'
+
+const KitScreen = import.meta.env.DEV ? lazy(() => import('./screens/KitScreen')) : null
 
 export function App() {
   useFamilyRefresh()
@@ -62,6 +64,7 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [remembered])
 
+  if (route.name === 'kit' && KitScreen) return <Suspense fallback={<p>Opening the kit…</p>}><KitScreen /></Suspense>
   if (route.name === 'oauth-consent') return <OAuthConsentScreen />
   if (route.name === 'davis-callback') return <DavisCallbackScreen />
   return <ApprovedFrame notebook={remembered}><Screen route={route} remembered={remembered} /></ApprovedFrame>

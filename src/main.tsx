@@ -55,3 +55,5 @@ import './styles/approved-desk.css'
 import './styles/app-design.css'
 
 import './styles/notebook-desk.css'
+
+import './styles/kit.css'

@@ -411,3 +411,7 @@
 .fn-app .fn-print-meta,.fn-app .forecast-range span,.fn-app .fn-tape-label,.fn-app .siena-item-foot time { font-size:11px; }
 .siena-collection .reminder-late { color:var(--oxblood-800); }
 @media(max-width:359px) { .list-masthead { gap:6px; } }
+/* Later prototype selectors were more specific than the shared metadata rules. */
+.fn-app .fn-plan-print .fn-print-meta,.fn-app .fn-forecast-day .forecast-range>span { font-size:11px; }
+:is(.rows,.settings-card,.plan-section,.fn-open-reminder,.overview-events) .fn-count { color:var(--paper-action); }
+:is(.settings-card,.event-form,.reminder-page-form,.ask-dialog) input::placeholder { color:var(--paper-quiet); }

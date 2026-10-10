@@ -12,8 +12,14 @@ Skip a persistent notebook spine-height field: stable notebook-ID-derived height
 
 - Paper-specific ink, legible metadata and placeholders, single calendar marks, four labeled 52px phone tabs, desktop New page / Ask Siena labels, On my desk copy, compact 12-hour event times and overdue duration.
 - Four forecast days below 400px; larger views retain five/seven. Corrected the existing 320px notebook masthead overflow by reducing its gaps.
-- Production build, dashboard suite, and five-width navigation suite pass. Phone/tablet and typography checks are running before the combined release.
+- Production build, dashboard suite, five-width navigation suite, and eight-width phone/tablet checks pass. The 1440/744/390px computed-type audit passes; sampled light-paper text meets 4.5:1 contrast.
 
 ## Phase 2 and release
 
-In progress. The shared kit will remain isolated from production screens; update this record with final checks, main commit, and live deployment evidence.
+- Built Masthead/Actions, DeskContainer/ReadingColumn, SectionHead, Paper, Row, Card, Menu/Fold, Meta, Rail/TabBar, and RoomTransition in `src/components/kit/` with scoped `kit.css`.
+- `/kit` is development-only and tree-shaken from the production JavaScript. It reads existing local records; preview controls only modify component state. The larger navigation and screen replacements remain future work. No settings flag, schema change, migration, or backend deployment is needed.
+- Menus contain focus and support arrows, Home/End, Enter/Space, and Escape; folds support keyboard opening/closing. Completion waits for its callback and retains a failed reminder. Touch swipe is available on the Row. Cards keep edit controls as sibling buttons, not nested interactive links.
+- Rail spines derive stable 96–128px heights from notebook IDs. Folded rail is 72px, open rail 236px; the preview tab bar has the reserved, disabled Jot slot. Room transitions preserve child identity and use a 90ms fade for reduced motion.
+- Manila metadata is darker than the prototype values because the supplied cream-paper colors only achieved about 3.9:1 on manila. This preserves the stated readability requirement.
+- Kit layout, keyboard/focus, completion, fold, stable-spine, motion, typography, and real-data preservation checks pass at 1440, 744, and 390px. The full existing regression suite is running before production release.
+- Phase 1 is on GitHub main at `e5c3241`; subsequent commits will record Phase 2 and final publication. Service worker v38 will deliver the combined release. Physical iPhone behavior remains unverified; browser touch and safe-area simulations pass.

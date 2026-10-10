@@ -5,6 +5,7 @@ import { ST_JOHN_NOTEBOOK } from './notebook-desk'
    the browser's, which is the one that matters on a phone. */
 
 export type Route =
+  | { name: 'kit' }
   | { name: 'shelf' }
   | { name: 'overview' }
   | { name: 'plans' }
@@ -62,6 +63,7 @@ function snapshot() {
 
 export function parse(path: string): Route {
   const parts = path.split('/').filter(Boolean).map(decodeURIComponent)
+  if (import.meta.env.DEV && parts[0] === 'kit') return { name: 'kit' }
   if (parts.length === 0) return { name: 'shelf' }
   if (parts[0] === 'plans') return { name: 'workshop' }
   if (parts[0] === 'workshop') return { name: 'workshop' }
