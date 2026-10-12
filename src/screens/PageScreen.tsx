@@ -116,7 +116,8 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
       const serial = ++request
       void getPage(id).then((found) => {
         const base = baseRef.current
-        if (!live || serial !== request || !found || found.deleted || !base || base.id !== id) return
+        if (!live || serial !== request || !found || found.deleted || !base || base.id !== id)
+          return
         if (viewRef.current?.composing) return
         // A pending local draft stays in the editor until its guarded save.
         if (bodyRef.current !== base.body && bodyRef.current !== found.body) return
@@ -128,7 +129,11 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
     }
     refresh.current = run
     const off = subscribe(run)
-    return () => { live = false; refresh.current = () => {}; off() }
+    return () => {
+      live = false
+      refresh.current = () => {}
+      off()
+    }
   }, [id])
 
   /* Writes go to local storage and return immediately. The debounce only
@@ -227,7 +232,9 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
       navigate(to.page(review.id))
     } catch (error) {
       setReviewProblem(error instanceof Error ? error.message : 'Could not gather the review.')
-    } finally { setGathering(false) }
+    } finally {
+      setGathering(false)
+    }
   }
 
   const runWriteUp = async () => {
@@ -239,9 +246,7 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
       setWroteUp('written up · ⌘Z takes it back')
     } catch (e) {
       setWroteUp(
-        e instanceof WriteupError
-          ? e.message
-          : 'That did not work, and the page is untouched.',
+        e instanceof WriteupError ? e.message : 'That did not work, and the page is untouched.',
       )
     } finally {
       setWriting(false)
@@ -295,6 +300,10 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
       <Shell notebook={book.id} activeId={page.id} focus={workshop}>
         {({ toggle, hidden }) => (
           <main className="desk" key="desk">
+            <header className="phone-page-heading">
+              <span>{book.name}</span>
+              <small>Saved</small>
+            </header>
             <article
               className="leaf"
               data-stock={stock}
@@ -304,7 +313,18 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
               {/* Three marks at rest, not eleven. */}
               <div className="tools">
                 <div className="row">
-                  {workshop ? <button className="icon-control" aria-label="Back to plan" title="Back to plan" onClick={() => navigate(to.plan(id))}><Icon name="back" /></button> : toggle}
+                  {workshop ? (
+                    <button
+                      className="icon-control"
+                      aria-label="Back to plan"
+                      title="Back to plan"
+                      onClick={() => navigate(to.plan(id))}
+                    >
+                      <Icon name="back" />
+                    </button>
+                  ) : (
+                    toggle
+                  )}
                   {hidden ? (
                     <span className="breadcrumb">
                       {book.name} · {todayLine()}
@@ -381,7 +401,10 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                 initialBody={page.body}
                 externalBody={body}
                 onChange={onChange}
-                onView={(next) => { viewRef.current = next; setView(next) }}
+                onView={(next) => {
+                  viewRef.current = next
+                  setView(next)
+                }}
                 onCompositionEnd={() => refresh.current()}
                 highlightColor={() => color.current}
                 onDropFile={onDropFile}
@@ -392,7 +415,15 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                 <div className="pagefoot">
                   <div className="pagefoot-measure">
                     {docked ? null : (
-                      <button className="foot-back icon-control" aria-label={workshop ? "Back to plan" : "Back to list"} onClick={() => workshop ? navigate(to.plan(id)) : back(to.notebook(book.id))}><Icon name="back" /></button>
+                      <button
+                        className="foot-back icon-control"
+                        aria-label={workshop ? 'Back to plan' : 'Back to list'}
+                        onClick={() =>
+                          workshop ? navigate(to.plan(id)) : back(to.notebook(book.id))
+                        }
+                      >
+                        <Icon name="back" />
+                      </button>
                     )}
                     <span>{countLabel(words, 'word')}</span>
                     <span>·</span>
@@ -421,7 +452,8 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
               start a page without leaving the one in hand. ⌘⇧N does it from
               anywhere on a desktop. */}
           <SheetItem
-            label="New page" icon="new-page"
+            label="New page"
+            icon="new-page"
             state="⌘⇧N"
             onClick={() => {
               setMenu(false)
@@ -435,7 +467,8 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
           <div className="sheet-rule" />
           <div className="sheet-label">Page</div>
           <SheetItem
-            label="Ask Siena about this page" icon="from-siena"
+            label="Ask Siena about this page"
+            icon="from-siena"
             state="review before applying"
             onClick={() => {
               setMenu(false)
@@ -447,11 +480,15 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
               key={event.id}
               label={event.title}
               state="calendar event"
-              onClick={() => { setMenu(false); navigate(to.event(event.id)) }}
+              onClick={() => {
+                setMenu(false)
+                navigate(to.event(event.id))
+              }}
             />
           ))}
           <SheetItem
-            label={page.pinned ? 'Unpin' : 'Pin'} icon="pin"
+            label={page.pinned ? 'Unpin' : 'Pin'}
+            icon="pin"
             state={page.pinned ? 'pinned' : undefined}
             onClick={() => {
               void setPinned(page.id, !page.pinned)
@@ -470,7 +507,8 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
           />
           {!follows ? (
             <SheetItem
-              label="Follow defaults" icon="restore"
+              label="Follow defaults"
+              icon="restore"
               onClick={() => {
                 void clearOverrides(page.id)
                 setPage((current) =>
@@ -496,9 +534,13 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
             <>
               <div className="sheet-rule" />
               <div className="sheet-label">Journal</div>
-              <p className="sheet-review-note">Gather a fresh copy to include changed notes. This review and your edits will be kept.</p>
+              <p className="sheet-review-note">
+                Gather a fresh copy to include changed notes. This review and your edits will be
+                kept.
+              </p>
               <SheetItem
-                label={gathering ? 'Gathering review' : 'Gather a fresh copy'} icon="refresh"
+                label={gathering ? 'Gathering review' : 'Gather a fresh copy'}
+                icon="refresh"
                 state={reviewProblem || page.entryDate || undefined}
                 onClick={() => void recollect()}
               />
@@ -507,7 +549,8 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                   real entry; this is laid on top of it and is allowed to be
                   unavailable. */}
               <SheetItem
-                label={writing ? 'Writing it up' : 'Write it up'} icon="edit"
+                label={writing ? 'Writing it up' : 'Write it up'}
+                icon="edit"
                 state={
                   wroteUp ??
                   (!hasModelKey()
@@ -541,14 +584,16 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
 
           <div className="sheet-rule" />
           <SheetItem
-            label="Export as markdown" icon="download"
+            label="Export as markdown"
+            icon="download"
             onClick={() => {
               void exportPage({ ...page, body })
               setMenu(false)
             }}
           />
           <SheetItem
-            label="Delete page" icon="trash"
+            label="Delete page"
+            icon="trash"
             danger
             onClick={() => {
               setMenu(false)

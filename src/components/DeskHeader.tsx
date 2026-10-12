@@ -3,7 +3,6 @@ import { Icon } from './Icon'
 import { AskSiena } from './AskSiena'
 import type { Page } from '../lib/model'
 import { navigate, to } from '../lib/router'
-import { useCalendarView } from '../lib/calendar-view'
 
 export function RouteLink({ href, children, onClick, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
   return <a {...props} href={href} onClick={event => {
@@ -16,22 +15,8 @@ export function RouteLink({ href, children, onClick, ...props }: React.AnchorHTM
 
 export function DeskHeader({ title, notebook, pages }: { title: string; notebook: string; pages: Page[] }) {
   const [asking, setAsking] = useState(false)
-  const { month } = useCalendarView()
-  const date = new Intl.DateTimeFormat([], { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())
   return <>
-    <header className="fn-header">
-      <RouteLink className="fn-wordmark" href={to.overview()} aria-label="Field Notes home"><img className="fn-rowan" src="/approved-design/rowan.png" alt="" /><span className="fn-mobile-brand">Field<br />Notes</span></RouteLink>
-      <nav className="fn-topnav" aria-label="Saved items"><RouteLink className="icon-control" href={to.fromSiena()} aria-label="Saved items" title="Saved items"><Icon name="from-siena" /></RouteLink></nav>
-      <div className="fn-header-actions">
-        <RouteLink className="fn-icon-button fn-desktop-search" href={to.search()} aria-label="Search" title="Search"><Icon name="search" /></RouteLink>
-        <RouteLink className="fn-new" href={to.newPage(notebook)} aria-label="New page" title="New page"><Icon name="new-page" /><span>New page</span></RouteLink>
-        <button className="fn-ask ask-siena-button" onClick={() => setAsking(true)} aria-label="Ask Siena"><Icon name="from-siena" /><span>Ask Siena</span></button>
-      </div>
-    </header>
-    <div className="fn-intro overview-head">
-      <div><h1 id="desk-heading" tabIndex={-1}>{title}</h1></div>
-      <div className="fn-date"><RouteLink className="fn-date-link" href={to.calendar(month)} aria-label={`${date}. Open full calendar`} title="Open full calendar">{date}</RouteLink></div>
-    </div>
+    <header className="redesign-desk-header"><div><span className="section-label">{title === 'Workshop' ? 'Plans, tools & work in progress' : 'Notebook desk'}</span><h1 id="desk-heading" tabIndex={-1}>{title === 'Workshop' ? 'The Workshop' : title}</h1></div><div className="desk-header-tools"><RouteLink href={to.search()} aria-label="Search" title="Search"><Icon name="search"/></RouteLink><RouteLink href={to.newPage(notebook)} aria-label="New page" title="New page"><Icon name="new-page"/></RouteLink><button onClick={()=>setAsking(true)} aria-label="Ask Siena" title="Ask Siena"><Icon name="from-siena"/></button><RouteLink href={to.settings()} aria-label="Settings" title="Settings"><Icon name="settings"/></RouteLink></div></header>
     {asking ? <AskSiena pages={pages} onClose={() => setAsking(false)} /> : null}
   </>
 }

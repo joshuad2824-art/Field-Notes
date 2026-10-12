@@ -1,37 +1,104 @@
-import { Icon } from '../components/Icon'
+import { useState } from 'react'
 import { SienaItemCard } from '../components/SienaItemCard'
 import { allSienaItems, markAllSienaItemsSeen } from '../lib/siena-items'
-import { navigate, to } from '../lib/router'
+import { isoDay } from '../lib/format'
 import { useLive } from '../lib/useLive'
-
 export function FromSienaScreen() {
-  const items = useLive(allSienaItems, [], [])
-  const unseen = items.filter((item) => !item.seenAt).length
-  const active = items.filter((item) => !item.completedAt)
-  const completed = items.filter((item) => item.type === 'reminder' && item.completedAt)
+  const items = useLive(allSienaItems, [], []),
+    [filter, setFilter] = useState('Due')
+  const unseen = items.filter((i) => !i.seenAt).length,
+    notes = items
+      .filter((i) => i.type === 'note')
+      .sort((a, b) => Number(!!a.seenAt) - Number(!!b.seenAt) || b.created - a.created),
+    reminders = items.filter((i) => i.type === 'reminder' && !i.completedAt),
+    updates = items.filter((i) => i.type === 'task_update'),
+    saved = items.filter((i) => i.type === 'saved'),
+    completed = items.filter((i) => i.type === 'reminder' && i.completedAt)
+  const visible = reminders.filter(
+    (i) =>
+      filter === 'All open' ||
+      (filter === 'Due'
+        ? !i.dueAt || isoDay(i.dueAt) <= isoDay()
+        : !!i.dueAt && isoDay(i.dueAt) > isoDay()),
+  )
   return (
     <div className="app">
-      <div className="statusband" />
-      <main className="siena-collection scroll">
-        <div className="overview-wrap">
-          <div className="overview-top">
-            <button className="overview-back" onClick={() => navigate(to.overview())} aria-label="‹ Overview" title="‹ Overview"><Icon name="back" /></button>
-            {unseen ? <button className="overview-back" onClick={() => void markAllSienaItemsSeen()} aria-label="Mark all seen" title="Mark all seen"><Icon name="seen" /></button> : null}
+      <main className="siena-collection board-collection scroll">
+        <header className="collection-header">
+          <div>
+            <h1 id="desk-heading">From Siena</h1>
+            <p>
+              {unseen} new · {items.length - unseen} kept
+            </p>
           </div>
-          <header className="overview-intro">
-            <span className="section-label">Saved in Field Notes</span>
-            <h1>From Siena {unseen ? <span className="siena-badge">{unseen}</span> : null}</h1>
-            
-          </header>
-          {active.length ? (
-            <div className="siena-collection-list">
-              {active.map((item) => <SienaItemCard key={item.id} item={item} paper={item.type === 'note'} />)}
+          <button className="collection-chip" onClick={() => void markAllSienaItemsSeen()}>
+            Mark all seen
+          </button>
+        </header>
+        <div className="siena-board">
+          <section className="siena-featured">
+            <h2>Note</h2>
+            {notes[0] ? (
+              <SienaItemCard item={notes[0]} paper />
+            ) : (
+              <div className="empty-state">
+                <h3>All caught up.</h3>
+                <p>I'll leave anything new here as soon as it comes in.</p>
+                <img src="/redesign/puffin-right.webp" alt="" />
+              </div>
+            )}
+            {notes.length > 1 ? (
+              <details>
+                <summary>Earlier notes · {notes.length - 1}</summary>
+                {notes.slice(1).map((i) => (
+                  <SienaItemCard key={i.id} item={i} paper />
+                ))}
+              </details>
+            ) : null}
+          </section>
+          <section className="siena-reminders">
+            <h2>Reminders</h2>
+            <div className="collection-filters" role="group" aria-label="Filter reminders">
+              {['Due', 'Ahead', 'All open'].map((f) => (
+                <button key={f} aria-pressed={f === filter} onClick={() => setFilter(f)}>
+                  {f}
+                </button>
+              ))}
             </div>
-          ) : <p className="overview-empty">No active items from Siena.</p>}
-          {completed.length ? <details id="completed" open={window.location.hash === '#completed' ? true : undefined} className="siena-collection-list siena-history"><summary><h2>Completed reminders</h2><span> · {completed.length}</span></summary>
-            
-            {completed.map((item) => <SienaItemCard key={item.id} item={item} />)}
-          </details> : null}
+            {visible.length ? (
+              visible.map((i) => <SienaItemCard key={i.id} item={i} />)
+            ) : (
+              <p>Nothing here right now.</p>
+            )}
+            {completed.length ? (
+              <details
+                id="completed"
+                open={location.hash === '#completed' ? true : undefined}
+                className="siena-history"
+              >
+                <summary>Completed reminders · {completed.length}</summary>
+                {completed.map((i) => (
+                  <SienaItemCard key={i.id} item={i} />
+                ))}
+              </details>
+            ) : null}
+          </section>
+          <section className="siena-updates">
+            <h2>Task updates</h2>
+            {updates.length ? (
+              updates.map((i) => <SienaItemCard key={i.id} item={i} />)
+            ) : (
+              <p>No updates yet.</p>
+            )}
+          </section>
+          <section className="siena-saved">
+            <h2>Saved</h2>
+            {saved.length ? (
+              saved.map((i) => <SienaItemCard key={i.id} item={i} />)
+            ) : (
+              <p>Things worth keeping will gather here.</p>
+            )}
+          </section>
         </div>
       </main>
     </div>

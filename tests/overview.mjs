@@ -26,3 +26,7 @@ assert.deepEqual(summary.pinned.map((entry) => entry.id), ['one'])
 assert.deepEqual(summary.notebookCounts, { 'field-notes': 1, church: 1, journal: 1 })
 
 console.log('PASS  overview summary ignores deleted pages and code examples, and orders live work')
+
+const {planProgress}=await import('../src/lib/plan-progress.ts')
+assert.deepEqual(planProgress('- [x] Done\n- [ ] Open\n```md\n- [x] Example\n```\n1. [ ] Another'),{done:1,total:3})
+console.log('PASS plan progress excludes fenced examples and supports numbered checklists')

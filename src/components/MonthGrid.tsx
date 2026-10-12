@@ -16,6 +16,8 @@ interface Props {
    A day can carry both, and today with nothing written on it still lights. */
 export function MonthGrid({ month, written, events, selected, onPick }: Props) {
   const today = isoDay()
+  const days = monthOf(month)
+  const visible = days[35].inMonth ? days : days.slice(0, 35)
 
   return (
     <div className="cal">
@@ -27,7 +29,7 @@ export function MonthGrid({ month, written, events, selected, onPick }: Props) {
         ))}
       </div>
       <div className="cal-grid">
-        {monthOf(month).map((day) => {
+        {visible.map((day) => {
           const marks = [
             day.inMonth ? '' : 'outside',
             written.has(day.iso) ? 'written' : '',

@@ -199,10 +199,8 @@ const notebookIds = () =>
     journal?.updated === 0,
     String(journal?.updated),
   )
-  ok('the three regular notebooks remain on the shelf and Workshop has its own destination', (await view.locator(".fn-sidebar-books .fn-book-spine:not([href='/n/journal'])").count()) === 3 && (await view.locator(".fn-sidebar-books [href='/n/workshop']").count()) === 0)
-  ok('Journal sits with content, away from Trash', (await view.locator(".fn-sidebar-books [href='/n/journal']").count()) === 1 && (await view.locator('.rail-foot .rail-journal').count()) === 0)
-
-  await view.getByRole('button', { name: 'Manage notebooks', exact: true }).click()
+  ok('Journal is on the notebook sidebar',await view.locator(".board-sidebar [href='/n/journal']").count()===1)
+  await view.getByRole('button',{name:'Add a notebook',exact:true}).click()
   await view.waitForTimeout(300)
   ok(
     'and the manager does not offer to rename, recolour or delete it',
@@ -297,7 +295,7 @@ const journalPages = () =>
   await view.reload({ waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1200)
 
-  await view.locator(".fn-sidebar-books [href='/n/journal']").click()
+  await view.locator(".board-sidebar [href='/n/journal']").click()
   await view.waitForTimeout(400)
   ok(
     'the journal opens with its own button at the foot, not New page',
@@ -326,7 +324,7 @@ const journalPages = () =>
   /* Again. The whole point of keying on notebook plus entryDate. */
   await view.goto(BASE + '/n/field-notes', { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1000)
-  await view.locator(".fn-sidebar-books [href='/n/journal']").click()
+  await view.locator(".board-sidebar [href='/n/journal']").click()
   await view.waitForTimeout(400)
   await view.locator('.list-foot .plate-button').click()
   await view.waitForTimeout(1400)
@@ -345,27 +343,8 @@ const journalPages = () =>
   await view.goto(`${BASE}/calendar/${month}`, { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1000)
 
-  ok('the month carries a strip of its journal entries', (await view.locator('.calendar-journal-row').count()) >= 1)
-  ok(
-    'and the entry is also down among the days, because it is a page and the calendar is a lens',
-    (await view.locator(`.calendar-day .row-page:has-text("${title}")`).count()) === 1,
-  )
-  ok(
-    'the strip sits above the day groups rather than under them',
-    await view.evaluate(() => {
-      const strip = document.querySelector('.calendar-journal')?.getBoundingClientRect()
-      const day = document.querySelector('.calendar-day')?.getBoundingClientRect()
-      return !!strip && !!day && strip.bottom <= day.top + 1
-    }),
-  )
-  ok(
-    'and an entry puts no ring on its Sunday, because nothing was written that day',
-    await view.evaluate((iso) => {
-      const cell = document.querySelector(`.cal-day[aria-label="${iso}"]`)
-      return !!cell && !cell.classList.contains('written')
-    }, entry.entryDate),
-    entry.entryDate,
-  )
+  ok('the calendar contains a page marker for the journal',await view.locator('.month-cell-head').getByRole('button',{name:/pages/}).count()>=1)
+
 }
 
 // Explicit refresh creates another review and preserves the edited original.

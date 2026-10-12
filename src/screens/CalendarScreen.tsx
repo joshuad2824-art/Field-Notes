@@ -1,111 +1,181 @@
+import { useState } from 'react'
+import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
-import { eventDaysInMonth } from '../lib/event-range'
+import { eventOnDay } from '../lib/event-range'
 import { Icon } from '../components/Icon'
-import { CalendarPanel } from '../components/CalendarPanel'
-import { DeskHeader } from '../components/DeskHeader'
-import { useCalendarView } from '../lib/calendar-view'
-import { PageRow } from '../components/PageRow'
+import { ColorTray, ColorsGlyph } from '../components/ColorTray'
+import { MonthGrid } from '../components/MonthGrid'
 import { EventRow } from '../components/EventRow'
+import { PageRow } from '../components/PageRow'
+import { useCalendarView, selectCalendarDate } from '../lib/calendar-view'
 import { eventsInMonth } from '../lib/events'
 import { pagesInMonth } from '../lib/db'
-import { dayOf, monthNow, monthParts } from '../lib/calendar'
-import { countLabel, isoDay, readableDay } from '../lib/format'
-import { JOURNAL_NOTEBOOK, type FieldEvent, type Page, titleOf } from '../lib/model'
-import { back, navigate, to } from '../lib/router'
+import { dayOf, monthNow, monthParts, monthOf, stepMonth } from '../lib/calendar'
+import { isoDay, readableDay, clock } from '../lib/format'
+import { JOURNAL_NOTEBOOK } from '../lib/model'
+import { navigate, to } from '../lib/router'
+import { useSettings } from '../lib/settings'
 import { useLive } from '../lib/useLive'
-
-/* The month, whole. No chrome bar — the date is the masthead here as much as
-   it is in the rail, so the month name is the heading and the marks step it.
-
-   Below the grid, that month's pages in the order they were written. The
-   calendar is a lens over the same pages, never a place they live. */
-export function CalendarScreen({ month, notebook }: { month?: string; notebook: string }) {
-  const { month: shown } = useCalendarView()
-  void month
-  const pages = useLive<Page[]>(() => pagesInMonth(shown), [shown], [])
-  const localEvents = useLive<FieldEvent[]>(() => eventsInMonth(shown), [shown], [])
-  const family = useFamilyAgenda()
-  const events = mergeCalendarEvents(localEvents, family).filter(event => eventDaysInMonth(event, shown).length)
-  const { month: name } = monthParts(shown)
-
-  /* The month's journal entries, read off the pages already loaded rather
-     than asked for a second time. They are also down in their own day groups
-     below, because they are pages and the calendar is a lens over pages — this
-     strip is the direct answer to wanting somewhere to find them as a set. */
-  const entries = pages.filter((page) => page.notebook === JOURNAL_NOTEBOOK)
-
-  /* Grouped by day, so a day with three pages reads as a day and not as three
-     unrelated rows. */
-  const days: { iso: string; pages: Page[]; events: FieldEvent[] }[] = []
-  for (const page of pages) {
-    const iso = dayOf(page)
-    const last = days[days.length - 1]
-    if (last && last.iso === iso) last.pages.push(page)
-    else days.push({ iso, pages: [page], events: [] })
+export function CalendarScreen({ notebook }: { month?: string; notebook: string }) {
+  const { month: shown, selected } = useCalendarView(),
+    settings = useSettings(),
+    [colors, setColors] = useState(false)
+  const pages = useLive(() => pagesInMonth(shown), [shown], []),
+    localEvents = useLive(() => eventsInMonth(shown), [shown], []),
+    family = useFamilyAgenda()
+  const events = mergeCalendarEvents(
+      localEvents,
+      family,
+      `${shown}-01`,
+      monthOf(shown)[41].iso,
+    ),
+    parts = monthParts(shown),
+    days = monthOf(shown)
+  // Keep the sixth row only when the actual month needs it.
+  const cells = days[35].inMonth ? days : days.slice(0, 35)
+  const choose = (iso: string) => {
+    selectCalendarDate(iso)
   }
-  for (const event of events) {
-    for (const iso of eventDaysInMonth(event, shown)) {
-      const day = days.find((row) => row.iso === iso)
-      if (day) day.events.push(event)
-      else days.push({ iso, pages: [], events: [event] })
-    }
-  }
-  days.sort((a, b) => a.iso.localeCompare(b.iso))
-
   return (
-    <div className="app fn-app">
-
-      <div className="calendar-screen fn-shell scroll">
-        <div className="calendar-body">
-          <DeskHeader title="Your month." notebook={notebook} pages={pages} />
-          <div className="fn-calendar-page">
-          <div className="calendar-masthead fn-calendar-page-toolbar">
-            <button className="icon-control" aria-label="Back" title="Back" onClick={() => back(to.overview())}><Icon name="back" /></button>
-            <button className="icon-control" aria-label="Notebook" title="Notebook" onClick={() => navigate(to.notebook(notebook))}><Icon name="notebook" /></button>
-            <span className="grow" />
-            <button className="link-caps" onClick={() => navigate(to.newEvent(shown === monthNow() ? isoDay() : `${shown}-01`))} aria-label="Add event" title="Add event"><Icon name="add" /></button>
+    <div className="app month-app">
+      <main className="month-screen scroll">
+        <header className="month-header">
+          <div>
+            <h1 id="desk-heading">
+              {parts.month} <span>{parts.year}</span>
+            </h1>
+            <p>
+              {pages.length} pages · {events.length} events this month
+            </p>
           </div>
-          <div className="calendar-overview">
-          <CalendarPanel large />
-          <div className="calendar-count section-label">{countLabel(pages.length, 'page')} · {countLabel(events.length, 'event')} this month</div>
+          <div className="month-controls">
+            <button
+              aria-label="Previous month"
+              onClick={() => navigate(to.calendar(stepMonth(shown, -1)))}
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => {
+                choose(isoDay())
+                navigate(to.calendar(monthNow()))
+              }}
+            >
+              Today
+            </button>
+            <button
+              aria-label="Next month"
+              onClick={() => navigate(to.calendar(stepMonth(shown, 1)))}
+            >
+              ›
+            </button>
+            <button aria-label="Colors" title="Colors" onClick={() => setColors(true)}>
+              <ColorsGlyph />
+            </button>
           </div>
-          <section className="calendar-agenda" aria-label="This month’s pages and events">
-          <h1 className="calendar-agenda-heading">In {name}</h1>
-          {days.length === 0 ? <p className="calendar-empty">No pages or events this month.</p> : null}
-          {entries.length ? (
-            <div className="calendar-journal">
-              <div className="section-label">Journal</div>
-              <div className="calendar-journal-rows">
-                {entries.map((entry) => (
-                  <button
-                    key={entry.id}
-                    className="calendar-journal-row"
-                    onClick={() => navigate(to.page(entry.id))}
-                  >
-                    {titleOf(entry.body)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {days.map((day) => (
-            <div key={day.iso} className="calendar-day">
-              <button className="calendar-day-label" onClick={() => navigate(to.day(day.iso))}>
-                {readableDay(day.iso)}
-              </button>
-              <div className="rows">
-                {day.events.map((event) => <EventRow key={event.id} event={event} />)}
-                {day.pages.map((page) => (
-                  <PageRow key={page.id} page={page} showNotebook />
-                ))}
-              </div>
-            </div>
-          ))}
-          </section>
+        </header>
+        <div className="month-desktop">
+          <div className="month-weekdays">
+            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(
+              (d) => (
+                <span key={d}>{d}</span>
+              ),
+            )}
+          </div>
+          <div className="month-cells">
+            {cells.map((day) => {
+              const daily = events.filter((e) => eventOnDay(e, day.iso)),
+                written = pages.filter((p) => dayOf(p) === day.iso)
+              return (
+                <section
+                  key={day.iso}
+                  className={`month-cell${!day.inMonth ? ' outside' : ''}${day.iso === selected ? ' selected' : ''}`}
+                >
+                  <div className="month-cell-head">
+                    <button
+                      className={day.iso === isoDay() ? 'today' : ''}
+                      aria-label={day.iso}
+                      onClick={() => navigate(to.day(day.iso))}
+                    >
+                      {day.date}
+                    </button>
+                    {written.length ? (
+                      <button onClick={() => choose(day.iso)}>{written.length} pages</button>
+                    ) : null}
+                  </div>
+                  {daily.slice(0, 3).map((e) => (
+                    <button
+                      key={e.id}
+                      className={`month-event ${e.calendarTarget === 'Family' ? 'family' : ''}`}
+                      onClick={() =>
+                        e.externalSource === 'davis'
+                          ? window.open(DAVIS_SOURCE_URL, '_blank', 'noopener,noreferrer')
+                          : navigate(to.event(e.seriesId ?? e.id, e.occurrenceDate))
+                      }
+                    >
+                      <strong>{e.title}</strong>
+                      <small>{clock(e.startTime) || 'All day'}</small>
+                    </button>
+                  ))}
+                  {daily.length > 3 ? (
+                    <button
+                      className="month-overflow"
+                      onClick={() => navigate(to.day(day.iso))}
+                    >
+                      {daily.length - 3} more
+                    </button>
+                  ) : null}
+                </section>
+              )
+            })}
           </div>
         </div>
-      </div>
+        <div className="month-mobile">
+          <MonthGrid
+            month={shown}
+            selected={selected}
+            written={new Set(pages.filter((p) => p.notebook !== JOURNAL_NOTEBOOK).map(dayOf))}
+            events={
+              new Set(
+                cells.filter((d) => events.some((e) => eventOnDay(e, d.iso))).map((d) => d.iso),
+              )
+            }
+            onPick={choose}
+          />
+        </div>
+        <section className="month-selected">
+          <h2>
+            {readableDay(selected)}
+            {selected === isoDay() ? ' · Today' : ''}
+          </h2>
+          {events
+            .filter((e) => eventOnDay(e, selected))
+            .map((e) => (
+              <EventRow key={e.id} event={e} />
+            ))}
+          <div className="rows">
+            {pages
+              .filter((p) => dayOf(p) === selected)
+              .map((p) => (
+                <PageRow key={p.id} page={p} showNotebook />
+              ))}
+          </div>
+          {!events.some((e) => eventOnDay(e, selected)) &&
+          !pages.some((p) => dayOf(p) === selected) ? (
+            <p>Nothing on this day yet.</p>
+          ) : null}
+          <button className="cream-button" onClick={() => navigate(to.newEvent(selected))}>
+            <Icon name="add" />
+            Add event
+          </button>
+        </section>
+      </main>
+      {colors ? (
+        <ColorTray
+          notebook={settings.themeNotebook || notebook}
+          onClose={() => setColors(false)}
+        />
+      ) : null}
     </div>
   )
 }

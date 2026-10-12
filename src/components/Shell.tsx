@@ -1,3 +1,4 @@
+import { PageDaySheet } from './PageDaySheet'
 import { Icon } from './Icon'
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPage } from '../lib/db'
@@ -29,8 +30,15 @@ interface Props {
    window, and the rail slides over as a drawer that starts closed. Crossing
    the boundary reconciles the drawer, because one that survived a resize into
    the docked layout would be a second, invisible state. */
-export function Shell({ notebook, overview = false, activeId, children, focus = false }: Props) {
+export function Shell({
+  notebook,
+  overview = false,
+  activeId,
+  children,
+  focus = false,
+}: Props) {
   const externalRail = useExternalRail()
+  const tablet = useMediaQuery('(min-width: 820px) and (max-width: 1199px)')
   const available = useMediaQuery(SIDEBAR_AVAILABLE)
   const regularDocked = useMediaQuery(SIDEBAR_DOCKED)
   /* Overview needs only the rail and the desk, so the familiar sidebar can
@@ -53,7 +61,8 @@ export function Shell({ notebook, overview = false, activeId, children, focus = 
   const railOver = !docked && railDrawer
 
   /* Below the boundary the leaf replaces the list rather than joining it. */
-  const showList = overview || focus ? false : compact ? !activeId : listDocked
+  const showList =
+    overview || focus || (tablet && !!activeId) ? false : compact ? !activeId : listDocked
   const showLeaf = overview || (compact ? !!activeId : true)
   /* Nothing to the left saying where we are, so the leaf says it itself. */
   const hidden = docked && !listDocked && !railDocked && !(externalRail && settings.rail)
@@ -76,9 +85,11 @@ export function Shell({ notebook, overview = false, activeId, children, focus = 
   const toggle = overview ? (
     <button
       className="mark-button"
-      onClick={() => docked ? setSettings({ rail: !settings.rail }) : setRailDrawer(true)}
+      onClick={() => (docked ? setSettings({ rail: !settings.rail }) : setRailDrawer(true))}
       aria-label={railDocked ? 'Hide the notebooks' : 'Show the notebooks'}
-    ><Icon name="menu" /></button>
+    >
+      <Icon name="menu" />
+    </button>
   ) : (
     <button
       className={`mark-button${listDocked && available ? ' on' : ''}`}
@@ -115,7 +126,7 @@ export function Shell({ notebook, overview = false, activeId, children, focus = 
           notebook={notebook}
           activeId={activeId}
           compact={compact}
-          railShown={railDocked}
+          railShown={railDocked || (externalRail && docked && settings.rail)}
           onToggleRail={() =>
             docked ? setSettings({ rail: !settings.rail }) : setRailDrawer(true)
           }
@@ -123,6 +134,7 @@ export function Shell({ notebook, overview = false, activeId, children, focus = 
         />
       ) : null}
 
+      {tablet && activeId && !focus ? <PageDaySheet id={activeId} /> : null}
       {showLeaf ? children({ toggle, hidden }) : null}
 
       {manage ? (

@@ -92,22 +92,15 @@ export interface SienaItem {
 export const DEFAULT_NOTEBOOKS: Notebook[] = [
   /* Seeded at 0 rather than now: two devices that each stood these four up
      before ever pairing should meet with nothing to argue about. */
-  { id: 'field-notes', name: 'Field Notes', color: '#082744', order: 0, updated: 0 },
-  { id: 'workshop', name: 'The Workshop', color: '#3a342e', order: 1, updated: 0 },
-  { id: 'hearth', name: 'The Hearth', color: '#530a28', order: 2, updated: 0 },
-  { id: 'church', name: 'Church', color: '#123737', order: 3, updated: 0 },
+  { id: 'field-notes', name: 'Field Notes', color: '#1B2A5E', order: 0, updated: 0 },
+  { id: 'workshop', name: 'The Workshop', color: '#5A5046', order: 1, updated: 0 },
+  { id: 'hearth', name: 'The Hearth', color: '#5A0B25', order: 2, updated: 0 },
+  { id: 'church', name: 'Church', color: '#1D4842', order: 3, updated: 0 },
 ]
 
 /* Covers come from the palette, so a new notebook still looks like it belongs
    on the shelf. */
-export const COVER_COLORS = [
-  '#082744',
-  '#3a342e',
-  '#530a28',
-  '#123737',
-  '#24332a',
-  '#1b261f',
-]
+export const COVER_COLORS = ['#3B2160', '#1B2A5E', '#163F7A', '#0B4A6B', '#12384A', '#1D4842', '#0E4A33', '#2D5A12', '#876808', '#7A3118', '#5A5046', '#7A0F0F', '#5A0B25', '#6B1C4A', '#5C1C5E', '#2C333A']
 
 export const DEFAULT_NOTEBOOK: NotebookId = 'field-notes'
 
@@ -132,7 +125,7 @@ export const JOURNAL_NOTEBOOK: NotebookId = 'journal'
 export const JOURNAL_BOOK: Notebook = {
   id: JOURNAL_NOTEBOOK,
   name: 'Journal',
-  color: '#1b261f',
+  color: '#0E4A33',
   order: 900,
   updated: 0,
 }

@@ -90,9 +90,8 @@ export function SyncPanel() {
       <>
         <h2>Sync</h2>
         <p>
-          This device is paired. Writing goes to the device first and reaches the others
-          afterwards, on its own; nothing here is ever waited on. There is no session behind it
-          and nothing to sign in to again.
+          This device is paired. Your writing saves here first, then syncs to your other
+          devices. Pair a new device with the code below.
         </p>
 
         {/* Named, not just styled. The suite used to find this line as "the
@@ -112,11 +111,27 @@ export function SyncPanel() {
             className="btn caps"
             disabled={status.state === 'syncing'}
             onClick={() => void syncNow()}
-           aria-label="Sync now" title="Sync now"><Icon name="refresh" /></button>
-          <button className="btn caps" aria-label={showCode ? 'Hide the code' : 'Pair another device'} title={showCode ? 'Hide the code' : 'Pair another device'} onClick={() => setShowCode(!showCode)}>
+            aria-label="Sync now"
+            title="Sync now"
+          >
+            <Icon name="refresh" />
+          </button>
+          <button
+            className="btn caps"
+            aria-label={showCode ? 'Hide the code' : 'Pair another device'}
+            title={showCode ? 'Hide the code' : 'Pair another device'}
+            onClick={() => setShowCode(!showCode)}
+          >
             <Icon name="link" />
           </button>
-          <button className="btn caps danger" onClick={() => setConfirmOff(true)} aria-label="Unpair" title="Unpair"><Icon name="close" /></button>
+          <button
+            className="btn caps danger"
+            onClick={() => setConfirmOff(true)}
+            aria-label="Unpair"
+            title="Unpair"
+          >
+            <Icon name="close" />
+          </button>
         </div>
 
         {showCode ? (
@@ -130,7 +145,8 @@ export function SyncPanel() {
             <div className="actions">
               <button
                 className="btn caps"
-                aria-label={copied ? 'Copied' : 'Copy'} title="Copy pairing code"
+                aria-label={copied ? 'Copied' : 'Copy'}
+                title="Copy pairing code"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(pairing)
@@ -162,8 +178,19 @@ export function SyncPanel() {
                   setConfirmOff(false)
                   setShowCode(false)
                 }}
-               aria-label="Unpair it" title="Unpair it"><Icon name="close" /></button>
-              <button className="outline" onClick={() => setConfirmOff(false)} aria-label="Keep it paired" title="Keep it paired"><Icon name="close" /></button>
+                aria-label="Unpair it"
+                title="Unpair it"
+              >
+                <Icon name="close" />
+              </button>
+              <button
+                className="outline"
+                onClick={() => setConfirmOff(false)}
+                aria-label="Keep it paired"
+                title="Keep it paired"
+              >
+                <Icon name="close" />
+              </button>
             </div>
           </div>
         ) : null}
@@ -178,30 +205,41 @@ export function SyncPanel() {
     <>
       <h2>Sync</h2>
       <p>
-        Not set up. Everything works exactly as it does now; the pages simply stay on this
-        device. Setting it up is one paste per device and then never again — there is no account
-        and nothing that expires.
+        Not set up yet. Your pages stay on this device. Pair it with your existing archive, or
+        set up your first device.
       </p>
 
       <div className="actions">
         <button
           className={`btn caps${mode === 'first' ? ' on' : ''}`}
           onClick={() => setMode('first')}
-         aria-label="First device" title="First device"><Icon name="new-page" /></button>
+          aria-label="First device"
+          title="First device"
+        >
+          <Icon name="new-page" /> First device
+        </button>
         <button
           className={`btn caps${mode === 'join' ? ' on' : ''}`}
           onClick={() => setMode('join')}
-         aria-label="Already has it" title="Already has it"><Icon name="link" /></button>
+          aria-label="Already has it"
+          title="Already has it"
+        >
+          <Icon name="link" /> Pair this device
+        </button>
       </div>
 
       {mode === 'first' ? (
         <div className="sync-form">
-          <p>
-            Make a free Supabase project, run <code>supabase/schema.sql</code> from this repo in
-            its SQL editor, then paste the project URL and the anon key below. Both are on the
-            project’s API settings page and neither is a secret — the vault key this device
-            generates is, and it never leaves here except in a pairing code you carry yourself.
-          </p>
+          <details className="sync-setup-help">
+            <summary>First-device setup instructions</summary>
+            <p>
+              Make a free Supabase project, run <code>supabase/schema.sql</code> from this repo
+              in its SQL editor, then paste the project URL and the anon key below. Both are on
+              the project’s API settings page and neither is a secret — the vault key this
+              device generates is, and it never leaves here except in a pairing code you carry
+              yourself.
+            </p>
+          </details>
           <label className="sync-label" htmlFor="sync-url">
             Project URL
           </label>
@@ -227,7 +265,13 @@ export function SyncPanel() {
             spellCheck={false}
           />
           <div className="actions">
-            <button className="btn caps" disabled={busy} aria-label={busy ? 'Connecting' : 'Make the vault'} title="Make the vault" onClick={() => void first()}>
+            <button
+              className="btn caps"
+              disabled={busy}
+              aria-label={busy ? 'Connecting' : 'Make the vault'}
+              title="Make the vault"
+              onClick={() => void first()}
+            >
               <Icon name="link" />
             </button>
           </div>
@@ -255,7 +299,8 @@ export function SyncPanel() {
             <button
               className="btn caps"
               disabled={busy || !code.trim()}
-              aria-label={busy ? 'Pairing' : 'Pair this device'} title="Pair this device"
+              aria-label={busy ? 'Pairing' : 'Pair this device'}
+              title="Pair this device"
               onClick={() => void join()}
             >
               <Icon name="link" />

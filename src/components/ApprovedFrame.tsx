@@ -1,60 +1,338 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useMediaQuery } from '../lib/media'
-import { useNotebooks, journalBook, isReserved, firstNotebookId } from '../lib/notebooks'
+import { useAllNotebooks, isReserved, firstNotebookId, notebookOf } from '../lib/notebooks'
 import { setSettings, useSettings } from '../lib/settings'
-import { navigate, to, useRoute } from '../lib/router'
+import { back, navigate, to, useRoute } from '../lib/router'
 import { showCalendarMonth, selectCalendarDate, useCalendarView } from '../lib/calendar-view'
+import { getPage, livePages } from '../lib/db'
+import { useLive } from '../lib/useLive'
+import { applyTheme, coverColor } from '../lib/theme'
+import { AskSiena } from './AskSiena'
 import { Icon } from './Icon'
-import { CalendarPanel } from './CalendarPanel'
 import { NotebookManager } from './NotebookManager'
 import { RouteLink } from './DeskHeader'
-import { setEdgeColor, surfaceColor, tokenColor } from '../lib/themecolor'
+import { setEdgeColor } from '../lib/themecolor'
 import { SyncMark } from './SyncMark'
-import { WeatherLine } from './WeatherLine'
 import { useKeyboardOpen } from '../lib/viewport'
-
+import { ColorTray, ColorsGlyph } from './ColorTray'
 const FrameContext = createContext(false)
-export function useExternalRail() { return useContext(FrameContext) }
-
-export function ApprovedFrame({ notebook, children }: { notebook: string; children: ReactNode }) {
-  const desktop = useMediaQuery('(min-width: 1024px)')
-  const settings = useSettings()
-  const keyboard = useKeyboardOpen()
-  const route = useRoute()
-  const calendar = useCalendarView()
-  const books = useNotebooks()
-  const [manage, setManage] = useState(false)
+export function useExternalRail() {
+  return useContext(FrameContext)
+}
+export function ApprovedFrame({
+  notebook,
+  children,
+}: {
+  notebook: string
+  children: ReactNode
+}) {
+  const desktop = useMediaQuery('(min-width: 1200px)'),
+    settings = useSettings(),
+    keyboard = useKeyboardOpen(),
+    route = useRoute(),
+    calendar = useCalendarView(),
+    books = useAllNotebooks()
+  const [asking, setAsking] = useState(false),
+    [manage, setManage] = useState(false),
+    [colors, setColors] = useState(false),
+    [menu, setMenu] = useState(false)
+  const pageId =
+    route.name === 'page' || route.name === 'plan' || route.name === 'review' ? route.id : ''
+  const page = useLive(
+    () => (pageId ? getPage(pageId) : Promise.resolve(undefined)),
+    [pageId],
+    undefined,
+  )
+  const pages = useLive(livePages, [], [])
+  const routeBook =
+    route.name === 'notebook' || route.name === 'notebook-desk'
+      ? route.notebook
+      : page?.notebook
+  const activeBook = notebookOf(routeBook ?? settings.themeNotebook)
+  const themeBook = activeBook?.id ?? notebook
+  const notebookView = ['notebook', 'page', 'review'].includes(route.name)
+  const home = ['overview', 'shelf'].includes(route.name),
+    workshop = ['workshop', 'plans', 'plan'].includes(route.name),
+    calendarView = ['calendar', 'day', 'event', 'event-new'].includes(route.name)
   useEffect(() => {
+    if (routeBook && routeBook !== settings.themeNotebook)
+      setSettings({ themeNotebook: routeBook })
+  }, [routeBook, settings.themeNotebook])
+  useEffect(() => {
+    applyTheme(activeBook?.color)
+    setEdgeColor(workshop ? '#2A2622' : '#001011')
+  }, [activeBook?.color, workshop])
+  useEffect(() => {
+    setMenu(false)
+    setColors(false)
     if (route.name === 'calendar' && route.month) showCalendarMonth(route.month)
     if (route.name === 'day') selectCalendarDate(route.iso)
-  }, [route.name, route.name === 'calendar' ? route.month : route.name === 'day' ? route.iso : ''])
+  }, [location.pathname])
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      const bottom = document.querySelector('.fn-mobile-navigation') ?? document.querySelector('.leaf')
-      if (bottom) setEdgeColor(surfaceColor(bottom))
-      else setEdgeColor(tokenColor('--frame-bg'))
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [route.name, location.pathname, desktop, keyboard])
-  const primary: { label: string; icon: React.ComponentProps<typeof Icon>['name']; href: string; active: boolean }[] = [
-    { label: 'Today', icon: 'overview', href: to.overview(), active: route.name === 'overview' || route.name === 'shelf' },
-    { label: 'Notebooks', icon: 'notebook', href: to.notebookHome(notebook), active: ['notebook', 'notebook-desk', 'page'].includes(route.name) },
-    { label: 'Workshop', icon: 'workshop', href: to.workshop(), active: ['workshop', 'plans', 'plan'].includes(route.name) },
+    const close = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenu(false)
+        setColors(false)
+      }
+    }
+    window.addEventListener('keydown', close)
+    return () => window.removeEventListener('keydown', close)
+  }, [])
+  const destinations = [
+    { label: 'Today', icon: 'overview' as const, href: to.overview(), active: home },
+    {
+      label: 'Notebooks',
+      icon: 'notebook' as const,
+      href: to.notebookHome(notebook),
+      active: notebookView,
+    },
+    {
+      label: 'Calendar',
+      icon: 'calendar' as const,
+      href: to.calendar(calendar.month),
+      active: calendarView,
+    },
+    { label: 'Workshop', icon: 'workshop' as const, href: to.workshop(), active: workshop },
+    {
+      label: 'From Siena',
+      icon: 'from-siena' as const,
+      href: to.fromSiena(),
+      active: route.name === 'from-siena',
+    },
   ]
-  const mobile = [...primary, { label: 'Calendar', icon: 'calendar' as const, href: to.calendar(calendar.month), active: ['calendar', 'day', 'event', 'event-new'].includes(route.name) }]
-  return <FrameContext.Provider value={desktop}><div className={`approved-application${desktop ? ' with-calendar-rail' : ''}${keyboard ? ' keyboard-open' : ''}`}>
-    <a className="fn-skip" href="#desk-heading" onClick={event => { event.preventDefault(); const heading = document.getElementById('desk-heading') ?? document.querySelector<HTMLElement>('main h1, .cm-content, main'); if (heading && !heading.hasAttribute('tabindex') && !heading.isContentEditable) heading.setAttribute('tabindex', '-1'); heading?.focus() }}>Skip to content</a>
-    {desktop && settings.rail ? <aside className="fn-rail rail" aria-label="Primary navigation">
-      <div className="fn-seal rail-wordmark"><RouteLink className="fn-seal-home" href={to.overview()} aria-label="Field Notes home"><img className="fn-rowan rail-mark" src="/approved-design/rowan.png" alt="" /><span className="fn-brand-text rail-name"><span>Field</span><span>Notes</span></span></RouteLink><button className="mark-button tight" aria-label="Hide the notebooks" title="Hide the notebooks" onClick={() => setSettings({ rail: false })}><Icon name="back" /></button></div>
-      <CalendarPanel />
-      {route.name !== 'overview' && route.name !== 'shelf' ? <WeatherLine /> : null}
-      <nav className="fn-rail-group">{primary.map(item => <RouteLink key={item.label} className={`fn-rail-button${item.active ? ' is-active' : ''}`} href={item.href} aria-label={item.label} title={item.label} aria-current={item.active ? 'page' : undefined}><Icon name={item.icon} /><span>{item.label}</span></RouteLink>)}</nav>
-      <section className="fn-sidebar-books" aria-label="Notebook shelf"><div className="fn-shelf-heading"><h2>Notebooks</h2><button aria-label="Manage notebooks" title="Manage notebooks" onClick={() => setManage(true)}><Icon name="manage-notebooks" /></button></div><div className="fn-book-spines">{[...books, journalBook()].map((book, index) => <RouteLink key={book.id} className="fn-book-spine" href={to.notebookHome(book.id)} onClick={() => { if (!isReserved(book.id)) setSettings({ notebook: book.id }) }} aria-label={`Open ${book.name} notebook`} title={book.name} style={{ backgroundColor: book.color, height: 128 - (index % 4) * 7 + (index % 4 === 2 ? 15 : 0) }}><span>{book.name}</span></RouteLink>)}<span className="fn-resting-book" aria-hidden="true" /></div></section>
-      <nav className="fn-rail-foot" aria-label="Tools"><RouteLink href={to.search()} aria-label="Search" title="Search"><Icon name="search" /></RouteLink><RouteLink href={to.trash()} aria-label="Trash" title="Trash"><Icon name="trash" /></RouteLink><RouteLink href={to.settings()} aria-label="Settings" title="Settings"><Icon name="settings" /></RouteLink></nav><SyncMark />
-    </aside> : null}
-    <div className="approved-content">{children}</div>
-    {desktop && !settings.rail && route.name !== 'page' && route.name !== 'notebook' ? <button className="approved-restore-rail" aria-label="Show the notebooks" title="Show the notebooks" onClick={() => setSettings({ rail: true })}><Icon name="menu" /></button> : null}
-    {!desktop && !keyboard ? <nav className="fn-mobile-navigation" aria-label="Primary navigation">{mobile.map(item => <RouteLink key={item.label} className={item.active ? 'is-active' : ''} href={item.href} aria-label={item.label} title={item.label} aria-current={item.active ? 'page' : undefined}><Icon name={item.icon} /><span>{item.label}</span></RouteLink>)}</nav> : null}
-    {manage ? <NotebookManager onClose={() => setManage(false)} onAdded={id => { if (!isReserved(id)) setSettings({ notebook: id }); navigate(to.notebook(id)) }} onDeleted={id => { if (id === notebook) { const next = books.find(book => book.id !== id)?.id ?? firstNotebookId(); setSettings({ notebook: next }); navigate(to.notebook(next), { replace: true }) } }} /> : null}
-  </div></FrameContext.Provider>
+  const add = () => {
+    if (calendarView)
+      navigate(to.newEvent(route.name === 'day' ? route.iso : calendar.selected))
+    else if (workshop) {
+      if (route.name === 'plan') navigate(to.workshop())
+      else document.querySelector<HTMLButtonElement>('button[aria-label="Add plan"]')?.click()
+    } else navigate(to.newPage(isReserved(themeBook) ? notebook : themeBook))
+  }
+  return (
+    <FrameContext.Provider value={true}>
+      <div
+        className={`approved-application redesign-application route-${route.name}${keyboard ? ' keyboard-open' : ''}${workshop ? ' workshop-room' : ''}`}
+      >
+        <a
+          className="fn-skip"
+          href="#desk-heading"
+          onClick={(e) => {
+            e.preventDefault()
+            const heading = document.querySelector<HTMLElement>(
+              '#desk-heading, main h1, .cm-content, main',
+            )
+            if (heading && !heading.isContentEditable) heading.tabIndex = -1
+            heading?.focus()
+          }}
+        >
+          Skip to content
+        </a>
+        {desktop && notebookView && settings.rail ? (
+          <aside className="board-sidebar" aria-label="Notebooks">
+            <span className="section-label">Notebook</span>
+            <h1>{notebookOf(routeBook ?? notebook)?.name ?? 'Notebooks'}</h1>
+            <p>{pages.filter((p) => p.notebook === (routeBook ?? notebook)).length} pages</p>
+            <nav>
+              {books.map((book) => (
+                <RouteLink
+                  key={book.id}
+                  href={to.notebookHome(book.id)}
+                  className={book.id === routeBook ? 'active' : ''}
+                >
+                  <i style={{ backgroundColor: coverColor(book.color) }} />
+                  <span>{book.name}</span>
+                  <small>{pages.filter((p) => p.notebook === book.id).length}</small>
+                </RouteLink>
+              ))}
+              <button onClick={() => setManage(true)}>
+                <Icon name="circle" />
+                Add a notebook
+              </button>
+            </nav>
+            <footer>
+              <RouteLink href={to.overview()} aria-label="Today" title="Today">
+                <Icon name="overview" />
+              </RouteLink>
+              <button aria-label="Colors" title="Colors" onClick={() => setColors(true)}>
+                <ColorsGlyph />
+              </button>
+              <RouteLink href={to.trash()} aria-label="Trash" title="Trash">
+                <Icon name="trash" />
+              </RouteLink>
+              <RouteLink href={to.settings()} aria-label="Settings" title="Settings">
+                <Icon name="settings" />
+              </RouteLink>
+            </footer>
+          </aside>
+        ) : null}
+        <div className="approved-content">{children}</div>
+        {home ? (
+          <div className="board-sync">
+            <SyncMark />
+          </div>
+        ) : null}
+        {!keyboard && !(desktop && notebookView) ? (
+          <nav className="floating-nav" aria-label="Primary navigation">
+            {home ? (
+              destinations.map((d) => (
+                <RouteLink
+                  key={d.label}
+                  className={`${d.active ? 'active ' : ''}pill-${d.label.toLowerCase().replace(' ', '-')}`}
+                  href={d.href}
+                  aria-label={d.label}
+                  title={d.label}
+                  aria-current={d.active ? 'page' : undefined}
+                >
+                  <Icon name={d.icon} />
+                  {d.active && desktop ? <span>{d.label}</span> : null}
+                </RouteLink>
+              ))
+            ) : (
+              <button onClick={() => back(to.overview())} aria-label="Back" title="Back">
+                <Icon name="back" />
+              </button>
+            )}
+            {!home && route.name === 'page' ? (
+              <button
+                aria-label="Page style"
+                title="Page style"
+                onClick={() =>
+                  document
+                    .querySelector<HTMLButtonElement>('button[aria-label="Style"]')
+                    ?.click()
+                }
+              >
+                Aa
+              </button>
+            ) : null}
+            {!home && !notebookView ? (
+              <RouteLink
+                href={to.calendar(calendar.month)}
+                aria-label="Calendar"
+                title="Calendar"
+              >
+                <Icon name="calendar" />
+              </RouteLink>
+            ) : null}
+            <button
+              className={menu ? 'active' : ''}
+              aria-label="Navigation and filters"
+              title="Navigation and filters"
+              aria-expanded={menu}
+              onClick={() => setMenu(!menu)}
+            >
+              <Icon name="filter" />
+            </button>
+            {route.name === 'event' ? (
+              <button
+                aria-label="Edit event"
+                title="Edit event"
+                onClick={() => window.dispatchEvent(new Event('field-notes:edit-event'))}
+              >
+                <Icon name="edit" />
+              </button>
+            ) : null}
+            {route.name === 'event' ? (
+              <button
+                aria-label="Delete event"
+                title="Delete event"
+                onClick={() => window.dispatchEvent(new Event('field-notes:delete-event'))}
+              >
+                <Icon name="trash" />
+              </button>
+            ) : (
+              <button
+                className="pill-add"
+                aria-label={calendarView ? 'Add event' : workshop ? 'New plan' : 'New page'}
+                title="Add"
+                onClick={add}
+              >
+                <Icon name="add" />
+              </button>
+            )}
+          </nav>
+        ) : null}
+        {menu ? (
+          <>
+            <button
+              className="nav-menu-scrim"
+              aria-label="Close navigation"
+              onClick={() => setMenu(false)}
+            />
+            <nav className="pill-menu" aria-label="All destinations">
+              {destinations.map((d) => (
+                <RouteLink key={d.label} href={d.href}>
+                  <Icon name={d.icon} />
+                  {d.label}
+                </RouteLink>
+              ))}
+              <button
+                onClick={() => {
+                  setMenu(false)
+                  setColors(true)
+                }}
+              >
+                <ColorsGlyph />
+                Colors
+              </button>
+              <button
+                onClick={() => {
+                  setMenu(false)
+                  setManage(true)
+                }}
+              >
+                <Icon name="manage-notebooks" />
+                Manage notebooks
+              </button>
+              <button
+                onClick={() => {
+                  setMenu(false)
+                  setAsking(true)
+                }}
+              >
+                <Icon name="from-siena" />
+                Ask Siena
+              </button>
+              <RouteLink href={to.search()}>
+                <Icon name="search" />
+                Search
+              </RouteLink>
+              <RouteLink href={to.trash()}>
+                <Icon name="trash" />
+                Trash
+              </RouteLink>
+              <RouteLink href={to.settings()}>
+                <Icon name="settings" />
+                Settings
+              </RouteLink>
+            </nav>
+          </>
+        ) : null}
+        {asking ? <AskSiena pages={pages} onClose={() => setAsking(false)} /> : null}
+        {colors ? (
+          <ColorTray
+            notebook={themeBook}
+            pageId={pageId || undefined}
+            onClose={() => setColors(false)}
+          />
+        ) : null}
+        {manage ? (
+          <NotebookManager
+            onClose={() => setManage(false)}
+            onAdded={(id) => {
+              setSettings({ notebook: id, themeNotebook: id })
+              navigate(to.notebook(id))
+            }}
+            onDeleted={(id) => {
+              if (id === notebook) {
+                const next = firstNotebookId()
+                setSettings({ notebook: next, themeNotebook: next })
+                navigate(to.notebook(next), { replace: true })
+              }
+            }}
+          />
+        ) : null}
+      </div>
+    </FrameContext.Provider>
+  )
 }

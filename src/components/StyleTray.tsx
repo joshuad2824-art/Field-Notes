@@ -345,7 +345,7 @@ export function StyleTray({
             onClick={onPen}
             title="Pen"
           >
-            {pen === 'felt' ? 'fine pen' : 'ink'}
+            {pen === 'felt' ? 'Grape Nuts' : 'Ink'}
           </button>
           <button className="tray-word mono" onMouseDown={hold} onClick={onStock} title="Stock">
             {stock}

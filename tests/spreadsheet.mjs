@@ -474,6 +474,9 @@ await desk(1440, 900, async (page) => {
     const out = []
     for (let n = 1; n <= view.state.doc.lines; n++) {
       const line = view.state.doc.line(n)
+      // Widget coordinates identify the table top; text coordinates include the
+      // new handwriting face's ascent. Compare actual text above and below it.
+      if (line.text.trim().startsWith('|')) continue
       const coords = view.coordsAtPos(line.from)
       if (!coords) continue
       out.push(Math.round(coords.top - view.lineBlockAt(line.from).top))

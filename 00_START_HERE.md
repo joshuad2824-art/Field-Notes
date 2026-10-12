@@ -1,9 +1,17 @@
 # Field Notes — Start Here
 
-Updated October 10, 2026 for the verified production-to-GitHub synchronization.
+Updated October 12, 2026 for the complete visual redesign.
 
 
-## October 10 refinement release — live
+## October 12 complete redesign — live
+
+- Production: Netlify `6acd5e4be27d392faed8cafa`, service worker v39. The supplied complete redesign supersedes earlier visual/kit boundaries below; older entries remain as release history.
+- Today, notebooks and editor, agenda/calendar, Workshop, From Siena, work desk, search, Settings, Trash, navigation, themes and empty states now follow the October 12 handoff.
+- All 23 current regression suites pass. The design checks cover 28 captures across all 27 references and five desktop/tablet/phone widths. Clean dependency installation and production build pass; hosted navigation, local save/reload, and runtime checks pass at four widths.
+- Background services, synced records, permissions, hosted MCP, recurrence, backups and editor highlighters are preserved. No real archive records were changed during testing.
+- Details: `docs/2026-10-12 - Complete Redesign.md`. Local evidence/recovery: `work/2026-10-12-redesign/`. Physical installed-phone behavior and real cross-device propagation remain unverified.
+
+## October 10 refinement release — historical
 
 - Current production: Netlify `6aca65a2c15d91b5423c0955`, service worker v38, built from GitHub main source `ac42e83`. Phase 1 is `e5c3241`; Phase 2 is `ac42e83`. Both phases and this release record are kept on main.
 - Readable notebook cards and metadata, labeled compact phone tabs, labeled desktop actions, simpler calendar marks, On my desk copy, compact event times, and overdue labels are live. The 320px notebook overflow is fixed.

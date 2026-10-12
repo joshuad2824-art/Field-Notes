@@ -49,7 +49,7 @@ async function run(name, options, initialPlace = null) {
   }
   try {
     await page.goto(`${base}/overview`)
-    await page.getByRole('heading', { name: 'At the desk.' }).waitFor()
+    await page.getByRole('heading', { name: 'Field Notes', exact:true }).waitFor()
     await settle()
     assert.equal(await calls(), 0, `${name}: launch must not request location`)
     for (let i = 0; i < 2; i++) {

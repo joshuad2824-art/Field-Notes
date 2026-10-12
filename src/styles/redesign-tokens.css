@@ -1,0 +1,93 @@
+/* Field Notes redesign — tokens to ADD to src/styles/tokens.css.
+   Everything not listed here is unchanged from the existing Timber & Ink tokens
+   (teal/cream/brass/amber/spruce/driftwood ramps, status colors, durations, easing). */
+
+@font-face {
+  font-family: 'Grape Nuts';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/grape-nuts-400-latin.woff2') format('woff2');
+  /* latin-ext file already ships at /fonts/grape-nuts-400-latin-ext.woff2 — keep the existing unicode-range split from public/fonts/fonts.css */
+}
+
+:root {
+  /* ── the room ───────────────────────────────────────────────────── */
+  --room: #001011; /* teal-950: app background behind tiles, notebook sidebar, desk behind the page */
+  --tile-ink: #142a2b; /* teal-800: day-sheet tile */
+  --tile-recess: #0c2223; /* teal-850: week strip, shelf, tray, dialogs, form wells (on --room) */
+  --tile-inset: #22393a; /* teal-700: weather inset inside the day-sheet tile */
+  --hairline-on-room: rgba(246, 243, 236, 0.06);
+  --hairline-tile: rgba(246, 243, 236, 0.08);
+
+  /* ── the theme (set at runtime from the palette; defaults = Timber teal) ── */
+  --th-wash: #1d4842;
+  --th-base: #14322e;
+  --th-deep: #0e2320;
+  --th-raised: #345a55;
+  --th-soft: #cbd1ca;
+
+  /* ── fixed tiles that never follow the theme ───────────────────── */
+  --tile-weather: #24332a; /* spruce-700 */
+  --tile-lit: #c6862f; /* amber-500 — the ONE lit tile (date) per view */
+  --tile-lit-ink: #001011;
+  --tile-coming-up: #082744; /* navy */
+  --tile-workshop: #3a342e; /* driftwood-700 */
+  --tile-paper: #f6f3ec; /* cream-100: From Siena note, briefs */
+  --workshop-room: #2a2622; /* driftwood-800: Workshop screen background */
+  --workshop-plan: #4e463d; /* driftwood-600: active plan tile */
+  --stjohn-cover: #1b2a5e; /* Midnight */
+
+  /* ── event bars ─────────────────────────────────────────────────── */
+  --cal-joshua: #c5ae67;
+  --cal-family: #81a569;
+  --cal-davis: #9cb1b2;
+
+  /* ── the page (night stock, default) ───────────────────────────── */
+  --leaf-night: #051b1c; /* teal-900 */
+  --leaf-night-ink: #e9e6df; /* cream-200 body */
+  --leaf-night-head: #f6f3ec; /* cream-100 titles + headers */
+  --leaf-night-quiet: #9cb1b2; /* teal-300 subtext */
+  --leaf-night-link: #ae9546; /* brass-500 */
+  --leaf-night-check: #c5ae67; /* brass-400 checkbox ring + fill */
+  --leaf-night-dot: rgba(246, 243, 236, 0.06);
+  /* paper stock */
+  --leaf-paper: #f6f3ec;
+  --leaf-paper-ink: #142a2b;
+  --leaf-paper-head: #051b1c;
+  --leaf-paper-quiet: #4e6b6c;
+  --leaf-paper-link: #7a6201; /* brass-700 */
+  --leaf-paper-dot: rgba(20, 42, 43, 0.1);
+
+  /* ── page type ──────────────────────────────────────────────────── */
+  --font-title: 'Oswald', sans-serif; /* page title: 600, uppercase, .03em */
+  --font-header: 'Playfair Display', serif; /* h2: 700 */
+  --font-pen: 'Grape Nuts', cursive; /* body + list items */
+  --font-sub: 'Courier Prime', monospace; /* links, dates, captions, counts, Saved, footers */
+  --font-ui: 'Archivo', sans-serif; /* chrome: buttons, card titles, event titles */
+  --font-sign: 'Oswald', sans-serif; /* section labels: 500, 11–13px, .18em, uppercase */
+
+  /* ── radii ──────────────────────────────────────────────────────── */
+  --r-tile: 24px; /* Mac + iPad tiles */
+  --r-tile-sm: 22px; /* iPhone tiles, leaf top corners */
+  --r-card: 18px; /* cards inside a themed panel */
+  --r-row: 16px; /* page-list cards, reminder rows, insets */
+  --r-well: 14px; /* inputs, rectangular buttons, day chips */
+  --r-sheet: 30px; /* iPhone sheet top corners */
+  --r-print: 6px; /* pictures on the page */
+  --r-pill: 999px;
+
+  /* ── shadows ────────────────────────────────────────────────────── */
+  --sh-card: 0 12px 26px rgba(0, 0, 0, 0.22);
+  --sh-pill: 0 14px 34px rgba(0, 0, 0, 0.6);
+  --sh-button: 0 10px 24px rgba(0, 0, 0, 0.28);
+  --sh-leaf: 0 18px 44px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(246, 243, 236, 0.08);
+  --sh-dialog:
+    0 2px 0 rgba(0, 0, 0, 0.5), 0 28px 64px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(246, 243, 236, 0.1);
+  --sh-print: 0 1px 0 rgba(0, 0, 0, 0.5), 0 12px 28px rgba(0, 0, 0, 0.48);
+  --sh-print-wide: 0 1px 0 rgba(0, 0, 0, 0.5), 0 14px 32px rgba(0, 0, 0, 0.5);
+  --ring-selected: 0 0 0 3px var(--tile-recess), 0 0 0 6px #f6f3ec; /* chosen swatch */
+  --ring-focus-field:
+    inset 0 0 0 1px rgba(198, 134, 47, 0.6), 0 0 0 3px rgba(198, 134, 47, 0.15);
+}

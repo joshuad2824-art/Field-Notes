@@ -1,3 +1,4 @@
+import { ColorTray, ColorsGlyph } from '../components/ColorTray'
 import { Icon } from '../components/Icon'
 import { useEffect, useRef, useState } from 'react'
 import { requestPersistence, storageEstimate } from '../lib/db'
@@ -42,6 +43,7 @@ function importLine(r: ImportReport): string {
 
 export function SettingsScreen() {
   const settings = useSettings()
+  const [colors, setColors] = useState(false)
   /* Every notebook here, the journal included: a backup that leaves out the
      one notebook nothing else can rebuild is not a backup. */
   const books = useAllNotebooks()
@@ -134,156 +136,228 @@ export function SettingsScreen() {
   }, [swVersion])
 
   return (
-    <div className="app">
+    <div className="app settings-app">
       <header className="chrome">
         <button className="btn glyph" onClick={() => back()} aria-label="Back">
           <Icon name="back" />
         </button>
-        <span className="chrome-title">Settings</span>
+        <h1 className="chrome-title">Settings</h1>
       </header>
 
       <div className="scroll">
-        <nav className="settings-index" aria-label="Settings sections"><a href="#settings-appearance">Appearance</a><a href="#settings-backup">Backup</a><a href="#settings-connections">Connections</a><a href="#settings-advanced">Advanced</a></nav>
-        <div className="panel-card settings-sections"><section id="settings-appearance" className="settings-card">
-          <h2>Pages</h2>
-          <p>
-            Default paper and pen for pages without their own appearance settings.
-          </p>
-          <div className="actions">
-            <button
-              className={`btn caps${settings.stock === 'night' ? ' on' : ''}`}
-              onClick={() =>
-                setSettings({ stock: settings.stock === 'night' ? 'paper' : 'night' })
-              }
-            >
-              Stock · {settings.stock}
-            </button>
-            <button
-              className={`btn caps${settings.pen === 'felt' ? ' on' : ''}`}
-              onClick={() => setSettings({ pen: settings.pen === 'felt' ? 'ink' : 'felt' })}
-            >
-              Pen · {settings.pen}
-            </button>
-          </div>
-          <div className="specimen" data-stock={settings.stock} data-pen={settings.pen}>
-            <div className="specimen-leaf">
-              <span className="specimen-text">The first morning</span>
-            </div>
-          </div>
-
-          <details className="settings-journal"><summary>Journal</summary><JournalPanel /></details>
-          </section><section id="settings-backup" className="settings-card">
-          <h2>Backup</h2>
-          <p>
-            Download a copy of your pages, images, events, and saved Siena items.
-          </p>
-          <div className="actions">
-            <button className="btn caps" onClick={() => void exportShelf()} aria-label="Whole shelf" title="Whole shelf"><Icon name="download" /></button>
-            {books.map((book) => (
+        <nav className="settings-index" aria-label="Settings sections">
+          <a href="#settings-sync">
+            <Icon name="refresh" />
+            Sync
+          </a>
+          <a href="#settings-weather">
+            <Icon name="circle" />
+            Weather
+          </a>
+          <a href="#settings-appearance">
+            <Icon name="edit" />
+            New pages
+          </a>
+          <a href="#settings-colors">
+            <ColorsGlyph />
+            Colors
+          </a>
+          <a href="#settings-calendar">
+            <Icon name="calendar" />
+            Calendar
+          </a>
+          <a href="#settings-siena">
+            <Icon name="from-siena" />
+            Siena
+          </a>
+          <a href="#settings-backup">
+            <Icon name="download" />
+            Backup
+          </a>
+        </nav>
+        <div className="panel-card settings-sections">
+          <section id="settings-sync" className="settings-card">
+            <SyncPanel />
+          </section>
+          <section id="settings-weather" className="settings-card">
+            <WeatherPanel />
+          </section>
+          <section id="settings-appearance" className="settings-card">
+            <h2>New pages</h2>
+            <p>Default paper and pen for pages without their own appearance settings.</p>
+            <div className="actions">
               <button
-                key={book.id}
-                className="btn caps"
-                onClick={() => void exportNotebook(book.id as NotebookId)}
-              >
-                {book.name}
-              </button>
-            ))}
-          </div>
-
-          <h2>Import</h2>
-          <p>
-            Restore an exported archive or bring in Markdown files. Restoring an archive twice keeps one copy of each page.
-          </p>
-          <div className="actions">
-            <button
-              className="btn caps"
-              disabled={importing}
-              aria-label={importing ? 'Reading' : 'Choose files'} title="Import files"
-              onClick={() => filesRef.current?.click()}
-            >
-              <Icon name="upload" />
-            </button>
-            <input
-              ref={filesRef}
-              type="file"
-              multiple
-              accept=".md,.markdown,.txt,.zip,text/markdown,application/zip"
-              style={{ display: 'none' }}
-              aria-label="Import files"
-              onChange={async (e) => {
-                const picked = Array.from(e.currentTarget.files ?? [])
-                e.currentTarget.value = ''
-                if (!picked.length) return
-                setImporting(true)
-                try {
-                  setImported(importLine(await importFiles(picked)))
-                } catch {
-                  setImported('could not read that')
-                } finally {
-                  setImporting(false)
+                className={`btn caps${settings.stock === 'night' ? ' on' : ''}`}
+                onClick={() =>
+                  setSettings({ stock: settings.stock === 'night' ? 'paper' : 'night' })
                 }
-              }}
-            />
-          </div>
-          {imported ? (
-            <p className="meta" style={{ marginTop: 16 }} data-import-report>
-              {imported}
+              >
+                Stock · {settings.stock}
+              </button>
+              <button
+                className={`btn caps${settings.pen === 'felt' ? ' on' : ''}`}
+                onClick={() => setSettings({ pen: settings.pen === 'felt' ? 'ink' : 'felt' })}
+              >
+                Pen · {settings.pen === 'felt' ? 'Grape Nuts' : 'Ink'}
+              </button>
+            </div>
+            <p className="theme-follow">Theme · Follow the last notebook</p>
+            <div className="specimen" data-stock={settings.stock} data-pen={settings.pen}>
+              <div className="specimen-leaf">
+                <span className="specimen-text">The first morning</span>
+              </div>
+            </div>
+
+            <details className="settings-journal">
+              <summary>Journal</summary>
+              <JournalPanel />
+            </details>
+          </section>
+          <section id="settings-backup" className="settings-card">
+            <h2>Backup</h2>
+            <p>Download a copy of your pages, images, events, and saved Siena items.</p>
+            <div className="actions">
+              <button
+                className="btn caps"
+                onClick={() => void exportShelf()}
+                aria-label="Whole shelf"
+                title="Whole shelf"
+              >
+                <Icon name="download" /> Export everything
+              </button>
+              {books.map((book) => (
+                <button
+                  key={book.id}
+                  className="btn caps"
+                  onClick={() => void exportNotebook(book.id as NotebookId)}
+                >
+                  {book.name}
+                </button>
+              ))}
+            </div>
+
+            <h2>Import</h2>
+            <p>
+              Restore an exported archive or bring in Markdown files. Restoring an archive twice
+              keeps one copy of each page.
             </p>
-          ) : null}
+            <div className="actions">
+              <button
+                className="btn caps"
+                disabled={importing}
+                aria-label={importing ? 'Reading' : 'Choose files'}
+                title="Import files"
+                onClick={() => filesRef.current?.click()}
+              >
+                <Icon name="upload" /> Import files
+              </button>
+              <input
+                ref={filesRef}
+                type="file"
+                multiple
+                accept=".md,.markdown,.txt,.zip,text/markdown,application/zip"
+                style={{ display: 'none' }}
+                aria-label="Import files"
+                onChange={async (e) => {
+                  const picked = Array.from(e.currentTarget.files ?? [])
+                  e.currentTarget.value = ''
+                  if (!picked.length) return
+                  setImporting(true)
+                  try {
+                    setImported(importLine(await importFiles(picked)))
+                  } catch {
+                    setImported('could not read that')
+                  } finally {
+                    setImporting(false)
+                  }
+                }}
+              />
+            </div>
+            {imported ? (
+              <p className="meta" style={{ marginTop: 16 }} data-import-report>
+                {imported}
+              </p>
+            ) : null}
+          </section>
+          <section id="settings-colors" className="settings-card">
+            <h2>Colors</h2>
+            <p>The cover of the last notebook you opened follows you through Field Notes.</p>
+            <button className="cream-button" onClick={() => setColors(true)}>
+              <ColorsGlyph />
+              Choose a cover
+            </button>
+          </section>
+          <section id="settings-calendar" className="settings-card">
+            <DavisAgenda />
+          </section>
+          <section id="settings-siena" className="settings-card">
+            <SienaConnectPanel />
+          </section>
+          <details id="settings-advanced" className="settings-card settings-advanced">
+            <summary>Advanced</summary>
+            <h2>Storage</h2>
+            <p>
+              Pages live on this device in IndexedDB, and that is the primary store rather than
+              a cache — the editor writes there and returns, and never waits on anything else.
+              Deleted pages linger for thirty days before they go.
+            </p>
+            <div className="actions">
+              <button
+                className="btn caps"
+                onClick={() => navigate(to.trash())}
+                aria-label="Deleted pages"
+                title="Deleted pages"
+              >
+                <Icon name="trash" />
+              </button>
+              <button
+                className="btn caps"
+                onClick={async () => setPersisted(await requestPersistence())}
+                aria-label="Keep on device"
+                title="Keep on device"
+              >
+                <Icon name="save" />
+              </button>
+            </div>
+            <p className="meta" style={{ marginTop: 16 }}>
+              {persisted === null ? 'checking' : persisted ? 'persistent' : 'best effort'} ·{' '}
+              {usage} used
+            </p>
 
-          </section><section id="settings-connections" className="settings-card settings-connections"><h2>Connections</h2>
-          <div className="connection-grid"><div><SyncPanel /></div>
+            <h2>Screen</h2>
+            <p className="meta" style={{ overflowWrap: 'anywhere' }}>
+              App address:{' '}
+              <span style={{ textTransform: 'none' }}>{window.location.origin}</span>
+            </p>
+            <p>
+              These measurements help compare the app’s window with the screen. A difference can
+              come from the status bar, browser controls, keyboard, or installed-app behavior.
+              The numbers alone do not show where a visible gap comes from; compare them with
+              what is on the screen.
+            </p>
+            <p className="meta mono-block">
+              {screen.map((line) => (
+                <span key={line} style={{ display: 'block' }}>
+                  {line}
+                </span>
+              ))}
+            </p>
 
-          <div><SienaConnectPanel /></div>
-
-          <div><WeatherPanel /></div>
-          <div><DavisAgenda /></div></div>
-
-          </section><details id="settings-advanced" className="settings-card settings-advanced"><summary>Advanced</summary>
-          <h2>Storage</h2>
-          <p>
-            Pages live on this device in IndexedDB, and that is the primary store rather than a
-            cache — the editor writes there and returns, and never waits on anything else.
-            Deleted pages linger for thirty days before they go.
-          </p>
-          <div className="actions">
-            <button className="btn caps" onClick={() => navigate(to.trash())} aria-label="Deleted pages" title="Deleted pages"><Icon name="trash" /></button>
-            <button
-              className="btn caps"
-              onClick={async () => setPersisted(await requestPersistence())}
-             aria-label="Keep on device" title="Keep on device"><Icon name="save" /></button>
-          </div>
-          <p className="meta" style={{ marginTop: 16 }}>
-            {persisted === null ? 'checking' : persisted ? 'persistent' : 'best effort'} ·{' '}
-            {usage} used
-          </p>
-
-          <h2>Screen</h2>
-          <p className="meta" style={{ overflowWrap: 'anywhere' }}>
-            App address: <span style={{ textTransform: 'none' }}>{window.location.origin}</span>
-          </p>
-          <p>
-            These measurements help compare the app’s window with the screen. A difference
-            can come from the status bar, browser controls, keyboard, or installed-app behavior.
-            The numbers alone do not show where a visible gap comes from; compare them with
-            what is on the screen.
-          </p>
-          <p className="meta mono-block">
-            {screen.map((line) => (
-              <span key={line} style={{ display: 'block' }}>
-                {line}
-              </span>
-            ))}
-          </p>
-
-          <h2>Phase</h2>
-          <p>
-            Phase 2 — sync and device pairing. The mirror is a mirror, not the source of truth:
-            the archive that matters is the one on this device and the folder of markdown an
-            export puts on disk.
-          </p>
-        </details></div>
+            <h2>Phase</h2>
+            <p>
+              Phase 2 — sync and device pairing. The mirror is a mirror, not the source of
+              truth: the archive that matters is the one on this device and the folder of
+              markdown an export puts on disk.
+            </p>
+          </details>
+        </div>
       </div>
+      {colors ? (
+        <ColorTray
+          notebook={settings.themeNotebook || settings.notebook}
+          onClose={() => setColors(false)}
+        />
+      ) : null}
     </div>
   )
 }

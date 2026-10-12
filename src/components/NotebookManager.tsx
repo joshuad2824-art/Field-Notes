@@ -1,7 +1,8 @@
 import { Icon } from './Icon'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { notebookCounts } from '../lib/db'
 import { countLabel } from '../lib/format'
+import { colorName, coverColor } from '../lib/theme'
 import { COVER_COLORS } from '../lib/model'
 import { addNotebook, deleteNotebook, recolorNotebook, useNotebooks } from '../lib/notebooks'
 import { useLive } from '../lib/useLive'
@@ -14,6 +15,7 @@ interface Props {
 
 export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
   const books = useNotebooks()
+  useEffect(() => { const close = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close) }, [onClose])
   const counts = useLive<Record<string, number>>(notebookCounts, [], {})
   const [confirm, setConfirm] = useState<string | null>(null)
   const [recoloring, setRecoloring] = useState<string | null>(null)
@@ -55,13 +57,13 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
                     do. */}
                 <button
                   className="book-dot big"
-                  style={{ background: book.color }}
+                  style={{ background: coverColor(book.color) }}
                   onClick={() => setRecoloring(recoloring === book.id ? null : book.id)}
                   aria-label={`Recolour ${book.name}`}
                   title="Recolour"
                 />
                 <span className="manager-name">{book.name}</span>
-                <span className="manager-count">{counts[book.id] ?? 0}</span>
+                <span className="manager-count">{counts[book.id] ?? 0} pages</span>
                 <button
                   className="mark-button danger"
                   onClick={() => setConfirm(book.id)}
@@ -83,7 +85,7 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
                         await recolorNotebook(book.id, option)
                         setRecoloring(null)
                       }}
-                      aria-label={option}
+                      aria-label={colorName(option)}
                     />
                   ))}
                 </div>
@@ -119,13 +121,13 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
         <div className="manager-rule" />
 
         <div className="manager-add">
-          <div className="section-label">New notebook</div>
+          <div className="section-label">Add one</div>
           <input
             className="well"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && void add()}
-            placeholder="What should I call it?"
+            placeholder="What should I call it?" autoFocus
             aria-label="Notebook name"
           />
           <div className="swatch-row">
@@ -135,11 +137,11 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
                 className={`cover-swatch${option === color ? ' on' : ''}`}
                 style={{ background: option }}
                 onClick={() => setColor(option)}
-                aria-label={option}
+                aria-label={colorName(option)}
               />
             ))}
             <span className="grow" />
-            <button className="plate-button tight" disabled={!candidate || !!alreadyNamed} onClick={add} aria-label="Add notebook" title="Add notebook"><Icon name="add" /></button>
+            <button className="plate-button tight" disabled={!candidate || !!alreadyNamed} onClick={add} aria-label="Add notebook" title="Add notebook">Add notebook</button>
           </div>
           <p className="manager-note" role={alreadyNamed ? 'status' : undefined}>
             {alreadyNamed

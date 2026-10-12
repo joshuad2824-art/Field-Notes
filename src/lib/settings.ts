@@ -16,6 +16,7 @@ export interface Settings {
   rail: boolean
   list: boolean
   /* The notebook the app opens into. */
+  themeNotebook: string
   notebook: string
   /* How large the writing is drawn. Two jobs since August 2026: stepping a
      page up for a room, and — through its first-run default below — the
@@ -34,10 +35,11 @@ export const ZOOMS = [1, 1.25, 1.5, 1.75, 2] as const
 const KEY = 'field-notes.settings'
 const DEFAULTED_KEY = 'field-notes.zoom-defaulted'
 const FALLBACK: Settings = {
-  pen: 'ink',
-  stock: 'paper',
+  pen: 'felt',
+  stock: 'night',
   rail: true,
   list: true,
+  themeNotebook: '',
   notebook: 'field-notes',
   zoom: 1,
 }
@@ -71,10 +73,11 @@ function read(): Settings {
     /* The two columns were one flag until they learned to fold separately. */
     const both = parsed.sidebar !== false
     const settings: Settings = {
-      pen: parsed.pen === 'felt' ? 'felt' : 'ink',
-      stock: parsed.stock === 'night' ? 'night' : 'paper',
+      pen: parsed.pen === 'ink' ? 'ink' : 'felt',
+      stock: parsed.stock === 'paper' ? 'paper' : 'night',
       rail: parsed.rail ?? both,
       list: parsed.list ?? both,
+      themeNotebook: typeof parsed.themeNotebook === 'string' ? parsed.themeNotebook : '',
       notebook: typeof parsed.notebook === 'string' ? parsed.notebook : FALLBACK.notebook,
       zoom: ZOOMS.includes(parsed.zoom as (typeof ZOOMS)[number]) ? (parsed.zoom as number) : 1,
     }
@@ -83,7 +86,7 @@ function read(): Settings {
        started at — so it takes the device default, and the marker is what
        makes a later, deliberate return to 1 stick. */
     if (!localStorage.getItem(DEFAULTED_KEY)) {
-      if (settings.zoom === 1) settings.zoom = deviceZoom()
+      if (raw && settings.zoom === 1) settings.zoom = deviceZoom()
       localStorage.setItem(DEFAULTED_KEY, '1')
     }
     return settings

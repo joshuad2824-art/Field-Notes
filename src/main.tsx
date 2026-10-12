@@ -57,3 +57,6 @@ import './styles/app-design.css'
 import './styles/notebook-desk.css'
 
 import './styles/kit.css'
+
+import './styles/redesign-tokens.css'
+import './styles/redesign.css'

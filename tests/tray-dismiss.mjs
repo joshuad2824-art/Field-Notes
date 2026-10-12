@@ -72,7 +72,7 @@ async function run(name, options) {
     // its range, proven by applying a mark to exactly the selected words.
     const before = await page.evaluate(() => window.getSelection().toString())
     assert.equal(before, selected)
-    await activate(page.locator('.saved'))
+    await activate(page.locator('.saved:visible, .phone-page-heading small:visible').first())
     await assertClosed()
     await saved('**Alpha beta**\nSecond line\nThird line')
     await activate(toggle)
