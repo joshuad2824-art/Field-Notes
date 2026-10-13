@@ -1646,6 +1646,9 @@ body,
 .month-event.family {
   border-color: #81a569;
 }
+.month-event.apple {
+  border-color: #c98f98;
+}
 .month-event strong {
   font: 500 13px/1.3 var(--font-ui);
   overflow: hidden;
@@ -3676,6 +3679,9 @@ body,
 }
 .redesign-application .event-row-family {
   border-color: #81a569;
+}
+.redesign-application .event-row-apple {
+  border-color: #c98f98;
 }
 .redesign-application .event-source-tag {
   font: 500 10px var(--font-ui);

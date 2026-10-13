@@ -5,6 +5,7 @@ import { useLive } from '../lib/useLive'
 import { eventsOnDay } from '../lib/events'
 import { allSienaItems } from '../lib/siena-items'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
+import { useAppleCalendar } from '../apple/calendar'
 import { eventOnDay } from '../lib/event-range'
 import { EventRow } from './EventRow'
 import { SienaItemCard } from './SienaItemCard'
@@ -17,6 +18,7 @@ export function PageDaySheet({ id }: { id: string }) {
     iso = page ? dayOf(page) : isoDay(),
     local = useLive(() => eventsOnDay(iso), [iso], []),
     family = useFamilyAgenda(),
+    apple = useAppleCalendar(iso, iso),
     items = useLive(allSienaItems, [], []),
     pages = useLive(() => pagesOnDay(iso), [iso], []),
     date = new Date(iso + 'T12:00:00')
@@ -28,7 +30,7 @@ export function PageDaySheet({ id }: { id: string }) {
       </p>
       <h2>Schedule</h2>
       <section>
-        {mergeCalendarEvents(local, family, iso, iso)
+        {mergeCalendarEvents(local, family, iso, iso, apple)
           .filter((e) => eventOnDay(e, iso))
           .map((e) => (
             <EventRow key={e.id} event={e} />

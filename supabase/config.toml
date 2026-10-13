@@ -1,3 +1,8 @@
 [functions.field-notes-mcp]
 # The function itself validates OAuth tokens. Discovery must answer anonymous requests.
 verify_jwt = false
+
+[functions.apple-calendar]
+# The sync mirror has no JWT sessions by design. The function checks the vault key itself,
+# against the mirror, before it reads anything.
+verify_jwt = false

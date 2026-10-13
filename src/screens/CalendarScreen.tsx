@@ -1,5 +1,6 @@
 import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
+import { useAppleCalendar } from '../apple/calendar'
 import { eventOnDay } from '../lib/event-range'
 import { MonthGrid } from '../components/MonthGrid'
 import { EventRow } from '../components/EventRow'
@@ -17,12 +18,14 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
   const { month: shown, selected } = useCalendarView()
   const pages = useLive(() => pagesInMonth(shown), [shown], []),
     localEvents = useLive(() => eventsInMonth(shown), [shown], []),
-    family = useFamilyAgenda()
+    family = useFamilyAgenda(),
+    apple = useAppleCalendar(`${shown}-01`, monthOf(shown)[41].iso)
   const events = mergeCalendarEvents(
       localEvents,
       family,
       `${shown}-01`,
       monthOf(shown)[41].iso,
+      apple,
     ),
     parts = monthParts(shown),
     days = monthOf(shown)
@@ -106,11 +109,13 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
                   {daily.slice(0, 2).map((e) => (
                     <button
                       key={e.id}
-                      className={`month-event ${e.calendarTarget === 'Family' ? 'family' : ''}`}
+                      className={`month-event ${e.calendarTarget === 'Family' ? 'family' : ''}${e.externalSource === 'apple' ? ' apple' : ''}`}
                       onClick={() =>
                         e.externalSource === 'davis'
                           ? window.open(DAVIS_SOURCE_URL, '_blank', 'noopener,noreferrer')
-                          : navigate(to.event(e.seriesId ?? e.id, e.occurrenceDate))
+                          : e.externalSource === 'apple'
+                            ? navigate(to.day(day.iso))
+                            : navigate(to.event(e.seriesId ?? e.id, e.occurrenceDate))
                       }
                     >
                       <strong>{e.title}</strong>

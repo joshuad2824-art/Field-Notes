@@ -13,6 +13,7 @@ import { JournalPanel } from '../components/JournalPanel'
 import { SyncPanel } from '../components/SyncPanel'
 import { SienaConnectPanel } from '../components/SienaConnectPanel'
 import { DavisAgenda } from '../components/DavisAgenda'
+import { AppleCalendar } from '../components/AppleCalendar'
 import { WeatherPanel } from '../components/WeatherPanel'
 
 /* What an inset actually comes out as. A custom property reports the text it
@@ -278,6 +279,9 @@ export function SettingsScreen() {
             </button>
           </section>
           <section id="settings-calendar" className="settings-card">
+            <AppleCalendar />
+          </section>
+          <section id="settings-family-calendar" className="settings-card">
             <DavisAgenda />
           </section>
           <section id="settings-siena" className="settings-card">

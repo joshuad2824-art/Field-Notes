@@ -395,6 +395,7 @@
 .fn-workshop-sheet .fn-stock-row { padding: 5px 0; }
 .desk-agenda-row { display: block; }
 .event-row-davis { border-left: 3px solid #8eaeb0; background: rgba(142,174,176,.09); text-decoration: none; color: inherit; }
+.event-row-apple { border-left: 3px solid #c98f98; background: rgba(201,143,152,.09); color: inherit; cursor: default; }
 .event-source-tag { display: block; color: #bdd3d4; font-size: .7rem; letter-spacing: .04em; }
 .calendar-source-status { font-size: .85rem; }
 .plan-tools { flex-wrap: wrap; }
@@ -408,3 +409,5 @@
 .fn-open-reminder .event-source-tag { color: #456468; }
 .overview-events .event-row-davis { border-left: 3px solid #66868a; background: #e1e9e5; }
 .overview-events .event-source-tag { color: #355a60; }
+.overview-events .event-row-apple { border-left: 3px solid #9a5560; background: #f0e4e2; }
+.overview-events .event-row-apple .event-source-tag { color: #6d3a44; }

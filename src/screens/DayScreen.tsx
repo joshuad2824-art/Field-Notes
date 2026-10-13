@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { eventOnDay } from '../lib/event-range'
 import { shiftDate } from '../lib/event-recurrence'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
+import { useAppleCalendar } from '../apple/calendar'
 import { livePages } from '../lib/db'
 import { isoDay, readableDay } from '../lib/format'
 import { dayOf } from '../lib/calendar'
@@ -25,9 +26,10 @@ export function DayScreen({ iso }: { iso: string; notebook: string }) {
   const pages = useLive(livePages, [], []),
     localEvents = useLive(liveEvents, [], []),
     items = useLive(allSienaItems, [], []),
-    family = useFamilyAgenda()
+    family = useFamilyAgenda(),
+    apple = useAppleCalendar(iso, shiftDate(iso, count - 1))
   const days = Array.from({ length: count }, (_, i) => shiftDate(iso, i)),
-    events = mergeCalendarEvents(localEvents, family, iso, days[days.length - 1])
+    events = mergeCalendarEvents(localEvents, family, iso, days[days.length - 1], apple)
   const reminders = (date: string) =>
     items.filter(
       (i) => i.type === 'reminder' && !i.completedAt && i.dueAt && isoDay(i.dueAt) === date,

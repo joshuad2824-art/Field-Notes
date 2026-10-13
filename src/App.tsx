@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { useFamilyRefresh } from './davis/calendar'
+import { useAppleRefresh } from './apple/calendar'
 import { useRoute, navigate, to, type Route } from './lib/router'
 import { ApprovedFrame } from './components/ApprovedFrame'
 import { DeskScreen } from './screens/DeskScreen'
@@ -31,6 +32,7 @@ const KitScreen = import.meta.env.DEV ? lazy(() => import('./screens/KitScreen')
 
 export function App() {
   useFamilyRefresh()
+  useAppleRefresh()
   const route = useRoute()
   const settings = useSettings()
   const books = useNotebooks()

@@ -8,6 +8,7 @@ import { eventOnDay } from '../lib/event-range'
 import { EventRow } from '../components/EventRow'
 import { SienaItemCard } from '../components/SienaItemCard'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
+import { useAppleCalendar } from '../apple/calendar'
 import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { RouteLink } from '../components/DeskHeader'
 import { BoardWeather } from '../components/BoardWeather'
@@ -40,6 +41,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
   const pages = useLive(livePages, [], []),
     localEvents = useLive(liveEvents, [], []),
     family = useFamilyAgenda(),
+    apple = useAppleCalendar(`${today.slice(0, 7)}-01`, shiftDate(`${today.slice(0, 7)}-28`, 20)),
     items = useLive(allSienaItems, [], []),
     books = useAllNotebooks()
   const month = today.slice(0, 7),
@@ -50,6 +52,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
       family,
       `${month}-01`,
       shiftDate(`${month}-28`, 20),
+      apple,
     ),
     events = allEvents.filter((e) => eventOnDay(e, today)),
     siena = sienaSections(items),
@@ -177,7 +180,13 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
             </button>
           </section>
           {next ? (
-            next.event.externalSource === 'davis' ? (
+            next.event.externalSource === 'apple' ? (
+              <div className="board-tile board-date board-countdown">
+                <strong>{countdownLabel(next.at - now)}</strong>
+                <span>until</span>
+                <em>{next.event.title}</em>
+              </div>
+            ) : next.event.externalSource === 'davis' ? (
               <a
                 className="board-tile board-date board-countdown"
                 href={DAVIS_SOURCE_URL}
