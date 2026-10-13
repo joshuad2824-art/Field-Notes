@@ -85,6 +85,12 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
     ? scheduleDays(workEvents(workState, today, lastDay), today, SCHEDULE_DAYS)
     : []
   const scheduleNote = scheduleNotes[workState.status]
+  /* Today and the next day with anything on it stay open; the rest of the
+     fortnight waits behind one control so the card keeps the desk's measure. */
+  const [wholeSchedule, setWholeSchedule] = useState(false)
+  const shownDays = wholeSchedule ? schedule : schedule.slice(0, 2)
+  const laterDays = schedule.slice(2)
+  const laterCount = laterDays.reduce((sum, day) => sum + day.events.length, 0)
   const selected =
     filter === 'all' ? sections.active : filter === 'due' ? sections.due : sections.upcoming
   const featured = sections.briefs[0]
@@ -155,7 +161,7 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                         </p>
                       ) : null}
                       {workState.snapshot
-                        ? schedule.map((day, index) => (
+                        ? shownDays.map((day, index) => (
                             <div className="work-schedule-day" key={day.iso}>
                               <h3>
                                 {index === 0 ? 'Today · ' : ''}
@@ -194,6 +200,18 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                             </div>
                           ))
                         : null}
+                      {workState.snapshot && laterDays.length ? (
+                        <button
+                          className="work-show-more"
+                          aria-expanded={wholeSchedule}
+                          onClick={() => setWholeSchedule((open) => !open)}
+                        >
+                          {wholeSchedule
+                            ? 'Show less'
+                            : `${laterDays.length} more ${laterDays.length === 1 ? 'day' : 'days'} · ${laterCount} ${laterCount === 1 ? 'event' : 'events'}`}{' '}
+                          <Icon name="forward" />
+                        </button>
+                      ) : null}
                     </section>
                   ) : null}
                   <section
