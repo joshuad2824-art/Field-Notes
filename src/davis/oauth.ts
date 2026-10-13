@@ -49,7 +49,7 @@ export function validateTokens(value: unknown, clientId: string, now: number): T
   return { access: t.access_token, ...(typeof t.refresh_token === 'string' ? { refresh: t.refresh_token } : {}), expires: Math.min(now + t.expires_in * 1000, claims.exp * 1000), accountId: claims.sub }
 }
 export function createDavisSession(config: Config, dependencies: Partial<Dependencies> = {}) {
-  const deps: Dependencies = { fetcher: fetch, storage: sessionStorage, now: Date.now, crypto: globalThis.crypto, ...dependencies }
+  const deps: Dependencies = { fetcher: (...args) => fetch(...args), storage: sessionStorage, now: Date.now, crypto: globalThis.crypto, ...dependencies }
   let tokens: Tokens | undefined
   let metadata: Discovery | undefined
   let refresh: Promise<void> | undefined
