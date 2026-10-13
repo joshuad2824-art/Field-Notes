@@ -1,5 +1,6 @@
 import { forwardRef } from 'react'
-import { navigate, to } from '../lib/router'
+import { navigate } from '../lib/router'
+import { NotebookSwitcher } from './NotebookSwitcher'
 
 export const RouteLink = forwardRef<HTMLAnchorElement, React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }>(function RouteLink({ href, children, onClick, ...props }, ref) {
   return <a {...props} ref={ref} href={href} onClick={event => {
@@ -10,15 +11,14 @@ export const RouteLink = forwardRef<HTMLAnchorElement, React.AnchorHTMLAttribute
   }}>{children}</a>
 })
 
-/* The notebook's name is its door: it opens the page list. Search, a new
-   page, Ask Siena and Settings are one tap away in the pill and its menu. */
+/* The notebook's name is the switcher here as on every notebook, so a desk
+   is never a room you cannot leave for another notebook. Its own page list
+   is the "From your notebook" heading. */
 export function DeskHeader({ title, notebook }: { title: string; notebook: string }) {
   return (
     <header className="redesign-desk-header">
       <h1 id="desk-heading" tabIndex={-1}>
-        <RouteLink href={to.notebook(notebook)} title="Notebook pages" aria-label={`${title} — notebook pages`}>
-          {title}
-        </RouteLink>
+        <NotebookSwitcher notebook={notebook}>{title}</NotebookSwitcher>
       </h1>
     </header>
   )

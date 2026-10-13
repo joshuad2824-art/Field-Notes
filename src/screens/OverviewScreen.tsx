@@ -99,7 +99,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
           </div>
         </header>
         <div className="today-board">
-          <section className="board-tile board-day">
+          <section className={`board-tile board-day${!events.length && !upcoming.length ? ' is-quiet' : ''}`}>
             <RouteLink className="day-spine" href={to.calendar(month)}>
               <span>
                 {date.toLocaleDateString([], { weekday: 'long' })} <b>{date.getDate()}</b>{' '}

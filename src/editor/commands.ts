@@ -1,5 +1,6 @@
 import type { ChangeSpec, EditorState } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
+import { isolateHistory } from '@codemirror/commands'
 import { linksIn } from './links'
 import {
   INDENT_UNIT,
@@ -751,9 +752,13 @@ export function applyCaps(view: EditorView): boolean {
     return false
   }
 
+  /* Its own step in the history: undo takes back the shout, not the
+     shout together with whatever was typed just before it. */
   view.dispatch({
     changes: { from: range.from, to: range.to, insert: next },
     selection: expanded ? { anchor: range.to } : { anchor: range.from, head: range.to },
+    userEvent: 'input.caps',
+    annotations: isolateHistory.of('full'),
   })
   view.focus()
   return true

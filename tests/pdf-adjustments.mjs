@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { openAppMenu, raiseRooms } from './pill.mjs'
 import { execSync } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 const { chromium } = await import(
@@ -31,13 +32,13 @@ try {
     await p.getByRole('button', { name: 'Quick note', exact: true }).click()
     const area = p.getByRole('textbox', { name: 'Quick note', exact: true })
     await area.fill('Keep this thought\nUntil I file it.')
-    await p.getByRole('button', { name: 'Close quick note' }).click()
+    await p.getByRole('button', { name: 'Done', exact: true }).click()
     await p.reload()
     await p.getByRole('button', { name: 'Quick note', exact: true }).click()
     await assert.equal(await area.inputValue(), 'Keep this thought\nUntil I file it.')
     // October 13: the notebook picker is a row of dots; the filing path is the same.
     await p.getByRole('radio', { name: 'Church', exact: true }).click()
-    await p.getByRole('button', { name: 'Close quick note' }).click()
+    await p.getByRole('button', { name: 'Done', exact: true }).click()
     await p.waitForFunction(async () =>
       (await (await import('/src/lib/db.ts')).livePages('church')).some(
         (p) => p.body === 'Keep this thought\nUntil I file it.',
@@ -51,7 +52,8 @@ try {
        + offers page · event · quick note; the month's name switches to the day
        agenda and the day's heading back to its month; Colors is in the app
        menu now that the calendar's own tools have retired. */
-    assert.equal(await p.locator('.floating-nav [aria-label=Calendar]').count(), 1)
+    assert.equal(await (await raiseRooms(p)).locator('[aria-label=Calendar]').count(), 1)
+    await p.keyboard.press('Escape')
     await p.locator('.floating-nav').getByRole('button', { name: 'Add', exact: true }).click()
     await p.getByRole('menuitem', { name: 'New event', exact: true }).click()
     await p.waitForURL(/\/event\/new/)
@@ -64,7 +66,7 @@ try {
       await p.locator('.agenda-date button').first().click()
     await p.locator('.agenda-day-heading').click()
     await p.waitForURL(/\/calendar\//)
-    await p.getByRole('button', { name: 'App menu' }).click()
+    await openAppMenu(p)
     await p.getByRole('button', { name: 'Colors', exact: true }).click()
     await p.getByRole('button', { name: 'Heather', exact: true }).waitFor()
     await p.keyboard.press('Escape')

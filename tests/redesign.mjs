@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { openAppMenu, raiseRooms } from './pill.mjs'
 import { execSync } from 'node:child_process'
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs'
 const { chromium } = await import(
@@ -70,7 +71,7 @@ try {
   await shot('02-mac-agenda')
   await visit('/calendar/' + month)
   // October 13: Colors lives in the app menu; the calendar's own tools retired.
-  await page.getByRole('button', { name: 'App menu', exact: true }).click()
+  await openAppMenu(page)
   await page.getByRole('button', { name: 'Colors', exact: true }).click()
   await shot('03-mac-month-color-tray')
   await page.keyboard.press('Escape')
@@ -125,7 +126,7 @@ try {
   await shot('15-iphone-page-picture')
   await visit('/')
   // October 13: Today's "Manage" link retired; the app menu opens the manager.
-  await page.getByRole('button', { name: 'App menu', exact: true }).click()
+  await openAppMenu(page)
   await page.getByRole('button', { name: 'Manage notebooks', exact: true }).click()
   await shot('16-mac-notebook-manager')
   await page.keyboard.press('Escape')
@@ -192,7 +193,7 @@ try {
   )
   await visit('/p/redesign-page')
   // October 13: the sidebar footer retired; Colors is in the app menu.
-  await page.getByRole('button', { name: 'App menu', exact: true }).click()
+  await openAppMenu(page)
   await page.getByRole('button', { name: 'Colors', exact: true }).click()
   await page.getByRole('button', { name: 'Cranberry', exact: true }).click()
   await page.keyboard.press('Escape')

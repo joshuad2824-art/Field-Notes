@@ -15,6 +15,7 @@ import { applyTheme, coverColor } from '../lib/theme'
 import { AskSiena } from './AskSiena'
 import { Icon } from './Icon'
 import { NotebookManager } from './NotebookManager'
+import { ShelfMenu } from './NotebookSwitcher'
 import { QuickNote } from './QuickNote'
 import { RouteLink } from './DeskHeader'
 import { setEdgeColor } from '../lib/themecolor'
@@ -42,11 +43,13 @@ const editable = (el: Element | null) =>
 
 type Plus =
   | { kind: 'run'; label: string; run: () => void }
+  | { kind: 'save'; label: string; run: () => void }
   | { kind: 'choose' }
   | { kind: 'off' }
 
 export function ApprovedFrame({ notebook, children }: { notebook: string; children: ReactNode }) {
   const desktop = useMediaQuery('(min-width: 1200px)'),
+    phone = useMediaQuery('(max-width: 819px)'),
     settings = useSettings(),
     keyboard = useKeyboardOpen(),
     route = useRoute(),
@@ -60,8 +63,11 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     [quick, setQuick] = useState(false),
     [receded, setReceded] = useState(false),
     [notice, setNotice] = useState(''),
-    [chooserAt, setChooserAt] = useState<{ left: number; bottom: number } | null>(null)
+    [chooserAt, setChooserAt] = useState<{ left: number; bottom: number } | null>(null),
+    [expanded, setExpanded] = useState(false),
+    [shelf, setShelf] = useState<{ left: number; bottom: number } | null>(null)
   const addRef = useRef<HTMLButtonElement>(null)
+  const navRef = useRef<HTMLElement>(null)
   const pageId = route.name === 'page' || route.name === 'plan' || route.name === 'review' ? route.id : ''
   const page = useLive(() => (pageId ? getPage(pageId) : Promise.resolve(undefined)), [pageId], undefined)
   const eventId = route.name === 'event' ? route.id : ''
@@ -95,6 +101,8 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     setMenu(false)
     setColors(false)
     setChooser(false)
+    setExpanded(false)
+    setShelf(null)
     if (route.name === 'calendar' && route.month) showCalendarMonth(route.month)
     if (route.name === 'day') selectCalendarDate(route.iso)
   }, [location.pathname])
@@ -144,6 +152,17 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
       setNotice(error instanceof Error ? error.message : 'Could not open the weekly review.')
     }
   }
+  /* While an event's form is open, + is its ✓: the obvious thing to do on a
+     form is to keep it. The screen says when its form is open and what saving
+     it is called (an event or a whole series). */
+  const [eventForm, setEventForm] = useState('')
+  useEffect(() => {
+    const open = (e: Event) => setEventForm((e as CustomEvent<string>).detail || '')
+    window.addEventListener('field-notes:event-form', open)
+    return () => window.removeEventListener('field-notes:event-form', open)
+  }, [])
+  const saveEvent = () => window.dispatchEvent(new Event('field-notes:save-event'))
+
   const plus: Plus = (() => {
     if (quick) return { kind: 'off' }
     switch (route.name as Route['name']) {
@@ -160,11 +179,12 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
       case 'day':
         return { kind: 'run', label: 'New event', run: () => navigate(to.newEvent(calendar.selected)) }
       case 'event': {
+        if (eventForm) return { kind: 'save', label: eventForm, run: saveEvent }
         const day = route.name === 'event' ? (route.occurrence ?? event?.date ?? calendar.selected) : ''
         return { kind: 'run', label: 'New event', run: () => navigate(to.newEvent(day)) }
       }
       case 'event-new':
-        return { kind: 'off' }
+        return { kind: 'save', label: eventForm || 'Save event', run: saveEvent }
       case 'workshop':
       case 'plans':
       case 'plan':
@@ -181,7 +201,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
   /* The pill recedes when nothing is reaching for it: while scrolling down,
      while typing, and after three still seconds under a mouse. It returns on
      scroll up, at the end of a scroll, on any pointer movement, or a tap. */
-  const held = menu || chooser
+  const held = menu || chooser || expanded || !!shelf
   const heldRef = useRef(held)
   heldRef.current = held
   useEffect(() => {
@@ -271,6 +291,8 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
 
   useDismiss(menu, () => setMenu(false))
   useDismiss(chooser, () => setChooser(false))
+  useDismiss(expanded, () => setExpanded(false))
+  useDismiss(!!shelf, () => setShelf(null))
   useDismiss(colors, () => setColors(false))
   useEffect(() => {
     if (!notice) return
@@ -283,6 +305,28 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     manage: (focus) => setManage({ focus }),
   }
   const shownBook = routeBook ?? notebook
+  const compact = phone
+  const here = rooms.find((d) => d.active)
+  /* On a desk or a tablet the pill already holds Today, so a ← that would
+     only go to Today says it twice. A phone's pill doesn't show the rooms. */
+  const showUp = !!parent && (compact || parent !== to.overview())
+  const openShelf = () => {
+    const r = navRef.current?.getBoundingClientRect()
+    setMenu(false)
+    setChooser(false)
+    setExpanded(false)
+    setShelf(r ? { left: r.left + r.width / 2, bottom: innerHeight - r.top + 12 } : { left: innerWidth / 2, bottom: 96 })
+  }
+  /* Notebooks from inside a notebook opens the shelf rather than reopening
+     the notebook you are already in. */
+  const roomTap = (e: React.MouseEvent, d: (typeof rooms)[number]) => {
+    if (d.label === 'Notebooks' && d.active) {
+      e.preventDefault()
+      openShelf()
+      return
+    }
+    setExpanded(false)
+  }
 
   return (
     <FrameContext.Provider value={api}>
@@ -338,45 +382,72 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
         {!keyboard ? (
           <>
             <nav
-              className={`floating-nav${receded ? ' receded' : ''}${quick ? ' above-quick' : ''}`}
+              ref={navRef}
+              className={`floating-nav${receded ? ' receded' : ''}${quick ? ' above-quick' : ''}${compact ? ' compact' : ''}${expanded ? ' expanded' : ''}`}
               aria-label="Primary navigation"
               onFocus={() => setReceded(false)}
             >
-              {parent ? (
+              {showUp ? (
                 <button className="pill-up" onClick={goUp} aria-label="Up" title="Up — ⌘↑">
                   <Icon name="back" />
                 </button>
               ) : null}
-              {rooms.map((d) => (
-                <RouteLink
-                  key={d.label}
-                  className={`${d.active ? 'active ' : ''}pill-${d.label.toLowerCase().replace(' ', '-')}`}
-                  href={d.href}
-                  aria-label={d.label}
-                  title={d.label}
-                  aria-current={d.active ? 'page' : undefined}
+              {compact ? (
+                /* On a phone the pill is three marks: up, the room you are
+                   in, and +. The room's own mark opens the rest in place. */
+                <button
+                  className={`pill-room${here ? ' active' : ''}`}
+                  aria-label={here ? `${here.label} — rooms` : 'Rooms'}
+                  title="Rooms"
+                  aria-expanded={false}
+                  onClick={() => {
+                    setMenu(false)
+                    setChooser(false)
+                    setExpanded(true)
+                  }}
                 >
-                  <Icon name={d.icon} />
-                  {d.active && desktop ? <span>{d.label}</span> : null}
-                </RouteLink>
-              ))}
-              <span className="pill-rule" aria-hidden="true" />
-              <button
-                className={`pill-more${menu ? ' on' : ''}`}
-                aria-label="App menu"
-                title="App menu"
-                aria-haspopup="menu"
-                aria-expanded={menu}
-                onClick={() => {
-                  setChooser(false)
-                  setMenu(!menu)
-                }}
-              >
-                <Icon name="more" />
-              </button>
+                  <Icon name={here?.icon ?? 'menu'} />
+                </button>
+              ) : (
+                <>
+                  {rooms.map((d) => (
+                    <RouteLink
+                      key={d.label}
+                      className={`${d.active ? 'active ' : ''}pill-${d.label.toLowerCase().replace(' ', '-')}`}
+                      href={d.href}
+                      aria-label={d.label}
+                      title={d.label}
+                      aria-current={d.active ? 'page' : undefined}
+                      onClick={(e) => roomTap(e, d)}
+                    >
+                      <Icon name={d.icon} />
+                      {d.active && desktop ? <span>{d.label}</span> : null}
+                    </RouteLink>
+                  ))}
+                  <span className="pill-rule" aria-hidden="true" />
+                  <button
+                    className={`pill-more${menu ? ' on' : ''}`}
+                    aria-label="App menu"
+                    title="App menu"
+                    aria-haspopup="menu"
+                    aria-expanded={menu}
+                    onClick={() => {
+                      setChooser(false)
+                      setShelf(null)
+                      setMenu(!menu)
+                    }}
+                  >
+                    <Icon name="more" />
+                  </button>
+                </>
+              )}
               {plus.kind === 'off' ? (
                 <button className="pill-add" aria-label="Add" title="Add" aria-disabled="true" onClick={() => {}}>
                   <Icon name="add" />
+                </button>
+              ) : plus.kind === 'save' ? (
+                <button className="pill-add pill-save" aria-label="Save event" title={plus.label} onClick={plus.run}>
+                  <Icon name="done" />
                 </button>
               ) : plus.kind === 'choose' ? (
                 <button
@@ -388,6 +459,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
                   aria-expanded={chooser}
                   onClick={() => {
                     setMenu(false)
+                    setShelf(null)
                     const r = addRef.current?.getBoundingClientRect()
                     if (r) setChooserAt({ left: r.left + r.width / 2, bottom: innerHeight - r.top + 12 })
                     setChooser(!chooser)
@@ -401,6 +473,44 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
                 </button>
               )}
             </nav>
+            {expanded ? (
+              <>
+                <button
+                  className="nav-menu-scrim quiet"
+                  aria-label="Close rooms"
+                  tabIndex={-1}
+                  onClick={() => setExpanded(false)}
+                />
+                <nav className="pill-rooms" aria-label="Rooms">
+                  {rooms.map((d) => (
+                    <RouteLink
+                      key={d.label}
+                      className={`${d.active ? 'active ' : ''}pill-${d.label.toLowerCase().replace(' ', '-')}`}
+                      href={d.href}
+                      aria-label={d.label}
+                      title={d.label}
+                      aria-current={d.active ? 'page' : undefined}
+                      onClick={(e) => roomTap(e, d)}
+                    >
+                      <Icon name={d.icon} />
+                    </RouteLink>
+                  ))}
+                  <span className="pill-rule" aria-hidden="true" />
+                  <button
+                    className="pill-more"
+                    aria-label="App menu"
+                    title="App menu"
+                    aria-haspopup="menu"
+                    onClick={() => {
+                      setExpanded(false)
+                      setMenu(true)
+                    }}
+                  >
+                    <Icon name="more" />
+                  </button>
+                </nav>
+              </>
+            ) : null}
             <button
               className={`pill-handle${receded ? ' shown' : ''}`}
               aria-label="Show navigation"
@@ -416,6 +526,12 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
           <p className="pill-notice" role="alert">
             {notice}
           </p>
+        ) : null}
+        {shelf ? (
+          <>
+            <button className="nav-menu-scrim quiet" aria-label="Close" tabIndex={-1} onClick={() => setShelf(null)} />
+            <ShelfMenu current={shownBook} onDone={() => setShelf(null)} className="pill-shelf" style={shelf} />
+          </>
         ) : null}
         {chooser ? (
           <>

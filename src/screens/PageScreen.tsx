@@ -328,9 +328,6 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
       <Shell notebook={book.id} activeId={page.id} focus={workshop}>
         {({ toggle, hidden }) => (
           <main className="desk" key="desk">
-            <header className="phone-page-heading">
-              <NotebookSwitcher notebook={book.id} />
-            </header>
             <article
               className="leaf"
               data-stock={stock}
@@ -341,6 +338,9 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
               <div className={`tools${typing ? ' typing' : ''}`}>
                 <div className="row">
                   {workshop ? null : toggle}
+                  {/* On a phone the notebook's name rides in the toolbar's
+                      own row, so the writing starts one row sooner. */}
+                  <NotebookSwitcher notebook={book.id} className="tools-switcher" />
                   {hidden ? (
                     <span className="breadcrumb">
                       {book.name} · {todayLine()}

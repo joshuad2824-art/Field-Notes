@@ -1,6 +1,13 @@
 # Field Notes — Start Here
 
-Updated October 13, 2026 for the controls review.
+Updated October 13, 2026 for the phone pass.
+
+## October 13 phone pass — live
+
+- From Joshua's iPhone: the phone's pill is three marks (← · the room you are in · +) and the room's mark raises the five rooms and ⋯. Notebooks from inside a notebook raises the shelf; the notebook name carries a quiet chevron; the St. John desk's name is a switcher too, so no notebook is a room you can't leave.
+- Quick note names its chosen notebook and files with ✓; an event form's ✓ is the pill's +; the event's pencil and ⋯ sit on its date line; a phone page has one toolbar row; a quiet Today is one line; month cells hold one line per event; the empty leaf matches the page stock; St. John's board has no holes; Settings' tabs wrap; All caps is its own undo step.
+- Service worker v44. Details, amendments to decisions 13 and 19, and test changes: `docs/2026-10-13 - Phone Pass.md`.
+
 
 ## October 13 controls review — live
 

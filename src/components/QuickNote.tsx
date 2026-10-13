@@ -62,13 +62,16 @@ export function QuickNote({ onClose }: { onClose: () => void }) {
       <section className="quick-note-dialog" aria-labelledby="quick-note-title">
         <header>
           <h2 id="quick-note-title">Quick note</h2>
+          {/* Closing files the note when a notebook is chosen and keeps it
+              as a quick note when not — so the mark is ✓, not ×. */}
           <button
-            className="icon-control"
-            aria-label="Close quick note"
+            className="icon-control quick-note-done"
+            aria-label="Done"
+            title="Done"
             disabled={busy}
             onClick={() => void close()}
           >
-            <Icon name="close" />
+            <Icon name="done" />
           </button>
         </header>
         {draft ? (
@@ -104,6 +107,11 @@ export function QuickNote({ onClose }: { onClose: () => void }) {
                   </label>
                 ))}
               </div>
+              {/* The chosen notebook says its name; nothing is chosen, nothing
+                  is said. */}
+              <span className="quick-note-book" aria-hidden="true">
+                {books.find((b) => b.id === draft.notebook)?.name ?? ''}
+              </span>
             </footer>
           </>
         ) : (

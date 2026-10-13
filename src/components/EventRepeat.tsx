@@ -17,7 +17,7 @@ export function EventRepeat({ draft, onChange }: { draft: EventDraft; onChange: 
   const preview = !error && r ? recurrencePreview(draft) : []
   const ending = r?.until !== undefined ? 'until' : r?.count !== undefined ? 'count' : 'never'
   return <fieldset className="event-repeat"><legend>Repeat</legend>
-    <label>Schedule<select value={r?.frequency ?? 'none'} onChange={e => changeFrequency(e.target.value)}>
+    <label><span className="sr-only">Schedule</span><select value={r?.frequency ?? 'none'} onChange={e => changeFrequency(e.target.value)}>
       <option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option>
     </select></label>
     {r ? <>

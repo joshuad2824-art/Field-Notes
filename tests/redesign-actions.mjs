@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { openAppMenu, raiseRooms } from './pill.mjs'
 import { execSync } from 'node:child_process'
 const { chromium } = await import(
   `${execSync('npm root -g', { encoding: 'utf8' }).trim()}/playwright/index.mjs`
@@ -35,18 +36,20 @@ try {
     await visit('/')
     /* October 13: the five rooms are in the pill itself and the app menu holds
        the back rooms, so all eight destinations are still one tap away. */
+    /* October 13, second pass: on a phone the pill is ← · room · +, and the
+       room's mark raises the rooms and the app menu. */
+    const rooms = width < 820 ? page.locator('.pill-rooms') : page.locator('.floating-nav')
+    if (width < 820) await page.locator('.floating-nav .pill-room').click()
     for (const name of ['Today', 'Notebooks', 'Calendar', 'Workshop', 'From Siena'])
-      assert.ok(
-        await page.locator('.floating-nav').getByRole('link', { name, exact: true }).isVisible(),
-      )
-    await page.getByRole('button', { name: 'App menu' }).click()
+      assert.ok(await rooms.getByRole('link', { name, exact: true }).isVisible())
+    await rooms.getByRole('button', { name: 'App menu' }).click()
     for (const name of ['Search', 'Settings', 'Trash'])
       assert.ok(
         await page.locator('.pill-menu').getByRole('link', { name, exact: true }).isVisible(),
       )
     await page.keyboard.press('Escape')
     assert.equal(await page.locator('.pill-menu').count(), 0)
-    await page.getByRole('button', { name: 'App menu' }).click()
+    await openAppMenu(page)
     await page
       .locator('.pill-menu')
       .getByRole('button', { name: 'Manage notebooks', exact: true })
@@ -69,7 +72,7 @@ try {
     await fit()
     if (width === 1440) {
       // October 13: the sidebar footer retired; Colors is in the app menu.
-      await page.getByRole('button', { name: 'App menu' }).click()
+      await openAppMenu(page)
       await page.locator('.pill-menu').getByRole('button', { name: 'Colors', exact: true }).click()
       await page.getByRole('button', { name: /^night/ }).click()
       await page.waitForFunction(

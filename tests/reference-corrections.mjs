@@ -35,7 +35,11 @@ try {
         assert.equal(await p.locator('.board-books small').count(), 0)
         assert.equal(await p.locator('.quiet-day').count(), 0)
         const square = await p.locator('.board-month').boundingBox()
-        assert.ok(Math.abs(square.width - square.height) < 2, JSON.stringify(square))
+        /* October 13, second pass: on a phone the card is as tall as its
+           weeks, so the last one is never cut by its edge. */
+        if (width >= 820) assert.ok(Math.abs(square.width - square.height) < 2, JSON.stringify(square))
+        const last = await p.locator('.board-month .cal-day').last().boundingBox()
+        assert.ok(last.y + last.height <= square.y + square.height + 0.5, 'the last week sits inside the month card')
       }
       if (route === '/workshop') {
         // October 13: the Workshop is no longer a dead end; the pill is here too.

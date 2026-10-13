@@ -43,6 +43,22 @@ export function EventScreen({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [menu, setMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  /* The pill's + is this form's ✓ while it is open, so the screen tells the
+     frame when it is, and what saving it is called. */
+  const formOpen = editing && (!id || !!event)
+  const saveLabel = event?.recurrence ? 'Save the series' : 'Save event'
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('field-notes:event-form', { detail: formOpen ? saveLabel : '' }))
+    return () => {
+      window.dispatchEvent(new CustomEvent('field-notes:event-form', { detail: '' }))
+    }
+  }, [formOpen, saveLabel])
+  useEffect(() => {
+    const submit = () => formRef.current?.requestSubmit()
+    window.addEventListener('field-notes:save-event', submit)
+    return () => window.removeEventListener('field-notes:save-event', submit)
+  }, [])
   useDismiss(menu, () => setMenu(false))
   useEffect(() => {
     if (!menu) return
@@ -77,6 +93,7 @@ export function EventScreen({
 
   const save = async (e: FormEvent) => {
     e.preventDefault()
+    if (busy) return
     if (!draft.title.trim()) return setNotice('Give the event a title.')
     const rangeError = eventRangeError(draft)
     if (rangeError) return setNotice(rangeError)
@@ -213,7 +230,7 @@ export function EventScreen({
             </div>
           ) : null}
           {editing ? (
-            <form className="event-form" onSubmit={(e) => void save(e)}>
+            <form ref={formRef} className="event-form" onSubmit={(e) => void save(e)}>
               <h1>{id ? (event?.recurrence ? 'Event series' : 'Edit event') : 'New event'}</h1>
               {id && event?.recurrence ? (
                 <p className="event-date-help">
@@ -321,27 +338,8 @@ export function EventScreen({
                   {notice}
                 </p>
               ) : null}
-              <div className="event-form-actions">
-                <button
-                  className="overview-action primary"
-                  type="submit"
-                  disabled={busy}
-                  aria-label="Save event"
-                  title="Save event"
-                >
-                  <Icon name="save" />
-                  {event?.recurrence ? 'Save the series' : 'Save event'}
-                </button>
-                <button
-                  className="event-copy"
-                  type="button"
-                  onClick={() => void copy()}
-                  aria-label="Copy details for Apple Calendar"
-                  title="Copy details for Apple Calendar"
-                >
-                  <Icon name="copy" /> Copy details
-                </button>
-                {id ? (
+              {id ? (
+                <div className="event-form-actions">
                   <button
                     className="event-copy"
                     type="button"
@@ -354,8 +352,8 @@ export function EventScreen({
                   >
                     <Icon name="close" />
                   </button>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </form>
           ) : null}
           {event && !event.deleted ? (

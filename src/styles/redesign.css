@@ -6535,3 +6535,325 @@ body,
   gap: 10px;
   padding: 12px;
 }
+
+/* ── October 13, second pass: from Joshua's phone ────────────────────────
+   One section, grouped by component, in this sheet rather than a new one. */
+
+/* The notebook's name carries a small, quiet chevron: the only sign that it
+   opens the shelf. */
+.notebook-switcher-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32em;
+}
+.notebook-switcher-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notebook-switcher-chevron {
+  flex: none;
+  width: max(10px, 0.46em);
+  height: max(10px, 0.46em);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5;
+  transition: transform var(--duration-instant) linear;
+}
+.notebook-switcher.open .notebook-switcher-chevron {
+  transform: rotate(180deg);
+}
+/* The same shelf, raised above the pill when Notebooks is tapped from
+   inside a notebook. */
+.notebook-switcher-menu.pill-shelf {
+  position: fixed;
+  top: auto;
+  z-index: 61;
+  transform: translateX(-50%);
+  max-height: min(60vh, 520px);
+}
+
+/* The phone's pill: up, the room you are in, and +. */
+.floating-nav.compact {
+  gap: 6px;
+  padding: 0 8px;
+}
+.floating-nav.compact > a,
+.floating-nav.compact > button {
+  min-width: 48px;
+  width: 48px;
+}
+.floating-nav.compact .pill-add {
+  margin-left: 0;
+}
+.floating-nav .pill-room.active {
+  background: rgba(0, 0, 0, 0.24);
+}
+/* The rooms rise above the pill when the room's mark is tapped. */
+.pill-rooms {
+  position: absolute;
+  z-index: 61;
+  left: 50%;
+  bottom: calc(max(20px, var(--safe-bottom)) + 72px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #0c2223;
+  box-shadow: var(--sh-dialog);
+  white-space: nowrap;
+}
+.pill-rooms > a,
+.pill-rooms > button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #f6f3ec;
+}
+.pill-rooms > .active {
+  background: #ffffff1a;
+}
+.pill-rooms .pill-rule {
+  flex: none;
+  width: 1px;
+  height: 24px;
+  margin: 0 4px;
+  background: #ffffff33;
+}
+.pill-rooms .fn-icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* Quick note: the chosen notebook says its name; ✓ files it. On a phone the
+   dots sit under the title, above the writing, so the keyboard never hides
+   them. */
+.quick-note-dialog footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.quick-note-book {
+  font: 500 12px var(--font-sign);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #e9e6df;
+}
+.quick-note-book:empty {
+  display: none;
+}
+@media (max-width: 819px) {
+  .redesign-application .sheet:has(.quick-note-dialog) {
+    width: calc(100vw - 16px);
+    height: calc(100% - var(--safe-top) - 16px);
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .quick-note-dialog {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .quick-note-dialog footer {
+    order: 1;
+    border-top: 0;
+    border-bottom: 1px solid #f6f3ec25;
+    padding: 10px 0 12px;
+  }
+  .quick-note-dialog textarea {
+    order: 2;
+    flex: 1;
+    height: auto;
+    min-height: 0;
+    resize: none;
+  }
+  .quick-note-dialog [role='alert'] {
+    order: 3;
+  }
+}
+
+/* An event's pencil and ⋯ sit on its date line, not in a band of their
+   own. */
+.redesign-application .event-screen:has(.event-wrap:not(.event-split) .event-detail) {
+  background: var(--th-wash);
+}
+.redesign-application .event-wrap:not(.event-split) > .event-top {
+  position: absolute;
+  z-index: 3;
+  top: 22px;
+  right: 22px;
+  width: auto;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+@media (min-width: 820px) {
+  .redesign-application .event-wrap:not(.event-split) > .event-top {
+    top: 24px;
+    right: 0;
+  }
+  .redesign-application .event-wrap:not(.event-split) > .event-detail {
+    padding-top: 30px;
+  }
+}
+
+/* A page on a phone: the notebook's name and the page's tools share one
+   row, and ← is the way back to the list. */
+.redesign-application .leaf .tools .tools-switcher {
+  display: none;
+}
+@media (max-width: 819px) {
+  .redesign-application .leaf .tools .tools-switcher {
+    display: block;
+    margin-right: auto;
+    font: 600 18px var(--font-sign);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--leaf-heading, #f6f3ec);
+  }
+  /* Doubled to out-rank app-design.css's (0,4,1) icon-button rule. */
+  .redesign-application .leaf .tools .row > button.list-toggle.list-toggle {
+    display: none;
+  }
+  .redesign-application .leaf .tools .notebook-switcher-menu {
+    font: 500 14px var(--font-ui);
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  .redesign-application .desk:has(> .leaf) {
+    padding-top: 0;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .redesign-application .desk > .leaf {
+    width: 100%;
+    min-height: 0;
+    flex: 1;
+  }
+}
+
+/* Today on a quiet day: no events today and none coming, so the first card
+   is only its date, one line long, rather than an empty box. */
+@media (max-width: 1199px) {
+  .redesign-application .today-board > .board-day.is-quiet {
+    min-height: 0;
+    height: auto;
+  }
+  .redesign-application .board-day.is-quiet .day-spine {
+    flex: 1;
+    justify-content: flex-start;
+    padding: 18px 22px;
+    background: transparent;
+  }
+  .redesign-application .board-day.is-quiet .day-spine span {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 18px;
+  }
+  .redesign-application .board-day.is-quiet .day-content {
+    display: none;
+  }
+}
+/* The phone's month card is as tall as its weeks, so the last one is never
+   cut by the card's edge. */
+@media (max-width: 819px) {
+  .redesign-application .today-board > .board-month {
+    aspect-ratio: auto;
+    height: auto;
+  }
+  .redesign-application .board-month .cal-grid {
+    flex: none;
+    grid-auto-rows: 46px;
+  }
+}
+
+/* Month cells: an event is one line, its time at the right, as in
+   Timepage's month — so two events and "N more" always fit. */
+.month-event {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 0 5px;
+}
+.month-event strong {
+  flex: 1;
+}
+.month-event small {
+  flex: none;
+}
+
+/* The empty leaf is cut from the same stock a new page will be. */
+.redesign-application .empty-leaf[data-stock='night'] {
+  background-color: #051b1c;
+  background-image: radial-gradient(circle, rgba(246, 243, 236, 0.06) 1px, transparent 1.5px);
+  box-shadow: var(--sh-leaf);
+}
+.redesign-application .empty-leaf[data-stock='paper'] {
+  background-color: #f6f3ec;
+  background-image: radial-gradient(circle, rgba(20, 42, 43, 0.1) 1px, transparent 1.5px);
+  box-shadow: var(--sh-leaf);
+}
+
+/* St. John on a tablet or a desk: the list and the notebook's pages are one
+   column, so nothing leaves a hole beneath the short list; the brief and the
+   shelf stand beside it. */
+@media (min-width: 820px) {
+  .redesign-application .work-grid {
+    align-items: start;
+  }
+  .redesign-application .work-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    grid-column: 1 / span 5;
+    grid-row: 1 / span 2;
+    min-width: 0;
+  }
+  .redesign-application .work-main > .work-actions,
+  .redesign-application .work-main > .work-notes {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .redesign-application .work-notes .work-note-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .redesign-application .work-brief {
+    grid-column: 6 / span 4;
+    grid-row: 1 / span 2;
+  }
+  .redesign-application .work-resources {
+    grid-column: 10 / span 3;
+    grid-row: 1;
+  }
+  .redesign-application .work-done {
+    grid-column: 10 / span 3;
+    grid-row: 2;
+  }
+  .redesign-application .work-calendar-note {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+}
+
+/* Settings on a phone: every section's name in view, on two rows if need be,
+   rather than a strip that runs off the edge. */
+@media (max-width: 819px) {
+  .redesign-application .settings-index {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}

@@ -185,7 +185,11 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                     <div className="work-section-heading">
                       <div>
                         <span className="work-eyebrow">Keep within reach</span>
-                        <h2 id="work-notes-heading">From your notebook</h2>
+                        <h2 id="work-notes-heading">
+                          <RouteLink href={to.notebook(notebook)} aria-label="From your notebook — all pages" title="All pages">
+                            From your notebook
+                          </RouteLink>
+                        </h2>
                       </div>
                     </div>
                     <input

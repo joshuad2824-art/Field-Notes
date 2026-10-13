@@ -4,11 +4,14 @@ import { SIDEBAR_AVAILABLE, SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { useLive } from '../lib/useLive'
 import { createPage, livePages } from '../lib/db'
 import { navigate, to } from '../lib/router'
+import { useSettings } from '../lib/settings'
 export function HomeScreen({ notebook }: { notebook: string }) {
   const journal = notebook === JOURNAL_NOTEBOOK
   const docked = useMediaQuery(SIDEBAR_DOCKED),
     available = useMediaQuery(SIDEBAR_AVAILABLE),
     pages = useLive(() => livePages(notebook), [notebook], [])
+  /* The empty leaf is cut from the same stock a new page will be. */
+  const { stock } = useSettings()
   return (
     <div className="app">
       <div className="statusband" />
@@ -20,10 +23,11 @@ export function HomeScreen({ notebook }: { notebook: string }) {
               {/* An empty leaf in the notebook's colour. Nothing is written in
                   the journal by hand, so its leaf only waits. */}
               {journal ? (
-                <div className="empty-leaf" aria-hidden="true" />
+                <div className="empty-leaf" data-stock={stock} aria-hidden="true" />
               ) : (
                 <button
                   className="empty-leaf"
+                  data-stock={stock}
                   aria-label="Start a page here"
                   title="Start a page here"
                   onClick={() => void createPage(notebook).then((made) => navigate(to.page(made.id)))}

@@ -89,6 +89,30 @@ try {
       await page.mouse.move(width / 2, 12)
       await locator.click()
     }
+    /* October 13, second pass: a phone's pill is ← · the room you are in · +,
+       and the room's mark raises the rooms and the app menu. */
+    const phone = width < 820
+    const raise = async () => {
+      if (!phone) return
+      if (await page.getByRole('navigation', { name: 'Rooms' }).isVisible().catch(() => false)) return
+      await tap(page.locator('.floating-nav .pill-room'))
+      await page.getByRole('navigation', { name: 'Rooms' }).waitFor()
+    }
+    const room = async (name) => {
+      await raise()
+      return phone
+        ? page.getByRole('navigation', { name: 'Rooms' }).getByRole('link', { name, exact: true })
+        : pill().getByRole('link', { name, exact: true })
+    }
+    const appMenuButton = async () => {
+      await raise()
+      return phone
+        ? page.getByRole('navigation', { name: 'Rooms' }).getByRole('button', { name: 'App menu' })
+        : pill().getByRole('button', { name: 'App menu' })
+    }
+    /* On a tablet or a desk the pill already holds Today, so ← shows only
+       where it goes somewhere else. */
+    const TOP = ['today', 'notebook', 'empty notebook', 'journal', 'st john', 'calendar', 'workshop', 'from siena', 'search', 'settings', 'trash']
 
     const routes = [
       ['/', 'today'],
@@ -116,10 +140,19 @@ try {
     for (const [route, name] of routes) {
       await visit(route)
       ok(await pill().isVisible(), `${width} ${name}: pill visible`)
-      for (const room of ROOMS)
-        ok(await pill().getByRole('link', { name: room, exact: true }).isVisible(), `${width} ${name}: ${room} in pill`)
-      ok(await pill().getByRole('button', { name: 'App menu' }).isVisible(), `${width} ${name}: app menu`)
-      eq(await pill().getByRole('button', { name: 'Up' }).count(), name === 'today' ? 0 : 1, `${width} ${name}: ← present unless Today`)
+      if (phone)
+        eq(await pill().locator('a, button').count(), name === 'today' ? 2 : 3, `${width} ${name}: a phone's pill is ← · room · +`)
+      for (const r of ROOMS) ok(await (await room(r)).isVisible(), `${width} ${name}: ${r} one tap away`)
+      ok(await (await appMenuButton()).isVisible(), `${width} ${name}: app menu`)
+      if (phone) {
+        await page.keyboard.press('Escape')
+        ok(!(await page.getByRole('navigation', { name: 'Rooms' }).isVisible().catch(() => false)), `${width} ${name}: Esc lowers the rooms`)
+      }
+      eq(
+        await pill().getByRole('button', { name: 'Up' }).count(),
+        name === 'today' || (!phone && TOP.includes(name)) ? 0 : 1,
+        `${width} ${name}: ← where it goes somewhere the pill doesn't`,
+      )
       ok(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         `${width} ${name}: no horizontal overflow`,
@@ -171,7 +204,7 @@ try {
 
     /* 2. Workshop and Plan reach Today; every room is one tap from them. */
     for (const from of ['/workshop', '/plan/redesign-plan']) {
-      for (const [room, expect] of [
+      for (const [roomName, expect] of [
         ['Today', /^\/overview$/],
         ['Notebooks', /^\/n\//],
         ['Calendar', /^\/calendar/],
@@ -179,7 +212,7 @@ try {
         ['From Siena', /^\/from-siena$/],
       ]) {
         await visit(from)
-        await tap(pill().getByRole('link', { name: room, exact: true }))
+        await tap(await room(roomName))
         await page.waitForURL((u) => expect.test(u.pathname))
         checks++
       }
@@ -194,6 +227,18 @@ try {
       await page.getByRole('menuitemradio', { name: 'Garden' }).click()
     }
     await page.waitForURL(/\/n\/garden$/)
+    checks++
+    // Notebooks from inside a notebook raises the shelf instead of reopening it.
+    await visit('/n/church')
+    await tap(await room('Notebooks'))
+    await page.locator('.pill-shelf').getByRole('menuitemradio', { name: 'The Hearth' }).click()
+    await page.waitForURL(/\/n\/hearth$/)
+    checks++
+    // The St. John desk's name is a switcher too: it is never a room you can't leave.
+    await visit(`/n/${ST_JOHN}/desk`)
+    await page.locator('.redesign-desk-header').getByRole('button', { name: /switch notebook/ }).click()
+    await page.getByRole('menuitemradio', { name: 'Church' }).click()
+    await page.waitForURL(/\/n\/church$/)
     checks++
     if (width >= 1200) {
       // With the sidebar folded the list head is the switcher.
@@ -226,23 +271,25 @@ try {
       ['/search', '/overview'],
     ]
     for (const [from, to] of parents) {
+      if (!phone && to === '/overview') continue
       await visit(from)
       await tap(pill().getByRole('button', { name: 'Up' }))
       await page.waitForURL((u) => u.pathname === to)
       checks++
     }
     // Back rooms return to the room they were opened from, as reached in use.
-    for (const [open, room] of [
-      [() => pill().getByRole('button', { name: 'App menu' }), 'Search'],
-      [() => pill().getByRole('button', { name: 'App menu' }), 'Settings'],
-      [() => pill().getByRole('button', { name: 'App menu' }), 'Trash'],
+    for (const [open, roomLabel] of [
+      [appMenuButton, 'Search'],
+      [appMenuButton, 'Settings'],
+      [appMenuButton, 'Trash'],
       [null, 'From Siena'],
     ]) {
+      const room_ = roomLabel
       await visit('/workshop')
       if (open) {
-        await tap(open())
-        await page.getByRole('navigation', { name: 'App menu' }).getByText(room, { exact: true }).click()
-      } else await tap(pill().getByRole('link', { name: room, exact: true }))
+        await tap(await open())
+        await page.getByRole('navigation', { name: 'App menu' }).getByText(roomLabel, { exact: true }).click()
+      } else await tap(await room(room_))
       await page.waitForURL((u) => u.pathname !== '/workshop')
       await tap(pill().getByRole('button', { name: 'Up' }))
       await page.waitForURL((u) => u.pathname === '/workshop')
@@ -288,7 +335,8 @@ try {
     await page.waitForURL((u) => u.pathname === `/event/new/${seriesDay}`)
     checks++
     await visit(`/event/new/${today}`)
-    eq(await pill().getByRole('button', { name: 'Add' }).getAttribute('aria-disabled'), 'true', `${width}: + is inert on New event`)
+    ok(await pill().getByRole('button', { name: 'Save event' }).isVisible(), `${width}: on New event + is its ✓`)
+    eq(await page.locator('main').getByRole('button', { name: 'Save event' }).count(), 0, `${width}: and the form keeps no second Save`)
     for (const room of ['/workshop', '/plan/redesign-plan']) {
       await visit(room)
       await tap(pill().getByRole('button', { name: 'New plan' }))
@@ -316,7 +364,7 @@ try {
     await page.getByRole('menuitem', { name: 'Quick note' }).click()
     await page.getByRole('textbox', { name: 'Quick note' }).waitFor()
     eq(await pill().getByRole('button', { name: 'Add' }).getAttribute('aria-disabled'), 'true', `${width}: + is inert under the quick note`)
-    await page.getByRole('button', { name: 'Close quick note' }).click()
+    await page.getByRole('button', { name: 'Done', exact: true }).click()
 
     /* 6. Keyboard. */
     await visit('/p/redesign-page')
@@ -328,7 +376,7 @@ try {
     await page.waitForURL((u) => u.pathname === '/n/church')
     checks++
     await visit('/')
-    await tap(pill().getByRole('button', { name: 'App menu' }))
+    await tap(await appMenuButton())
     const appMenu = page.getByRole('navigation', { name: 'App menu' })
     for (const item of ['Search', 'Colors', 'Manage notebooks', 'Ask Siena', 'Trash', 'Settings'])
       ok(await appMenu.getByText(item, { exact: true }).isVisible(), `${width}: app menu has ${item}`)
@@ -396,7 +444,7 @@ try {
       Math.max(...els.map((e) => { const r = e.getBoundingClientRect(); return Math.abs(r.width - r.height) })),
     )
     ok(worst < 0.6, `${width}: every day mark on Today is a circle (worst ${worst}px)`)
-    await tap(pill().getByRole('button', { name: 'App menu' }))
+    await tap(await appMenuButton())
     const offsets = await page.locator('.pill-menu > *').evaluateAll((els) =>
       els.map((e) => Math.round(e.querySelector('svg, .colors-glyph').getBoundingClientRect().left - e.getBoundingClientRect().left)),
     )
@@ -430,12 +478,12 @@ try {
       await page.getByRole('button', { name: 'Quick note', exact: true }).click()
       const area = page.getByRole('textbox', { name: 'Quick note', exact: true })
       await area.fill('Keep this thought\nUntil I file it.')
-      await page.getByRole('button', { name: 'Close quick note' }).click()
+      await page.getByRole('button', { name: 'Done', exact: true }).click()
       await page.reload()
       await page.getByRole('button', { name: 'Quick note', exact: true }).click()
       eq(await area.inputValue(), 'Keep this thought\nUntil I file it.', `${width}: quick note draft survives reload`)
       await page.getByRole('radio', { name: 'Church' }).click()
-      await page.getByRole('button', { name: 'Close quick note' }).click()
+      await page.getByRole('button', { name: 'Done', exact: true }).click()
       await page.waitForFunction(async () =>
         (await (await import('/src/lib/db.ts')).livePages('church')).some((p) => p.body === 'Keep this thought\nUntil I file it.'),
       )

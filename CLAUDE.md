@@ -33,6 +33,10 @@ Joshua approved the October 12 controls review whole (`docs/2026-10-13 - Control
 - **The October 12 calendar note is amended.** The upper-right calendar tools (the list/calendar toggle and ⋯) retire. The month name, the pill and the event's own ⋯ do their jobs.
 - **The October sheets are one sheet.** `pdf-adjustments.css` and `reference-corrections.css` were folded into `redesign.css`, pixel-identical at six widths; see the release doc for the method and for why every `!important` stayed.
 
+## October 13 phone pass
+
+Joshua's iPhone overturned two parts of the controls review, and he approved the change (`docs/2026-10-13 - Phone Pass.md`). **On a phone the pill is three marks** — ← · the room you are in · + — and the room's mark raises the five rooms and the app menu above it; on a tablet or a desk the pill keeps every room and shows ← only where it goes somewhere other than Today. **A notebook's name is always the switcher**, the St. John desk's included, and carries a small chevron; Notebooks tapped from inside a notebook raises the same shelf above the pill. While an event's form is open, + is its ✓. The written-day rings on the month stay.
+
 ## October 7 Workshop and calendar update
 
 Joshua requested one Workshop destination for physical-project plans and a small owned-tools card, original images inside plans, and a return button to the plan list. Family events belong alongside native calendar events, identified by a colored Davis / Read only tag; connection controls belong in Settings. This supersedes separate Plans/Workshop navigation and the separate Davis dashboard panel. The current implementation and verification status are in `00_START_HERE.md`, `docs/project-desk.md`, and `docs/siena-plugin.md`.

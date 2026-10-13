@@ -87,7 +87,7 @@ export function Shell({
     </button>
   ) : (
     <button
-      className={`mark-button${listDocked && available ? ' on' : ''}`}
+      className={`mark-button list-toggle${listDocked && available ? ' on' : ''}`}
       onClick={() => {
         if (compact) navigate(to.notebook(notebook))
         else setSettings({ list: !settings.list })
