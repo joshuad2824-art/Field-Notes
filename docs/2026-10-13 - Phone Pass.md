@@ -37,6 +37,12 @@ Joshua used the controls-review build (v43) on his iPhone and sent screenshots. 
 - `controls-review`, `pdf-adjustments`: the quick note's ✓ is "Done".
 - Run here against a local Vite server: 24 of 27 suites pass. `links` and `open-editor-sync` fail identically on the untouched v43 source in this environment (no route to example.com; the faked mirror's host is intercepted by the session's proxy), so they are environmental here; both passed on Joshua's Mac for v43.
 
+## Release
+
+Pushed to GitHub `main` as `e2cc481`, which Netlify builds and publishes on its own: production deploy `6ace36dbc5a0418049c987f3`, service worker v44, published October 13 at 8:49 AM. The live site serves the same bundle as the local build (`assets/index-CGahhlEI.js`), deep links resolve, and Joshua's own Today renders the quiet-day line, the fitted month and the three-mark pill at phone width. Prior production `6ace21ba833484a19c975397` (v43). The controls-review commits that had only been on Joshua's Mac are now on GitHub too (also as branch `controls-review-2026-10-13`), and his local checkout was fast-forwarded to `e2cc481`.
+
+**Note for later releases:** this site deploys from GitHub `main` with auto publishing on. A push to `main` without `[skip netlify]` publishes.
+
 ## Not verified here
 
 Physical iPhone and iPad behaviour (the raised rooms row under a real finger, the full-height quick note with the iOS keyboard), and propagation to another paired device.

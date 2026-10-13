@@ -6,7 +6,7 @@ Updated October 13, 2026 for the phone pass.
 
 - From Joshua's iPhone: the phone's pill is three marks (← · the room you are in · +) and the room's mark raises the five rooms and ⋯. Notebooks from inside a notebook raises the shelf; the notebook name carries a quiet chevron; the St. John desk's name is a switcher too, so no notebook is a room you can't leave.
 - Quick note names its chosen notebook and files with ✓; an event form's ✓ is the pill's +; the event's pencil and ⋯ sit on its date line; a phone page has one toolbar row; a quiet Today is one line; month cells hold one line per event; the empty leaf matches the page stock; St. John's board has no holes; Settings' tabs wrap; All caps is its own undo step.
-- Service worker v44. Details, amendments to decisions 13 and 19, and test changes: `docs/2026-10-13 - Phone Pass.md`.
+- Production: Netlify `6ace36dbc5a0418049c987f3` from GitHub `main@e2cc481`, service worker v44 (prior `6ace21ba833484a19c975397`, v43). Pushing `main` publishes; use `[skip netlify]` for record-only commits. Details, amendments to decisions 13 and 19, and test changes: `docs/2026-10-13 - Phone Pass.md`.
 
 
 ## October 13 controls review — live
