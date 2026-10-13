@@ -1,6 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useMediaQuery } from '../lib/media'
-import { useAllNotebooks, isReserved, firstNotebookId, notebookOf } from '../lib/notebooks'
+import {
+  useAllNotebooks,
+  isReserved,
+  firstNotebookId,
+  notebookOf,
+  isWorkshopNotebook,
+} from '../lib/notebooks'
 import { setSettings, useSettings } from '../lib/settings'
 import { back, navigate, to, useRoute } from '../lib/router'
 import { showCalendarMonth, selectCalendarDate, useCalendarView } from '../lib/calendar-view'
@@ -84,6 +90,11 @@ export function ApprovedFrame({
     window.addEventListener('keydown', close)
     return () => window.removeEventListener('keydown', close)
   }, [])
+  useEffect(() => {
+    const open = () => setMenu((value) => !value)
+    window.addEventListener('field-notes:workshop-menu', open)
+    return () => window.removeEventListener('field-notes:workshop-menu', open)
+  }, [])
   const destinations = [
     { label: 'Today', icon: 'overview' as const, href: to.overview(), active: home },
     {
@@ -111,7 +122,8 @@ export function ApprovedFrame({
       navigate(to.newEvent(route.name === 'day' ? route.iso : calendar.selected))
     else if (workshop) {
       if (route.name === 'plan') navigate(to.workshop())
-      else document.querySelector<HTMLButtonElement>('button[aria-label="Add plan"]')?.click()
+      else
+        window.dispatchEvent(new CustomEvent('field-notes:workshop-action', { detail: 'plan' }))
     } else navigate(to.newPage(isReserved(themeBook) ? notebook : themeBook))
   }
   return (
@@ -204,7 +216,7 @@ export function ApprovedFrame({
           </div>
         ) : null}
         {!keyboard &&
-        !['calendar', 'day'].includes(route.name) &&
+        !['calendar', 'day', 'workshop', 'plans'].includes(route.name) &&
         !(desktop && notebookView) ? (
           <nav className="floating-nav" aria-label="Primary navigation">
             {home ? (
@@ -298,6 +310,36 @@ export function ApprovedFrame({
               onClick={() => setMenu(false)}
             />
             <nav className="pill-menu" aria-label="All destinations">
+              {['workshop', 'plans'].includes(route.name) ? (
+                <>
+                  {[
+                    ['plan', 'New plan'],
+                    ['equipment', 'Add equipment'],
+                    ['projects', 'On my desk'],
+                  ].map(([action, label]) => (
+                    <button
+                      key={action}
+                      onClick={() => {
+                        setMenu(false)
+                        window.dispatchEvent(
+                          new CustomEvent('field-notes:workshop-action', { detail: action }),
+                        )
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </>
+              ) : null}
+              {['workshop', 'plans'].includes(route.name) ? (
+                <RouteLink
+                  href={to.notebook(
+                    books.find((b) => isWorkshopNotebook(b.id))?.id ?? notebook,
+                  )}
+                >
+                  Workshop pages
+                </RouteLink>
+              ) : null}
               {calendarView ? (
                 <>
                   <button

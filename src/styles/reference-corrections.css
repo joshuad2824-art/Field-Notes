@@ -1,0 +1,439 @@
+/* Joshua's October 12 corrections supersede the earlier PDF composition. */
+.redesign-application .today-board {
+  grid-template-rows: auto auto auto;
+  align-items: stretch;
+}
+.redesign-application .board-day {
+  grid-column: span 6;
+  grid-row: auto;
+}
+.redesign-application .board-day .day-content {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 24px;
+}
+.redesign-application .board-month {
+  grid-column: span 3;
+  grid-row: auto;
+  display: block;
+  aspect-ratio: 1;
+  align-self: start;
+  padding: 22px;
+}
+.redesign-application .board-month > div {
+  width: 100%;
+}
+.redesign-application .board-month .month-grid {
+  width: 100%;
+}
+.redesign-application .board-weather-card {
+  grid-column: span 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  background: #163b40;
+  padding: 22px;
+}
+.redesign-application .board-weather-card .weather-inset {
+  display: block;
+  grid-column: auto;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
+.redesign-application .board-weather-card .weather-inset-line > span {
+  display: none;
+}
+.redesign-application .board-weather-card .weather-inset-line {
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.redesign-application .board-weather-card .board-forecast {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.redesign-application .board-day-coming .board-upcoming-row {
+  margin: 12px 0 0;
+}
+.redesign-application .board-day-coming .event-row {
+  margin-bottom: 8px;
+}
+.redesign-application .month-screen {
+  padding: 0;
+  gap: 0;
+}
+.redesign-application .month-header {
+  background: #001011;
+  padding: 28px 142px 22px 36px;
+  min-height: 96px;
+}
+.redesign-application .month-weekdays {
+  background: #001011;
+  margin: 0;
+  padding: 0 0 14px;
+}
+.redesign-application .month-cells {
+  border-radius: 0;
+}
+.redesign-application .month-header h1 span {
+  color: #c6ceca;
+}
+.redesign-application .workshop-reference-app {
+  background: #2a2622;
+  color: #f6f3ec;
+}
+.redesign-application .workshop-reference {
+  height: 100%;
+  padding: 32px 40px 36px;
+  overflow: auto;
+}
+.workshop-reference button {
+  cursor: pointer;
+  color: inherit;
+  border: 0;
+  background: none;
+}
+.workshop-reference-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.workshop-reference-header h1 {
+  margin: 0;
+  font:
+    600 44px/1.12 'Oswald',
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.workshop-reference-header h1 button {
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  text-align: left;
+}
+.workshop-reference-header p {
+  margin: 3px 0 0;
+  color: #b4a995;
+  font:
+    12px 'Oswald',
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+.workshop-reference-filters {
+  display: flex;
+  gap: 6px;
+}
+.workshop-reference-filters button {
+  border-radius: 24px;
+  background: #ffffff14;
+  padding: 9px 16px;
+  font:
+    500 13px 'Archivo',
+    sans-serif;
+}
+.workshop-reference-filters button[aria-pressed='true'] {
+  background: #f6f3ec;
+  color: #2a2622;
+}
+.workshop-reference-plans {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.workshop-reference-plan {
+  background: #3a342e;
+  border-radius: 24px;
+  overflow: hidden;
+  min-width: 0;
+}
+.workshop-reference-plan[data-status='active'] {
+  background: #4e463d;
+}
+.workshop-reference-plan[data-status='done'] {
+  background: #24332a;
+}
+.workshop-reference-open {
+  display: block;
+  width: 100%;
+  padding: 12px 12px 18px;
+  text-align: left;
+}
+.workshop-reference-plan .desk-thumbnail {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  margin: 0;
+  overflow: hidden;
+}
+.workshop-reference-plan .desk-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.workshop-reference-plan .plan-cover-empty {
+  background:
+    repeating-linear-gradient(135deg, #ffffff04 0 10px, transparent 10px 20px), #00000018;
+}
+.workshop-reference-plan .plan-cover-empty svg {
+  display: none;
+}
+.workshop-reference-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 16px 8px 8px;
+}
+.workshop-reference-title strong {
+  font:
+    600 18px/1.3 'Archivo',
+    sans-serif;
+}
+.workshop-reference-title span {
+  flex-shrink: 0;
+  font:
+    500 11px 'Archivo',
+    sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: #f6f3ec22;
+}
+.workshop-reference-open > p {
+  margin: 0 8px 12px;
+  font:
+    400 13px/1.4 'Archivo',
+    sans-serif;
+  color: #dedad3;
+}
+.workshop-reference-progress {
+  margin: 0 8px;
+}
+.workshop-reference-progress progress {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 5px;
+  border: 0;
+  border-radius: 9px;
+  background: #f6f3ec25;
+  overflow: hidden;
+}
+.workshop-reference-progress progress::-webkit-progress-bar {
+  background: #f6f3ec25;
+  border-radius: 9px;
+}
+.workshop-reference-progress progress::-webkit-progress-value {
+  background: #f6f3ec;
+  border-radius: 9px;
+}
+.workshop-reference-progress progress::-moz-progress-bar {
+  background: #f6f3ec;
+  border-radius: 9px;
+}
+.workshop-reference-progress small {
+  display: block;
+  margin-top: 7px;
+  color: #b4a995;
+  text-transform: uppercase;
+  font:
+    11px 'Archivo',
+    sans-serif;
+  letter-spacing: 0.06em;
+}
+.workshop-reference-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+.workshop-reference-bottom > section {
+  min-height: 287px;
+  border-radius: 24px;
+  padding: 22px 24px;
+}
+.workshop-reference-bottom h2 {
+  margin: 0 0 12px;
+  font:
+    500 12px 'Oswald',
+    sans-serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.workshop-reference-bottom h2 button {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  padding: 0;
+}
+.workshop-reference-tools {
+  background: #3a342e;
+}
+.workshop-reference-tools header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.workshop-reference-tools header > span {
+  font:
+    13px 'Archivo',
+    sans-serif;
+  color: #b4a995;
+}
+.workshop-reference-tools > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.workshop-reference-tools > div > button {
+  font:
+    13px 'Archivo',
+    sans-serif;
+  background: #f6f3ec19;
+  border-radius: 18px;
+  padding: 7px 12px;
+}
+.workshop-reference-routine {
+  background: #f6f3ec;
+  color: #173235;
+}
+.workshop-reference-routine .reading-content {
+  font:
+    18px/1.6 'Grape Nuts',
+    cursive;
+}
+.workshop-reference-routine .reading-content p {
+  margin: 0;
+}
+.workshop-reference-routine .reading-content ul {
+  padding: 0;
+  list-style: none;
+  margin: 0;
+}
+.redesign-application:is(.route-workshop, .route-plans) .pill-menu {
+  top: 112px;
+  bottom: auto;
+  left: 40px;
+  right: auto;
+  transform: none;
+  max-height: calc(100% - 140px);
+  overflow: auto;
+}
+@media (min-width: 820px) and (max-width: 1199px) {
+  .redesign-application .board-day {
+    grid-column: span 12;
+  }
+  .redesign-application .board-month,
+  .redesign-application .board-weather-card {
+    grid-column: span 6;
+  }
+  .workshop-reference-plans {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 819px) {
+  .redesign-application .today-board > .board-day,
+  .redesign-application .today-board > .board-month,
+  .redesign-application .today-board > .board-weather-card {
+    display: block;
+    grid-column: 1/-1;
+    grid-row: auto;
+  }
+  .redesign-application .today-board > .board-day {
+    display: flex;
+  }
+  .redesign-application .board-month {
+    aspect-ratio: 1;
+  }
+  .redesign-application .board-weather-card .board-forecast {
+    display: grid;
+  }
+  .redesign-application .board-weather-card .weather-inset {
+    margin-top: 20px;
+  }
+  .redesign-application .month-header {
+    padding: 24px 16px 20px;
+    min-height: 145px;
+  }
+  .redesign-application .month-mobile,
+  .redesign-application .month-selected {
+    padding: 16px;
+  }
+  .redesign-application .workshop-reference {
+    padding: 28px 20px;
+  }
+  .workshop-reference-header {
+    display: block;
+  }
+  .workshop-reference-header h1 {
+    font-size: 36px;
+  }
+  .workshop-reference-filters {
+    margin-top: 20px;
+  }
+  .workshop-reference-filters button {
+    padding: 9px 14px;
+  }
+  .workshop-reference-plans,
+  .workshop-reference-bottom {
+    grid-template-columns: 1fr;
+  }
+  .workshop-reference-bottom > section {
+    min-height: 220px;
+  }
+  .redesign-application:is(.route-workshop, .route-plans) .pill-menu {
+    left: 20px;
+  }
+}
+
+.redesign-application .board-weather-card .weather-unavailable.weather-inset {
+  display: none;
+}
+@media (min-width: 820px) and (max-width: 1199px) {
+  .redesign-application .board-date {
+    padding: 18px 10px;
+  }
+  .redesign-application .board-date strong {
+    font-size: 36px;
+  }
+  .redesign-application .board-date span {
+    font-size: 20px;
+  }
+}
+.workshop-reference-routine .reading-check {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #817000;
+  border-radius: 50%;
+  font-size: 0;
+  vertical-align: middle;
+  margin-top: 6px;
+}
+.workshop-reference-routine .reading-check[aria-label='Completed'] {
+  background: #817000;
+}
+.workshop-reference-routine .reading-check-item:has([aria-label='Completed']) > div {
+  text-decoration: line-through;
+  color: #788580;
+}
+/* Keep all six weeks inside the square in longer calendar months. */
+.redesign-application .board-month>div {height:100%;display:flex;flex-direction:column;}
+.redesign-application .board-month .cal {flex:1;min-height:0;display:flex;flex-direction:column;}
+.redesign-application .board-month .cal-grid {flex:1;min-height:0;grid-auto-rows:minmax(0,1fr);}
+.redesign-application .board-month .cal-day {height:100%;min-height:0;}
+.redesign-application .board-month .cal .cal-day .cal-day-n {width:min(32px,100%);height:min(32px,100%);}

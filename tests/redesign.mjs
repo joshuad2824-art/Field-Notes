@@ -65,7 +65,7 @@ try {
   }
   await visit('/')
   await shot('01-mac-today')
-  assert.equal(await page.locator('.today-board .board-tile').count(), 9)
+  assert.equal(await page.locator('.today-board .board-tile').count(), 10)
   await visit('/day/' + today)
   await shot('02-mac-agenda')
   await visit('/calendar/' + month)
@@ -89,7 +89,7 @@ try {
   await visit('/workshop')
   await shot('05-mac-workshop')
   await page.getByRole('button', { name: 'Paused', exact: true }).click()
-  assert.equal(await page.locator('.desk-plan-link').count(), 1)
+  assert.equal(await page.locator('.workshop-reference-plan').count(), 1)
   await page.getByRole('button', { name: 'All', exact: true }).click()
   await visit('/from-siena')
   await shot('06-mac-from-siena')

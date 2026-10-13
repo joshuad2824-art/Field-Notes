@@ -3,6 +3,12 @@
 Updated October 12, 2026 for the complete visual redesign.
 
 
+## October 12 reference corrections — live
+
+- Joshua's latest written corrections supersede conflicting PDF recommendations. Today now has Schedule/Coming Up, a square month card, and separate weather; no quiet-day quote, repeated weekday headings, or notebook-spine counts.
+- Calendar has its dark header again. Workshop follows the supplied four-card/two-panel composition with real plans, tool chips, and a page-backed Shop Routine. Click The Workshop heading for navigation and creation actions.
+- Production: Netlify `6acd9c989e81e7268cffadb7`, service worker v41. Build and eight targeted checks pass; layouts checked at six widths, including six-week calendar fit. Release details and recovery: `docs/2026-10-12 - Reference Corrections.md`; evidence: `work/2026-10-12-reference-corrections/`.
+
 ## October 12 PDF adjustments — live
 
 - Production: Netlify `6acd95269c0cc5456608cf6c`, service worker v40. Joshua's five-page PDF now takes precedence over the original screenshots where they differ.

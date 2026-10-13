@@ -62,3 +62,5 @@ import './styles/redesign-tokens.css'
 import './styles/redesign.css'
 
 import './styles/pdf-adjustments.css'
+
+import './styles/reference-corrections.css'

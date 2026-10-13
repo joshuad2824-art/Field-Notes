@@ -62,16 +62,6 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
   const plan = projectDesk(pages).plans[0]?.[0],
     { total, done } = planProgress(plan?.body)
   const weekStart = today
-  const quotes = [
-    'Leave a little room in the day for something you didn’t plan.',
-    'A small beginning is still a beginning.',
-    'Some things become clearer when you put them on paper.',
-    'Pay attention to the ordinary things you’ll want to remember.',
-    'There is time to do one thing with care.',
-    'A quiet day can hold a good deal of life.',
-    'Keep a place for the work that matters to you.',
-  ]
-  const quote = quotes[Math.floor(Date.parse(today + 'T12:00:00Z') / 86400000) % quotes.length]
   return (
     <div className="app board-app">
       {quick ? <QuickNote onClose={() => setQuick(false)} /> : null}
@@ -96,26 +86,39 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               </span>
             </RouteLink>
             <div className="day-content">
-              <section>
-                <h2>{events.length ? 'Schedule' : 'Quote'}</h2>
-                {events.length ? (
-                  events.slice(0, 3).map((e) => <EventRow key={e.id} event={e} />)
-                ) : (
-                  <div className="quiet-day">
-                    <blockquote>{quote}</blockquote>
-                    <cite>Siena</cite>
-                  </div>
-                )}
-                {events.length > 3 ? (
-                  <RouteLink href={to.day(today)} className="board-more">
-                    {events.length - 3} more
-                  </RouteLink>
-                ) : null}
-              </section>
-              <section className="board-current-weather">
-                <BoardWeather />
-              </section>
-              <BoardWeather compact />
+              {events.length ? (
+                <section className="board-today-schedule">
+                  <h2>Today's Schedule</h2>
+                  {events.slice(0, 3).map((e) => (
+                    <EventRow key={e.id} event={e} />
+                  ))}
+                  {events.length > 3 ? (
+                    <RouteLink href={to.day(today)} className="board-more">
+                      {events.length - 3} more
+                    </RouteLink>
+                  ) : null}
+                </section>
+              ) : null}
+              <div className="board-day-coming">
+                <h2>Coming up</h2>
+                {upcoming.length
+                  ? upcoming.slice(0, 4).map((entry) => (
+                      <div className="board-upcoming-row" key={entry.iso}>
+                        <RouteLink href={to.day(entry.iso)}>
+                          {new Date(entry.iso + 'T12:00:00').toLocaleDateString([], {
+                            weekday: 'short',
+                            day: 'numeric',
+                          })}
+                        </RouteLink>
+                        <div>
+                          {entry.events.map((e) => (
+                            <EventRow key={e.id} event={e} />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  : null}
+              </div>
             </div>
           </section>
           <section className="board-tile board-month">
@@ -132,28 +135,12 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
                 onPick={() => navigate(to.calendar(month))}
               />
             </div>
-            <div className="board-month-today">
-              <h2>Coming up</h2>
-              {upcoming.length ? (
-                upcoming.slice(0, 4).map((entry) => (
-                  <div className="board-upcoming-row" key={entry.iso}>
-                    <RouteLink href={to.day(entry.iso)}>
-                      {new Date(entry.iso + 'T12:00:00').toLocaleDateString([], {
-                        weekday: 'short',
-                        day: 'numeric',
-                      })}
-                    </RouteLink>
-                    <div>
-                      {entry.events.map((e) => (
-                        <EventRow key={e.id} event={e} />
-                      ))}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p>Nothing in the next several days.</p>
-              )}
+          </section>
+          <section className="board-tile board-weather-card">
+            <div className="board-current-weather">
+              <BoardWeather />
             </div>
+            <BoardWeather compact />
           </section>
           <section className="board-tile board-weather-tile">
             <button
@@ -198,7 +185,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
                 const d = shiftDate(weekStart, i)
                 return (
                   <RouteLink key={d} href={to.day(d)}>
-                    <small>{letter}</small>
+                    {i < 7 ? <small>{letter}</small> : null}
                     <span
                       className={`${written.has(d) ? 'written ' : ''}${marked.has(d) ? 'has-event ' : ''}${today === d ? 'today' : ''}`}
                     >
@@ -255,7 +242,6 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
                   }}
                 >
                   <strong>{book.name}</strong>
-                  <small>{pages.filter((p) => p.notebook === book.id).length}</small>
                 </RouteLink>
               ))}
               <button aria-label="Add notebook" onClick={() => setManage(true)}>

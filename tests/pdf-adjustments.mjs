@@ -86,17 +86,42 @@ try {
       }
       await p.screenshot({ path: `${out}/${width}-${path.replaceAll('/', '_')}.png` })
     }
-    if(width === 1440) {
+    if (width === 1440) {
       await visit('/')
-      await p.getByRole('button',{name:'Quick note',exact:true}).click()
-      await p.getByRole('textbox',{name:'Quick note',exact:true}).fill('Still here if filing fails')
-      await p.screenshot({path:out+'/quick-note-dialog.png'})
+      await p.getByRole('button', { name: 'Quick note', exact: true }).click()
+      await p
+        .getByRole('textbox', { name: 'Quick note', exact: true })
+        .fill('Still here if filing fails')
+      await p.screenshot({ path: out + '/quick-note-dialog.png' })
       await p.keyboard.press('Escape')
-      const result=await p.evaluate(async()=>{const q=await import('/src/lib/quick-note.ts');const draft=await q.readQuickNote();try{await q.closeQuickNote({...draft,notebook:'missing-notebook'})}catch{}return (await q.readQuickNote()).body})
-      assert.equal(result,'Still here if filing fails')
-      await p.evaluate(async()=>{const{db,changed}=await import('/src/lib/db.ts');await db.events.clear();await db.sienaItems.update('redesign-note',{body:'A full message.\n'.repeat(50)+'End of the complete message.'});changed()})
-      await p.reload();await p.getByRole('heading',{name:'Quote',exact:true}).waitFor()
-      const note=p.locator('.board-siena p');assert.ok((await note.textContent()).endsWith('End of the complete message.'));assert.ok(await note.evaluate(e=>e.scrollHeight<=e.clientHeight+2));await p.screenshot({path:out+'/quiet-day-long-message.png'})
+      const result = await p.evaluate(async () => {
+        const q = await import('/src/lib/quick-note.ts')
+        const draft = await q.readQuickNote()
+        try {
+          await q.closeQuickNote({ ...draft, notebook: 'missing-notebook' })
+        } catch {}
+        return (await q.readQuickNote()).body
+      })
+      assert.equal(result, 'Still here if filing fails')
+      await p.evaluate(async () => {
+        const { db, changed } = await import('/src/lib/db.ts')
+        await db.events.clear()
+        await db.sienaItems.update('redesign-note', {
+          body: 'A full message.\n'.repeat(50) + 'End of the complete message.',
+        })
+        changed()
+      })
+      await p.reload()
+      await p.getByRole('heading', { name: 'Coming up', exact: true }).waitFor()
+      assert.equal(await p.locator('.board-today-schedule, .quiet-day').count(), 0)
+      assert.equal(
+        await p.locator('.board-day').getByText('Nothing', { exact: false }).count(),
+        0,
+      )
+      const note = p.locator('.board-siena p')
+      assert.ok((await note.textContent()).endsWith('End of the complete message.'))
+      assert.ok(await note.evaluate((e) => e.scrollHeight <= e.clientHeight + 2))
+      await p.screenshot({ path: out + '/quiet-day-long-message.png' })
     }
     assert.deepEqual(errors, [])
     await c.close()

@@ -27,6 +27,8 @@ const names = [
   'redesign',
   'redesign-actions',
   'pdf-adjustments',
+  'reference-corrections',
+  'calendar-square',
 ]
 const out = 'work/check-results'
 mkdirSync(out, { recursive: true })
