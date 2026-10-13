@@ -31,6 +31,7 @@ const names = [
   'calendar-square',
   'controls-review',
   'apple-calendar',
+  'davis-persistence',
 ]
 const out = 'work/check-results'
 mkdirSync(out, { recursive: true })

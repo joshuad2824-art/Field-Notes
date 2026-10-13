@@ -1,5 +1,5 @@
 // A read-only, memory-only presentation model. No Field Notes database writes,
-// recurrence expansion, refresh tokens, or credentials in localStorage.
+// recurrence expansion or saved family event copies. OAuth persistence is separate.
 import { DavisIdentityError, type DavisSource } from './wire'
 export const DAVIS_AGENDA_URL = 'https://bsyupmesvqwxboncwgeg.supabase.co/functions/v1/davis-field-notes'
 export const DAVIS_CALLBACK_PATH = '/oauth/davis/callback'
@@ -47,14 +47,14 @@ export function createAgendaStore() {
   let generation = 0
   const listeners = new Set<() => void>()
   const publish = (next: AgendaState) => { state = next; for (const fn of listeners) fn() }
-  const clear = (status: 'disconnected' | 'denied') => {
+  const clear = (status: 'disconnected' | 'denied', runCleanup = true) => {
     generation++; controller?.abort(); controller = undefined; reader = undefined; account = ''; household = ''
-    const cleanup = onClear; onClear = undefined; cleanup?.(); publish({ status })
+    const cleanup = onClear; onClear = undefined; if (runCleanup) cleanup?.(); publish({ status })
   }
   return {
     getSnapshot: () => state,
     subscribe: (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn) } },
-    disconnect: () => clear('disconnected'),
+    disconnect: (runCleanup = true) => clear('disconnected', runCleanup),
     connect(accountId: string, read: AgendaReader, cleanup?: () => void) {
       generation++; controller?.abort(); onClear?.(); account = accountId; household = ''; reader = read; onClear = cleanup
       publish({ status: 'loading' }) // a new account never inherits old protected data

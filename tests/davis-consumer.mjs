@@ -29,7 +29,7 @@ try {
     const discovery = { issuer: auth.DAVIS_ISSUER, authorization_endpoint: `${auth.DAVIS_ISSUER}/oauth/authorize`, token_endpoint: `${auth.DAVIS_ISSUER}/oauth/token`, response_types_supported: ['code'], code_challenge_methods_supported: ['S256'], token_endpoint_auth_methods_supported: ['none'], scopes_supported: ['email'], resource_indicators_supported: true }
     let now = Date.parse('2026-10-02T01:00:00Z')
     const encoded = (value) => btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-    const token = (extra = {}, responseExtra = {}) => ({ access_token: `${encoded({ alg: 'RS256' })}.${encoded({ iss: auth.DAVIS_ISSUER, sub: fixtureAccount, aud: 'https://davis-at-home.netlify.app/integrations/field-notes/agenda', davis_access: 'field_notes_read', client_id: clientId, exp: Math.floor(now / 1000) + 3600, scope: 'email', ...extra })}.synthetic-signature`, token_type: 'Bearer', expires_in: 3600, refresh_token: 'synthetic-refresh-only', scope: 'email', ...responseExtra })
+    const token = (extra = {}, responseExtra = {}) => ({ access_token: `${encoded({ alg: 'RS256' })}.${encoded({ iss: auth.DAVIS_ISSUER, sub: fixtureAccount, aud: 'https://bsyupmesvqwxboncwgeg.supabase.co/functions/v1/davis-field-notes', davis_access: 'field_notes_read', client_id: clientId, exp: Math.floor(now / 1000) + 3600, scope: 'email', ...extra })}.synthetic-signature`, token_type: 'Bearer', expires_in: 3600, refresh_token: 'synthetic-refresh-only', scope: 'email', ...responseExtra })
     const setup = (options = {}) => {
       const storage = store(), calls = []
       let mode = 'ready', refreshCount = 0, releaseRefresh
@@ -44,10 +44,12 @@ try {
           }
           return json(options.token || token(), options.tokenStatus || 200)
         }
-        if (url.origin === 'https://davis-at-home.netlify.app') {
+        if (url.pathname === '/functions/v1/davis-field-notes') {
           if (mode === 'denied') return json({ error: 'Synthetic denied' }, 401)
           if (mode === 'failure') return json({ error: 'Synthetic unavailable' }, 503)
           const fixture = agendaFixture(url.searchParams.get('from'), url.searchParams.get('to'), '2026-10-01')
+          fixture.events = fixture.events.filter(e => e.date <= fixture.to && e.endDate >= fixture.from)
+          fixture.reminders = fixture.reminders.filter(r => r.date <= fixture.to)
           fixture.fetchedAt = '2026-10-02T01:00:00.000Z'
           if (mode === 'malformed') fixture.complete = false
           if (mode === 'household-change') { fixture.householdId = 'different'; fixture.events = []; fixture.reminders = [] }
@@ -55,7 +57,7 @@ try {
         }
         throw new Error('Unexpected mock URL')
       }
-      const session = auth.createDavisSession({ clientId, callbackUrl: auth.DAVIS_CALLBACK_URL }, { storage, fetcher, now: () => now })
+      const session = auth.createDavisSession({ clientId, callbackUrl: auth.DAVIS_CALLBACK_URL }, { storage, persistent: store(), lock: run => run(), fetcher, now: () => now })
       return { session, storage, calls, setMode: (value) => { mode = value }, refreshCount: () => refreshCount, release: () => releaseRefresh?.() }
     }
     const callbackURL = (authorization) => new URL(`${auth.DAVIS_CALLBACK_URL}?code=synthetic-code&state=${new URL(authorization).searchParams.get('state')}`)
@@ -94,7 +96,7 @@ try {
       check(await auth.pkceChallenge('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk') === 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM', 'RFC PKCE vector')
       const s = setup(), first = new URL(await s.session.begin()), pending = JSON.parse(s.storage.getItem(auth.DAVIS_PENDING_KEY))
       check(pending.state.length === 43 && pending.verifier.length === 43 && first.searchParams.get('code_challenge') === await auth.pkceChallenge(pending.verifier), 'Challenge matches verifier')
-      check(first.searchParams.get('scope') === 'email' && first.searchParams.get('resource') === 'https://davis-at-home.netlify.app/integrations/field-notes/agenda' && first.searchParams.get('redirect_uri') === auth.DAVIS_CALLBACK_URL, 'Exact authorization scope/resource/callback')
+      check(first.searchParams.get('scope') === 'email' && first.searchParams.get('resource') === 'https://bsyupmesvqwxboncwgeg.supabase.co/functions/v1/davis-field-notes' && first.searchParams.get('redirect_uri') === auth.DAVIS_CALLBACK_URL, 'Exact authorization scope/resource/callback')
       const second = new URL(await s.session.begin()); check(first.searchParams.get('state') !== second.searchParams.get('state'), 'Fresh unpredictable transaction')
       const unsupported = setup({ discovery: { ...discovery, resource_indicators_supported: false } }); check(!new URL(await unsupported.session.begin()).searchParams.has('resource'), 'Do not invent discovery support')
     })
@@ -108,14 +110,14 @@ try {
       const valid = setup(), ok = callbackURL(await valid.session.begin()); await valid.session.callback(ok); await rejects(() => valid.session.callback(ok)); check(valid.calls.filter(c => c.method === 'POST').length === 1, 'Code exchanged only once')
     })
     await scenario('dedicated JWT claims and bearer/lifetime checks reject general or expired tokens', async () => {
-      for (const claims of [{ aud: 'authenticated' }, { aud: 'https://davis-at-home.netlify.app/mcp' }, { aud: ['https://davis-at-home.netlify.app/integrations/field-notes/agenda', 'other'] }, { davis_access: 'general' }, { client_id: 'other' }, { exp: Math.floor(now / 1000) - 1 }, { iss: 'https://other.example' }, { sub: '' }, { scope: 'profile' }, { nbf: 'invalid' }]) await rejects(() => auth.validateTokens(token(claims), clientId, now))
+      for (const claims of [{ aud: 'authenticated' }, { aud: 'https://davis-at-home.netlify.app/mcp' }, { aud: ['https://bsyupmesvqwxboncwgeg.supabase.co/functions/v1/davis-field-notes', 'other'] }, { davis_access: 'general' }, { client_id: 'other' }, { exp: Math.floor(now / 1000) - 1 }, { iss: 'https://other.example' }, { sub: '' }, { scope: 'profile' }, { nbf: 'invalid' }]) await rejects(() => auth.validateTokens(token(claims), clientId, now))
       for (const extra of [{ token_type: 'MAC' }, { expires_in: 0 }, { refresh_token: 5 }, { scope: 'profile' }]) await rejects(() => auth.validateTokens(token({}, extra), clientId, now))
     })
     await scenario('code exchange options, household-local range, connected only after successful read', async () => {
       const s = setup({ tokenStatus: 201 }), url = callbackURL(await s.session.begin()), connection = await s.session.callback(url)
-      check(s.calls.filter(c => c.url.includes('/agenda?')).length === 0, 'Token alone is not a successful read')
+      check(s.calls.filter(c => c.url.includes('/davis-field-notes?')).length === 0, 'Token alone is not a successful read')
       const view = createAgendaStore(); view.connect(connection.accountId, connection.read, s.session.clear); await view.refresh()
-      check(view.getSnapshot().status === 'ready' && view.getSnapshot().snapshot.from === '2026-10-01' && view.getSnapshot().snapshot.to === '2026-10-07', 'Returned local today anchors seven days')
+      check(view.getSnapshot().status === 'ready' && view.getSnapshot().snapshot.from === '2026-09-01' && view.getSnapshot().snapshot.to === '2027-10-01', 'Chicago today anchors past month and next year')
       const exchange = s.calls.find(c => c.method === 'POST'); check(exchange.credentials === 'omit' && exchange.cache === 'no-store' && exchange.contentType === 'application/x-www-form-urlencoded' && exchange.body.client_id === clientId && exchange.body.redirect_uri === auth.DAVIS_CALLBACK_URL && !('client_secret' in exchange.body), 'Public exchange without secret')
       check(s.storage.length === 0, 'No tokens in temporary storage')
       s.setMode('failure'); await view.refresh(); check(view.getSnapshot().status === 'stale' && view.getSnapshot().snapshot.fetchedAt, 'Failure retains stale prior snapshot')

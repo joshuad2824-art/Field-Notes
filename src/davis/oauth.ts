@@ -6,13 +6,14 @@ export const DAVIS_ISSUER = 'https://bsyupmesvqwxboncwgeg.supabase.co/auth/v1'
 export const DAVIS_CALLBACK_URL = `https://timber-inkfieldnotes.netlify.app${DAVIS_CALLBACK_PATH}`
 export const DAVIS_DISCOVERY_URL = 'https://bsyupmesvqwxboncwgeg.supabase.co/.well-known/oauth-authorization-server/auth/v1'
 export const DAVIS_PENDING_KEY = 'field-notes.davis.pending-pkce'
+export const DAVIS_SESSION_KEY = 'field-notes.davis.connection-v1'
 const TRANSACTION_MS = 10 * 60_000
 interface Config { clientId: string; callbackUrl: string }
 interface Discovery { issuer: string; authorization_endpoint: string; token_endpoint: string; resource_indicators_supported?: boolean }
 interface Pending { issuer: string; clientId: string; callbackUrl: string; createdAt: number; state: string; verifier: string }
 interface Tokens { access: string; refresh?: string; expires: number; accountId: string }
 class AccessEnded extends Error {}
-interface Dependencies { fetcher: typeof fetch; storage: Storage; now: () => number; crypto: Crypto }
+interface Dependencies { fetcher: typeof fetch; storage: Storage; persistent: Storage; lock: <T>(run: () => Promise<T>) => Promise<T>; now: () => number; crypto: Crypto }
 const invalid = () => { throw new Error('Davis connection could not be verified. Reconnect to try again.') }
 const obj = (v: unknown): Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : invalid()
 const base64url = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
@@ -49,7 +50,7 @@ export function validateTokens(value: unknown, clientId: string, now: number): T
   return { access: t.access_token, ...(typeof t.refresh_token === 'string' ? { refresh: t.refresh_token } : {}), expires: Math.min(now + t.expires_in * 1000, claims.exp * 1000), accountId: claims.sub }
 }
 export function createDavisSession(config: Config, dependencies: Partial<Dependencies> = {}) {
-  const deps: Dependencies = { fetcher: (...args) => fetch(...args), storage: sessionStorage, now: Date.now, crypto: globalThis.crypto, ...dependencies }
+  const deps: Dependencies = { fetcher: (...args) => fetch(...args), storage: sessionStorage, persistent: localStorage, lock: async run => { if (!navigator.locks) throw new Error('This browser cannot safely renew a shared Davis connection.'); return await navigator.locks.request(DAVIS_SESSION_KEY, run) }, now: Date.now, crypto: globalThis.crypto, ...dependencies }
   let tokens: Tokens | undefined
   let metadata: Discovery | undefined
   let refresh: Promise<void> | undefined
@@ -57,7 +58,19 @@ export function createDavisSession(config: Config, dependencies: Partial<Depende
   let operation: AbortController | undefined
   let refreshOperation: AbortController | undefined
   const configured = () => Boolean(config.clientId.trim()) && config.callbackUrl === DAVIS_CALLBACK_URL
-  const clear = () => { epoch++; operation?.abort(); refreshOperation?.abort(); operation = undefined; refreshOperation = undefined; tokens = undefined; refresh = undefined; deps.storage.removeItem(DAVIS_PENDING_KEY) }
+  const saved = () => {
+    try {
+      const v = JSON.parse(deps.persistent.getItem(DAVIS_SESSION_KEY) || 'null')
+      if (v?.clientId !== config.clientId || typeof v.accountId !== 'string' || !v.accountId || typeof v.refresh !== 'string' || !v.refresh || v.refresh.length > 20000) return undefined
+      return v as { clientId: string; accountId: string; refresh: string }
+    } catch { return undefined }
+  }
+  const clear = (persist = true) => {
+    epoch++; operation?.abort(); refreshOperation?.abort(); operation = undefined; refreshOperation = undefined; tokens = undefined; refresh = undefined
+    deps.storage.removeItem(DAVIS_PENDING_KEY)
+    // A tombstone invalidates exchanges already in flight in another tab.
+    if (persist) deps.persistent.setItem(DAVIS_SESSION_KEY, JSON.stringify({ disabled: true, revision: random(deps.crypto) }))
+  }
   const timed = async <T,>(controller: AbortController, run: () => Promise<T>): Promise<T> => {
     const timer = window.setTimeout(() => controller.abort(), 20_000)
     try { return await run() } finally { window.clearTimeout(timer) }
@@ -69,17 +82,23 @@ export function createDavisSession(config: Config, dependencies: Partial<Depende
     const found = validateDiscovery(await response.json()); metadata = found; return found
   }
   const exchange = async (parameters: URLSearchParams, signal: AbortSignal, expectedEpoch: number): Promise<void> => {
+    const before = deps.persistent.getItem(DAVIS_SESSION_KEY)
     const discovery = await discover(signal)
     const response = await deps.fetcher(discovery.token_endpoint, { method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error', signal, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: parameters })
+    if (expectedEpoch !== epoch || signal.aborted || deps.persistent.getItem(DAVIS_SESSION_KEY) !== before) return invalid()
     if (!response.ok) { if (response.status === 400 || response.status === 401 || response.status === 403) { clear(); throw new AccessEnded('Davis access has ended. Reconnect to continue.') }; return invalid() }
     let received: Tokens
     try { received = validateTokens(await response.json(), config.clientId, deps.now()) } catch { clear(); throw new AccessEnded('Davis access could not be verified. Reconnect to continue.') }
-    if (expectedEpoch !== epoch || signal.aborted) return invalid()
+    if (expectedEpoch !== epoch || signal.aborted || deps.persistent.getItem(DAVIS_SESSION_KEY) !== before) return invalid()
     if (tokens && tokens.accountId !== received.accountId) { clear(); throw new AccessEnded('Davis account changed. Reconnect to continue.') }
+    received.refresh ??= parameters.get('refresh_token') || undefined
+    if (!received.refresh) { clear(); throw new AccessEnded('Davis did not provide a renewable connection. Reconnect to try again.') }
+    deps.persistent.setItem(DAVIS_SESSION_KEY, JSON.stringify({ clientId: config.clientId, accountId: received.accountId, refresh: received.refresh }))
     tokens = received
   }
   const validAccess = async (signal: AbortSignal): Promise<string> => {
     if (!tokens) throw new AccessEnded('Reconnect to Davis to continue.')
+    if (saved()?.accountId !== tokens.accountId) { clear(false); throw new AccessEnded('Davis was disconnected on this browser.') }
     if (tokens.expires - deps.now() > 30_000) return tokens.access
     if (!tokens.refresh) { clear(); throw new AccessEnded('Reconnect to Davis to continue.') }
     if (!refresh) {
@@ -87,16 +106,56 @@ export function createDavisSession(config: Config, dependencies: Partial<Depende
       const request = new AbortController(); refreshOperation = request
       // A superseded agenda read must not cancel a shared rotating-token
       // exchange. Disconnect and its own deadline still abort that exchange.
-      refresh = timed(request, () => exchange(new URLSearchParams({ grant_type: 'refresh_token', refresh_token: previousRefresh, client_id: config.clientId }), request.signal, previousEpoch)).then(() => { if (tokens && !tokens.refresh) tokens.refresh = previousRefresh }).finally(() => { if (previousEpoch === epoch) { refresh = undefined; refreshOperation = undefined } })
+      refresh = deps.lock(async () => {
+        if (previousEpoch !== epoch || request.signal.aborted) return invalid()
+        const current = saved()
+        if (!current || current.accountId !== tokens?.accountId) { clear(false); throw new AccessEnded('Davis was disconnected on this browser.') }
+        await timed(request, () => exchange(new URLSearchParams({ grant_type: 'refresh_token', refresh_token: current.refresh || previousRefresh, client_id: config.clientId }), request.signal, previousEpoch))
+      }).finally(() => { if (previousEpoch === epoch) { refresh = undefined; refreshOperation = undefined } })
     }
     await refresh
     if (!tokens || signal.aborted) return invalid()
     return tokens.access
   }
+  function connection(): { accountId: string; read: AgendaReader } {
+    if (!tokens) return invalid()
+    const identity: DavisIdentity = { accountId: tokens.accountId }, expectedEpoch = epoch
+    const read: AgendaReader = async (signal) => {
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(deps.now()))
+      const part = (type: string) => parts.find(p => p.type === type)!.value
+      const today = `${part('year')}-${part('month')}-${part('day')}`
+      const from = shiftDate(today, -30), to = shiftDate(today, 365)
+      let token: string
+      try { token = await validAccess(signal) } catch (error) { if (error instanceof AccessEnded) return { status: 401 }; throw error }
+      const entries = new Map<string, ReturnType<typeof projectAgenda>['entries'][number]>()
+      let snapshot: ReturnType<typeof projectAgenda> | undefined
+      for (let start = from; start <= to; start = shiftDate(start, 93)) {
+        const end = shiftDate(start, 92) < to ? shiftDate(start, 92) : to
+        const result = await fetchAgenda(token, { from: start, to: end }, identity, signal, deps.fetcher)
+        if (result.status === 401 || result.status === 403) { clear(); return { status: result.status } }
+        if (!result.wire) return { status: result.status }
+        identity.householdId ??= result.wire.householdId
+        const page = projectAgenda(result.wire)
+        snapshot ??= page
+        for (const entry of page.entries) entries.set(entry.sourceId, entry)
+      }
+      if (signal.aborted || expectedEpoch !== epoch || !snapshot) return invalid()
+      return { status: 200, snapshot: { ...snapshot, from, to, entries: [...entries.values()] } }
+    }
+    return { accountId: tokens.accountId, read }
+  }
   return {
     configured,
     clear,
     hasTokens: () => Boolean(tokens),
+    savedAccount: () => saved()?.accountId,
+    restore() {
+      if (!configured()) return undefined
+      const stored = saved()
+      if (!stored) return undefined
+      tokens = { access: '', refresh: stored.refresh, expires: 0, accountId: stored.accountId }
+      return connection()
+    },
     async begin(): Promise<string> {
       clear()
       if (!configured()) throw new Error('Davis connection has not been configured.')
@@ -125,26 +184,7 @@ export function createDavisSession(config: Config, dependencies: Partial<Depende
       operation?.abort(); const request = new AbortController(); operation = request; const expectedEpoch = ++epoch
       await timed(request, () => exchange(new URLSearchParams({ grant_type: 'authorization_code', code, client_id: config.clientId, redirect_uri: config.callbackUrl, code_verifier: p.verifier }), request.signal, expectedEpoch))
       if (!tokens || expectedEpoch !== epoch) return invalid()
-      const identity: DavisIdentity = { accountId: tokens.accountId }
-      let today: string | undefined
-      const read: AgendaReader = async (signal) => {
-        const utcDay = new Date(deps.now()).toISOString().slice(0, 10)
-        const range = today ? { from: today, to: shiftDate(today, 6) } : { from: shiftDate(utcDay, -1), to: shiftDate(utcDay, 7) }
-        let token: string
-        try { token = await validAccess(signal) } catch (error) { if (error instanceof AccessEnded) return { status: 401 }; throw error }
-        let result = await fetchAgenda(token, range, identity, signal, deps.fetcher)
-        if (result.status === 401 || result.status === 403) { clear(); return { status: result.status } }
-        if (!result.wire) return { status: result.status }
-        identity.householdId ??= result.wire.householdId
-        today = result.wire.today
-        if (range.from !== today || range.to !== shiftDate(today, 6)) {
-          result = await fetchAgenda(token, { from: today, to: shiftDate(today, 6) }, identity, signal, deps.fetcher)
-          if (result.status === 401 || result.status === 403) clear()
-        }
-        if (signal.aborted || expectedEpoch !== epoch) return invalid()
-        return { status: result.status, ...(result.wire ? { snapshot: projectAgenda(result.wire) } : {}) }
-      }
-      return { accountId: tokens.accountId, read }
+      return connection()
     },
   }
 }
@@ -162,4 +202,21 @@ export function completeDavisCallback(): Promise<void> {
     if (davisAgenda.getSnapshot().status !== 'ready') { davisAgenda.disconnect(); throw new Error('Davis could not confirm agenda access. Reconnect to try again.') }
   })().catch((error) => { davisSession.clear(); throw error })
   return callbackRun
+}
+
+export function restoreDavisConnection() {
+  if (location.pathname === DAVIS_CALLBACK_PATH || davisSession.hasTokens()) return
+  const connection = davisSession.restore()
+  if (!connection) return
+  davisAgenda.connect(connection.accountId, connection.read, davisSession.clear)
+  void davisAgenda.refresh()
+}
+export function handleDavisStorage(event: StorageEvent) {
+  if (event.key !== DAVIS_SESSION_KEY && event.key !== null) return
+  const account = davisAgenda.getSnapshot().snapshot?.accountId
+  const stored = davisSession.savedAccount()
+  if (!stored || (account && stored !== account)) {
+    davisSession.clear(false)
+    davisAgenda.disconnect(false)
+  }
 }

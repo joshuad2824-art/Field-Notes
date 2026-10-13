@@ -1,3 +1,4 @@
+import { restoreDavisConnection, handleDavisStorage } from './oauth'
 import { workEvents, type WorkState } from '../work-calendar/calendar'
 import { expandEvents } from '../lib/event-recurrence'
 import { useEffect, useSyncExternalStore } from 'react'
@@ -19,9 +20,11 @@ export function mergeCalendarEvents(local: FieldEvent[], state: AgendaState, fro
 export function useFamilyAgenda() { return useSyncExternalStore(davisAgenda.subscribe, davisAgenda.getSnapshot) }
 export function useFamilyRefresh() {
   useEffect(() => {
-    const refresh = () => { if (document.visibilityState === 'visible' && davisAgenda.getSnapshot().snapshot) void davisAgenda.refresh() }
+    restoreDavisConnection()
+    window.addEventListener('storage', handleDavisStorage)
+    const refresh = () => { if (document.visibilityState === 'visible' && !['setup', 'disconnected', 'denied'].includes(davisAgenda.getSnapshot().status)) void davisAgenda.refresh() }
     const timer = window.setInterval(refresh, 5 * 60_000)
     window.addEventListener('online', refresh); document.addEventListener('visibilitychange', refresh)
-    return () => { window.clearInterval(timer); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', refresh) }
+    return () => { window.removeEventListener('storage', handleDavisStorage); window.clearInterval(timer); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', refresh) }
   }, [])
 }
