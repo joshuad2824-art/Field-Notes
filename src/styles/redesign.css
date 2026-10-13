@@ -6197,3 +6197,210 @@ body,
   outline-offset: 3px;
   border-radius: 4px;
 }
+
+/* ── October 13, Pass 4: every board uses its space ─────────────────────── */
+
+/* Today's first card: Schedule beside Coming Up from a tablet up. */
+@media (min-width: 820px) {
+  .redesign-application .board-day .day-content {
+    display: grid;
+    grid-template-columns: none;
+    grid-template-rows: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
+  }
+}
+
+/* The countdown is type only: how long, "until", and what. */
+.redesign-application .board-countdown {
+  gap: 4px;
+  padding: 18px 14px;
+  text-align: center;
+  text-decoration: none;
+}
+.redesign-application .board-countdown strong {
+  font: 600 30px/1.05 var(--font-sign);
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.redesign-application .board-countdown span {
+  font: 400 14px/1.4 var(--font-sign);
+  letter-spacing: 0.18em;
+}
+.redesign-application .board-countdown em {
+  font: 600 15px/1.3 var(--font-ui);
+  font-style: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* A desk: the board is the window less its header and the pill's lane, and
+   the three rows share it. A shorter window scrolls rather than clipping. */
+@media (min-width: 1200px) {
+  .redesign-application .today-board {
+    height: max(680px, calc(100% - 56px));
+    grid-template-rows: auto minmax(150px, 1.1fr) minmax(150px, 1fr);
+  }
+  .redesign-application .board-siena {
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .redesign-application .board-coming {
+    overflow: auto;
+  }
+}
+@media (min-width: 1800px) {
+  .redesign-application .today-board {
+    height: max(720px, calc(100% - 56px));
+  }
+}
+
+/* A tablet: twelve columns, and each row's tiles fill them. The month stays
+   square but no larger than its dates need. */
+@media (min-width: 820px) and (max-width: 1199px) {
+  .redesign-application .today-board {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: none;
+  }
+  .redesign-application .today-board > .board-day {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .redesign-application .today-board > .board-month,
+  .redesign-application .today-board > .board-weather-card {
+    grid-column: span 6;
+    grid-row: auto;
+  }
+  .redesign-application .today-board > .board-date {
+    grid-column: span 3;
+    grid-row: auto;
+  }
+  .redesign-application .today-board > .board-weather-tile {
+    grid-column: span 3;
+    grid-row: auto;
+  }
+  .redesign-application .today-board > .board-siena {
+    grid-column: span 6;
+    grid-row: auto;
+  }
+  .redesign-application .today-board > .board-coming,
+  .redesign-application .today-board > .board-shelf,
+  .redesign-application .today-board > .board-workshop {
+    grid-column: span 4;
+  }
+}
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .redesign-application .today-board > .board-month {
+    grid-column: span 5;
+  }
+  .redesign-application .today-board > .board-weather-card {
+    grid-column: span 7;
+  }
+}
+
+/* The phone's weather card says the day's range once. */
+@media (max-width: 819px) {
+  .redesign-application .board-weather-card .weather-phone-range {
+    display: none;
+  }
+}
+
+/* Day agenda: an empty day is as tall as its date and says nothing. */
+.redesign-application .agenda-day.is-empty {
+  min-height: 0;
+}
+.redesign-application .agenda-day.is-empty .agenda-date {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.redesign-application .agenda-day.is-empty .agenda-band {
+  padding-top: 0;
+  padding-bottom: 0;
+  min-height: 0;
+}
+.redesign-application .agenda-sheet {
+  padding-top: 28px;
+}
+.redesign-application .agenda-sheet header {
+  margin-bottom: 20px;
+}
+@media (max-width: 819px) {
+  .redesign-application .agenda-day.is-empty {
+    min-height: 0;
+  }
+}
+
+/* Event: a centred column on a tablet and a desk, like an event sheet,
+   rather than cards a whole window wide. */
+@media (min-width: 820px) {
+  .redesign-application .event-screen:has(.event-wrap:not(.event-split) .event-detail) {
+    background: var(--th-wash);
+  }
+  .redesign-application .event-wrap:not(.event-split):has(.event-detail) {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .redesign-application .event-wrap:not(.event-split) > .event-top {
+    padding: 24px 0 0;
+    background: transparent;
+  }
+  .redesign-application .event-wrap:not(.event-split) > .event-detail {
+    flex: 1 1 100%;
+    padding: 20px 0 40px;
+    background: transparent;
+    box-shadow: none;
+    min-height: 0;
+  }
+}
+
+/* Workshop: the two panels are as tall as what is in them, and an empty
+   Shop Routine is only its heading. */
+.redesign-application .workshop-reference-bottom {
+  align-items: start;
+}
+.redesign-application .workshop-reference-bottom > section {
+  min-height: 0;
+}
+.redesign-application .workshop-reference-routine.is-empty h2 {
+  margin: 0;
+}
+@media (max-width: 819px) {
+  .redesign-application .workshop-reference-bottom > section {
+    min-height: 0;
+  }
+}
+
+/* Settings: collapsed rows read at the same contrast as everything else. */
+.redesign-application .settings-card details > summary {
+  color: #e9e6df;
+}
+
+/* Search: one quiet focus state, as on the page itself — no gold box. */
+.redesign-application .search-box:focus-within {
+  box-shadow: none;
+  background: #12302f;
+}
+.redesign-application .search-box input:focus,
+.redesign-application .search-box input:focus-visible {
+  box-shadow: none;
+}
+
+/* Repeat's label sits above its fields like every other label. */
+.redesign-application .event-repeat legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 0;
+  font: 600 11px var(--font-ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9cb1b2;
+}
+.redesign-application .event-repeat legend + * {
+  clear: both;
+}

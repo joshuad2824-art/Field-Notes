@@ -124,7 +124,7 @@ try {
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         `${width} ${name}: no horizontal overflow`,
       )
-      const text = process.env.SKIP_TEXT ? '' : (await page.evaluate(() => document.body.innerText)).toLowerCase()
+      const text = (await page.evaluate(() => document.body.innerText)).toLowerCase()
       for (const s of GONE)
         ok(!text.includes(s.toLowerCase()), `${width} ${name}: "${s.trim()}" is gone`)
       const lines = new Set(text.split('\n').map((l) => l.trim()))

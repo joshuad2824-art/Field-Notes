@@ -164,7 +164,7 @@ export function DeskScreen({ notebook }: { kind: 'plans' | 'workshop'; notebook:
               ))}
             </div>
           </section>
-          <section className={`workshop-reference-routine${routine ? '' : ' empty'}`}>
+          <section className={`workshop-reference-routine${routine ? '' : ' is-empty'}`}>
             <h2>
               <button
                 disabled={creatingRoutine}

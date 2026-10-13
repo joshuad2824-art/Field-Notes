@@ -72,7 +72,7 @@ export function DayScreen({ iso }: { iso: string; notebook: string }) {
               <section
                 key={day}
                 data-day={day}
-                className={`agenda-day${!daily.length && !rs.length ? ' empty' : ''}`}
+                className={`agenda-day${!daily.length && !rs.length ? ' is-empty' : ''}`}
               >
                 <div className="agenda-date">
                   <button

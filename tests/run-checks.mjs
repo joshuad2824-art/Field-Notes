@@ -29,6 +29,7 @@ const names = [
   'pdf-adjustments',
   'reference-corrections',
   'calendar-square',
+  'controls-review',
 ]
 const out = 'work/check-results'
 mkdirSync(out, { recursive: true })

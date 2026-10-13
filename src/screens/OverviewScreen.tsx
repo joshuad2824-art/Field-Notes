@@ -1,5 +1,6 @@
 import { useFrame } from '../components/ApprovedFrame'
 import { useLongPress } from '../lib/long-press'
+import { countdownLabel, nextTimed } from '../lib/countdown'
 import { planProgress } from '../lib/plan-progress'
 import { useEffect, useState } from 'react'
 import { shiftDate } from '../lib/event-recurrence'
@@ -26,9 +27,14 @@ import { allSienaItems, sienaSections } from '../lib/siena-items'
 import { useLive } from '../lib/useLive'
 export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
   const [today, setToday] = useState(isoDay)
+  const [now, setNow] = useState(() => Date.now())
   const frame = useFrame()
+  /* Once a minute: the date can turn over and the countdown moves on. */
   useEffect(() => {
-    const timer = setInterval(() => setToday(isoDay()), 60000)
+    const timer = setInterval(() => {
+      setToday(isoDay())
+      setNow(Date.now())
+    }, 60000)
     return () => clearInterval(timer)
   }, [])
   const pages = useLive(livePages, [], []),
@@ -61,6 +67,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
   const plan = projectDesk(pages).plans[0]?.[0],
     { total, done } = planProgress(plan?.body)
   const weekStart = today
+  const next = nextTimed(allEvents, now)
   return (
     <div className="app board-app">
       <main className="board-screen scroll">
@@ -150,12 +157,36 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               <strong>Quick note</strong>
             </button>
           </section>
-          <RouteLink className="board-tile board-date" href={to.calendar(month)}>
-            <strong>{date.toLocaleDateString([], { weekday: 'short' })}</strong>
-            <span>
-              {date.getDate()} {date.toLocaleDateString([], { month: 'short' })}
-            </span>
-          </RouteLink>
+          {next ? (
+            next.event.externalSource === 'davis' ? (
+              <a
+                className="board-tile board-date board-countdown"
+                href={DAVIS_SOURCE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <strong>{countdownLabel(next.at - now)}</strong>
+                <span>until</span>
+                <em>{next.event.title}</em>
+              </a>
+            ) : (
+              <RouteLink
+                className="board-tile board-date board-countdown"
+                href={to.event(next.event.seriesId ?? next.event.id, next.event.occurrenceDate)}
+              >
+                <strong>{countdownLabel(next.at - now)}</strong>
+                <span>until</span>
+                <em>{next.event.title}</em>
+              </RouteLink>
+            )
+          ) : (
+            <RouteLink className="board-tile board-date" href={to.calendar(month)}>
+              <strong>{date.toLocaleDateString([], { weekday: 'short' })}</strong>
+              <span>
+                {date.getDate()} {date.toLocaleDateString([], { month: 'short' })}
+              </span>
+            </RouteLink>
+          )}
           <RouteLink className="board-tile board-siena" href={to.fromSiena()}>
             <div className="board-tile-label">
               <h2>From Siena</h2>
