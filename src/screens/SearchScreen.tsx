@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { allTags } from '../lib/db'
 import { search, type Hit } from '../lib/search'
-import { back, navigate, to } from '../lib/router'
+import { navigate, parentOf, to, up } from '../lib/router'
 import { useLive } from '../lib/useLive'
 import { liveEvents } from '../lib/events'
 import { allSienaItems } from '../lib/siena-items'
 import { titleOf } from '../lib/model'
 import { useAllNotebooks } from '../lib/notebooks'
 import { coverColor } from '../lib/theme'
-import { shortStamp, readableDay } from '../lib/format'
+import { countLabel, shortStamp, readableDay } from '../lib/format'
 function Match({ text, query }: { text: string; query: string }) {
   const at = text.toLowerCase().indexOf(query.toLowerCase())
   return at < 0 ? (
@@ -34,11 +34,6 @@ export function SearchScreen() {
     tags = useLive(allTags, [], [])
   useEffect(() => {
     input.current?.focus()
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') back()
-    }
-    window.addEventListener('keydown', key)
-    return () => window.removeEventListener('keydown', key)
   }, [])
   useEffect(() => {
     let live = true
@@ -83,11 +78,14 @@ export function SearchScreen() {
             placeholder="Search"
             type="search"
             aria-label="Search"
+            onKeyDown={(e) => {
+              /* Search is a back room: Escape in its field leaves it. */
+              if (e.key !== 'Escape' || e.defaultPrevented) return
+              e.preventDefault()
+              up(parentOf({ name: 'search' }) ?? to.overview())
+            }}
           />
           <span>{q ? `${count} found` : ''}</span>
-          <button onClick={() => back()} aria-label="Close search">
-            esc
-          </button>
         </div>
         <div className="collection-filters search-filters">
           {['Everything', 'Pages', 'Events', 'From Siena'].map((k) => (
@@ -117,7 +115,7 @@ export function SearchScreen() {
                     <h2>
                       <i style={{ background: coverColor(b.color) }} />
                       {b.name}
-                      <small>{group.length} pages</small>
+                      <small>{countLabel(group.length, 'page')}</small>
                     </h2>
                     {group.map((h) => (
                       <button
@@ -191,8 +189,7 @@ export function SearchScreen() {
             </div>
           )
         ) : (
-          <div className="tagpane">
-            <h2>Tags</h2>
+          <div className="tagpane" aria-label="Tags">
             <div className="chips">
               {tags.map((t) => (
                 <button

@@ -1,7 +1,3 @@
-import { useState } from 'react'
-import { Icon } from './Icon'
-import { AskSiena } from './AskSiena'
-import type { Page } from '../lib/model'
 import { navigate, to } from '../lib/router'
 
 export function RouteLink({ href, children, onClick, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
@@ -13,10 +9,16 @@ export function RouteLink({ href, children, onClick, ...props }: React.AnchorHTM
   }}>{children}</a>
 }
 
-export function DeskHeader({ title, notebook, pages }: { title: string; notebook: string; pages: Page[] }) {
-  const [asking, setAsking] = useState(false)
-  return <>
-    <header className="redesign-desk-header"><div><span className="section-label">{title === 'Workshop' ? 'Plans, tools & work in progress' : 'Notebook desk'}</span><h1 id="desk-heading" tabIndex={-1}>{title === 'Workshop' ? 'The Workshop' : title}</h1></div><div className="desk-header-tools"><RouteLink href={to.search()} aria-label="Search" title="Search"><Icon name="search"/></RouteLink><RouteLink href={to.newPage(notebook)} aria-label="New page" title="New page"><Icon name="new-page"/></RouteLink><button onClick={()=>setAsking(true)} aria-label="Ask Siena" title="Ask Siena"><Icon name="from-siena"/></button><RouteLink href={to.settings()} aria-label="Settings" title="Settings"><Icon name="settings"/></RouteLink></div></header>
-    {asking ? <AskSiena pages={pages} onClose={() => setAsking(false)} /> : null}
-  </>
+/* The notebook's name is its door: it opens the page list. Search, a new
+   page, Ask Siena and Settings are one tap away in the pill and its menu. */
+export function DeskHeader({ title, notebook }: { title: string; notebook: string }) {
+  return (
+    <header className="redesign-desk-header">
+      <h1 id="desk-heading" tabIndex={-1}>
+        <RouteLink href={to.notebook(notebook)} title="Notebook pages" aria-label={`${title} — notebook pages`}>
+          {title}
+        </RouteLink>
+      </h1>
+    </header>
+  )
 }

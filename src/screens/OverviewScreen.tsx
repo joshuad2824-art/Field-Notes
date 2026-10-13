@@ -1,4 +1,5 @@
-import { QuickNote } from '../components/QuickNote'
+import { useFrame } from '../components/ApprovedFrame'
+import { useLongPress } from '../lib/long-press'
 import { planProgress } from '../lib/plan-progress'
 import { useEffect, useState } from 'react'
 import { shiftDate } from '../lib/event-recurrence'
@@ -10,7 +11,6 @@ import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { RouteLink } from '../components/DeskHeader'
 import { BoardWeather } from '../components/BoardWeather'
 import { MonthGrid } from '../components/MonthGrid'
-import { NotebookManager } from '../components/NotebookManager'
 import { Icon } from '../components/Icon'
 import { weekAhead } from '../lib/agenda'
 import { liveEvents } from '../lib/events'
@@ -25,9 +25,8 @@ import { navigate, to } from '../lib/router'
 import { allSienaItems, sienaSections } from '../lib/siena-items'
 import { useLive } from '../lib/useLive'
 export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
-  const [today, setToday] = useState(isoDay),
-    [manage, setManage] = useState(false),
-    [quick, setQuick] = useState(false)
+  const [today, setToday] = useState(isoDay)
+  const frame = useFrame()
   useEffect(() => {
     const timer = setInterval(() => setToday(isoDay()), 60000)
     return () => clearInterval(timer)
@@ -64,7 +63,6 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
   const weekStart = today
   return (
     <div className="app board-app">
-      {quick ? <QuickNote onClose={() => setQuick(false)} /> : null}
       <main className="board-screen scroll">
         <header className="board-header">
           <h1 id="desk-heading">Field Notes</h1>
@@ -145,12 +143,11 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
           <section className="board-tile board-weather-tile">
             <button
               className="quick-note-open"
-              onClick={() => setQuick(true)}
+              onClick={() => frame?.quickNote()}
               aria-label="Quick note"
             >
               <Icon name="edit" />
               <strong>Quick note</strong>
-              <small>A thought to keep</small>
             </button>
           </section>
           <RouteLink className="board-tile board-date" href={to.calendar(month)}>
@@ -228,23 +225,12 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
           <section className="board-tile board-shelf">
             <div className="board-tile-label">
               <h2>Notebooks</h2>
-              <button onClick={() => setManage(true)}>Manage</button>
             </div>
             <div className="board-books">
               {books.map((book, i) => (
-                <RouteLink
-                  key={book.id}
-                  href={to.notebookHome(book.id)}
-                  aria-label={`Open ${book.name} notebook`}
-                  style={{
-                    backgroundColor: coverColor(book.color),
-                    height: `${100 - (i % 5) * 7}%`,
-                  }}
-                >
-                  <strong>{book.name}</strong>
-                </RouteLink>
+                <Spine key={book.id} id={book.id} name={book.name} color={book.color} index={i} />
               ))}
-              <button aria-label="Add notebook" onClick={() => setManage(true)}>
+              <button aria-label="Add notebook" onClick={() => frame?.manage()}>
                 <Icon name="add" />
               </button>
             </div>
@@ -275,13 +261,29 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
           </RouteLink>
         </div>
       </main>
-      {manage ? (
-        <NotebookManager
-          onClose={() => setManage(false)}
-          onAdded={(id) => navigate(to.notebook(id))}
-          onDeleted={() => {}}
-        />
-      ) : null}
     </div>
+  )
+}
+
+/* A spine opens its notebook. Held, or right-clicked on a desk, it opens the
+   manager on that notebook for a rename or a new cover. The journal is
+   reserved, so holding it does nothing more than a tap. */
+function Spine({ id, name, color, index }: { id: string; name: string; color: string; index: number }) {
+  const frame = useFrame()
+  const { fired, ...hold } = useLongPress(() => {
+    if (id !== JOURNAL_NOTEBOOK) frame?.manage(id)
+  })
+  return (
+    <RouteLink
+      href={to.notebookHome(id)}
+      aria-label={`Open ${name} notebook`}
+      style={{ backgroundColor: coverColor(color), height: `${100 - (index % 5) * 7}%` }}
+      {...hold}
+      onClick={(e) => {
+        if (fired()) e.preventDefault()
+      }}
+    >
+      <strong>{name}</strong>
+    </RouteLink>
   )
 }

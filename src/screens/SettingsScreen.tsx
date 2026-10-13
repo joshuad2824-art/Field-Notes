@@ -8,7 +8,7 @@ import { bytes, countLabel } from '../lib/format'
 import type { NotebookId } from '../lib/model'
 import { useAllNotebooks } from '../lib/notebooks'
 import { setSettings, useSettings } from '../lib/settings'
-import { back, navigate, to } from '../lib/router'
+import { navigate, to } from '../lib/router'
 import { JournalPanel } from '../components/JournalPanel'
 import { SyncPanel } from '../components/SyncPanel'
 import { SienaConnectPanel } from '../components/SienaConnectPanel'
@@ -138,9 +138,6 @@ export function SettingsScreen() {
   return (
     <div className="app settings-app">
       <header className="chrome">
-        <button className="btn glyph" onClick={() => back()} aria-label="Back">
-          <Icon name="back" />
-        </button>
         <h1 className="chrome-title">Settings</h1>
       </header>
 
@@ -184,7 +181,6 @@ export function SettingsScreen() {
           </section>
           <section id="settings-appearance" className="settings-card">
             <h2>New pages</h2>
-            <p>Default paper and pen for pages without their own appearance settings.</p>
             <div className="actions">
               <button
                 className={`btn caps${settings.stock === 'night' ? ' on' : ''}`}
@@ -201,7 +197,6 @@ export function SettingsScreen() {
                 Pen · {settings.pen === 'felt' ? 'Grape Nuts' : 'Ink'}
               </button>
             </div>
-            <p className="theme-follow">Theme · Follow the last notebook</p>
             <div className="specimen" data-stock={settings.stock} data-pen={settings.pen}>
               <div className="specimen-leaf">
                 <span className="specimen-text">The first morning</span>
@@ -215,7 +210,6 @@ export function SettingsScreen() {
           </section>
           <section id="settings-backup" className="settings-card">
             <h2>Backup</h2>
-            <p>Download a copy of your pages, images, events, and saved Siena items.</p>
             <div className="actions">
               <button
                 className="btn caps"
@@ -230,6 +224,7 @@ export function SettingsScreen() {
                   key={book.id}
                   className="btn caps"
                   onClick={() => void exportNotebook(book.id as NotebookId)}
+                  aria-label={`Export ${book.name}`}
                 >
                   {book.name}
                 </button>
@@ -237,10 +232,6 @@ export function SettingsScreen() {
             </div>
 
             <h2>Import</h2>
-            <p>
-              Restore an exported archive or bring in Markdown files. Restoring an archive twice
-              keeps one copy of each page.
-            </p>
             <div className="actions">
               <button
                 className="btn caps"

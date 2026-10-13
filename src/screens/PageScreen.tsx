@@ -45,8 +45,8 @@ import { WriteupError, writeUp } from '../writeup/anthropic'
 import { getSettings, setSettings, stepZoom, useSettings } from '../lib/settings'
 import { useKeyboardOpen } from '../lib/viewport'
 import { resetEdgeColor, setEdgeColor, tokenColor } from '../lib/themecolor'
-import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
-import { back, navigate, to } from '../lib/router'
+import { navigate, to } from '../lib/router'
+import { NotebookSwitcher } from '../components/NotebookSwitcher'
 import { useLive } from '../lib/useLive'
 
 const SAVE_DELAY = 250
@@ -55,7 +55,6 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
   const settings = useSettings()
   const books = useNotebooks()
   const keyboardOpen = useKeyboardOpen()
-  const docked = useMediaQuery(SIDEBAR_DOCKED)
   const linkedEvents = useLive<FieldEvent[]>(() => eventsForPage(id), [id], [])
 
   const [page, setPage] = useState<Page | null>(null)
@@ -86,6 +85,14 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
   const loaded = useRef(false)
   const openedBlank = useRef(false)
   const timer = useRef<number | null>(null)
+  /* Amended decision 17: a saved page says nothing. A mark appears only when
+     a save has been pending for two seconds, or has failed. */
+  const [saveMark, setSaveMark] = useState<'' | 'saving' | 'failed'>('')
+  const slowSave = useRef<number | null>(null)
+  /* The toolbar steps back to a third while the writing is moving, and
+     returns on hover or after a pause. */
+  const [typing, setTyping] = useState(false)
+  const typingTimer = useRef<number | null>(null)
 
   bodyRef.current = body
 
@@ -164,7 +171,18 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
           navigate(to.page(saved.id))
         }
       } else if (mounted.current) setPage(saved)
-    })
+    }).then(
+      () => {
+        if (bodyRef.current !== baseRef.current?.body) return
+        if (slowSave.current) clearTimeout(slowSave.current)
+        slowSave.current = null
+        if (mounted.current) setSaveMark('')
+      },
+      (error) => {
+        if (mounted.current) setSaveMark('failed')
+        throw error
+      },
+    )
     saves.current = save.catch(() => {})
     return save
   }
@@ -174,6 +192,8 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
     window.addEventListener('pagehide', onHide)
     document.addEventListener('visibilitychange', onHide)
     return () => {
+      if (slowSave.current) clearTimeout(slowSave.current)
+      if (typingTimer.current) clearTimeout(typingTimer.current)
       window.removeEventListener('pagehide', onHide)
       document.removeEventListener('visibilitychange', onHide)
       if (!loaded.current) return
@@ -198,6 +218,14 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
   const onChange = (next: string) => {
     setBody(next)
     bodyRef.current = next
+    if (slowSave.current === null)
+      slowSave.current = window.setTimeout(
+        () => setSaveMark((mark) => (mark === 'failed' ? mark : 'saving')),
+        2000,
+      )
+    setTyping(true)
+    if (typingTimer.current) clearTimeout(typingTimer.current)
+    typingTimer.current = window.setTimeout(() => setTyping(false), 1500)
     if (timer.current) clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
       timer.current = null
@@ -301,8 +329,7 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
         {({ toggle, hidden }) => (
           <main className="desk" key="desk">
             <header className="phone-page-heading">
-              <span>{book.name}</span>
-              <small>Saved</small>
+              <NotebookSwitcher notebook={book.id} />
             </header>
             <article
               className="leaf"
@@ -311,27 +338,20 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
               style={{ '--zoom': settings.zoom } as CSSProperties}
             >
               {/* Three marks at rest, not eleven. */}
-              <div className="tools">
+              <div className={`tools${typing ? ' typing' : ''}`}>
                 <div className="row">
-                  {workshop ? (
-                    <button
-                      className="icon-control"
-                      aria-label="Back to plan"
-                      title="Back to plan"
-                      onClick={() => navigate(to.plan(id))}
-                    >
-                      <Icon name="back" />
-                    </button>
-                  ) : (
-                    toggle
-                  )}
+                  {workshop ? null : toggle}
                   {hidden ? (
                     <span className="breadcrumb">
                       {book.name} · {todayLine()}
                     </span>
                   ) : null}
                   <span className="grow" />
-                  <span className="saved">Saved</span>
+                  {saveMark ? (
+                    <span className="saved" data-save={saveMark} role="status">
+                      {saveMark === 'failed' ? 'Not saved' : 'Saving'}
+                    </span>
+                  ) : null}
                   {/* Undo and redo are the editor's own; they sit with Aa
                       rather than with the navigation on the left. */}
                   <button
@@ -414,17 +434,6 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
               {keyboardOpen ? null : (
                 <div className="pagefoot">
                   <div className="pagefoot-measure">
-                    {docked ? null : (
-                      <button
-                        className="foot-back icon-control"
-                        aria-label={workshop ? 'Back to plan' : 'Back to list'}
-                        onClick={() =>
-                          workshop ? navigate(to.plan(id)) : back(to.notebook(book.id))
-                        }
-                      >
-                        <Icon name="back" />
-                      </button>
-                    )}
                     <span>{countLabel(words, 'word')}</span>
                     <span>·</span>
                     <span>{editedStamp(page.updated)}</span>

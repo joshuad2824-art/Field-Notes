@@ -1,5 +1,5 @@
 import { recurrenceError, recurrencePreview, recurrenceSummary, dateWeekday, WEEKDAYS, type EventRecurrence } from '../lib/event-recurrence'
-import { readableDay } from '../lib/format'
+import { readableDay, repeatLine } from '../lib/format'
 import type { EventDraft } from '../lib/events'
 
 export function EventRepeat({ draft, onChange }: { draft: EventDraft; onChange: (draft: EventDraft) => void }) {
@@ -30,7 +30,7 @@ export function EventRepeat({ draft, onChange }: { draft: EventDraft; onChange: 
       <label>Ends<select value={ending} onChange={e => patch({ until: e.target.value === 'until' ? draft.date : undefined, count: e.target.value === 'count' ? 12 : undefined })}><option value="never">Never</option><option value="until">On a date</option><option value="count">After a number of occurrences</option></select></label>
       {ending === 'until' ? <label>Last repeat date<input required type="date" min={draft.date} value={r.until ?? ''} onChange={e => patch({ until: e.target.value })} /></label> : null}
       {ending === 'count' ? <label>Occurrences<input required type="number" min="1" max="9999" value={Number.isFinite(r.count) ? r.count : ''} onChange={e => patch({ count: e.target.valueAsNumber })} /></label> : null}
-      {error ? <p className="event-date-help" role="status">{error}</p> : <div className="repeat-preview" aria-live="polite"><p>{recurrenceSummary(r)}</p>{preview.length ? <><span>Next dates</span><ul>{preview.map(day => <li key={day}>{readableDay(day)}</li>)}</ul>{preview[0] !== draft.date ? <small>The first event will start on {readableDay(preview[0])}.</small> : null}</> : <small>No occurrences before the end date. Adjust the schedule.</small>}</div>}
+      {error ? <p className="event-date-help" role="status">{error}</p> : <div className="repeat-preview" aria-live="polite"><p>{repeatLine(recurrenceSummary(r))}</p>{preview.length ? <><span>Next dates</span><ul>{preview.map(day => <li key={day}>{readableDay(day)}</li>)}</ul>{preview[0] !== draft.date ? <small>The first event will start on {readableDay(preview[0])}.</small> : null}</> : <small>No occurrences before the end date. Adjust the schedule.</small>}</div>}
       {(r.monthDay && r.monthDay > 28) || r.monthWeek === 5 ? <p className="event-date-help">Months without this date or weekday are skipped. Choose “Last day” or “Last” for a repeat in every month.</p> : null}
       {r.frequency === 'yearly' && draft.date.slice(5) === '02-29' ? <p className="event-date-help">February 29 repeats in leap years.</p> : null}
     </> : null}

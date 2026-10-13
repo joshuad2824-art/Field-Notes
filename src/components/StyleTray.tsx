@@ -15,6 +15,7 @@ import { capsInCell, insertTable, markInCell } from '../editor/table'
 import { linkAt, removeLink, writeLink, type NoteLink } from '../editor/links'
 import { addImage, isImage } from '../lib/images'
 import { imageMarkdown, type Pen, type Placement, type Stock } from '../lib/model'
+import { useDismiss } from '../lib/dismiss'
 
 interface Props {
   toggleRef: RefObject<HTMLButtonElement | null>
@@ -124,6 +125,10 @@ export function StyleTray({
     url: string
   } | null>(null)
   const [linkError, setLinkError] = useState('')
+
+  /* Escape closes the strip before it reaches the editor, so the first press
+     takes the strip away and the second lets go of the caret. */
+  useDismiss(true, onClose)
 
   useEffect(() => {
     const dismissOutside = (event: MouseEvent) => {

@@ -68,7 +68,7 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
     <div className="app fn-app notebook-desk-app">
       <main className="notebook-desk scroll">
         <div className="notebook-desk-wrap">
-          <DeskHeader title={book?.name ?? 'Notebook desk'} notebook={notebook} pages={pages} />
+          <DeskHeader title={book?.name ?? 'Notebook desk'} notebook={notebook} />
           {!book ? (
             <p className="work-empty">
               This notebook isn’t available on this device yet.{' '}
@@ -93,16 +93,6 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                       ? 'Your actions, your notes, and the threads worth keeping close.'
                       : 'Pick up a thread, find a note, and make room for what’s next.'}
                   </p>
-                  <div className="work-cover-links">
-                    <RouteLink href={to.notebook(notebook)}>
-                      <Icon name="notebook" />
-                      Notebook pages
-                    </RouteLink>
-                    <RouteLink href={to.newPage(notebook)}>
-                      <Icon name="new-page" />
-                      Write a note
-                    </RouteLink>
-                  </div>
                 </div>
                 <div className="work-counts" aria-label="Open reminder counts">
                   <button onClick={() => setFilter('due')} aria-pressed={filter === 'due'}>
@@ -248,13 +238,17 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                     aria-labelledby="work-brief-heading"
                   >
                     <span className="work-tape" aria-hidden="true" />
-                    <div className="work-section-heading">
+                    <RouteLink
+                      className="work-section-heading work-brief-head"
+                      href={to.fromSiena()}
+                      title="From Siena"
+                    >
                       <div>
                         <span className="work-eyebrow">02 / The latest word</span>
                         <h2 id="work-brief-heading">From Siena</h2>
                       </div>
                       <Icon name="from-siena" />
-                    </div>
+                    </RouteLink>
                     {featured ? (
                       <>
                         <p className="work-brief-date">
@@ -279,9 +273,6 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                         ))}
                       </details>
                     ) : null}
-                    <RouteLink className="work-text-link" href={to.fromSiena()}>
-                      All messages from Siena <Icon name="forward" />
-                    </RouteLink>
                   </section>
                   {work ? (
                     <section
@@ -301,9 +292,6 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                           </a>
                         ))}
                       </div>
-                      <p className="work-source-note">
-                        Opens the source. Use your Ascension account.
-                      </p>
                     </section>
                   ) : null}
                   <section className="work-done">
@@ -333,9 +321,6 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                           ? 'The Ascension calendar connection is still to come. Your Field Notes events remain on Today.'
                           : 'Your Field Notes events remain on Today.'}
                       </p>
-                      <RouteLink href={to.overview()}>
-                        Open Today <Icon name="forward" />
-                      </RouteLink>
                     </div>
                   </div>
                 </aside>

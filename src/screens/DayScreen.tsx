@@ -11,7 +11,9 @@ import { PageRow } from '../components/PageRow'
 import { EventRow } from '../components/EventRow'
 import { SienaItemCard } from '../components/SienaItemCard'
 import { BoardWeather } from '../components/BoardWeather'
-import { Icon } from '../components/Icon'
+import { selectCalendarDate } from '../lib/calendar-view'
+import { useDismiss } from '../lib/dismiss'
+import { useMediaQuery } from '../lib/media'
 import { liveEvents } from '../lib/events'
 import { allSienaItems } from '../lib/siena-items'
 export function DayScreen({ iso }: { iso: string; notebook: string }) {
@@ -44,6 +46,14 @@ export function DayScreen({ iso }: { iso: string; notebook: string }) {
     el.addEventListener('scroll', scroll)
     return () => el.removeEventListener('scroll', scroll)
   }, [])
+  /* The pill's + adds on the day being looked at. */
+  const choose = (day: string) => {
+    setSelected(day)
+    setDetail(true)
+    selectCalendarDate(day)
+  }
+  const phone = useMediaQuery('(max-width: 819px)')
+  useDismiss(detail && phone, () => setDetail(false))
   const date = new Date(selected + 'T12:00:00')
   return (
     <div className="app agenda-app">
@@ -59,14 +69,15 @@ export function DayScreen({ iso }: { iso: string; notebook: string }) {
             const daily = events.filter((e) => eventOnDay(e, day)),
               rs = reminders(day)
             return (
-              <section key={day} data-day={day} className="agenda-day">
+              <section
+                key={day}
+                data-day={day}
+                className={`agenda-day${!daily.length && !rs.length ? ' empty' : ''}`}
+              >
                 <div className="agenda-date">
                   <button
                     className={day === isoDay() ? 'today' : ''}
-                    onClick={() => {
-                      setSelected(day)
-                      setDetail(true)
-                    }}
+                    onClick={() => choose(day)}
                     aria-label={readableDay(day)}
                   >
                     <span>
@@ -92,10 +103,7 @@ export function DayScreen({ iso }: { iso: string; notebook: string }) {
                   {daily.length + rs.length > 2 ? (
                     <button
                       className="agenda-more"
-                      onClick={() => {
-                        setSelected(day)
-                        setDetail(true)
-                      }}
+                      onClick={() => choose(day)}
                     >
                       <strong>{daily.length + rs.length - 1} more</strong>
                       <span>
@@ -105,49 +113,26 @@ export function DayScreen({ iso }: { iso: string; notebook: string }) {
                       </span>
                     </button>
                   ) : null}
-                  {!daily.length && !rs.length ? (
-                    <button
-                      className="agenda-free"
-                      onClick={() => {
-                        setSelected(day)
-                        setDetail(true)
-                      }}
-                    >
-                      An open day
-                    </button>
-                  ) : null}
-                  <button
-                    className="agenda-day-open"
-                    onClick={() => {
-                      setSelected(day)
-                      setDetail(true)
-                    }}
-                    aria-label={`View ${readableDay(day)}`}
-                  >
-                    <Icon name="forward" />
-                  </button>
                 </div>
               </section>
             )
           })}
         </div>
         <aside className={`agenda-sheet scroll${detail ? ' is-open' : ''}`}>
-          <button
-            className="agenda-sheet-close"
-            aria-label="Back to agenda"
-            onClick={() => setDetail(false)}
-          >
-            <Icon name="back" />
-          </button>
           <header>
-            <h1 id="desk-heading">{date.toLocaleDateString([], { weekday: 'long' })}</h1>
+            <h1 id="desk-heading">
+              <button
+                className="agenda-day-heading"
+                onClick={() => navigate(to.calendar(selected.slice(0, 7)))}
+                title={`Open ${date.toLocaleDateString([], { month: 'long', year: 'numeric' })}`}
+              >
+                {date.toLocaleDateString([], { weekday: 'long' })}
+              </button>
+            </h1>
             <p>
               {date.toLocaleDateString([], { day: 'numeric', month: 'long' })}
               {selected === isoDay() ? ' · Today' : ''}
             </p>
-            <button aria-label="Add event" onClick={() => navigate(to.newEvent(selected))}>
-              <Icon name="add" />
-            </button>
           </header>
           <h2>Schedule</h2>
           <section>

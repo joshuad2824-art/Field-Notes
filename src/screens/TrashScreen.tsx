@@ -5,7 +5,6 @@ import { deletedPages, purgePage, restorePage } from '../lib/db'
 import { deletedEvents, purgeEvent, restoreEvent } from '../lib/events'
 import { readableDay, clock } from '../lib/format'
 import { TOMBSTONE_DAYS, type FieldEvent, type Page, snippetOf, titleOf } from '../lib/model'
-import { back } from '../lib/router'
 import { useLive } from '../lib/useLive'
 
 function daysLeft(deleted: number): number {
@@ -44,9 +43,6 @@ export function TrashScreen() {
   return (
     <div className="app trash-app">
       <header className="chrome">
-        <button className="btn glyph" onClick={() => back()} aria-label="Back">
-          <Icon name="back" />
-        </button>
         <h1 className="chrome-title">Trash</h1>
         {pages.length + events.length > 0 ? (
           <button

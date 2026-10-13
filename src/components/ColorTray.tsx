@@ -36,15 +36,9 @@ export function ColorTray({
   useEffect(() => {
     const previous = document.activeElement as HTMLElement
     ref.current?.querySelector<HTMLButtonElement>('button')?.focus()
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', key)
-    return () => {
-      window.removeEventListener('keydown', key)
-      previous?.focus()
-    }
-  }, [onClose])
+    /* Escape is the frame's: it registered this tray on the dismiss stack. */
+    return () => previous?.focus()
+  }, [])
   return (
     <div className="color-tray-scrim" onClick={onClose}>
       <div

@@ -1,14 +1,9 @@
 import { Icon } from './Icon'
-import { useEffect, type ComponentProps, type ReactNode } from 'react'
+import { type ComponentProps, type ReactNode } from 'react'
+import { useDismiss } from '../lib/dismiss'
 
 export function Sheet({ onClose, children }: { onClose: () => void; children: ReactNode }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useDismiss(true, onClose)
 
   return (
     <div className="scrim" onMouseDown={onClose} role="presentation">

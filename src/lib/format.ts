@@ -165,3 +165,18 @@ export function lateBy(ts: number, now = Date.now()): string {
   const days = Math.floor((now - ts) / 86_400_000)
   return Number.isFinite(days) && days >= 1 ? `${days} day${days === 1 ? '' : 's'} late` : ''
 }
+
+/* The shared recurrence engine says "through 2026-12-17", because the hosted
+   server says it in the same words and the engine is shared byte for byte. On
+   screen the date reads the way the rest of the app writes one — "until Dec
+   17" — with the year only when it is not this one. */
+export function repeatLine(summary: string, now = new Date()): string {
+  return summary.replace(/ through (\d{4})-(\d{2})-(\d{2})$/, (_, y, m, d) => {
+    const date = new Date(Number(y), Number(m) - 1, Number(d), 12)
+    return ` until ${date.toLocaleDateString([], {
+      month: 'short',
+      day: 'numeric',
+      ...(Number(y) !== now.getFullYear() ? { year: 'numeric' } : {}),
+    })}`
+  })
+}

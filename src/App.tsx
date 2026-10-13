@@ -91,7 +91,7 @@ function Screen({ route, remembered }: { route: Route; remembered: string }) {
     case 'event':
       return <EventScreen id={route.id} occurrence={route.occurrence} notebook={remembered} />
     case 'notebook':
-      if (isWorkshopNotebook(route.notebook)) return <WorkshopNotebookRedirect notebook={remembered} />
+      if (isWorkshopNotebook(route.notebook) && !route.list) return <WorkshopNotebookRedirect notebook={remembered} />
       return <HomeScreen notebook={notebookOf(route.notebook)?.id ?? remembered} />
     case 'notebook-desk':
       return <NotebookDeskScreen key={route.notebook} notebook={route.notebook} />

@@ -1,7 +1,5 @@
-import { Icon } from '../components/Icon'
 import { pagesWithTag } from '../lib/db'
 import type { Page } from '../lib/model'
-import { back } from '../lib/router'
 import { useLive } from '../lib/useLive'
 import { PageRow } from '../components/PageRow'
 
@@ -11,9 +9,6 @@ export function TagScreen({ tag }: { tag: string }) {
   return (
     <div className="app">
       <header className="chrome">
-        <button className="btn glyph" onClick={() => back()} aria-label="Back">
-          <Icon name="back" />
-        </button>
         <span className="chrome-title">#{tag}</span>
       </header>
 

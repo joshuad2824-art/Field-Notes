@@ -1,7 +1,6 @@
 import { PageDaySheet } from './PageDaySheet'
 import { Icon } from './Icon'
 import { useEffect, useState, type ReactNode } from 'react'
-import { createPage } from '../lib/db'
 import { SIDEBAR_AVAILABLE, SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { firstNotebookId, isReserved, useNotebooks } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
@@ -76,12 +75,6 @@ export function Shell({
     navigate(to.notebookHome(id))
   }
 
-  const newPage = async () => {
-    const page = await createPage(notebook)
-    setRailDrawer(false)
-    navigate(to.page(page.id))
-  }
-
   const toggle = overview ? (
     <button
       className="mark-button"
@@ -130,7 +123,6 @@ export function Shell({
           onToggleRail={() =>
             docked ? setSettings({ rail: !settings.rail }) : setRailDrawer(true)
           }
-          onNewPage={newPage}
         />
       ) : null}
 

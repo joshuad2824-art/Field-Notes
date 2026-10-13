@@ -1,9 +1,9 @@
 import { Icon } from './Icon'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { livePages } from '../lib/db'
 import { countLabel, groupFor, mastheadParts, shortStamp } from '../lib/format'
-import { collectWeek, lastWeekAt } from '../lib/journal'
 import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
+import { NotebookSwitcher } from './NotebookSwitcher'
 import { JOURNAL_NOTEBOOK, type Page, snippetOf, titleOf, wordCount } from '../lib/model'
 import { notebookForPage } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
@@ -19,7 +19,6 @@ interface Props {
      is what folds and unfolds it. */
   railShown: boolean
   onToggleRail: () => void
-  onNewPage: () => void
   onPick?: () => void
 }
 
@@ -48,35 +47,24 @@ export function PageList({
   compact,
   railShown,
   onToggleRail,
-  onNewPage,
   onPick,
 }: Props) {
   const book = notebookForPage(notebook)
   const pages = useLive<Page[]>(() => livePages(notebook), [notebook], [])
   const query = ''
   const { weekday, day, month, year } = mastheadParts()
-  /* The journal's foot carries a different button, for the same reason
-     decision 19 put New page here in the first place: the control belongs at
-     the foot of the column showing the pages it will make. Nothing is written
-     in the journal by hand, so New page would be the wrong offer. */
   const journal = notebook === JOURNAL_NOTEBOOK
-  const [collecting, setCollecting] = useState(false)
-  const [collectionProblem, setCollectionProblem] = useState('')
 
   /* iOS keeps a strip below the app and paints it from the page's own canvas
      background, so that colour has to be whatever is at the bottom of the screen.
-     When the list is the whole window, that is this foot — a near-black bar,
-     not the frame's teal — and getting it wrong draws exactly the band the
-     colour is there to prevent.
-
-     Only when the list is the whole window. Docked, the foot is one column of
-     three and has no claim on the width of the screen. */
-  const footRef = useRef<HTMLDivElement>(null)
+     When the list is the whole window, that is the list itself. Docked, the list
+     is one column of three and has no claim on the width of the screen. */
+  const colRef = useRef<HTMLDivElement>(null)
   const docked = useMediaQuery(SIDEBAR_DOCKED)
   useEffect(() => {
-    const foot = footRef.current
-    if (docked || !foot) return
-    setEdgeColor(surfaceColor(foot))
+    const col = colRef.current
+    if (docked || !col) return
+    setEdgeColor(surfaceColor(col))
     return resetEdgeColor
   }, [docked])
 
@@ -94,7 +82,7 @@ export function PageList({
   }
 
   return (
-    <div className="listcol">
+    <div className={`listcol${railShown ? ' rail-shown' : ''}`} ref={colRef}>
       {compact ? (
         <div className="list-masthead">
           <span className="list-numeral">{day}</span>
@@ -131,35 +119,12 @@ export function PageList({
             </button>
           )}
           <span className="book-dot" style={{ background: book.color }} />
-          <span className="list-title">{book.name}</span>
+          <NotebookSwitcher notebook={book.id} className="list-title" />
           <span className="grow" />
-          <span className="list-count">
-            {countLabel(pages.length, journal ? 'review' : 'page')}
-          </span>
         </div>
       </div>
 
       <div className="scroll list-body">
-        {journal ? (
-          <details className="journal-help">
-            <summary
-              className="icon-control"
-              aria-label="About weekly reviews"
-              title="About weekly reviews"
-            >
-              <Icon name="info" />
-            </summary>
-            <p className="journal-intro">
-              Weekly reviews assembled from your notebook pages. Review last week gathers its
-              notes, or opens your existing review with your edits intact.
-            </p>
-          </details>
-        ) : null}
-        {collectionProblem ? (
-          <p className="journal-intro" role="alert">
-            {collectionProblem}
-          </p>
-        ) : null}
         {groups.length === 0 ? (
           <div className="empty">
             {query.trim()
@@ -195,46 +160,6 @@ export function PageList({
         )}
       </div>
 
-      {/* New page belongs under the pages it makes, at every width. */}
-      <div className="list-foot" ref={footRef}>
-        {journal ? (
-          <button
-            className="plate-button tight"
-            aria-label={collecting ? 'Opening review' : 'Review last week'}
-            title="Review last week"
-            disabled={collecting}
-            /* Last week, not this one: on a Sunday morning the week you want
-               is the one that just finished. Collecting the same week twice
-               opens the existing review without replacing edits. */
-            onClick={async () => {
-              setCollecting(true)
-              setCollectionProblem('')
-              try {
-                const done = await collectWeek(lastWeekAt())
-                navigate(to.page(done.id))
-                onPick?.()
-              } catch (error) {
-                setCollectionProblem(
-                  error instanceof Error ? error.message : 'Could not open the weekly review.',
-                )
-              } finally {
-                setCollecting(false)
-              }
-            }}
-          >
-            <Icon name="calendar" />
-          </button>
-        ) : (
-          <button
-            className="plate-button tight"
-            onClick={onNewPage}
-            title="New page — ⌘⇧N"
-            aria-label="New page"
-          >
-            <Icon name="add" />
-          </button>
-        )}
-      </div>
     </div>
   )
 }

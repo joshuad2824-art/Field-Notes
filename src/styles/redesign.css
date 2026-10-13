@@ -75,10 +75,74 @@ body,
   align-items: center;
   gap: 2px;
   padding: 0 8px;
-  background: var(--th-raised);
+  white-space: nowrap;
+  isolation: isolate;
+  --pill-bg: var(--th-raised);
+}
+/* The pill's body is drawn behind it, so it can settle into a short bar
+   where it sat without moving any of the controls on it. */
+.floating-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--pill-bg);
   border-radius: 999px;
   box-shadow: var(--sh-pill);
-  white-space: nowrap;
+  transform-origin: 50% 50%;
+  transition:
+    transform var(--duration-base) var(--ease-standard),
+    opacity var(--duration-base) var(--ease-standard);
+}
+.floating-nav > * {
+  transition: opacity var(--duration-base) var(--ease-standard);
+}
+.floating-nav.receded::before {
+  transform: scale(0.08, 0.07);
+  opacity: 0;
+}
+.floating-nav.receded > * {
+  opacity: 0;
+}
+/* A finger cannot hover, so on touch the receded controls stop taking taps
+   and the bar is what brings them back. A mouse always moves before it
+   clicks, which brings them back first. */
+@media (pointer: coarse) {
+  .floating-nav.receded > * {
+    pointer-events: none;
+  }
+}
+.pill-handle {
+  position: absolute;
+  z-index: 56;
+  left: 50%;
+  bottom: calc(max(16px, var(--safe-bottom)) + 6px);
+  transform: translateX(-50%);
+  width: 88px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-base) var(--ease-standard);
+}
+.pill-handle span {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: #f6f3ecb3;
+}
+.pill-handle.shown {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .floating-nav::before {
+    transition: none;
+  }
 }
 .floating-nav > a,
 .floating-nav > button {
@@ -106,10 +170,19 @@ body,
   padding: 0;
   margin-left: 8px;
 }
-.floating-nav .pill-from-siena {
-  border-right: 1px solid #ffffff40;
-  border-radius: 0;
-  margin-right: 5px;
+.floating-nav .pill-rule {
+  flex: none;
+  width: 1px;
+  height: 24px;
+  margin: 0 4px;
+  background: #ffffff40;
+}
+.floating-nav .pill-more.on {
+  background: rgba(0, 0, 0, 0.24);
+}
+.floating-nav .pill-add[aria-disabled='true'] {
+  opacity: 0.4;
+  cursor: default;
 }
 .board-sync {
   position: absolute;
@@ -1357,16 +1430,20 @@ body,
   .board-sync {
     display: none;
   }
+  /* Every room stays in the pill on a phone. Eight targets have to fit 320,
+     so they abut — no dead gap between them — and narrow before they shrink
+     in height, which stays 44. */
   .floating-nav {
     height: 60px;
     bottom: max(20px, var(--safe-bottom));
-    padding: 0 8px;
-    gap: 4px;
+    padding: 0 4px;
+    gap: 0;
   }
   .floating-nav > a,
   .floating-nav > button {
     height: 44px;
-    min-width: 48px;
+    min-width: 42px;
+    padding: 0;
   }
   .floating-nav .fn-icon {
     width: 22px;
@@ -1375,11 +1452,10 @@ body,
   .floating-nav .pill-add {
     width: 44px;
     min-width: 44px;
+    margin-left: 4px;
   }
-  .floating-nav .pill-calendar,
-  .floating-nav .pill-workshop,
-  .floating-nav .pill-from-siena {
-    display: none;
+  .pill-handle {
+    bottom: calc(max(20px, var(--safe-bottom)) + 8px);
   }
   .redesign-application .listcol {
     width: 100%;
@@ -1741,14 +1817,6 @@ body,
   font: 400 14px var(--font-sign);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-}
-.agenda-sheet header button {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  border: 0;
-  background: none;
-  color: #f6f3ec;
 }
 .agenda-sheet h2 {
   font: 500 12px var(--font-sign);
@@ -2493,7 +2561,7 @@ body,
   background: #2a2622;
 }
 .workshop-room .floating-nav {
-  background: #6b6255;
+  --pill-bg: #6b6255;
 }
 .redesign-application .fn-workshop-page > .fn-shell {
   padding: 36px 40px 112px;
@@ -4597,8 +4665,9 @@ body,
     monospace;
   color: #9cb1b2;
 }
-.redesign-application:has(.quick-note-dialog) .floating-nav {
-  display: none;
+.redesign-application:has(.quick-note-dialog) .floating-nav.above-quick {
+  visibility: visible;
+  z-index: 125;
 }
 .redesign-application:is(.route-calendar, .route-day),
 .redesign-application .month-app,
@@ -4641,15 +4710,6 @@ body,
   font:
     600 13px 'Archivo',
     sans-serif;
-}
-.redesign-application:is(.route-calendar, .route-day) .pill-menu {
-  bottom: auto;
-  top: 80px;
-  right: 24px;
-  left: auto;
-  transform: none;
-  max-height: calc(100% - 100px);
-  overflow: auto;
 }
 .redesign-application .month-desktop {
   flex: 1;
@@ -5595,15 +5655,6 @@ body,
   list-style: none;
   margin: 0;
 }
-.redesign-application:is(.route-workshop, .route-plans) .pill-menu {
-  top: 112px;
-  bottom: auto;
-  left: 40px;
-  right: auto;
-  transform: none;
-  max-height: calc(100% - 140px);
-  overflow: auto;
-}
 @media (min-width: 820px) and (max-width: 1199px) {
   .redesign-application .board-day {
     grid-column: span 12;
@@ -5666,9 +5717,6 @@ body,
   .workshop-reference-bottom > section {
     min-height: 220px;
   }
-  .redesign-application:is(.route-workshop, .route-plans) .pill-menu {
-    left: 20px;
-  }
 }
 
 .redesign-application .board-weather-card .weather-unavailable.weather-inset {
@@ -5709,3 +5757,411 @@ body,
 .redesign-application .board-month .cal-grid {flex:1;min-height:0;grid-auto-rows:minmax(0,1fr);}
 .redesign-application .board-month .cal-day {height:100%;min-height:0;}
 .redesign-application .board-month .cal .cal-day .cal-day-n {width:min(32px,100%);height:min(32px,100%);}
+
+/* ── October 13: one control grammar ─────────────────────────────────────
+   The pill is identical on every screen; contextual controls live on the
+   thing they act on; every scroller leaves a lane for the pill. */
+.redesign-application {
+  --pill-lane: calc(56px + max(16px, var(--safe-bottom)) + 16px);
+}
+@media (max-width: 819px) {
+  .redesign-application {
+    --pill-lane: calc(60px + max(20px, var(--safe-bottom)) + 16px);
+  }
+}
+.redesign-application .approved-content .scroll {
+  padding-bottom: var(--pill-lane);
+}
+@media (max-width: 359px) {
+  .floating-nav > a,
+  .floating-nav > button {
+    min-width: 35px;
+  }
+  .floating-nav .pill-add {
+    width: 38px;
+    min-width: 38px;
+    margin-left: 2px;
+  }
+  .floating-nav .pill-rule {
+    margin: 0 2px;
+  }
+}
+.pill-notice {
+  position: absolute;
+  z-index: 57;
+  left: 50%;
+  bottom: calc(var(--pill-lane) + 4px);
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: #0c2223;
+  color: #f6f3ec;
+  font: 500 13px var(--font-ui);
+  box-shadow: var(--sh-dialog);
+}
+
+/* The app menu holds only the back rooms. */
+.pill-menu .fn-icon,
+.pill-menu .colors-glyph {
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+.nav-menu-scrim.quiet {
+  background: transparent;
+}
+
+/* + offers three things where no room implies one. */
+.add-chooser {
+  position: fixed;
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #0c2223;
+  box-shadow: var(--sh-dialog);
+  transform: translateX(-50%);
+}
+.add-chooser button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #f6f3ec;
+}
+.add-chooser button:hover,
+.add-chooser button:focus-visible {
+  background: #ffffff14;
+}
+
+/* The notebook's name is the switcher. */
+.notebook-switcher {
+  position: relative;
+  min-width: 0;
+}
+.notebook-switcher-name {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notebook-switcher-name:hover {
+  opacity: 0.82;
+}
+.notebook-switcher-menu {
+  position: absolute;
+  z-index: 70;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 232px;
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 18px;
+  background: #0c2223;
+  box-shadow: var(--sh-dialog);
+  font: 500 14px var(--font-ui);
+  letter-spacing: normal;
+  text-transform: none;
+}
+.notebook-switcher-menu > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #e9e6df;
+  font: inherit;
+  text-align: left;
+}
+.notebook-switcher-menu > button:hover,
+.notebook-switcher-menu > button[aria-checked='true'] {
+  background: #ffffff12;
+}
+.notebook-switcher-menu i {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #f6f3ec66;
+}
+.notebook-switcher-menu hr {
+  width: 100%;
+  margin: 4px 0;
+  border: 0;
+  border-top: 1px solid #ffffff1f;
+}
+.notebook-switcher-menu .notebook-switcher-add {
+  justify-content: center;
+  color: #9cb1b2;
+}
+/* On a desk the docked sidebar is the switcher; the list's head offers it
+   only once the sidebar is folded away. */
+@media (min-width: 1200px) {
+  .redesign-application .listcol:not(.rail-shown) .list-head-row > .notebook-switcher {
+    display: block;
+    margin-right: auto;
+    font: 600 24px var(--font-sign);
+    text-transform: uppercase;
+    color: #f6f3ec;
+  }
+  .redesign-application .listcol:not(.rail-shown) .list-head-row {
+    gap: 12px;
+  }
+  .redesign-application .listcol:not(.rail-shown) .list-head-row button.sidebar-tab {
+    margin-left: 0;
+  }
+}
+@media (max-width: 819px) {
+  .phone-page-heading .notebook-switcher {
+    font: 600 20px var(--font-sign);
+    text-transform: uppercase;
+  }
+}
+.redesign-application .board-sidebar .board-sidebar-add {
+  justify-content: flex-start;
+  width: 44px;
+  color: #9cb1b2;
+}
+
+/* The page's tools step back while the writing moves. */
+.redesign-application .leaf .tools {
+  transition: opacity var(--duration-base) var(--ease-standard);
+}
+.redesign-application .leaf .tools.typing {
+  opacity: 0.33;
+}
+.redesign-application .leaf .tools.typing:hover,
+.redesign-application .leaf .tools.typing:focus-within:not(:has(.cm-editor)) {
+  opacity: 1;
+}
+.redesign-application .leaf .tools .saved[data-save='failed'] {
+  color: #de6a58;
+}
+.redesign-application .pagefoot-measure > span {
+  opacity: 0.5;
+  transition: opacity var(--duration-instant) linear;
+}
+@media (hover: hover) {
+  .redesign-application .pagefoot:hover .pagefoot-measure > span {
+    opacity: 1;
+  }
+}
+/* The list toggle's "on" is a state, not a focus ring. */
+.redesign-application .tools .mark-button.on {
+  background: transparent;
+  color: inherit;
+}
+.redesign-application .tools .mark-button.on:hover {
+  background: var(--wash-hover);
+}
+
+/* An empty notebook is an empty leaf in its colour; a click starts a page. */
+.redesign-application .desk.notebook-empty {
+  align-items: stretch;
+}
+.redesign-application .empty-leaf {
+  flex: 1;
+  align-self: stretch;
+  margin: 24px 24px var(--pill-lane);
+  min-height: 0;
+  border: 0;
+  border-radius: 24px;
+  background-color: var(--th-raised);
+  background-image: radial-gradient(circle, rgba(246, 243, 236, 0.07) 1px, transparent 1.5px);
+  background-size: 28px 28px;
+  background-position: 14px 14px;
+  display: grid;
+  place-items: center;
+  cursor: text;
+}
+.redesign-application button.empty-leaf:focus-visible {
+  outline: 2px solid #e5d5ba;
+  outline-offset: 4px;
+}
+.redesign-application .empty-leaf img {
+  width: min(220px, 40%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Menus that hang from the thing they belong to: the Workshop's heading, a
+   plan's title, an event's ⋯. */
+.workshop-heading,
+.plan-title,
+.redesign-application .event-top {
+  position: relative;
+}
+.workshop-menu,
+.plan-menu,
+.event-menu {
+  position: absolute;
+  z-index: 70;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 18px;
+  background: #0c2223;
+  box-shadow: var(--sh-dialog);
+}
+.event-menu {
+  left: auto;
+  right: 0;
+}
+:is(.workshop-menu, .plan-menu, .event-menu) > :is(a, button) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #e9e6df;
+  font: 500 14px var(--font-ui);
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: left;
+  text-decoration: none;
+}
+:is(.workshop-menu, .plan-menu, .event-menu) > :is(a, button):hover {
+  background: #ffffff12;
+}
+.workshop-heading h1 button,
+.plan-title-button,
+.event-title-edit,
+.month-toggle,
+.agenda-day-heading {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.plan-title-button:hover,
+.event-title-edit:hover,
+.month-toggle:hover,
+.agenda-day-heading:hover {
+  opacity: 0.82;
+}
+
+/* Event: one pencil and one ⋯, top right; the place is its own Maps link. */
+.redesign-application .event-top {
+  justify-content: flex-end;
+}
+.redesign-application .event-top .overview-back:last-child {
+  margin-left: 0;
+}
+.redesign-application .event-top .overview-back.on {
+  background: #f6f3ec2e;
+}
+.redesign-application .event-location {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: #f6f3ec55;
+  text-underline-offset: 4px;
+}
+
+/* Calendar: the month's name is the switch, with ‹ › beside it. */
+.redesign-application .month-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+.redesign-application .month-title .month-controls {
+  margin: 0;
+}
+.redesign-application .month-written {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+}
+.redesign-application .month-written-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: #f6f3ec;
+  font: 500 15px var(--font-ui);
+  text-align: left;
+}
+.redesign-application .month-written-row i {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #f6f3ec66;
+}
+.redesign-application .month-written-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* St. John: the name opens its pages; the From Siena card's head opens From Siena. */
+.redesign-application .redesign-desk-header h1 a {
+  color: inherit;
+  text-decoration: none;
+}
+.redesign-application .work-brief-head {
+  color: inherit;
+  text-decoration: none;
+}
+.redesign-application .manager-rename {
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid #f6f3ec55;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 2px 0;
+}
+/* Between phone and desk the list head still names the notebook, and the
+   name is still the switcher. There is no docked sidebar to fold here. */
+@media (min-width: 820px) and (max-width: 1199px) {
+  .redesign-application .list-head-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .redesign-application .list-head-row .list-title {
+    font: 600 30px var(--font-sign);
+    text-transform: uppercase;
+    color: #f6f3ec;
+  }
+  .redesign-application .list-head-row .sidebar-tab {
+    display: none;
+  }
+}

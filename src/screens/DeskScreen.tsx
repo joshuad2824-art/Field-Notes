@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useDismiss } from '../lib/dismiss'
+import { RouteLink } from '../components/DeskHeader'
 import { projectDesk, field } from '../lib/project-desk'
 import { planProgress } from '../lib/plan-progress'
 import { livePages, createPage } from '../lib/db'
@@ -21,6 +23,22 @@ export function DeskScreen({ notebook }: { kind: 'plans' | 'workshop'; notebook:
   const [editing, setEditing] = useState<{ kind: DeskKind; selected?: Page } | null>(null)
   const [projects, setProjects] = useState(false)
   const [creatingRoutine, setCreatingRoutine] = useState(false)
+  const [menu, setMenu] = useState(false)
+  const head = useRef<HTMLDivElement>(null)
+  useDismiss(menu, () => setMenu(false))
+  useEffect(() => {
+    if (!menu) return
+    const outside = (e: PointerEvent) => {
+      if (!head.current?.contains(e.target as Node)) setMenu(false)
+    }
+    document.addEventListener('pointerdown', outside)
+    return () => document.removeEventListener('pointerdown', outside)
+  }, [menu])
+  const act = (kind: string) => {
+    setMenu(false)
+    if (kind === 'projects') setProjects(true)
+    else setEditing({ kind: kind as DeskKind })
+  }
   const status = (page: Page) => field(page.body, 'Status').toLowerCase() || 'plan'
   const routine = pages.find(
     (p) => isWorkshopNotebook(p.notebook) && /^shop routine$/i.test(titleOf(p.body)),
@@ -53,20 +71,26 @@ export function DeskScreen({ notebook }: { kind: 'plans' | 'workshop'; notebook:
     <div className="app workshop-reference-app">
       <main className="workshop-reference scroll">
         <header className="workshop-reference-header">
-          <div>
+          <div className="workshop-heading" ref={head}>
             <h1 id="desk-heading">
               <button
-                aria-label="Workshop navigation"
-                title="Workshop navigation"
-                onClick={() => window.dispatchEvent(new Event('field-notes:workshop-menu'))}
+                aria-label="Workshop menu"
+                title="Workshop menu"
+                aria-haspopup="menu"
+                aria-expanded={menu}
+                onClick={() => setMenu(!menu)}
               >
                 The Workshop
               </button>
             </h1>
-            <p>
-              {plans.length} plans · {plans.filter((p) => status(p) === 'active').length} active
-              · {plans.filter((p) => status(p) === 'paused').length} paused
-            </p>
+            {menu ? (
+              <nav className="workshop-menu" aria-label="Workshop">
+                <button onClick={() => act('plan')}>New plan</button>
+                <button onClick={() => act('equipment')}>Add equipment</button>
+                <button onClick={() => act('projects')}>On my desk</button>
+                <RouteLink href={to.notebookPages(workshopBook)}>Workshop pages</RouteLink>
+              </nav>
+            ) : null}
           </div>
           <div className="workshop-reference-filters" role="group" aria-label="Filter plans">
             {['All', 'Active', 'Paused', 'Done'].map((value) => (
@@ -131,7 +155,6 @@ export function DeskScreen({ notebook }: { kind: 'plans' | 'workshop'; notebook:
                   Tools on the wall
                 </button>
               </h2>
-              <span>{desk.owned.length} owned</span>
             </header>
             <div>
               {desk.owned.map((page) => (
@@ -141,7 +164,7 @@ export function DeskScreen({ notebook }: { kind: 'plans' | 'workshop'; notebook:
               ))}
             </div>
           </section>
-          <section className="workshop-reference-routine">
+          <section className={`workshop-reference-routine${routine ? '' : ' empty'}`}>
             <h2>
               <button
                 disabled={creatingRoutine}

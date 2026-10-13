@@ -2,14 +2,15 @@ import { EventRepeat } from '../components/EventRepeat'
 import { expandEvents, recurrenceSummary } from '../lib/event-recurrence'
 import { Icon } from '../components/Icon'
 import { eventRangeError } from '../lib/event-range'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useDismiss } from '../lib/dismiss'
 import { eventDetails, getEvent, saveEvent, deleteEvent, type EventDraft } from '../lib/events'
 import { createPage, livePages, patchPage } from '../lib/db'
-import { isoDay, readableDay, clock } from '../lib/format'
+import { isoDay, readableDay, clock, repeatLine } from '../lib/format'
 import { handoffToAppleCalendar } from '../lib/ical'
 import { titleOf, type FieldEvent, type Page } from '../lib/model'
 import { notebookForPage } from '../lib/notebooks'
-import { back, navigate, to } from '../lib/router'
+import { navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
 
 const emptyDraft = (date?: string): EventDraft => ({
@@ -40,6 +41,17 @@ export function EventScreen({
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [menu, setMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  useDismiss(menu, () => setMenu(false))
+  useEffect(() => {
+    if (!menu) return
+    const outside = (e: PointerEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenu(false)
+    }
+    document.addEventListener('pointerdown', outside)
+    return () => document.removeEventListener('pointerdown', outside)
+  }, [menu])
   const shown =
     event && occurrence
       ? (expandEvents([event], occurrence, occurrence).find((e) => e.date === occurrence) ??
@@ -62,17 +74,6 @@ export function EventScreen({
         calendarTarget: event.calendarTarget ?? 'Joshua',
       })
   }, [event, editing])
-
-  useEffect(() => {
-    const edit = () => setEditing(true),
-      remove = () => setConfirmDelete(true)
-    window.addEventListener('field-notes:edit-event', edit)
-    window.addEventListener('field-notes:delete-event', remove)
-    return () => {
-      window.removeEventListener('field-notes:edit-event', edit)
-      window.removeEventListener('field-notes:delete-event', remove)
-    }
-  }, [])
 
   const save = async (e: FormEvent) => {
     e.preventDefault()
@@ -149,24 +150,8 @@ export function EventScreen({
       <div className="statusband" />
       <main className="event-screen scroll">
         <div className={`event-wrap${editing && event ? ' event-split' : ''}`}>
-          <div className="event-top">
-            <button
-              className="overview-back"
-              onClick={() => back(to.notebook(notebook))}
-              aria-label="‹ Back"
-              title="‹ Back"
-            >
-              <Icon name="back" />
-            </button>
-            <button
-              className="overview-back"
-              onClick={() => navigate(to.notebook(notebook))}
-              aria-label="Notebook"
-              title="Notebook"
-            >
-              <Icon name="notebook" />
-            </button>
-            {event && !editing ? (
+          {event && !event.deleted && !editing ? (
+            <div className="event-top" ref={menuRef}>
               <button
                 className="overview-back"
                 onClick={() => setEditing(true)}
@@ -175,11 +160,60 @@ export function EventScreen({
               >
                 <Icon name="edit" />
               </button>
-            ) : null}
-          </div>
+              <button
+                className={`overview-back${menu ? ' on' : ''}`}
+                onClick={() => setMenu(!menu)}
+                aria-label="More event actions"
+                title="More event actions"
+                aria-haspopup="menu"
+                aria-expanded={menu}
+              >
+                <Icon name="more" />
+              </button>
+              {menu ? (
+                <div className="event-menu" role="menu" aria-label="Event actions">
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setMenu(false)
+                      setConfirmDelete(true)
+                    }}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setMenu(false)
+                      void exportIcs()
+                    }}
+                  >
+                    Export calendar file (.ics)
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setMenu(false)
+                      void copy()
+                    }}
+                  >
+                    Copy details
+                  </button>
+                  <button role="menuitem" onClick={() => navigate(to.day(shown?.date ?? event.date))}>
+                    Day agenda
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => navigate(to.calendar((shown?.date ?? event.date).slice(0, 7)))}
+                  >
+                    Full calendar
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           {editing ? (
             <form className="event-form" onSubmit={(e) => void save(e)}>
-              <span className="section-label">Field Notes calendar</span>
               <h1>{id ? (event?.recurrence ? 'Event series' : 'Edit event') : 'New event'}</h1>
               {id && event?.recurrence ? (
                 <p className="event-date-help">
@@ -205,21 +239,17 @@ export function EventScreen({
                 />
               </label>
               <label>
-                End date <span>optional</span>
+                End date
                 <input
-                  aria-describedby="event-end-date-help"
                   type="date"
                   min={draft.date}
                   value={draft.endDate ?? ''}
                   onChange={(e) => setDraft({ ...draft, endDate: e.target.value || undefined })}
                 />
               </label>
-              <p id="event-end-date-help" className="event-date-help">
-                The end date is the last day included. Leave it blank for a single-day event.
-              </p>
               <div className="event-form-times">
                 <label>
-                  Start time <span>optional</span>
+                  Start time
                   <input
                     type="time"
                     value={draft.startTime ?? ''}
@@ -229,7 +259,7 @@ export function EventScreen({
                   />
                 </label>
                 <label>
-                  End time <span>optional</span>
+                  End time
                   <input
                     type="time"
                     value={draft.endTime ?? ''}
@@ -241,7 +271,7 @@ export function EventScreen({
               </div>
               <EventRepeat draft={draft} onChange={setDraft} />
               <label>
-                Location <span>optional</span>
+                Location
                 <input
                   maxLength={500}
                   value={draft.location ?? ''}
@@ -249,7 +279,7 @@ export function EventScreen({
                 />
               </label>
               <label>
-                Note <span>optional</span>
+                Note
                 <textarea
                   maxLength={10000}
                   rows={5}
@@ -273,7 +303,7 @@ export function EventScreen({
                 </select>
               </label>
               <label>
-                Linked page <span>optional</span>
+                Linked page
                 <select
                   value={draft.pageId ?? ''}
                   onChange={(e) => setDraft({ ...draft, pageId: e.target.value || undefined })}
@@ -334,7 +364,16 @@ export function EventScreen({
                 {readableDay(shown?.date ?? event.date)}
                 {shown?.endDate ? ` – ${readableDay(shown.endDate)}` : ''}
               </span>
-              <h1>{event.title}</h1>
+              <h1>
+                <button
+                  className="event-title-edit"
+                  onClick={() => setEditing(true)}
+                  aria-label={`Edit ${event.title}`}
+                  title="Edit event"
+                >
+                  {event.title}
+                </button>
+              </h1>
               {event.conflictOf ? (
                 <p className="event-conflict">
                   A conflicting edit was kept as this copy. Review both events.
@@ -350,28 +389,26 @@ export function EventScreen({
                   </dd>
                 </div>
                 {event.location ? (
-                  <div>
-                    <dt>Where</dt>
+                  <div className="event-where">
                     <dd>
-                      {event.location}
                       <a
-                        className="event-map-link"
+                        className="event-location"
                         href={`https://maps.apple.com/?q=${encodeURIComponent(event.location)}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        title="Open in Maps"
                       >
-                        Open in Maps ↗
+                        {event.location}
                       </a>
                     </dd>
                   </div>
                 ) : null}
-                <div>
-                  <dt>Calendar</dt>
+                <div className="event-calendar">
                   <dd>{event.calendarTarget ?? 'Joshua'} · Apple Calendar handoff</dd>
                 </div>
               </dl>
               {event.recurrence ? (
-                <p className="event-series-summary">{recurrenceSummary(event.recurrence)}</p>
+                <p className="event-series-summary">{repeatLine(recurrenceSummary(event.recurrence))}</p>
               ) : null}
               {event.note ? <p className="event-detail-note">{event.note}</p> : null}
               <div className="event-linked">
@@ -397,35 +434,6 @@ export function EventScreen({
                   </button>
                 )}
               </div>
-              <div className="event-detail-actions">
-                <details className="event-more">
-                  <summary aria-label="More event actions" title="More event actions">
-                    <Icon name="more" />
-                  </summary>
-                  <button onClick={() => navigate(to.day(shown?.date ?? event.date))}>
-                    Day agenda
-                  </button>
-                  <button
-                    onClick={() =>
-                      navigate(to.calendar((shown?.date ?? event.date).slice(0, 7)))
-                    }
-                  >
-                    Full calendar
-                  </button>
-                  <button onClick={() => void exportIcs()}>Export calendar file (.ics)</button>
-                  <button onClick={() => void copy()}>Copy details</button>
-                </details>
-
-                <button
-                  className="event-delete"
-                  onClick={() => setConfirmDelete(true)}
-                  aria-label="Delete event"
-                  title="Delete event"
-                >
-                  <Icon name="trash" />
-                </button>
-              </div>
-
               {confirmDelete ? (
                 <div className="event-delete-confirm">
                   <p>

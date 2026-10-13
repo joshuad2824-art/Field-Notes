@@ -1,16 +1,16 @@
 import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
 import { eventOnDay } from '../lib/event-range'
-import { Icon } from '../components/Icon'
 import { MonthGrid } from '../components/MonthGrid'
 import { EventRow } from '../components/EventRow'
-import { PageRow } from '../components/PageRow'
+import { notebookForPage } from '../lib/notebooks'
+import { coverColor } from '../lib/theme'
 import { useCalendarView, selectCalendarDate } from '../lib/calendar-view'
 import { eventsInMonth } from '../lib/events'
 import { pagesInMonth } from '../lib/db'
 import { dayOf, monthNow, monthParts, monthOf, stepMonth } from '../lib/calendar'
 import { isoDay, readableDay, clock } from '../lib/format'
-import { JOURNAL_NOTEBOOK } from '../lib/model'
+import { JOURNAL_NOTEBOOK, titleOf } from '../lib/model'
 import { navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
 export function CalendarScreen({ notebook: _notebook }: { month?: string; notebook: string }) {
@@ -35,35 +35,45 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
     <div className="app month-app">
       <main className="month-screen scroll">
         <header className="month-header">
-          <div>
+          <div className="month-title">
+            {/* The month's name is the switch: month ⇄ the selected day's agenda. */}
             <h1 id="desk-heading">
-              {parts.month} <span>{parts.year}</span>
+              <button
+                className="month-toggle"
+                onClick={() => navigate(to.day(selected))}
+                title="Day agenda"
+                aria-label={`${parts.month} ${parts.year} — open the day agenda`}
+              >
+                {parts.month} <span>{parts.year}</span>
+              </button>
             </h1>
-            <p>
-              {pages.length} pages · {events.length} events this month
-            </p>
-          </div>
-          <div className="month-controls">
-            <button
-              aria-label="Previous month"
-              onClick={() => navigate(to.calendar(stepMonth(shown, -1)))}
-            >
-              ‹
-            </button>
-            <button
-              onClick={() => {
-                choose(isoDay())
-                navigate(to.calendar(monthNow()))
-              }}
-            >
-              Today
-            </button>
-            <button
-              aria-label="Next month"
-              onClick={() => navigate(to.calendar(stepMonth(shown, 1)))}
-            >
-              ›
-            </button>
+            <div className="month-controls">
+              <button
+                aria-label="Previous month"
+                title="Previous month"
+                onClick={() => navigate(to.calendar(stepMonth(shown, -1)))}
+              >
+                ‹
+              </button>
+              <button
+                aria-label="Next month"
+                title="Next month"
+                onClick={() => navigate(to.calendar(stepMonth(shown, 1)))}
+              >
+                ›
+              </button>
+              {shown !== monthNow() ? (
+                <button
+                  className="month-today"
+                  onClick={() => {
+                    choose(isoDay())
+                    navigate(to.calendar(monthNow()))
+                  }}
+                >
+                  Today
+                </button>
+              ) : null}
+            </div>
           </div>
         </header>
         <div className="month-desktop">
@@ -76,8 +86,7 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
           </div>
           <div className="month-cells">
             {cells.map((day) => {
-              const daily = events.filter((e) => eventOnDay(e, day.iso)),
-                written = pages.filter((p) => dayOf(p) === day.iso)
+              const daily = events.filter((e) => eventOnDay(e, day.iso))
               return (
                 <section
                   key={day.iso}
@@ -91,9 +100,6 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
                     >
                       {day.date}
                     </button>
-                    {written.length ? (
-                      <button onClick={() => choose(day.iso)}>{written.length} pages</button>
-                    ) : null}
                   </div>
                   {daily.slice(0, 3).map((e) => (
                     <button
@@ -136,14 +142,6 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
           />
         </div>
         <section className="month-selected">
-          <button
-            className="day-agenda-link"
-            aria-label="Open selected day agenda"
-            onClick={() => navigate(to.day(selected))}
-          >
-            <Icon name="list" />
-            Day agenda
-          </button>
           <h2>
             {readableDay(selected)}
             {selected === isoDay() ? ' · Today' : ''}
@@ -153,21 +151,17 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
             .map((e) => (
               <EventRow key={e.id} event={e} />
             ))}
-          <div className="rows">
+          {/* Pages written that day, as one line each: a notebook dot and a title. */}
+          <div className="month-written">
             {pages
               .filter((p) => dayOf(p) === selected)
               .map((p) => (
-                <PageRow key={p.id} page={p} showNotebook />
+                <button key={p.id} className="month-written-row" onClick={() => navigate(to.page(p.id))}>
+                  <i style={{ background: coverColor(notebookForPage(p.notebook).color) }} />
+                  <span>{titleOf(p.body)}</span>
+                </button>
               ))}
           </div>
-          {!events.some((e) => eventOnDay(e, selected)) &&
-          !pages.some((p) => dayOf(p) === selected) ? (
-            <p>Nothing on this day yet.</p>
-          ) : null}
-          <button className="cream-button" onClick={() => navigate(to.newEvent(selected))}>
-            <Icon name="add" />
-            Add event
-          </button>
         </section>
       </main>
     </div>

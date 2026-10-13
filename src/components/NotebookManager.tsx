@@ -1,24 +1,31 @@
 import { Icon } from './Icon'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { notebookCounts } from '../lib/db'
 import { countLabel } from '../lib/format'
 import { colorName, coverColor } from '../lib/theme'
 import { COVER_COLORS } from '../lib/model'
-import { addNotebook, deleteNotebook, recolorNotebook, useNotebooks } from '../lib/notebooks'
+import { addNotebook, deleteNotebook, recolorNotebook, renameNotebook, useNotebooks } from '../lib/notebooks'
 import { useLive } from '../lib/useLive'
+import { useDismiss } from '../lib/dismiss'
 
 interface Props {
+  /* Opened from a spine: that notebook's row comes up ready to rename and
+     recolour. */
+  focus?: string
   onClose: () => void
   onAdded: (id: string) => void
   onDeleted: (id: string) => void
 }
 
-export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
+export function NotebookManager({ focus, onClose, onAdded, onDeleted }: Props) {
   const books = useNotebooks()
-  useEffect(() => { const close = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close) }, [onClose])
+  useDismiss(true, onClose)
   const counts = useLive<Record<string, number>>(notebookCounts, [], {})
   const [confirm, setConfirm] = useState<string | null>(null)
-  const [recoloring, setRecoloring] = useState<string | null>(null)
+  const [recoloring, setRecoloring] = useState<string | null>(focus ?? null)
+  const [renaming, setRenaming] = useState(focus ?? '')
+  const focusedRow = useRef<HTMLDivElement>(null)
+  useEffect(() => focusedRow.current?.scrollIntoView({ block: 'nearest' }), [])
   const [name, setName] = useState('')
   const [color, setColor] = useState(COVER_COLORS[4])
 
@@ -48,7 +55,7 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
 
         <div className="manager-rows">
           {books.map((book) => (
-            <div key={book.id}>
+            <div key={book.id} ref={book.id === focus ? focusedRow : undefined}>
               <div className="manager-row">
                 {/* The dot is the control: a colour is data now, not a
                     christening. Swatches stay on COVER_COLORS — a free picker
@@ -62,8 +69,25 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
                   aria-label={`Recolour ${book.name}`}
                   title="Recolour"
                 />
-                <span className="manager-name">{book.name}</span>
-                <span className="manager-count">{counts[book.id] ?? 0} pages</span>
+                {renaming === book.id ? (
+                  <input
+                    className="manager-name manager-rename"
+                    defaultValue={book.name}
+                    aria-label={`Rename ${book.name}`}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') e.currentTarget.blur()
+                    }}
+                    onBlur={(e) => {
+                      const next = e.currentTarget.value.replace(/\s+/g, ' ').trim()
+                      if (next && next !== book.name) void renameNotebook(book.id, next)
+                      setRenaming('')
+                    }}
+                  />
+                ) : (
+                  <span className="manager-name">{book.name}</span>
+                )}
+                <span className="manager-count">{countLabel(counts[book.id] ?? 0, 'page')}</span>
                 <button
                   className="mark-button danger"
                   onClick={() => setConfirm(book.id)}
@@ -127,7 +151,7 @@ export function NotebookManager({ onClose, onAdded, onDeleted }: Props) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && void add()}
-            placeholder="What should I call it?" autoFocus
+            placeholder="What should I call it?" autoFocus={!focus}
             aria-label="Notebook name"
           />
           <div className="swatch-row">
