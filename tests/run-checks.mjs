@@ -26,6 +26,7 @@ const names = [
   'redesign-theme',
   'redesign',
   'redesign-actions',
+  'pdf-adjustments',
 ]
 const out = 'work/check-results'
 mkdirSync(out, { recursive: true })

@@ -22,7 +22,6 @@ export function Rail({ activeId, onPick, onManage, onFold }: Props) {
       </button>
       <span className="section-label">Notebook</span>
       <h1>{book.name}</h1>
-      <p>{counts[activeId] ?? 0} pages</p>
       <nav>
         {books.map((b) => (
           <button

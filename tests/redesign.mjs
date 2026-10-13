@@ -69,6 +69,7 @@ try {
   await visit('/day/' + today)
   await shot('02-mac-agenda')
   await visit('/calendar/' + month)
+  await page.getByRole('button', { name: 'Calendar tools', exact: true }).click()
   await page.getByRole('button', { name: 'Colors', exact: true }).click()
   await shot('03-mac-month-color-tray')
   await page.keyboard.press('Escape')

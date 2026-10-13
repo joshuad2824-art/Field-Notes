@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import { useEffect, useState } from 'react'
 import { IMAGE_RE, type Page } from '../lib/model'
 import { imageUrl } from '../lib/images'
@@ -13,5 +14,5 @@ export function DeskThumbnail({ page, kind = 'project' }: { page: Page; kind?: '
     if (id) void imageUrl(id).then((url) => { if (active) setPicture(url ? { id, url } : null) }).catch(() => { if (active) setPicture(null) })
     return () => { active = false }
   }, [id])
-  return id && picture?.id === id ? <div className={`desk-thumbnail desk-thumbnail-${kind}`}><img src={picture.url} alt={match?.[1] || 'Image from the source page'} /></div> : null
+  return id && picture?.id === id ? <div className={`desk-thumbnail desk-thumbnail-${kind}`}><img src={picture.url} alt={match?.[1] || 'Image from the source page'} /></div> : kind === 'plan' ? <div className="desk-thumbnail desk-thumbnail-plan plan-cover-empty" aria-hidden="true"><Icon name="workshop" /></div> : null
 }

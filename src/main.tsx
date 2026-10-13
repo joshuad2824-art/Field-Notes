@@ -60,3 +60,5 @@ import './styles/kit.css'
 
 import './styles/redesign-tokens.css'
 import './styles/redesign.css'
+
+import './styles/pdf-adjustments.css'

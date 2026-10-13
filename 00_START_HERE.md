@@ -3,7 +3,14 @@
 Updated October 12, 2026 for the complete visual redesign.
 
 
-## October 12 complete redesign — live
+## October 12 PDF adjustments — live
+
+- Production: Netlify `6acd95269c0cc5456608cf6c`, service worker v40. Joshua's five-page PDF now takes precedence over the original screenshots where they differ.
+- Cleaner, wider notes; persistent quick-note window; rearranged responsive Today board with full Siena messages and fourteen dates; full-screen calendar with upper-right tools; simplified St. John controls; new formatting strip; complete Workshop/project styling.
+- Unfiled quick notes remain on this device. Choosing a notebook files the note on close; then existing page sync/export applies. All existing notes/images and background services are preserved.
+- All 24 checks passed, including recorded follow-up runs. Six-width layout and interaction checks and hosted preview checks pass. Release detail: `docs/2026-10-12 - PDF Adjustments.md`; evidence/recovery: `work/2026-10-12-pdf-adjustments/`. Physical installed-phone behavior remains unverified.
+
+## October 12 complete redesign — earlier release
 
 - Production: Netlify `6acd5e4be27d392faed8cafa`, service worker v39. The supplied complete redesign supersedes earlier visual/kit boundaries below; older entries remain as release history.
 - Today, notebooks and editor, agenda/calendar, Workshop, From Siena, work desk, search, Settings, Trash, navigation, themes and empty states now follow the October 12 handoff.

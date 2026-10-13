@@ -112,13 +112,13 @@ try{for(const width of [1440,1180,390]){
  let calls=0,night=false,dead=false
  await context.route('**://api.open-meteo.com/**',r=>{calls++;if(dead)return r.abort();return r.fulfill({contentType:'application/json',body:JSON.stringify({current:{temperature_2m:night?6:14,weather_code:night?0:3,is_day:night?0:1},daily:{time:Array.from({length:7},(_,i)=>`2026-10-${12+i}`),temperature_2m_max:Array(7).fill(18),temperature_2m_min:Array(7).fill(9),weather_code:Array(7).fill(3)}})})})
  const page=await context.newPage();page.on('pageerror',e=>problems.push(e.message));await page.goto(BASE)
- await page.locator('.board-weather-tile .board-weather>strong').getByText('14°',{exact:true}).waitFor()
- ok(`${width}: weather tile reflects the service`,await page.locator('.board-weather-tile').innerText().then(t=>t.toLowerCase().includes('test town')||width<820))
+ await page.locator('.board-current-weather .board-weather>strong').getByText('14°',{exact:true}).waitFor()
+ ok(`${width}: weather tile reflects the service`,await page.locator('.board-current-weather').innerText().then(t=>t.toLowerCase().includes('test town')||width<820))
  ok(`${width}: forecast keeps five distinct days`,await page.locator('.board-forecast>div').count()===5)
  await page.evaluate(async()=>{const{refresh}=await import('/src/weather/store.ts');await refresh()});ok(`${width}: fresh weather reuses its cache`,calls===1)
- night=true;await page.evaluate(async()=>{const{refresh}=await import('/src/weather/store.ts');await refresh(true)});await page.locator('.board-weather-tile .board-weather>strong').getByText('6°',{exact:true}).waitFor();ok(`${width}: night glyph has no sun rays`,await page.locator('.board-weather-tile svg line').count()===0)
- dead=true;await page.reload();await page.locator('.board-weather-tile .board-weather>strong').getByText('6°',{exact:true}).waitFor();ok(`${width}: offline retains the last reading`,true)
- await page.evaluate(async()=>{const{setOff}=await import('/src/weather/store.ts');setOff(true)});ok(`${width}: off hides the weather reading`,await page.locator('.board-weather-tile .board-weather>strong').count()===0)
+ night=true;await page.evaluate(async()=>{const{refresh}=await import('/src/weather/store.ts');await refresh(true)});await page.locator('.board-current-weather .board-weather>strong').getByText('6°',{exact:true}).waitFor();ok(`${width}: night glyph has no sun rays`,await page.locator('.board-current-weather svg line').count()===0)
+ dead=true;await page.reload();await page.locator('.board-current-weather .board-weather>strong').getByText('6°',{exact:true}).waitFor();ok(`${width}: offline retains the last reading`,true)
+ await page.evaluate(async()=>{const{setOff}=await import('/src/weather/store.ts');setOff(true)});ok(`${width}: off hides the weather reading`,await page.locator('.board-current-weather .board-weather>strong').count()===0)
  await context.close()
 }}finally{await browser.close()}
 if(problems.length){console.error(problems);failures+=problems.length}process.exit(failures?1:0)

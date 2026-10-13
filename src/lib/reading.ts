@@ -110,7 +110,7 @@ export function planReading(body: string, title: string) {
     const lines = first.text.split('\n'), remaining: string[] = []
     let consumed = true
     for (const line of lines) {
-      const detail = line.match(/^(?:\*\*)?(Project|Version|Owner|Where we left off|Next step):(?:\*\*)?\s*(.*)$/i)
+      const detail = line.match(/^(?:\*\*)?(Project|Version|Owner|Status|Where we left off|Next step):(?:\*\*)?\s*(.*)$/i)
       if (consumed && /^\s*(?:#[\w-]+\s*)+$/.test(line)) continue
       if (consumed && detail) { metadata[detail[1].toLowerCase()] = detail[2]; continue }
       consumed = false; remaining.push(line)

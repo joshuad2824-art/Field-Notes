@@ -402,17 +402,20 @@ export function EventScreen({
                   <summary aria-label="More event actions" title="More event actions">
                     <Icon name="more" />
                   </summary>
+                  <button onClick={() => navigate(to.day(shown?.date ?? event.date))}>
+                    Day agenda
+                  </button>
+                  <button
+                    onClick={() =>
+                      navigate(to.calendar((shown?.date ?? event.date).slice(0, 7)))
+                    }
+                  >
+                    Full calendar
+                  </button>
                   <button onClick={() => void exportIcs()}>Export calendar file (.ics)</button>
                   <button onClick={() => void copy()}>Copy details</button>
                 </details>
-                <button
-                  className="overview-back"
-                  onClick={() => navigate(to.day(shown?.date ?? event.date))}
-                  aria-label="See the day ↗"
-                  title="See the day ↗"
-                >
-                  <Icon name="calendar" /> See the day
-                </button>
+
                 <button
                   className="event-delete"
                   onClick={() => setConfirmDelete(true)}

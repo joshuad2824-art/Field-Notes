@@ -1,9 +1,7 @@
-import { useState } from 'react'
 import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
 import { eventOnDay } from '../lib/event-range'
 import { Icon } from '../components/Icon'
-import { ColorTray, ColorsGlyph } from '../components/ColorTray'
 import { MonthGrid } from '../components/MonthGrid'
 import { EventRow } from '../components/EventRow'
 import { PageRow } from '../components/PageRow'
@@ -14,12 +12,9 @@ import { dayOf, monthNow, monthParts, monthOf, stepMonth } from '../lib/calendar
 import { isoDay, readableDay, clock } from '../lib/format'
 import { JOURNAL_NOTEBOOK } from '../lib/model'
 import { navigate, to } from '../lib/router'
-import { useSettings } from '../lib/settings'
 import { useLive } from '../lib/useLive'
-export function CalendarScreen({ notebook }: { month?: string; notebook: string }) {
-  const { month: shown, selected } = useCalendarView(),
-    settings = useSettings(),
-    [colors, setColors] = useState(false)
+export function CalendarScreen({ notebook: _notebook }: { month?: string; notebook: string }) {
+  const { month: shown, selected } = useCalendarView()
   const pages = useLive(() => pagesInMonth(shown), [shown], []),
     localEvents = useLive(() => eventsInMonth(shown), [shown], []),
     family = useFamilyAgenda()
@@ -68,9 +63,6 @@ export function CalendarScreen({ notebook }: { month?: string; notebook: string 
               onClick={() => navigate(to.calendar(stepMonth(shown, 1)))}
             >
               ›
-            </button>
-            <button aria-label="Colors" title="Colors" onClick={() => setColors(true)}>
-              <ColorsGlyph />
             </button>
           </div>
         </header>
@@ -144,6 +136,14 @@ export function CalendarScreen({ notebook }: { month?: string; notebook: string 
           />
         </div>
         <section className="month-selected">
+          <button
+            className="day-agenda-link"
+            aria-label="Open selected day agenda"
+            onClick={() => navigate(to.day(selected))}
+          >
+            <Icon name="list" />
+            Day agenda
+          </button>
           <h2>
             {readableDay(selected)}
             {selected === isoDay() ? ' · Today' : ''}
@@ -170,12 +170,6 @@ export function CalendarScreen({ notebook }: { month?: string; notebook: string 
           </button>
         </section>
       </main>
-      {colors ? (
-        <ColorTray
-          notebook={settings.themeNotebook || notebook}
-          onClose={() => setColors(false)}
-        />
-      ) : null}
     </div>
   )
 }

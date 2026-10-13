@@ -1,5 +1,4 @@
 import { Icon } from './Icon'
-import { RouteLink } from './DeskHeader'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { livePages } from '../lib/db'
 import { countLabel, groupFor, mastheadParts, shortStamp } from '../lib/format'
@@ -54,7 +53,7 @@ export function PageList({
 }: Props) {
   const book = notebookForPage(notebook)
   const pages = useLive<Page[]>(() => livePages(notebook), [notebook], [])
-  const [query, setQuery] = useState('')
+  const query = ''
   const { weekday, day, month, year } = mastheadParts()
   /* The journal's foot carries a different button, for the same reason
      decision 19 put New page here in the first place: the control belongs at
@@ -123,38 +122,51 @@ export function PageList({
         <div className="list-head-row">
           {compact ? null : (
             <button
-              className={`mark-button tight${railShown ? ' on' : ''}`}
+              className={`sidebar-tab${railShown ? ' on' : ''}`}
               onClick={onToggleRail}
               aria-label={railShown ? 'Hide the notebooks' : 'Show the notebooks'}
               title="Notebooks — ⌘⇧\"
             >
-              <Icon name="menu" />
+              <span aria-hidden="true">{railShown ? '‹' : '›'}</span>
             </button>
           )}
           <span className="book-dot" style={{ background: book.color }} />
           <span className="list-title">{book.name}</span>
           <span className="grow" />
-          <span className="list-count">{countLabel(pages.length, journal ? 'review' : 'page')}</span>
+          <span className="list-count">
+            {countLabel(pages.length, journal ? 'review' : 'page')}
+          </span>
         </div>
-        {!journal ? <RouteLink className="notebook-desk-link" href={to.notebookDesk(notebook)}><Icon name="overview" />Notebook desk</RouteLink> : null}
-        <input
-          className="well"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search this notebook"
-          type="search"
-          autoComplete="off"
-          spellCheck={false}
-          aria-label="Search this notebook"
-        />
       </div>
 
       <div className="scroll list-body">
-        {journal ? <details className="journal-help"><summary className="icon-control" aria-label="About weekly reviews" title="About weekly reviews"><Icon name="info" /></summary><p className="journal-intro">Weekly reviews assembled from your notebook pages. Review last week gathers its notes, or opens your existing review with your edits intact.</p></details> : null}
-        {collectionProblem ? <p className="journal-intro" role="alert">{collectionProblem}</p> : null}
+        {journal ? (
+          <details className="journal-help">
+            <summary
+              className="icon-control"
+              aria-label="About weekly reviews"
+              title="About weekly reviews"
+            >
+              <Icon name="info" />
+            </summary>
+            <p className="journal-intro">
+              Weekly reviews assembled from your notebook pages. Review last week gathers its
+              notes, or opens your existing review with your edits intact.
+            </p>
+          </details>
+        ) : null}
+        {collectionProblem ? (
+          <p className="journal-intro" role="alert">
+            {collectionProblem}
+          </p>
+        ) : null}
         {groups.length === 0 ? (
           <div className="empty">
-            {query.trim() ? 'No pages match.' : journal ? 'Your weekly reviews will appear here.' : 'Nothing here yet. Plenty of time.'}
+            {query.trim()
+              ? 'No pages match.'
+              : journal
+                ? 'Your weekly reviews will appear here.'
+                : 'Nothing here yet. Plenty of time.'}
           </div>
         ) : (
           groups.map((section) => (
@@ -185,17 +197,10 @@ export function PageList({
 
       {/* New page belongs under the pages it makes, at every width. */}
       <div className="list-foot" ref={footRef}>
-        <button className="icon-control overview-entry" aria-label="Overview" title="Overview" onClick={() => navigate(to.overview())}>
-          <Icon name="overview" />
-        </button>
-        <button className="icon-control" aria-label="Search" title="Search" onClick={() => navigate(to.search())}>
-          <Icon name="search" />
-        </button>
-        <span className="grow" />
         {journal ? (
           <button
             className="plate-button tight"
-            aria-label={collecting ? "Opening review" : "Review last week"}
+            aria-label={collecting ? 'Opening review' : 'Review last week'}
             title="Review last week"
             disabled={collecting}
             /* Last week, not this one: on a Sunday morning the week you want
@@ -209,7 +214,9 @@ export function PageList({
                 navigate(to.page(done.id))
                 onPick?.()
               } catch (error) {
-                setCollectionProblem(error instanceof Error ? error.message : 'Could not open the weekly review.')
+                setCollectionProblem(
+                  error instanceof Error ? error.message : 'Could not open the weekly review.',
+                )
               } finally {
                 setCollecting(false)
               }
@@ -218,7 +225,14 @@ export function PageList({
             <Icon name="calendar" />
           </button>
         ) : (
-          <button className="plate-button tight" onClick={onNewPage} title="New page — ⌘⇧N" aria-label="New page"><Icon name="new-page" /></button>
+          <button
+            className="plate-button tight"
+            onClick={onNewPage}
+            title="New page — ⌘⇧N"
+            aria-label="New page"
+          >
+            <Icon name="add" />
+          </button>
         )}
       </div>
     </div>

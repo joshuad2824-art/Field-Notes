@@ -60,8 +60,14 @@ export function ApprovedFrame({
   }, [routeBook, settings.themeNotebook])
   useEffect(() => {
     applyTheme(activeBook?.color)
-    setEdgeColor(workshop ? '#2A2622' : '#001011')
-  }, [activeBook?.color, workshop])
+    setEdgeColor(
+      workshop
+        ? '#2A2622'
+        : ['calendar', 'day'].includes(route.name)
+          ? coverColor(activeBook?.color)
+          : '#001011',
+    )
+  }, [activeBook?.color, workshop, route.name])
   useEffect(() => {
     setMenu(false)
     setColors(false)
@@ -101,7 +107,7 @@ export function ApprovedFrame({
     },
   ]
   const add = () => {
-    if (calendarView)
+    if (calendarView || home)
       navigate(to.newEvent(route.name === 'day' ? route.iso : calendar.selected))
     else if (workshop) {
       if (route.name === 'plan') navigate(to.workshop())
@@ -131,7 +137,6 @@ export function ApprovedFrame({
           <aside className="board-sidebar" aria-label="Notebooks">
             <span className="section-label">Notebook</span>
             <h1>{notebookOf(routeBook ?? notebook)?.name ?? 'Notebooks'}</h1>
-            <p>{pages.filter((p) => p.notebook === (routeBook ?? notebook)).length} pages</p>
             <nav>
               {books.map((book) => (
                 <RouteLink
@@ -171,22 +176,53 @@ export function ApprovedFrame({
             <SyncMark />
           </div>
         ) : null}
-        {!keyboard && !(desktop && notebookView) ? (
+        {['calendar', 'day'].includes(route.name) ? (
+          <div className="calendar-view-tools">
+            <button
+              aria-label={route.name === 'calendar' ? 'Day agenda' : 'Full calendar'}
+              title={route.name === 'calendar' ? 'Day agenda' : 'Full calendar'}
+              onClick={() =>
+                navigate(
+                  route.name === 'calendar'
+                    ? to.day(calendar.selected)
+                    : to.calendar(
+                        route.name === 'day' ? route.iso.slice(0, 7) : calendar.month,
+                      ),
+                )
+              }
+            >
+              <Icon name={route.name === 'calendar' ? 'list' : 'calendar'} />
+            </button>
+            <button
+              aria-label="Calendar tools"
+              title="Calendar tools"
+              aria-expanded={menu}
+              onClick={() => setMenu(!menu)}
+            >
+              <Icon name="more" />
+            </button>
+          </div>
+        ) : null}
+        {!keyboard &&
+        !['calendar', 'day'].includes(route.name) &&
+        !(desktop && notebookView) ? (
           <nav className="floating-nav" aria-label="Primary navigation">
             {home ? (
-              destinations.map((d) => (
-                <RouteLink
-                  key={d.label}
-                  className={`${d.active ? 'active ' : ''}pill-${d.label.toLowerCase().replace(' ', '-')}`}
-                  href={d.href}
-                  aria-label={d.label}
-                  title={d.label}
-                  aria-current={d.active ? 'page' : undefined}
-                >
-                  <Icon name={d.icon} />
-                  {d.active && desktop ? <span>{d.label}</span> : null}
-                </RouteLink>
-              ))
+              destinations
+                .filter((d) => d.label !== 'Calendar')
+                .map((d) => (
+                  <RouteLink
+                    key={d.label}
+                    className={`${d.active ? 'active ' : ''}pill-${d.label.toLowerCase().replace(' ', '-')}`}
+                    href={d.href}
+                    aria-label={d.label}
+                    title={d.label}
+                    aria-current={d.active ? 'page' : undefined}
+                  >
+                    <Icon name={d.icon} />
+                    {d.active && desktop ? <span>{d.label}</span> : null}
+                  </RouteLink>
+                ))
             ) : (
               <button onClick={() => back(to.overview())} aria-label="Back" title="Back">
                 <Icon name="back" />
@@ -243,7 +279,9 @@ export function ApprovedFrame({
             ) : (
               <button
                 className="pill-add"
-                aria-label={calendarView ? 'Add event' : workshop ? 'New plan' : 'New page'}
+                aria-label={
+                  calendarView || home ? 'Add event' : workshop ? 'New plan' : 'New page'
+                }
                 title="Add"
                 onClick={add}
               >
@@ -260,6 +298,23 @@ export function ApprovedFrame({
               onClick={() => setMenu(false)}
             />
             <nav className="pill-menu" aria-label="All destinations">
+              {calendarView ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setMenu(false)
+                      add()
+                    }}
+                  >
+                    <Icon name="add" />
+                    New event
+                  </button>
+                  <RouteLink href={to.day(calendar.selected)}>
+                    <Icon name="list" />
+                    Day agenda
+                  </RouteLink>
+                </>
+              ) : null}
               {destinations.map((d) => (
                 <RouteLink key={d.label} href={d.href}>
                   <Icon name={d.icon} />
