@@ -1,3 +1,4 @@
+import { useWorkCalendar } from '../work-calendar/calendar'
 import { getPage, pagesOnDay } from '../lib/db'
 import { dayOf } from '../lib/calendar'
 import { isoDay } from '../lib/format'
@@ -19,6 +20,7 @@ export function PageDaySheet({ id }: { id: string }) {
     local = useLive(() => eventsOnDay(iso), [iso], []),
     family = useFamilyAgenda(),
     apple = useAppleCalendar(iso, iso),
+    work = useWorkCalendar(iso, iso),
     items = useLive(allSienaItems, [], []),
     pages = useLive(() => pagesOnDay(iso), [iso], []),
     date = new Date(iso + 'T12:00:00')
@@ -30,7 +32,7 @@ export function PageDaySheet({ id }: { id: string }) {
       </p>
       <h2>Schedule</h2>
       <section>
-        {mergeCalendarEvents(local, family, iso, iso, apple)
+        {mergeCalendarEvents(local, family, iso, iso, apple, work)
           .filter((e) => eventOnDay(e, iso))
           .map((e) => (
             <EventRow key={e.id} event={e} />

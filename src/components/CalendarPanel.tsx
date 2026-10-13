@@ -1,3 +1,4 @@
+import { workEvents, useWorkCalendar } from '../work-calendar/calendar'
 import { familyEvents, useFamilyAgenda } from '../davis/calendar'
 import { appleEvents, useAppleCalendar } from '../apple/calendar'
 import { eventDaysInMonth } from '../lib/event-range'
@@ -18,7 +19,8 @@ export function CalendarPanel({ large = false }: { large?: boolean }) {
   const family = useFamilyAgenda()
   const monthEnd = `${view.month}-${String(new Date(Number(view.month.slice(0, 4)), Number(view.month.slice(5, 7)), 0).getDate()).padStart(2, '0')}`
   const apple = useAppleCalendar(`${view.month}-01`, monthEnd)
-  const events = new Set([...localEvents, ...familyEvents(family).flatMap(event => eventDaysInMonth(event, view.month)), ...appleEvents(apple, `${view.month}-01`, monthEnd).flatMap(event => eventDaysInMonth(event, view.month))])
+  const work = useWorkCalendar(`${view.month}-01`, monthEnd)
+  const events = new Set([...localEvents, ...familyEvents(family).flatMap(event => eventDaysInMonth(event, view.month)), ...workEvents(work, `${view.month}-01`, monthEnd).flatMap(event => eventDaysInMonth(event, view.month)), ...appleEvents(apple, `${view.month}-01`, monthEnd).flatMap(event => eventDaysInMonth(event, view.month))])
   const date = new Date(`${view.selected}T12:00:00`)
   const { month, year } = monthParts(view.month)
   const step = (by: number) => { const next = stepMonth(view.month, by); showCalendarMonth(next); if (location.pathname.startsWith('/calendar')) navigate(to.calendar(next), { replace: true }) }

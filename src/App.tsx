@@ -1,3 +1,4 @@
+import { useWorkRefresh } from './work-calendar/calendar'
 import { lazy, Suspense, useEffect } from 'react'
 import { useFamilyRefresh } from './davis/calendar'
 import { useAppleRefresh } from './apple/calendar'
@@ -33,6 +34,7 @@ const KitScreen = import.meta.env.DEV ? lazy(() => import('./screens/KitScreen')
 export function App() {
   useFamilyRefresh()
   useAppleRefresh()
+  useWorkRefresh()
   const route = useRoute()
   const settings = useSettings()
   const books = useNotebooks()

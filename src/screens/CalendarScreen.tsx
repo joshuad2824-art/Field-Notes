@@ -1,3 +1,4 @@
+import { useWorkCalendar } from '../work-calendar/calendar'
 import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
 import { useAppleCalendar } from '../apple/calendar'
@@ -19,13 +20,14 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
   const pages = useLive(() => pagesInMonth(shown), [shown], []),
     localEvents = useLive(() => eventsInMonth(shown), [shown], []),
     family = useFamilyAgenda(),
-    apple = useAppleCalendar(`${shown}-01`, monthOf(shown)[41].iso)
+    apple = useAppleCalendar(`${shown}-01`, monthOf(shown)[41].iso),
+    work = useWorkCalendar(`${shown}-01`, monthOf(shown)[41].iso)
   const events = mergeCalendarEvents(
       localEvents,
       family,
       `${shown}-01`,
       monthOf(shown)[41].iso,
-      apple,
+      apple, work,
     ),
     parts = monthParts(shown),
     days = monthOf(shown)
@@ -113,7 +115,7 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
                       onClick={() =>
                         e.externalSource === 'davis'
                           ? window.open(DAVIS_SOURCE_URL, '_blank', 'noopener,noreferrer')
-                          : e.externalSource === 'apple'
+                          : (e.externalSource === 'apple' || e.externalSource === 'work')
                             ? navigate(to.day(day.iso))
                             : navigate(to.event(e.seriesId ?? e.id, e.occurrenceDate))
                       }

@@ -1,3 +1,4 @@
+import { useWorkCalendar } from '../work-calendar/calendar'
 import { useFrame } from '../components/ApprovedFrame'
 import { useLongPress } from '../lib/long-press'
 import { countdownLabel, nextTimed } from '../lib/countdown'
@@ -42,6 +43,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
     localEvents = useLive(liveEvents, [], []),
     family = useFamilyAgenda(),
     apple = useAppleCalendar(`${today.slice(0, 7)}-01`, shiftDate(`${today.slice(0, 7)}-28`, 20)),
+    work = useWorkCalendar(`${today.slice(0, 7)}-01`, shiftDate(`${today.slice(0, 7)}-28`, 20)),
     items = useLive(allSienaItems, [], []),
     books = useAllNotebooks()
   const month = today.slice(0, 7),
@@ -52,7 +54,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
       family,
       `${month}-01`,
       shiftDate(`${month}-28`, 20),
-      apple,
+      apple, work,
     ),
     events = allEvents.filter((e) => eventOnDay(e, today)),
     siena = sienaSections(items),
@@ -180,7 +182,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
             </button>
           </section>
           {next ? (
-            next.event.externalSource === 'apple' ? (
+            (next.event.externalSource === 'apple' || next.event.externalSource === 'work') ? (
               <div className="board-tile board-date board-countdown">
                 <strong>{countdownLabel(next.at - now)}</strong>
                 <span>until</span>

@@ -1,7 +1,7 @@
 // A read-only, memory-only presentation model. No Field Notes database writes,
 // recurrence expansion, refresh tokens, or credentials in localStorage.
 import { DavisIdentityError, type DavisSource } from './wire'
-export const DAVIS_AGENDA_URL = 'https://davis-at-home.netlify.app/integrations/field-notes/agenda'
+export const DAVIS_AGENDA_URL = 'https://bsyupmesvqwxboncwgeg.supabase.co/functions/v1/davis-field-notes'
 export const DAVIS_CALLBACK_PATH = '/oauth/davis/callback'
 export interface AgendaEntry {
   sourceId: string

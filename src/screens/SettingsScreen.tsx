@@ -1,3 +1,4 @@
+import { WorkCalendar } from '../components/WorkCalendar'
 import { ColorTray, ColorsGlyph } from '../components/ColorTray'
 import { Icon } from '../components/Icon'
 import { useEffect, useRef, useState } from 'react'
@@ -280,6 +281,7 @@ export function SettingsScreen() {
           </section>
           <section id="settings-calendar" className="settings-card">
             <AppleCalendar />
+        <WorkCalendar />
           </section>
           <section id="settings-family-calendar" className="settings-card">
             <DavisAgenda />

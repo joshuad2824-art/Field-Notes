@@ -1,3 +1,4 @@
+import { useWorkCalendar } from '../work-calendar/calendar'
 import { useEffect, useRef, useState } from 'react'
 import { eventOnDay } from '../lib/event-range'
 import { shiftDate } from '../lib/event-recurrence'
@@ -27,9 +28,10 @@ export function DayScreen({ iso }: { iso: string; notebook: string }) {
     localEvents = useLive(liveEvents, [], []),
     items = useLive(allSienaItems, [], []),
     family = useFamilyAgenda(),
-    apple = useAppleCalendar(iso, shiftDate(iso, count - 1))
+    apple = useAppleCalendar(iso, shiftDate(iso, count - 1)),
+    work = useWorkCalendar(iso, shiftDate(iso, count - 1))
   const days = Array.from({ length: count }, (_, i) => shiftDate(iso, i)),
-    events = mergeCalendarEvents(localEvents, family, iso, days[days.length - 1], apple)
+    events = mergeCalendarEvents(localEvents, family, iso, days[days.length - 1], apple, work)
   const reminders = (date: string) =>
     items.filter(
       (i) => i.type === 'reminder' && !i.completedAt && i.dueAt && isoDay(i.dueAt) === date,
