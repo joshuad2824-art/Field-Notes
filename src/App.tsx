@@ -9,7 +9,7 @@ import { DeskScreen } from './screens/DeskScreen'
 import { captureNew, captureToday, wantCaretAtEnd } from './lib/capture'
 import { createPage, getPage } from './lib/db'
 import { firstNotebookId, isWorkshopNotebook, notebookOf, useNotebooks } from './lib/notebooks'
-import { getSettings, setSettings, useSettings } from './lib/settings'
+import { cycleColumns, getSettings, setSettings, useSettings } from './lib/settings'
 import { HomeScreen } from './screens/HomeScreen'
 import { PageScreen } from './screens/PageScreen'
 import { SearchScreen } from './screens/SearchScreen'
@@ -53,12 +53,13 @@ export function App() {
         e.preventDefault()
         navigate(to.search())
       }
-      /* Each column folds on its own: ⌘\ the list, ⌘⇧\ the notebooks.
-         Read at press time rather than from the closure. */
+      /* ⌘\ steps the columns the same way the one fold mark does (3 → 2 →
+         1 → 3); ⌘⇧\ still turns the notebooks on and off on its own. Read
+         at press time rather than from the closure. */
       if (key === '\\') {
         e.preventDefault()
         if (e.shiftKey) setSettings({ rail: !getSettings().rail })
-        else setSettings({ list: !getSettings().list })
+        else cycleColumns(window.matchMedia('(min-width: 1200px)').matches)
       }
       if (key === 'n' && e.shiftKey) {
         e.preventDefault()

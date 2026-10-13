@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { openAppMenu, raiseRooms } from './pill.mjs'
+import { backRooms, openAppMenu, raiseRooms } from './pill.mjs'
 import { execSync } from 'node:child_process'
 const { chromium } = await import(
   `${execSync('npm root -g', { encoding: 'utf8' }).trim()}/playwright/index.mjs`
@@ -38,20 +38,18 @@ try {
        the back rooms, so all eight destinations are still one tap away. */
     /* October 13, second pass: on a phone the pill is ← · room · +, and the
        room's mark raises the rooms and the app menu. */
-    const rooms = width < 820 ? page.locator('.pill-rooms') : page.locator('.floating-nav')
-    if (width < 820) await page.locator('.floating-nav .pill-room').click()
+    /* October 13, third pass: on a phone the room's mark raises one sheet
+       with the rooms and the back rooms; elsewhere ⋯ opens the app menu. */
+    const rooms = await raiseRooms(page)
     for (const name of ['Today', 'Notebooks', 'Calendar', 'Workshop', 'From Siena'])
       assert.ok(await rooms.getByRole('link', { name, exact: true }).isVisible())
-    await rooms.getByRole('button', { name: 'App menu' }).click()
+    let back = await openAppMenu(page)
     for (const name of ['Search', 'Settings', 'Trash'])
-      assert.ok(
-        await page.locator('.pill-menu').getByRole('link', { name, exact: true }).isVisible(),
-      )
+      assert.ok(await back.getByRole('link', { name, exact: true }).isVisible())
     await page.keyboard.press('Escape')
-    assert.equal(await page.locator('.pill-menu').count(), 0)
-    await openAppMenu(page)
-    await page
-      .locator('.pill-menu')
+    assert.equal(await backRooms(page).count(), 0)
+    back = await openAppMenu(page)
+    await back
       .getByRole('button', { name: 'Manage notebooks', exact: true })
       .click()
     const dialog = page.getByRole('dialog')
@@ -72,8 +70,7 @@ try {
     await fit()
     if (width === 1440) {
       // October 13: the sidebar footer retired; Colors is in the app menu.
-      await openAppMenu(page)
-      await page.locator('.pill-menu').getByRole('button', { name: 'Colors', exact: true }).click()
+      await (await openAppMenu(page)).getByRole('button', { name: 'Colors', exact: true }).click()
       await page.getByRole('button', { name: /^night/ }).click()
       await page.waitForFunction(
         () => document.querySelector('.leaf')?.dataset.stock === 'paper',
@@ -81,8 +78,11 @@ try {
       await page.keyboard.press('Escape')
       await page.reload()
       await page.locator('.leaf[data-stock=paper]').waitFor()
-      await page.getByRole('button', { name: 'Hide the notebooks', exact: true }).click()
-      await page.getByRole('button', { name: 'Show the notebooks', exact: true }).click()
+      /* One fold mark steps 3 → 2 → 1 → 3 (October 13, third pass). */
+      await page.getByRole('button', { name: 'Fold the notebooks', exact: true }).click()
+      assert.ok(!(await page.locator('.board-sidebar').isVisible()))
+      await page.getByRole('button', { name: 'Fold the list', exact: true }).click()
+      await page.getByRole('button', { name: 'Show the notebooks and the list', exact: true }).click()
       assert.ok(await page.locator('.board-sidebar').isVisible())
     }
     await visit('/from-siena')

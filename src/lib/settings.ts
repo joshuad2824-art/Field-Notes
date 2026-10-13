@@ -118,6 +118,21 @@ export function useSettings(): Settings {
   return useSyncExternalStore(subscribe, getSettings, getSettings)
 }
 
+/* The desk's columns, counted: notebooks + pages + page (3), pages + page
+   (2), or the page alone (1). One mark steps 3 → 2 → 1 → 3, and so does ⌘\.
+   Where the notebooks column can't dock (below 1200) the cycle is 2 ⇄ 1. */
+export function openColumns(s: Settings = current, railAvailable = true): 1 | 2 | 3 {
+  if (!s.list) return 1
+  return railAvailable && s.rail ? 3 : 2
+}
+export function cycleColumns(railAvailable: boolean): void {
+  const now = openColumns(current, railAvailable)
+  if (!railAvailable) setSettings({ list: now === 1 })
+  else if (now === 3) setSettings({ rail: false, list: true })
+  else if (now === 2) setSettings({ rail: false, list: false })
+  else setSettings({ rail: true, list: true })
+}
+
 /* One step in or out, stopping at the ends rather than wrapping round. */
 export function stepZoom(current: number, direction: 1 | -1): number {
   const at = ZOOMS.indexOf(current as (typeof ZOOMS)[number])

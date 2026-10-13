@@ -1298,7 +1298,9 @@ await atWidth(1800, 950, async (view) => {
   /* zoom, for a page on a big screen in front of a room */
   const pitchOf = () =>
     view.locator('.cm-line').last().evaluate((el) => Math.round(el.getBoundingClientRect().height))
-  await view.locator('.mark-button[aria-label="Style"]').click()
+  /* October 13, third pass: undo and redo sit beside the strip in the
+     toolbar's row, so pressing them leaves it open. */
+  ok('undo and redo leave the strip open', (await view.locator('.tray').count()) === 1)
   await view.getByRole('button', { name: 'Appearance tools', exact: true }).click()
   ok('the page starts at 100%', (await view.locator('.tray-zoom').textContent()) === '100%')
   ok('one line is 28px', (await pitchOf()) === 28, String(await pitchOf()))

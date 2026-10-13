@@ -61,6 +61,17 @@ export function ShelfMenu({
   )
 }
 
+/* A chevron after a title means the title is a menu (October 13, third
+   pass). One mark, drawn once, worn by every title that opens something:
+   notebook names, St. John, the month, the day, the Workshop, a plan. */
+export function TitleChevron() {
+  return (
+    <svg className="notebook-switcher-chevron title-chevron" viewBox="0 0 12 12" aria-hidden="true">
+      <path d="M3 4.5 6 7.5 9 4.5" />
+    </svg>
+  )
+}
+
 /* The notebook's own name is how you change notebooks. One tap drops the
    shelf; a second picks. A small, quiet chevron beside the name is the only
    hint that the name opens anything — a word would explain, a mark only

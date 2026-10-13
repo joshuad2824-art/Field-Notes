@@ -6988,3 +6988,477 @@ body,
     overflow-x: visible;
   }
 }
+
+/* ── October 13, third pass: quieter controls ────────────────────────────
+   docs/2026-10-13 - Quieter Controls.md. The pill holds still; the phone
+   raises one sheet; + names what it makes; one fold mark; Aa opens in the
+   toolbar's own row; a chevron after a title means a menu. */
+
+/* P1 · The switcher's shelf hangs below the name. The list head's title kept
+   `overflow: hidden` for its ellipsis, which clipped the shelf to the height
+   of the name; the label inside already ellipsizes on its own. */
+.redesign-application .notebook-switcher.list-title,
+.redesign-application .notebook-switcher.tools-switcher {
+  overflow: visible;
+}
+
+/* P2 · Every mark has a fixed slot on every route. */
+.floating-nav.steady > a,
+.floating-nav.steady > button,
+.floating-nav.steady > .pill-void {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 48px;
+  min-width: 48px;
+  padding: 0;
+}
+.floating-nav.steady > .pill-void {
+  height: 40px;
+}
+.floating-nav.steady > .pill-add {
+  width: 40px;
+  min-width: 40px;
+}
+.floating-nav.steady:not(.compact) .active {
+  background: transparent;
+}
+/* The room you are in is a well that settles from slot to slot. */
+.floating-nav .pill-well {
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  top: 50%;
+  width: 48px;
+  height: 40px;
+  margin-top: -20px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.24);
+  pointer-events: none;
+  transition:
+    transform var(--duration-base) var(--ease-standard),
+    opacity var(--duration-base) var(--ease-standard);
+}
+.floating-nav .pill-well.none {
+  opacity: 0;
+}
+/* Its name is a caption above the pill, under the pointer or focus and for
+   a moment on arrival; the pill never widens to carry it. */
+.floating-nav .pill-caption {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% + 10px);
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #0c2223;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(246, 243, 236, 0.1);
+  color: #f6f3ec;
+  font: 500 11px var(--font-sign);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 3px);
+  transition:
+    opacity var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+}
+.floating-nav .pill-caption.shown {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.floating-nav.receded .pill-caption,
+.floating-nav.receded .pill-well {
+  opacity: 0;
+}
+/* P5 · Under a resting mouse the pill dims where it is instead of leaving. */
+.floating-nav.resting {
+  opacity: 0.4;
+}
+.floating-nav {
+  transition: opacity 600ms var(--ease-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+  .floating-nav,
+  .floating-nav .pill-well,
+  .floating-nav .pill-caption {
+    transition: none;
+  }
+}
+
+/* P3 · The phone's pill: ←, the room you are in by name, and +. */
+.floating-nav.steady.compact {
+  width: min(264px, calc(100vw - 32px));
+  box-sizing: border-box;
+  gap: 6px;
+  padding: 0 8px;
+}
+.floating-nav.steady.compact > .pill-up,
+.floating-nav.steady.compact > .pill-void,
+.floating-nav.steady.compact > .pill-add {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  margin-left: 0;
+}
+.floating-nav.steady.compact > .pill-room {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.24);
+}
+.pill-room-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 13px var(--font-sign);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.pill-room-caret {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+.pill-room[aria-expanded='true'] .pill-room-caret {
+  transform: rotate(180deg);
+}
+/* One sheet: the five rooms by name, a rule, the six back rooms. */
+.nav-menu-scrim.pill-sheet-scrim {
+  z-index: 60;
+  background: rgba(0, 16, 17, 0.5);
+}
+.pill-sheet {
+  position: absolute;
+  z-index: 61;
+  left: 16px;
+  right: 16px;
+  bottom: calc(max(20px, var(--safe-bottom)) + 72px);
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 12px;
+  border-radius: 30px;
+  background: #0c2223;
+  box-shadow: var(--sh-dialog);
+  display: grid;
+  gap: 8px;
+}
+.pill-sheet-rooms {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+.redesign-application .pill-sheet-rooms > a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 64px;
+  border-radius: 16px;
+  color: #f6f3ec;
+  font: 500 11px var(--font-ui);
+  text-decoration: none;
+}
+.pill-sheet-rooms > .active {
+  background: #ffffff1a;
+}
+.pill-sheet-rooms .fn-icon {
+  width: 22px;
+  height: 22px;
+}
+.pill-sheet hr {
+  width: auto;
+  margin: 2px 8px;
+  border: 0;
+  border-top: 1px solid #ffffff1a;
+}
+.pill-sheet-back {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+}
+.redesign-application .pill-sheet .pill-sheet-back > a,
+.redesign-application .pill-sheet .pill-sheet-back > button:has(> .fn-icon),
+.redesign-application .pill-sheet .pill-sheet-back > button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #e9e6df;
+  font: 500 13px var(--font-ui);
+  text-align: left;
+  text-decoration: none;
+}
+.pill-sheet-back .fn-icon,
+.pill-sheet-back .colors-glyph {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: #9cb1b2;
+}
+.pill-sheet-back > :hover,
+.pill-sheet-rooms > :hover {
+  background: #ffffff12;
+}
+
+/* P4 · + names what it will make, and where a page goes. */
+.add-chooser.labelled {
+  flex-direction: row;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 22px;
+  width: min(360px, calc(100vw - 32px));
+  box-sizing: border-box;
+}
+.redesign-application .add-chooser.labelled > button:has(> .fn-icon),
+.redesign-application .add-chooser.labelled > button {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 84px;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 16px;
+  color: #f6f3ec;
+}
+.add-chooser.labelled strong {
+  font: 600 14px var(--font-ui);
+}
+.add-chooser.labelled small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  overflow: hidden;
+  font: 500 12px var(--font-ui);
+  color: #cbd1ca;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.add-chooser.labelled small i {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #f6f3ec99;
+}
+
+/* P6 · One fold mark; the list head's ‹ › retired. */
+.redesign-application .list-head-row .sidebar-tab {
+  display: none;
+}
+
+/* P7 · Aa opens the strip in the toolbar's own row: the sections as a small
+   segmented control, the tools beside them, undo and redo, and Aa lit, which
+   closes it. One band on a tablet or a desk; on a phone the tools take a
+   second line under the sections, and there is no third. The strip takes the
+   leaf's colours so it reads on paper as well as night. */
+.redesign-application .leaf .tools.tray-open,
+.redesign-application .leaf .tools.tray-open.typing {
+  opacity: 1;
+}
+.redesign-application .leaf .tools .row > .tray {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-quiet);
+}
+.redesign-application .leaf .tools .row > .tray .tray-sections {
+  flex: none;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-quiet) 16%, transparent);
+}
+.redesign-application .leaf .tools .row > .tray .tray-sections > button {
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-quiet);
+  font: 500 12px var(--font-ui);
+  box-shadow: none;
+}
+.redesign-application .leaf .tools .row > .tray .tray-sections > button[aria-pressed='true'] {
+  background: var(--text-heading);
+  color: var(--surface-page);
+}
+.redesign-application .leaf .tools .row > .tray .tray-strip {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border-left: 1px solid color-mix(in srgb, var(--text-quiet) 22%, transparent);
+  padding-left: 8px;
+}
+.redesign-application .leaf .tools .row > .tray :is(button, select) {
+  color: var(--text-quiet);
+}
+.redesign-application .leaf .tools .row > .tray :is(.tray-mark, .tray-block, .tray-step, .tray-word, .tray-style, .tray-clear):hover {
+  color: var(--text-heading);
+  background: color-mix(in srgb, var(--text-quiet) 14%, transparent);
+}
+.redesign-application .leaf .tools .row > .tray .tray-divider {
+  background: color-mix(in srgb, var(--text-quiet) 22%, transparent);
+}
+.redesign-application .leaf .tools.tray-open .row > .tools-aa.on {
+  background: var(--text-heading);
+  color: var(--surface-page);
+}
+/* Where the Text section doesn't fit beside the row's own marks (every
+   phone, and any leaf under about 1320px), its tools take a second line
+   under the sections. */
+.redesign-application .leaf .tools.tray-wrap .row {
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 52px;
+  row-gap: 4px;
+  padding-bottom: 6px;
+}
+.redesign-application .leaf .tools.tray-wrap .row > .tray {
+  display: contents;
+}
+.redesign-application .leaf .tools.tray-wrap .row > .tray .tray-sections {
+  margin-top: 8px;
+}
+.redesign-application .leaf .tools.tray-wrap .row > .tools-undo {
+  margin: 8px 0 0 auto;
+}
+.redesign-application .leaf .tools.tray-wrap .row > :is(.tools-redo, .tools-aa) {
+  margin-top: 8px;
+}
+.redesign-application .leaf .tools.tray-wrap .row > .tray .tray-strip {
+  order: 10;
+  flex: 1 0 100%;
+  border-left: 0;
+  padding-left: 0;
+}
+@media (max-width: 819px) {
+  .redesign-application .leaf .tools.tray-open .tools-switcher {
+    display: none;
+  }
+  /* Undo and redo are hidden on a phone, so Aa takes the far side. */
+  .redesign-application .leaf .tools.tray-wrap .row > .tools-aa {
+    margin-left: auto;
+  }
+}
+/* What scrolls past the end of the strip fades rather than cutting off. */
+.redesign-application .leaf .tools .row > .tray .tray-strip {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
+/* P8 · A chevron after a title means the title is a menu. */
+.title-chevron {
+  display: inline-block;
+  margin-left: 0.32em;
+  vertical-align: 0.12em;
+}
+.redesign-application :is(.plan-title-button, .workshop-heading h1 > button)[aria-expanded='true'] .title-chevron {
+  transform: rotate(180deg);
+}
+
+/* P9 · Two controls brought home. A plan's sections are a sticky row of the
+   Workshop's own chips instead of a native select. */
+.redesign-application .plan-index.plan-chips {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+  margin: 20px 0;
+  padding: 8px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: #2a2622;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+.redesign-application .plan-index.plan-chips::-webkit-scrollbar {
+  display: none;
+}
+.redesign-application .plan-index.plan-chips > button {
+  flex: none;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff14;
+  color: #f6f3ec;
+  font: 500 13px var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.redesign-application .plan-index.plan-chips > button:hover,
+.redesign-application .plan-index.plan-chips > button:focus-visible {
+  background: #f6f3ec;
+  color: #2a2622;
+}
+/* Settings' sections on a phone: one row of chips that scrolls sideways, not
+   two rows of tiny tabs. */
+@media (max-width: 819px) {
+  .redesign-application .settings-index {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 6px;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+  .redesign-application .settings-index::-webkit-scrollbar {
+    display: none;
+  }
+  .redesign-application .settings-index > a {
+    flex: none;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: #ffffff14;
+    font: 500 13px var(--font-ui);
+    white-space: nowrap;
+  }
+  .redesign-application .settings-index > a > :is(.fn-icon, .colors-glyph) {
+    display: none;
+  }
+}
+
+/* The phone calendar gives the month room to breathe: the day's sheet starts
+   lower, below a wider margin under the last week. */
+@media (max-width: 819px) {
+  .redesign-application .month-mobile {
+    padding-bottom: 40px;
+  }
+  .redesign-application .month-selected {
+    margin-top: 8px;
+    padding-top: 26px;
+  }
+}

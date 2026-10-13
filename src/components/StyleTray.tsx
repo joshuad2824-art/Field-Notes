@@ -135,6 +135,8 @@ export function StyleTray({
       const target = event.target
       if (!(target instanceof Node)) return
       if (toggleRef.current?.contains(target)) return
+      /* Undo and redo sit beside the strip in the same row. */
+      if (target instanceof Element && target.closest('[data-tray-keep]')) return
       if (trayRef.current?.contains(target) && target !== linkBackdrop.current) return
       onClose()
     }
@@ -180,13 +182,14 @@ export function StyleTray({
 
   return (
     <div ref={trayRef} className="tray" role="toolbar" aria-label="Style">
+      {/* The sections are a small segmented control at the head of the
+          strip. Aa, lit beside it, closes the strip, as does Esc; the strip
+          has no × of its own (October 13, third pass). */}
       <div className="tray-sections" aria-label="Formatting groups">
         {(['Text', 'Insert', 'Appearance'] as const).map(name => (
           <button key={name} aria-label={`${name} tools`} aria-pressed={section === name}
             onMouseDown={hold} onClick={() => setSection(name)}>{name}</button>
         ))}
-        <span className="grow" />
-        <button className="tray-close" onMouseDown={hold} onClick={onClose} aria-label="Close"><Icon name="close" /></button>
       </div>
       <div className="tray-strip">
         {section === 'Text' && <>

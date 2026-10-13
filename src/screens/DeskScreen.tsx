@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { TitleChevron } from '../components/NotebookSwitcher'
 import { useDismiss } from '../lib/dismiss'
 import { RouteLink } from '../components/DeskHeader'
 import { projectDesk, field } from '../lib/project-desk'
@@ -81,6 +82,7 @@ export function DeskScreen({ notebook }: { kind: 'plans' | 'workshop'; notebook:
                 onClick={() => setMenu(!menu)}
               >
                 The Workshop
+                <TitleChevron />
               </button>
             </h1>
             {menu ? (

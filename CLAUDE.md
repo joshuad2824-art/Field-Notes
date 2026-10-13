@@ -22,6 +22,19 @@ The app itself is at the root: `src/`, `index.html`, `netlify.toml`. `npm run de
 
 ---
 
+## October 13 quieter controls (third pass)
+
+Joshua asked for the whole of the quieter-controls proposal and three calendar changes (`docs/2026-10-13 - Quieter Controls.md`; the measurements are in `docs/2026-10-13 - Toolbars and Navigation Proposal.md`). It supersedes the two sections below where they differ.
+
+- **The pill holds still.** On a tablet or a desk every mark has a fixed slot on every route; ← keeps its slot even where there is nowhere up to go; the room you are in is a well that settles from slot to slot; its name is a caption above the pill (under the pointer or focus, and briefly on arrival), never a label that widens it. Under a resting mouse the pill dims to 40% instead of receding; it still recedes while you scroll down or type.
+- **The phone raises one sheet.** The pill is ← · the room by name (a notebook's own name inside one) with a caret · +, at one width. The name raises the five rooms with their names and the six back rooms beneath — anywhere in two taps. A short swipe up on the pill raises it too.
+- **+ names its choices.** Where a room implies nothing: Page (and the notebook it will go to), Event (today), Quick note.
+- **One fold mark.** The leaf's top-left mark steps notebooks + list + page → list + page → page alone → back, drawn with a line per open column; ⌘\ steps the same cycle (`cycleColumns` in `src/lib/settings.ts`); ⌘⇧\ still toggles the notebooks alone. The list head's ‹ › is gone.
+- **Aa opens in the toolbar's own row.** Sections as a segmented control, then the tools, undo, redo, and Aa lit to close. Where the tools don't fit (phones, leaves under ~1320px) they take one line under the sections: two bands at most. No × in the strip. Undo and redo don't close it.
+- **A chevron after a title means a menu** (`TitleChevron`): notebook names, St. John, the month, the day heading, the Workshop heading, a plan's title.
+- **A plan's sections are a sticky row of chips; Settings' sections on a phone are one sideways-scrolling row.**
+- **Events carry no source line** ("Work · Read only", "Family calendar"): the bar's colour says it, the row's accessible name keeps it. **The phone calendar's day sheet lists the day's events only**, and sits lower under the month.
+
 ## October 13 controls review
 
 Joshua approved the October 12 controls review whole (`docs/2026-10-13 - Controls Review.md`). The goal is one quiet control grammar everywhere: no screen is a dead end, every control appears once, no on-screen text explains the app to its only user, and every board uses its space. The look is unchanged.

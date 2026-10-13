@@ -65,6 +65,20 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
   const viewRef = useRef<EditorView | null>(null)
   const [tray, setTray] = useState(false)
   const trayToggle = useRef<HTMLButtonElement>(null)
+  /* The strip shares the toolbar's row only where the whole Text section
+     fits beside the row's own marks; on a narrower leaf its tools take a
+     second line under the sections — two bands at most, never three. */
+  const toolsRef = useRef<HTMLDivElement>(null)
+  const [trayWide, setTrayWide] = useState(false)
+  useEffect(() => {
+    const el = toolsRef.current
+    if (!tray || !el) return
+    const fit = () => setTrayWide(el.clientWidth >= 1320)
+    fit()
+    const watch = new ResizeObserver(fit)
+    watch.observe(el)
+    return () => watch.disconnect()
+  }, [tray])
   const [menu, setMenu] = useState(false)
   /* The prose pass, which is the only thing in this app that can be busy or
      can fail out loud. Both states live here rather than in the sheet, because
@@ -338,28 +352,55 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
               data-pen={pen}
               style={{ '--zoom': settings.zoom } as CSSProperties}
             >
-              {/* Three marks at rest, not eleven. */}
-              <div className={`tools${typing ? ' typing' : ''}`}>
+              {/* Three marks at rest, not eleven. Aa opens the style strip in
+                  this same row (October 13, third pass): one band, not three,
+                  and the writing stays exactly where it was. */}
+              <div
+                ref={toolsRef}
+                className={`tools${typing ? ' typing' : ''}${tray ? ` tray-open${trayWide ? '' : ' tray-wrap'}` : ''}`}
+              >
                 <div className="row">
                   {workshop ? null : toggle}
                   {/* On a phone the notebook's name rides in the toolbar's
                       own row, so the writing starts one row sooner. */}
                   <NotebookSwitcher notebook={book.id} className="tools-switcher" />
-                  {hidden ? (
+                  {hidden && !tray ? (
                     <span className="breadcrumb">
                       {book.name} · {todayLine()}
                     </span>
                   ) : null}
-                  <span className="grow" />
+                  {tray ? (
+                    <StyleTray
+                      toggleRef={trayToggle}
+                      view={view}
+                      pageId={page.id}
+                      pen={pen}
+                      stock={stock}
+                      placement={placement}
+                      highlight={color.current}
+                      zoom={settings.zoom}
+                      onHighlight={(next) => (color.current = next)}
+                      onPen={togglePen}
+                      onStock={toggleStock}
+                      onZoom={(direction) =>
+                        setSettings({ zoom: stepZoom(getSettings().zoom, direction) })
+                      }
+                      onClose={() => setTray(false)}
+                    />
+                  ) : (
+                    <span className="grow" />
+                  )}
                   {saveMark ? (
                     <span className="saved" data-save={saveMark} role="status">
                       {saveMark === 'failed' ? 'Not saved' : 'Saving'}
                     </span>
                   ) : null}
                   {/* Undo and redo are the editor's own; they sit with Aa
-                      rather than with the navigation on the left. */}
+                      rather than with the navigation on the left, and keep
+                      the strip open when pressed beside it. */}
                   <button
-                    className="mark-button"
+                    className="mark-button tools-undo"
+                    data-tray-keep=""
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => view && undo(view)}
                     aria-label="Undo — ⌘Z"
@@ -368,7 +409,8 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                     <Icon name="undo" />
                   </button>
                   <button
-                    className="mark-button"
+                    className="mark-button tools-redo"
+                    data-tray-keep=""
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => view && redo(view)}
                     aria-label="Redo — ⌘⇧Z"
@@ -378,7 +420,7 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                   </button>
                   <button
                     ref={trayToggle}
-                    className={`mark-button wide${tray ? ' on' : ''}`}
+                    className={`mark-button wide tools-aa${tray ? ' on' : ''}`}
                     /* Opening the tray must not take the focus off what the
                        tray is about to shape. CodeMirror keeps its selection
                        in state and survives a blur; a contenteditable table
@@ -387,38 +429,21 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                     onClick={() => setTray((open) => !open)}
                     aria-label="Style"
                     aria-expanded={tray}
+                    title={tray ? 'Close the strip — Esc' : 'Style'}
                   >
                     Aa
                   </button>
-                  <button
-                    className="mark-button"
-                    onClick={() => setMenu(true)}
-                    aria-label="Page options"
-                  >
-                    <Icon name="more" />
-                  </button>
+                  {tray ? null : (
+                    <button
+                      className="mark-button"
+                      onClick={() => setMenu(true)}
+                      aria-label="Page options"
+                    >
+                      <Icon name="more" />
+                    </button>
+                  )}
                 </div>
               </div>
-
-              {tray ? (
-                <StyleTray
-                  toggleRef={trayToggle}
-                  view={view}
-                  pageId={page.id}
-                  pen={pen}
-                  stock={stock}
-                  placement={placement}
-                  highlight={color.current}
-                  zoom={settings.zoom}
-                  onHighlight={(next) => (color.current = next)}
-                  onPen={togglePen}
-                  onStock={toggleStock}
-                  onZoom={(direction) =>
-                    setSettings({ zoom: stepZoom(getSettings().zoom, direction) })
-                  }
-                  onClose={() => setTray(false)}
-                />
-              ) : null}
 
               <Editor
                 key={page.id}

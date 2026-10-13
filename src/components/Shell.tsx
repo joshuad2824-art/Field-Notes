@@ -4,11 +4,43 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { SIDEBAR_AVAILABLE, SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { firstNotebookId, isReserved, useNotebooks } from '../lib/notebooks'
 import { navigate, to } from '../lib/router'
-import { setSettings, useSettings } from '../lib/settings'
+import { cycleColumns, openColumns, setSettings, useSettings } from '../lib/settings'
 import { NotebookManager } from './NotebookManager'
 import { useExternalRail } from './ApprovedFrame'
 import { PageList } from './PageList'
 import { Rail } from './Rail'
+
+/* What a press of the fold mark will do, named by the step it takes. */
+const foldLabel = (from: 1 | 2 | 3, to: 1 | 2 | 3) =>
+  to === 3
+    ? 'Show the notebooks and the list'
+    : to === 2 && from === 1
+      ? 'Show the list'
+      : to === 2
+        ? 'Fold the notebooks'
+        : 'Fold the list'
+
+/* The fold mark draws the desk as it stands: a frame with a line for each
+   column open beside the page. */
+export function FoldGlyph({ columns }: { columns: 1 | 2 | 3 }) {
+  return (
+    <svg
+      className="fn-icon fold-glyph"
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M7.5 4v16" strokeOpacity={columns >= 2 ? 1 : 0} />
+      <path d="M12 4v16" strokeOpacity={columns === 3 ? 1 : 0} />
+    </svg>
+  )
+}
 
 interface Props {
   focus?: boolean
@@ -40,6 +72,7 @@ export function Shell({
   const tablet = useMediaQuery('(min-width: 820px) and (max-width: 1199px)')
   const available = useMediaQuery(SIDEBAR_AVAILABLE)
   const regularDocked = useMediaQuery(SIDEBAR_DOCKED)
+  const desk = useMediaQuery('(min-width: 1200px)')
   /* Overview needs only the rail and the desk, so the familiar sidebar can
      dock sooner than it can on the three-column writing screen. */
   const overviewDocked = useMediaQuery('(min-width: 1000px)')
@@ -68,6 +101,12 @@ export function Shell({
   /* Nothing to the left saying where we are, so the leaf says it itself. */
   const hidden = docked && !listDocked && !railDocked && !(externalRail && settings.rail)
 
+  const railAvailable = desk && externalRail
+  const columns = openColumns(settings, railAvailable)
+  const nextColumns: 1 | 2 | 3 = railAvailable
+    ? columns === 3 ? 2 : columns === 2 ? 1 : 3
+    : columns === 2 ? 1 : 2
+
   const pickNotebook = (id: string) => {
     /* The journal is somewhere you go, not where you live. Remembering it as
        the notebook the app opens into would mean a visit to it quietly became
@@ -85,17 +124,25 @@ export function Shell({
     >
       <Icon name="menu" />
     </button>
-  ) : (
+  ) : compact ? (
     <button
-      className={`mark-button list-toggle${listDocked && available ? ' on' : ''}`}
-      onClick={() => {
-        if (compact) navigate(to.notebook(notebook))
-        else setSettings({ list: !settings.list })
-      }}
-      aria-label={compact ? 'The list' : listDocked ? 'Hide the list' : 'Show the list'}
-      title="The list — ⌘\"
+      className="mark-button list-toggle"
+      onClick={() => navigate(to.notebook(notebook))}
+      aria-label="The list"
+      title="The list"
     >
       <Icon name="menu" />
+    </button>
+  ) : (
+    /* One fold mark for both columns (October 13, third pass). It steps
+       3 → 2 → 1 → 3 and draws how many columns are open. */
+    <button
+      className="mark-button list-toggle fold-mark"
+      onClick={() => cycleColumns(railAvailable)}
+      aria-label={foldLabel(columns, nextColumns)}
+      title={`${foldLabel(columns, nextColumns)} — ⌘\\`}
+    >
+      <FoldGlyph columns={columns} />
     </button>
   )
 

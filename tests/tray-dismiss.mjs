@@ -72,9 +72,10 @@ async function run(name, options) {
     // its range, proven by applying a mark to exactly the selected words.
     const before = await page.evaluate(() => window.getSelection().toString())
     assert.equal(before, selected)
-    /* October 13: a saved page no longer shows "Saved"; the toolbar row's
-       empty spacer is the same kind of neutral spot outside the strip. */
-    await activate(page.locator('.leaf .tools .row').first())
+    /* October 13: a saved page no longer shows "Saved". Third pass: the
+       strip now lives in the toolbar's own row, so the neutral spot outside
+       it is the page foot's word count. */
+    await activate(page.locator('.leaf .pagefoot-measure > span').first())
     await assertClosed()
     await saved('**Alpha beta**\nSecond line\nThird line')
     await activate(toggle)
@@ -133,7 +134,9 @@ async function run(name, options) {
       await activate(toggle)
       await activate(page.getByRole('button', { name: 'Italic — ⌘I', exact: true }))
       await saved('**Alpha beta**\n*Second line!*\nThird line')
-      await activate(page.getByRole('button', { name: 'Close', exact: true }))
+      /* Third pass: the strip has no × of its own; Aa, lit beside it,
+         closes it. */
+      await activate(toggle)
       await assertClosed()
     }
 

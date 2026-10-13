@@ -108,16 +108,8 @@ export function PageList({
           a glance in a way a dot never is. */}
       <div className="list-head" style={{ '--book-color': book.color } as React.CSSProperties}>
         <div className="list-head-row">
-          {compact ? null : (
-            <button
-              className={`sidebar-tab${railShown ? ' on' : ''}`}
-              onClick={onToggleRail}
-              aria-label={railShown ? 'Hide the notebooks' : 'Show the notebooks'}
-              title="Notebooks — ⌘⇧\"
-            >
-              <span aria-hidden="true">{railShown ? '‹' : '›'}</span>
-            </button>
-          )}
+          {/* The ‹ / › that folded the notebooks retired with the one fold
+              mark on the leaf (October 13, third pass). */}
           <span className="book-dot" style={{ background: book.color }} />
           <NotebookSwitcher notebook={book.id} className="list-title" />
           <span className="grow" />

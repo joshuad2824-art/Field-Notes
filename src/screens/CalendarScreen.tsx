@@ -1,18 +1,17 @@
 import { useWorkCalendar } from '../work-calendar/calendar'
+import { TitleChevron } from '../components/NotebookSwitcher'
 import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
 import { useAppleCalendar } from '../apple/calendar'
 import { eventOnDay } from '../lib/event-range'
 import { MonthGrid } from '../components/MonthGrid'
 import { EventRow } from '../components/EventRow'
-import { notebookForPage } from '../lib/notebooks'
-import { coverColor } from '../lib/theme'
 import { useCalendarView, selectCalendarDate } from '../lib/calendar-view'
 import { eventsInMonth } from '../lib/events'
 import { pagesInMonth } from '../lib/db'
 import { dayOf, monthNow, monthParts, monthOf, stepMonth } from '../lib/calendar'
 import { isoDay, readableDay, clock } from '../lib/format'
-import { JOURNAL_NOTEBOOK, titleOf } from '../lib/model'
+import { JOURNAL_NOTEBOOK } from '../lib/model'
 import { navigate, to } from '../lib/router'
 import { useLive } from '../lib/useLive'
 export function CalendarScreen({ notebook: _notebook }: { month?: string; notebook: string }) {
@@ -50,6 +49,7 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
                 aria-label={`${parts.month} ${parts.year} — open the day agenda`}
               >
                 {parts.month} <span>{parts.year}</span>
+                <TitleChevron />
               </button>
             </h1>
             <div className="month-controls">
@@ -160,17 +160,9 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
             .map((e) => (
               <EventRow key={e.id} event={e} />
             ))}
-          {/* Pages written that day, as one line each: a notebook dot and a title. */}
-          <div className="month-written">
-            {pages
-              .filter((p) => dayOf(p) === selected)
-              .map((p) => (
-                <button key={p.id} className="month-written-row" onClick={() => navigate(to.page(p.id))}>
-                  <i style={{ background: coverColor(notebookForPage(p.notebook).color) }} />
-                  <span>{titleOf(p.body)}</span>
-                </button>
-              ))}
-          </div>
+          {/* The day's pages no longer follow its events here (October 13,
+              third pass): the sheet is the day's schedule. They are a tap
+              away on the day agenda, and the month's rings still mark them. */}
         </section>
       </main>
     </div>

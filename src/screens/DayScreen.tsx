@@ -1,4 +1,5 @@
 import { useWorkCalendar } from '../work-calendar/calendar'
+import { TitleChevron } from '../components/NotebookSwitcher'
 import { useEffect, useRef, useState } from 'react'
 import { eventOnDay } from '../lib/event-range'
 import { shiftDate } from '../lib/event-recurrence'
@@ -131,6 +132,7 @@ export function DayScreen({ iso }: { iso: string; notebook: string }) {
                 title={`Open ${date.toLocaleDateString([], { month: 'long', year: 'numeric' })}`}
               >
                 {date.toLocaleDateString([], { weekday: 'long' })}
+                <TitleChevron />
               </button>
             </h1>
             <p>

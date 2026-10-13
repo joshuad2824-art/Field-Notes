@@ -104,12 +104,25 @@ try {
         ? page.getByRole('navigation', { name: 'Rooms' }).getByRole('link', { name, exact: true })
         : pill().getByRole('link', { name, exact: true })
     }
-    const appMenuButton = async () => {
-      await raise()
-      return phone
-        ? page.getByRole('navigation', { name: 'Rooms' }).getByRole('button', { name: 'App menu' })
-        : pill().getByRole('button', { name: 'App menu' })
+    /* October 13, third pass: on a phone the back rooms are in the same
+       sheet as the rooms; on a tablet or a desk ⋯ opens them. */
+    const openBack = async () => {
+      if (phone) await raise()
+      else await tap(pill().getByRole('button', { name: 'App menu' }))
+      await page.getByRole('navigation', { name: 'App menu' }).waitFor()
     }
+    const backReachable = async () =>
+      phone
+        ? page.getByRole('navigation', { name: 'App menu' }).isVisible()
+        : pill().getByRole('button', { name: 'App menu' }).isVisible()
+    /* Where each mark of the pill sits, by name, so every route can be held
+       to the first one's (October 13, third pass: the pill holds still). */
+    const marks = () =>
+      pill().locator('a[aria-label], button[aria-label]').evaluateAll((els) =>
+        Object.fromEntries(els.map((e) => [e.getAttribute('aria-label'), Math.round(e.getBoundingClientRect().left + e.getBoundingClientRect().width / 2)])),
+      )
+    let firstMarks = null
+    let firstWidth = null
     /* On a tablet or a desk the pill already holds Today, so ← shows only
        where it goes somewhere else. */
     const TOP = ['today', 'notebook', 'empty notebook', 'journal', 'st john', 'calendar', 'workshop', 'from siena', 'search', 'settings', 'trash']
@@ -143,10 +156,23 @@ try {
       if (phone)
         eq(await pill().locator('a, button').count(), name === 'today' ? 2 : 3, `${width} ${name}: a phone's pill is ← · room · +`)
       for (const r of ROOMS) ok(await (await room(r)).isVisible(), `${width} ${name}: ${r} one tap away`)
-      ok(await (await appMenuButton()).isVisible(), `${width} ${name}: app menu`)
+      ok(await backReachable(), `${width} ${name}: app menu`)
       if (phone) {
         await page.keyboard.press('Escape')
         ok(!(await page.getByRole('navigation', { name: 'Rooms' }).isVisible().catch(() => false)), `${width} ${name}: Esc lowers the rooms`)
+      }
+      if (!phone) {
+        /* Every mark stays where it was on every route. */
+        const here = await marks()
+        firstMarks ??= here
+        for (const [label, x] of Object.entries(here)) {
+          const key = ['New page', 'New event', 'New plan', 'Review last week', 'Add', 'Save event'].includes(label) ? '+' : label
+          const was = Object.entries(firstMarks).find(([l]) => (['New page', 'New event', 'New plan', 'Review last week', 'Add', 'Save event'].includes(l) ? '+' : l) === key)
+          if (was) eq(x, was[1], `${width} ${name}: ${label} holds its place`)
+        }
+        const pillWidth = await pill().evaluate((n) => Math.round(n.getBoundingClientRect().width))
+        firstWidth ??= pillWidth
+        eq(pillWidth, firstWidth, `${width} ${name}: the pill keeps one width`)
       }
       eq(
         await pill().getByRole('button', { name: 'Up' }).count(),
@@ -185,7 +211,7 @@ try {
           '.work-resources', '.board-books', '.month-written-row', '.collection-chip', '.chips',
           '.board-upcoming-row', '.foot-tag', '.plan-image', '.work-filters', '.collection-filters',
           '.workshop-reference-filters', '.search-filters', '.repeat-weekdays', '.trash-app .row-meta',
-          '.board-sidebar nav', '.settings-index', '.tray', '.cm-content',
+          '.board-sidebar nav', '.settings-index', '.tray', '.cm-content', '.plan-chips',
         ].join(',')
         const seen = new Map()
         for (const el of document.querySelectorAll('button, a[href], select, input, summary, [role=menuitem]')) {
@@ -242,13 +268,25 @@ try {
     checks++
     if (width >= 1200) {
       // With the sidebar folded the list head is the switcher.
+      // October 13, third pass: one fold mark steps 3 → 2 → 1 → 3.
       await visit('/n/church')
-      await page.getByRole('button', { name: 'Hide the notebooks' }).click()
+      await page.getByRole('button', { name: 'Fold the notebooks' }).click()
+      ok(!(await page.locator('.board-sidebar').isVisible().catch(() => false)), `${width}: the fold mark folds the notebooks first`)
+      ok(await page.locator('.listcol').isVisible(), `${width}: and keeps the list`)
       await page.getByRole('button', { name: /switch notebook/ }).click()
       await page.getByRole('menuitemradio', { name: 'The Hearth' }).click()
       await page.waitForURL(/\/n\/hearth$/)
       checks++
-      await page.getByRole('button', { name: 'Show the notebooks' }).click()
+      await page.getByRole('button', { name: 'Fold the list' }).click()
+      ok(!(await page.locator('.listcol').isVisible().catch(() => false)), `${width}: then the list`)
+      await page.getByRole('button', { name: 'Show the notebooks and the list' }).click()
+      ok(await page.locator('.board-sidebar').isVisible(), `${width}: then brings both back`)
+      eq(await page.locator('.sidebar-tab:visible').count(), 0, `${width}: the list head's ‹ › retired`)
+      await page.keyboard.press('ControlOrMeta+\\')
+      ok(!(await page.locator('.board-sidebar').isVisible().catch(() => false)), `${width}: ⌘\\ steps the same cycle`)
+      await page.keyboard.press('ControlOrMeta+\\')
+      await page.keyboard.press('ControlOrMeta+\\')
+      ok(await page.locator('.board-sidebar').isVisible(), `${width}: and comes back round`)
     }
 
     /* 4. ← goes to the documented parent, from a cold load each time. */
@@ -279,15 +317,15 @@ try {
     }
     // Back rooms return to the room they were opened from, as reached in use.
     for (const [open, roomLabel] of [
-      [appMenuButton, 'Search'],
-      [appMenuButton, 'Settings'],
-      [appMenuButton, 'Trash'],
-      [null, 'From Siena'],
+      [true, 'Search'],
+      [true, 'Settings'],
+      [true, 'Trash'],
+      [false, 'From Siena'],
     ]) {
       const room_ = roomLabel
       await visit('/workshop')
       if (open) {
-        await tap(await open())
+        await openBack()
         await page.getByRole('navigation', { name: 'App menu' }).getByText(roomLabel, { exact: true }).click()
       } else await tap(await room(room_))
       await page.waitForURL((u) => u.pathname !== '/workshop')
@@ -376,7 +414,7 @@ try {
     await page.waitForURL((u) => u.pathname === '/n/church')
     checks++
     await visit('/')
-    await tap(await appMenuButton())
+    await openBack()
     const appMenu = page.getByRole('navigation', { name: 'App menu' })
     for (const item of ['Search', 'Colors', 'Manage notebooks', 'Ask Siena', 'Trash', 'Settings'])
       ok(await appMenu.getByText(item, { exact: true }).isVisible(), `${width}: app menu has ${item}`)
@@ -400,13 +438,15 @@ try {
       checks++
     }
 
-    /* 7. The pill recedes and returns. */
+    /* 7. Under a resting mouse the pill dims where it is (October 13, third
+          pass); it recedes only while scrolling down or typing. */
     await visit('/n/church')
     await page.waitForTimeout(3300)
-    ok(await page.locator('.floating-nav.receded').count(), `${width}: recedes after three still seconds`)
-    ok(await page.locator('.pill-handle.shown').isVisible(), `${width}: leaves its bar`)
+    ok(await page.locator('.floating-nav.resting').count(), `${width}: dims after three still seconds`)
+    eq(await page.locator('.floating-nav.receded').count(), 0, `${width}: and does not leave`)
+    ok(!(await page.locator('.pill-handle.shown').isVisible().catch(() => false)), `${width}: so no bar stands in for it`)
     await page.mouse.move(width / 2, 40)
-    await page.waitForFunction(() => !document.querySelector('.floating-nav.receded'))
+    await page.waitForFunction(() => !document.querySelector('.floating-nav.resting'))
     checks++
     await visit('/')
     const scrolled = await page.evaluate(async () => {
@@ -444,8 +484,8 @@ try {
       Math.max(...els.map((e) => { const r = e.getBoundingClientRect(); return Math.abs(r.width - r.height) })),
     )
     ok(worst < 0.6, `${width}: every day mark on Today is a circle (worst ${worst}px)`)
-    await tap(await appMenuButton())
-    const offsets = await page.locator('.pill-menu > *').evaluateAll((els) =>
+    await openBack()
+    const offsets = await page.locator('.pill-menu > *, .pill-sheet-back > *').evaluateAll((els) =>
       els.map((e) => Math.round(e.querySelector('svg, .colors-glyph').getBoundingClientRect().left - e.getBoundingClientRect().left)),
     )
     eq(new Set(offsets).size, 1, `${width}: app menu icons sit in one column (${offsets})`)
@@ -502,6 +542,67 @@ try {
       })
       eq(kept, 'Still here if filing fails', `${width}: a failed filing keeps the draft`)
     }
+
+    /* 10. October 13, third pass. */
+    // The notebook switcher's shelf is on top of the list, not clipped by it.
+    if (width < 1200) {
+      await visit('/n/church')
+      await page.locator('.listcol').getByRole('button', { name: /switch notebook/ }).click()
+      const seen = await page.locator('.listcol .notebook-switcher-menu').evaluate((m) => {
+        const r = m.getBoundingClientRect()
+        return m.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2))
+      })
+      ok(seen, `${width}: the switcher's shelf can be seen and touched`)
+      await page.keyboard.press('Escape')
+    }
+    // A phone's room mark says where you are.
+    if (phone) {
+      await visit('/n/church')
+      ok(/church/i.test(await page.locator('.floating-nav .pill-room').textContent()), `${width}: the room's mark names the notebook`)
+      await visit(`/calendar/${month}`)
+      ok(/calendar/i.test(await page.locator('.floating-nav .pill-room').textContent()), `${width}: and the room`)
+    } else {
+      // The room's name is a caption above the pill, under the pointer.
+      await visit('/n/church')
+      await pill().getByRole('link', { name: 'Calendar', exact: true }).hover()
+      await page.waitForFunction(() => document.querySelector('.pill-caption.shown')?.textContent === 'Calendar')
+      checks++
+    }
+    // + says what it makes, and where a page goes.
+    await visit('/')
+    await tap(pill().getByRole('button', { name: 'Add' }))
+    const chooserText = (await page.getByRole('menu', { name: 'Add' }).textContent()).toLowerCase()
+    for (const word of ['page', 'event', 'quick note', 'today'])
+      ok(chooserText.includes(word), `${width}: the chooser says "${word}"`)
+    ok((await page.getByRole('menuitem', { name: 'New page' }).locator('small').textContent()).trim().length > 0, `${width}: and names the page's notebook`)
+    await page.keyboard.press('Escape')
+    // Events say nothing about where they came from.
+    for (const route of ['/', `/calendar/${month}`, `/day/${today}`]) {
+      await visit(route)
+      eq(await page.locator('.event-source-tag').count(), 0, `${width} ${route}: no source line under events`)
+      const rows = (await page.locator('.event-row').allTextContents()).join(' ').toLowerCase()
+      ok(!rows.includes('read only') && !rows.includes('family calendar'), `${width} ${route}: no "read only" line`)
+    }
+    await visit(`/calendar/${month}`)
+    eq(await page.locator('.month-written-row').count(), 0, `${width}: the calendar's day sheet lists events, not pages`)
+    // A chevron after a title means a menu.
+    for (const [route, sel] of [
+      [`/calendar/${month}`, '.month-toggle'],
+      [`/day/${today}`, '.agenda-day-heading'],
+      ['/workshop', '.workshop-heading'],
+      ['/plan/redesign-plan', '.plan-title-button'],
+    ]) {
+      await visit(route)
+      ok(await page.locator(`${sel} .title-chevron`).count() >= 1, `${width} ${route}: its title wears the chevron`)
+    }
+    eq(await page.locator('.plan-index select').count(), 0, `${width}: a plan's sections are chips, not a select`)
+    // Aa opens in the toolbar's own row, with no × of its own.
+    await visit('/p/redesign-page')
+    await page.getByRole('button', { name: 'Style', exact: true }).click()
+    eq(await page.locator('.leaf .tools .row .tray').count(), 1, `${width}: the strip opens in the toolbar's row`)
+    eq(await page.locator('.tray').getByRole('button', { name: 'Close', exact: true }).count(), 0, `${width}: and Aa, not ×, closes it`)
+    await page.getByRole('button', { name: 'Style', exact: true }).click()
+    eq(await page.locator('.tray').count(), 0, `${width}: Aa closes it`)
 
     await page.screenshot({ path: `${out}/${width}-last.png` })
     eq(errors.join('\n'), '', `${width}: no runtime errors`)
