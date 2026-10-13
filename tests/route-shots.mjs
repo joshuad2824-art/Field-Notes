@@ -40,7 +40,7 @@ const report = []
 try {
   for (const width of widths) {
     const context = await browser.newContext({
-      viewport: { width, height: width >= 1200 ? 900 : width >= 820 ? 1180 : 844 },
+      viewport: { width, height: Number(process.env.HEIGHT) || (width >= 1200 ? 900 : width >= 820 ? 1180 : 844) },
       reducedMotion: 'reduce',
     })
     await context.route('**/*', (r) =>

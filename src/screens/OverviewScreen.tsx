@@ -2,7 +2,7 @@ import { useFrame } from '../components/ApprovedFrame'
 import { useLongPress } from '../lib/long-press'
 import { countdownLabel, nextTimed } from '../lib/countdown'
 import { planProgress } from '../lib/plan-progress'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { shiftDate } from '../lib/event-recurrence'
 import { eventOnDay } from '../lib/event-range'
 import { EventRow } from '../components/EventRow'
@@ -68,6 +68,22 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
     { total, done } = planProgress(plan?.body)
   const weekStart = today
   const next = nextTimed(allEvents, now)
+  /* The note's card fades at its foot only when there is more to scroll. */
+  const sienaRef = useRef<HTMLAnchorElement>(null)
+  const [sienaMore, setSienaMore] = useState(false)
+  useEffect(() => {
+    const el = sienaRef.current
+    if (!el) return
+    const check = () => setSienaMore(el.scrollHeight - el.scrollTop - el.clientHeight > 4)
+    check()
+    const observer = new ResizeObserver(check)
+    observer.observe(el)
+    el.addEventListener('scroll', check, { passive: true })
+    return () => {
+      observer.disconnect()
+      el.removeEventListener('scroll', check)
+    }
+  }, [siena.featured?.id, siena.featured?.body])
   return (
     <div className="app board-app">
       <main className="board-screen scroll">
@@ -104,6 +120,8 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
                   ) : null}
                 </section>
               ) : null}
+              {/* Only dates with events, and no heading over nothing. */}
+              {upcoming.length ? (
               <div className="board-day-coming">
                 <h2>Coming up</h2>
                 {upcoming.length
@@ -124,6 +142,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
                     ))
                   : null}
               </div>
+              ) : null}
             </div>
           </section>
           <section className="board-tile board-month">
@@ -187,7 +206,11 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               </span>
             </RouteLink>
           )}
-          <RouteLink className="board-tile board-siena" href={to.fromSiena()}>
+          <RouteLink
+            ref={sienaRef}
+            className={`board-tile board-siena${sienaMore ? ' has-more' : ''}`}
+            href={to.fromSiena()}
+          >
             <div className="board-tile-label">
               <h2>From Siena</h2>
               {siena.unseen ? <span className="board-badge">{siena.unseen} new</span> : null}

@@ -390,6 +390,40 @@ try {
       ok(!fit.clipped, '1440×900 no spine name is clipped')
     }
 
+    /* 8b. Found on Joshua's own screen and in the plan audit, after release. */
+    await visit('/')
+    const worst = await page.locator('.board-month .cal-day-n').evaluateAll((els) =>
+      Math.max(...els.map((e) => { const r = e.getBoundingClientRect(); return Math.abs(r.width - r.height) })),
+    )
+    ok(worst < 0.6, `${width}: every day mark on Today is a circle (worst ${worst}px)`)
+    await tap(pill().getByRole('button', { name: 'App menu' }))
+    const offsets = await page.locator('.pill-menu > *').evaluateAll((els) =>
+      els.map((e) => Math.round(e.querySelector('svg, .colors-glyph').getBoundingClientRect().left - e.getBoundingClientRect().left)),
+    )
+    eq(new Set(offsets).size, 1, `${width}: app menu icons sit in one column (${offsets})`)
+    await page.keyboard.press('Escape')
+    if (width >= 820) {
+      // Right-click stands in for the long press; both run through useLongPress.
+      await page.getByRole('link', { name: 'Open Church notebook' }).click({ button: 'right' })
+      await page.getByLabel('Rename Church').waitFor()
+      ok(await page.locator('.manager-recolor .cover-swatch').count() > 0, `${width}: a spine opens its notebook ready to recolour`)
+      eq(path(), '/', `${width}: and does not open the notebook`)
+      await page.keyboard.press('Escape')
+    }
+    await page.evaluate(async () => {
+      const { db, changed } = await import('/src/lib/db.ts')
+      window.__events = await db.events.toArray()
+      await db.events.clear()
+      changed()
+    })
+    await page.waitForTimeout(300)
+    eq(await page.getByRole('heading', { name: 'Coming up', exact: true }).count(), 0, `${width}: no Coming Up heading over nothing`)
+    await page.evaluate(async () => {
+      const { db, changed } = await import('/src/lib/db.ts')
+      await db.events.bulkPut(window.__events)
+      changed()
+    })
+
     /* 9. Quick note still files exactly and keeps its draft on failure. */
     if (width === 1440 || width === 390) {
       await visit('/')

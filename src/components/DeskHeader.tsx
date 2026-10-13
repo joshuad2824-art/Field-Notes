@@ -1,13 +1,14 @@
+import { forwardRef } from 'react'
 import { navigate, to } from '../lib/router'
 
-export function RouteLink({ href, children, onClick, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
-  return <a {...props} href={href} onClick={event => {
+export const RouteLink = forwardRef<HTMLAnchorElement, React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }>(function RouteLink({ href, children, onClick, ...props }, ref) {
+  return <a {...props} ref={ref} href={href} onClick={event => {
     onClick?.(event)
     if (event.defaultPrevented) return
     if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
     event.preventDefault(); navigate(href)
   }}>{children}</a>
-}
+})
 
 /* The notebook's name is its door: it opens the page list. Search, a new
    page, Ask Siena and Settings are one tap away in the pill and its menu. */

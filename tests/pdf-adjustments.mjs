@@ -121,7 +121,11 @@ try {
         changed()
       })
       await p.reload()
-      await p.getByRole('heading', { name: 'Coming up', exact: true }).waitFor()
+      /* October 13: with nothing on and nothing coming, the first card carries
+         no headings at all — Coming Up lists only dates with events. */
+      await p.locator('.board-day').waitFor()
+      await p.waitForTimeout(300)
+      assert.equal(await p.getByRole('heading', { name: 'Coming up', exact: true }).count(), 0)
       assert.equal(await p.locator('.board-today-schedule, .quiet-day').count(), 0)
       assert.equal(
         await p.locator('.board-day').getByText('Nothing', { exact: false }).count(),

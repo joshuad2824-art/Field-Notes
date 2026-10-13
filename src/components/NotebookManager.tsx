@@ -23,9 +23,13 @@ export function NotebookManager({ focus, onClose, onAdded, onDeleted }: Props) {
   const counts = useLive<Record<string, number>>(notebookCounts, [], {})
   const [confirm, setConfirm] = useState<string | null>(null)
   const [recoloring, setRecoloring] = useState<string | null>(focus ?? null)
-  const [renaming, setRenaming] = useState(focus ?? '')
+  const [renaming] = useState(focus ?? '')
   const focusedRow = useRef<HTMLDivElement>(null)
-  useEffect(() => focusedRow.current?.scrollIntoView({ block: 'nearest' }), [])
+  /* A block body: scroll methods return a promise in current browsers, and
+     an effect may only return its clean-up. */
+  useEffect(() => {
+    focusedRow.current?.scrollIntoView({ block: 'nearest' })
+  }, [])
   const [name, setName] = useState('')
   const [color, setColor] = useState(COVER_COLORS[4])
 
@@ -78,10 +82,12 @@ export function NotebookManager({ focus, onClose, onAdded, onDeleted }: Props) {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') e.currentTarget.blur()
                     }}
+                    /* Blur saves and the field stays: on a touch screen the
+                       finger lifting from a long press takes the focus, and
+                       closing on that would close it before it was used. */
                     onBlur={(e) => {
                       const next = e.currentTarget.value.replace(/\s+/g, ' ').trim()
                       if (next && next !== book.name) void renameNotebook(book.id, next)
-                      setRenaming('')
                     }}
                   />
                 ) : (

@@ -6484,3 +6484,54 @@ body,
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── October 13, after release: from Joshua's own screen ───────────────── */
+
+/* A day mark is a circle at any cell size. Its width came from a percentage
+   the cell could not supply, so it fell back to the digits and drew an oval
+   (true since October 12). The height still yields in a six-week month. */
+.redesign-application .board-month .cal .cal-day .cal-day-n {
+  width: auto;
+  aspect-ratio: 1;
+}
+/* On a desk the spines stand the full height of their card. */
+@media (min-width: 1200px) {
+  .redesign-application .board-shelf {
+    display: flex;
+    flex-direction: column;
+  }
+  .redesign-application .board-shelf .board-books {
+    flex: 1;
+    height: auto;
+    min-height: 136px;
+  }
+  /* A long note scrolls inside its card; the edge says there is more. */
+  .redesign-application .board-siena.has-more {
+    -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(#000 calc(100% - 28px), transparent);
+  }
+  .redesign-application :is(.board-siena, .board-coming) {
+    scrollbar-width: none;
+  }
+  .redesign-application :is(.board-siena, .board-coming)::-webkit-scrollbar {
+    display: none;
+  }
+}
+/* Every collapsed Settings row reads, Advanced included. */
+.redesign-application .settings-advanced > summary {
+  color: #e9e6df;
+}
+/* On a dark From Siena card the date is the card's one eyebrow; it reads. */
+.redesign-application .siena-item:not(.paper) .siena-item-top time {
+  color: #c1d4d4;
+}
+/* Menu rows with an icon are rows, not icon buttons. app-design.css centres
+   every `button:has(>.fn-icon)` at (0,4,1), which floated the icon and label
+   of Manage notebooks and Ask Siena to the middle of their rows; the doubled
+   class matches that specificity and wins by coming later. */
+.redesign-application :is(.pill-menu, .plan-menu).pill-menu > button:has(> .fn-icon),
+.redesign-application :is(.pill-menu, .plan-menu).plan-menu > button:has(> .fn-icon) {
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 12px;
+}
