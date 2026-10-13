@@ -32,6 +32,7 @@ const names = [
   'controls-review',
   'apple-calendar',
   'work-schedule',
+  'blank-pages',
   'davis-persistence',
 ]
 const out = 'work/check-results'

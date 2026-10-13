@@ -401,6 +401,31 @@ export function isBlank(body: string): boolean {
   return body.trim() === ''
 }
 
+/* A page with nothing written on it, not open anywhere on this device, and
+   left alone for a while, is a page nobody meant to keep: a tap on the empty
+   leaf, then away. One character, even a full stop, and it stays. The grace
+   covers a page that is open on another device while its writer thinks; if
+   they type after it was swept, the editor saves the words as a new page.
+   Reminders and journal pages are left alone: they are made on purpose. */
+export const BLANK_GRACE_MS = 10 * 60_000
+
+export function sweepableBlanks<P extends Pick<Page, 'id' | 'body' | 'updated' | 'deleted' | 'purpose' | 'entryDate'>>(
+  pages: P[],
+  now: number,
+  open: ReadonlySet<string>,
+  grace = BLANK_GRACE_MS,
+): P[] {
+  return pages.filter(
+    (p) =>
+      !p.deleted &&
+      !p.purpose &&
+      !p.entryDate &&
+      isBlank(p.body) &&
+      !open.has(p.id) &&
+      now - p.updated >= grace,
+  )
+}
+
 /* The drag payload when a picture is moved from one place in the page to
    another. Its own type, so a picture dragged out of the page and a file
    dragged in don't get confused for each other. */

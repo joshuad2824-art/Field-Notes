@@ -11,6 +11,7 @@ import {
   clearOverrides,
   createPage,
   deletePage,
+  holdOpen,
   getPage,
   moveTo,
   patchPage,
@@ -186,6 +187,9 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
     saves.current = save.catch(() => {})
     return save
   }
+
+  /* While this page is open here, the blank-page sweep leaves it alone. */
+  useEffect(() => holdOpen(id), [id])
 
   useEffect(() => {
     const onHide = () => void flush.current()

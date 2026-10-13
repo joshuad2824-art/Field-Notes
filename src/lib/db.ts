@@ -16,6 +16,7 @@ import {
   type PageImage,
   type Stock,
   isBlank,
+  sweepableBlanks,
   tagsOf,
 } from './model'
 
@@ -173,7 +174,10 @@ export async function livePages(notebook?: NotebookId): Promise<Page[]> {
 
 export async function deletedPages(): Promise<Page[]> {
   const rows = await db.pages.toArray()
-  return rows.filter((p) => p.deleted).sort((a, b) => (b.deleted ?? 0) - (a.deleted ?? 0))
+  /* A blank page's tombstone holds nothing to restore, so Trash doesn't list it. */
+  return rows
+    .filter((p) => p.deleted && !isBlank(p.body))
+    .sort((a, b) => (b.deleted ?? 0) - (a.deleted ?? 0))
 }
 
 export async function pagesWithTag(tag: string): Promise<Page[]> {
@@ -364,18 +368,42 @@ export async function moveTo(id: string, notebook: NotebookId): Promise<void> {
   await patchPage(id, { notebook })
 }
 
-/* Tombstone. A blank page leaves nothing behind and goes straight out.
-   Deleting and restoring both move `updated`, because that field is what tells
-   another device something happened here — a tombstone laid down without
-   touching it would look, from the mirror's side, exactly like a page nobody
-   had opened. */
+/* Tombstone. Deleting and restoring both move `updated`, because that field is
+   what tells another device something happened here — a tombstone laid down
+   without touching it would look, from the mirror's side, exactly like a page
+   nobody had opened. A blank page is tombstoned too, not dropped: it has
+   usually reached the mirror already, and only a tombstone takes it off the
+   other devices. Trash doesn't list blank tombstones, and they are purged with
+   the rest. */
 export async function deletePage(id: string): Promise<void> {
   const page = await db.pages.get(id)
-  if (!page) return
+  if (!page || page.deleted) return
   const now = Date.now()
-  if (isBlank(page.body)) await db.pages.delete(id)
-  else await db.pages.put({ ...page, deleted: now, updated: now })
+  await db.pages.put({ ...page, deleted: now, updated: now })
   changed()
+}
+
+/* Pages open in an editor on this device. The sweep never touches them. */
+const openPages = new Set<string>()
+export function holdOpen(id: string): () => void {
+  openPages.add(id)
+  return () => {
+    openPages.delete(id)
+  }
+}
+
+/* Clear away blank pages left behind: by a tap and a step away, by an app
+   closed on an empty page, or by another device. See sweepableBlanks. */
+export async function sweepBlankPages(now = Date.now()): Promise<number> {
+  let swept = 0
+  await db.transaction('rw', db.pages, async () => {
+    const gone = sweepableBlanks(await db.pages.toArray(), now, openPages)
+    if (!gone.length) return
+    await db.pages.bulkPut(gone.map((p) => ({ ...p, deleted: now, updated: now })))
+    swept = gone.length
+  })
+  if (swept) changed()
+  return swept
 }
 
 export async function restorePage(id: string): Promise<void> {

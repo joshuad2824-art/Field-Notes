@@ -1,3 +1,4 @@
+import { useBlankSweep } from './lib/blank-sweep'
 import { useWorkRefresh } from './work-calendar/calendar'
 import { lazy, Suspense, useEffect } from 'react'
 import { useFamilyRefresh } from './davis/calendar'
@@ -35,6 +36,7 @@ export function App() {
   useFamilyRefresh()
   useAppleRefresh()
   useWorkRefresh()
+  useBlankSweep()
   const route = useRoute()
   const settings = useSettings()
   const books = useNotebooks()
