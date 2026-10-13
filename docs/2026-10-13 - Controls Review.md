@@ -118,7 +118,7 @@ The gate also found two real regressions, both fixed rather than worked around: 
 - **After captures:** 102, every route at six widths, no runtime errors and no overflow (`after/report.json`), reviewed independently (above).
 - **Build:** clean `npm ci` and `npm run build`; 75 files; service worker v42. `tests/hosted-controls.mjs` — fresh unpaired profiles, every off-origin request refused — passes against the local production build at 1440/1180/390/320: rooms, + new page, save and reload, up, worker version.
 - **Hosted candidate:** draft deploy `6acdca464798e263705fd50f` (https://6acdca464798e263705fd50f--timber-inkfieldnotes.netlify.app). All 75 hosted files match the build byte for byte, and the hosted check passes at 1440/1180/390/320.
-- **Production:** not yet published. The production deploy step was held for Joshua's explicit go-ahead; production remains Netlify `6acd9c989e81e7268cffadb7`, service worker v41, until then.
+- **Production:** published on Joshua's go-ahead as Netlify `6acdcc2e9e39ce914665915f` (https://timber-inkfieldnotes.netlify.app), service worker v42, from the same `dist/` as the candidate. All 75 live files match the build byte for byte, and `tests/hosted-controls.mjs` passes against the live site at 1440/1180/390/320.
 - **Not verified here:** physical installed-phone behaviour (Home Screen app, Safari keyboard, the receding pill under a real finger) and propagation to another paired device. Both remain separate, named checks.
 
 ## Independent review
@@ -137,4 +137,4 @@ A fresh agent that had not seen the work reviewed the 102 after-captures against
 
 ## Recovery
 
-Baseline `39edc97`; source archive `work/2026-10-13-controls-review/before.tar` (from `git archive 39edc97`). Prior production Netlify `6acd9c989e81e7268cffadb7`, service worker v41; this build is v42. Before/after captures: `work/2026-10-13-controls-review/before/` and `after/`.
+Baseline `39edc97`; source archive `work/2026-10-13-controls-review/before.tar` (from `git archive 39edc97`). Prior production Netlify `6acd9c989e81e7268cffadb7`, service worker v41 — one-step rollback in Netlify. This release: `6acdcc2e9e39ce914665915f`, v42. Before/after captures: `work/2026-10-13-controls-review/before/` and `after/`.

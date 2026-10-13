@@ -2,12 +2,12 @@
 
 Updated October 13, 2026 for the controls review.
 
-## October 13 controls review — verified, awaiting publication
+## October 13 controls review — live
 
 - One quiet control grammar: the pill is identical on every screen and width (← · Today · Notebooks · Calendar · Workshop · From Siena │ ⋯ · +), recedes while you scroll, type or rest a mouse, and every scroller keeps a lane for it. ← is "up" to a fixed parent (`up()` in `src/lib/router.ts`) and never leaves the app; Esc, ⌘↑ and ⌘/⌃1–5 work. + makes the room's obvious thing (Review last week in Journal). The notebook's name is the switcher at every width.
 - Contextual controls live on what they act on (month name, day heading, event and plan titles, the Workshop heading, a held spine, a reminder's words, an empty leaf). Duplicates, explanatory copy and status counts are gone; consent text and the pairing-code warning stay. Today fits 1440×900; the date tile is a countdown to the next timed event.
 - The three October stylesheets are one `redesign.css`, pixel-identical at six widths. CLAUDE.md decisions 13, 17 and 19 are amended, with an October 13 section.
-- Verified candidate: Netlify draft `6acdca464798e263705fd50f`, service worker v42 — all 27 suites pass, 75 hosted files match the build, hosted checks pass at four widths. Production stays Netlify `6acd9c989e81e7268cffadb7` (v41) until Joshua approves the publish.
+- Production: Netlify `6acdcc2e9e39ce914665915f`, service worker v42. All 27 suites pass; all 75 live files match the verified build; hosted navigation, new page, save/reload and up pass at 1440/1180/390/320. Prior production `6acd9c989e81e7268cffadb7` (v41).
 - Details, decisions the spec left open, every changed test assertion, and recovery: `docs/2026-10-13 - Controls Review.md`. Evidence: `work/2026-10-13-controls-review/`. Physical installed-phone behaviour remains a separate, named-unverified check.
 
 
