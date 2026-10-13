@@ -18,4 +18,4 @@
 .work-schedule-main small{font:13px/1.45 var(--font-ui);color:#52605c;overflow-wrap:anywhere}
 .work-schedule-day .work-empty{margin:4px 0 8px;color:#4b5956}
 @media(max-width:480px){.work-schedule-day li{grid-template-columns:1fr;gap:2px}}
-.redesign-application .work-schedule .work-show-more,.work-schedule .work-show-more{color:#66520a;font:600 14px/1.5 var(--font-ui);padding-bottom:0}
+.work-middle{display:grid;gap:32px;min-width:0}

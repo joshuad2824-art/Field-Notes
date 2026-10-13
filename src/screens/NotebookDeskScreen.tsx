@@ -145,7 +145,7 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
               <div className="work-grid">
                 <div className="work-main">
                   {work ? (
-                    <section className="work-schedule work-paper" aria-labelledby="work-schedule-heading">
+                    <section className="work-schedule" aria-labelledby="work-schedule-heading">
                       <span className="work-paper-tab" aria-hidden="true">
                         Ascension calendar
                       </span>
@@ -281,6 +281,50 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                       </button>
                     ) : null}
                   </section>
+                </div>
+                {/* The middle column: the latest word from Siena, then the notebook's pages. */}
+                <div className="work-middle">
+                  <section
+                    className="work-brief work-paper"
+                    aria-labelledby="work-brief-heading"
+                  >
+                    <span className="work-tape" aria-hidden="true" />
+                    <RouteLink
+                      className="work-section-heading work-brief-head"
+                      href={to.fromSiena()}
+                      title="From Siena"
+                    >
+                      <div>
+                        <span className="work-eyebrow">02 / The latest word</span>
+                        <h2 id="work-brief-heading">From Siena</h2>
+                      </div>
+                      <Icon name="from-siena" />
+                    </RouteLink>
+                    {featured ? (
+                      <>
+                        <p className="work-brief-date">
+                          Saved {shortStamp(featured.created)} ·{' '}
+                          {featured.seenAt ? 'Seen' : 'Unread'}
+                        </p>
+                        <SienaItemCard item={featured} paper journal />
+                      </>
+                    ) : (
+                      <p className="work-empty">
+                        Work briefs will appear here when saved to this notebook. Older messages
+                        can be filed from From Siena.
+                      </p>
+                    )}
+                    {sections.briefs.length > 1 ? (
+                      <details className="work-earlier">
+                        <summary>
+                          Earlier notes & updates · {sections.briefs.length - 1}
+                        </summary>
+                        {sections.briefs.slice(1).map((item) => (
+                          <SienaItemCard key={item.id} item={item} />
+                        ))}
+                      </details>
+                    ) : null}
+                  </section>
                   <section className="work-notes" aria-labelledby="work-notes-heading">
                     <div className="work-section-heading">
                       <div>
@@ -337,47 +381,6 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                   </section>
                 </div>
                 <aside className="work-side">
-                  <section
-                    className="work-brief work-paper"
-                    aria-labelledby="work-brief-heading"
-                  >
-                    <span className="work-tape" aria-hidden="true" />
-                    <RouteLink
-                      className="work-section-heading work-brief-head"
-                      href={to.fromSiena()}
-                      title="From Siena"
-                    >
-                      <div>
-                        <span className="work-eyebrow">02 / The latest word</span>
-                        <h2 id="work-brief-heading">From Siena</h2>
-                      </div>
-                      <Icon name="from-siena" />
-                    </RouteLink>
-                    {featured ? (
-                      <>
-                        <p className="work-brief-date">
-                          Saved {shortStamp(featured.created)} ·{' '}
-                          {featured.seenAt ? 'Seen' : 'Unread'}
-                        </p>
-                        <SienaItemCard item={featured} paper journal />
-                      </>
-                    ) : (
-                      <p className="work-empty">
-                        Work briefs will appear here when saved to this notebook. Older messages
-                        can be filed from From Siena.
-                      </p>
-                    )}
-                    {sections.briefs.length > 1 ? (
-                      <details className="work-earlier">
-                        <summary>
-                          Earlier notes & updates · {sections.briefs.length - 1}
-                        </summary>
-                        {sections.briefs.slice(1).map((item) => (
-                          <SienaItemCard key={item.id} item={item} />
-                        ))}
-                      </details>
-                    ) : null}
-                  </section>
                   {work ? (
                     <section
                       className="work-resources"
