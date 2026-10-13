@@ -62,7 +62,9 @@ export function Shell({
   /* Below the boundary the leaf replaces the list rather than joining it. */
   const showList =
     overview || focus || (tablet && !!activeId) ? false : compact ? !activeId : listDocked
-  const showLeaf = overview || (compact ? !!activeId : true)
+  /* From a tablet up there is room beside the list for the empty leaf, so
+     a notebook with no page open still offers somewhere to start one. */
+  const showLeaf = overview || (compact ? !!activeId || (available && !activeId) : true)
   /* Nothing to the left saying where we are, so the leaf says it itself. */
   const hidden = docked && !listDocked && !railDocked && !(externalRail && settings.rail)
 

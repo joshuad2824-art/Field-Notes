@@ -101,7 +101,9 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
                       {day.date}
                     </button>
                   </div>
-                  {daily.slice(0, 3).map((e) => (
+                  {/* Two and a count: three no longer fit a cell once the
+                      pill has its lane. */}
+                  {daily.slice(0, 2).map((e) => (
                     <button
                       key={e.id}
                       className={`month-event ${e.calendarTarget === 'Family' ? 'family' : ''}`}
@@ -115,12 +117,12 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
                       <small>{clock(e.startTime) || 'All day'}</small>
                     </button>
                   ))}
-                  {daily.length > 3 ? (
+                  {daily.length > 2 ? (
                     <button
                       className="month-overflow"
                       onClick={() => navigate(to.day(day.iso))}
                     >
-                      {daily.length - 3} more
+                      {daily.length - 2} more
                     </button>
                   ) : null}
                 </section>

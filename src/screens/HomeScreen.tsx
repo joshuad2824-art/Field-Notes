@@ -1,21 +1,22 @@
 import { JOURNAL_NOTEBOOK } from '../lib/model'
 import { Shell } from '../components/Shell'
-import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
+import { SIDEBAR_AVAILABLE, SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { useLive } from '../lib/useLive'
 import { createPage, livePages } from '../lib/db'
 import { navigate, to } from '../lib/router'
 export function HomeScreen({ notebook }: { notebook: string }) {
   const journal = notebook === JOURNAL_NOTEBOOK
   const docked = useMediaQuery(SIDEBAR_DOCKED),
+    available = useMediaQuery(SIDEBAR_AVAILABLE),
     pages = useLive(() => livePages(notebook), [notebook], [])
   return (
     <div className="app">
       <div className="statusband" />
       <Shell notebook={notebook}>
         {({ toggle }) =>
-          docked ? (
+          available ? (
             <main className="desk desk-bare notebook-empty">
-              <div className="desk-marks">{toggle}</div>
+              {docked ? <div className="desk-marks">{toggle}</div> : null}
               {/* An empty leaf in the notebook's colour. Nothing is written in
                   the journal by hand, so its leaf only waits. */}
               {journal ? (

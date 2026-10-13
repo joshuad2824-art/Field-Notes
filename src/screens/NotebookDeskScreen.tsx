@@ -312,17 +312,6 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                       </details>
                     ) : null}
                   </section>
-                  <div className="work-calendar-note">
-                    <Icon name="calendar" />
-                    <div>
-                      <strong>Your day, together</strong>
-                      <p>
-                        {work
-                          ? 'The Ascension calendar connection is still to come. Your Field Notes events remain on Today.'
-                          : 'Your Field Notes events remain on Today.'}
-                      </p>
-                    </div>
-                  </div>
                 </aside>
               </div>
             </>

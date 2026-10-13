@@ -272,7 +272,6 @@ export function SettingsScreen() {
           </section>
           <section id="settings-colors" className="settings-card">
             <h2>Colors</h2>
-            <p>The cover of the last notebook you opened follows you through Field Notes.</p>
             <button className="cream-button" onClick={() => setColors(true)}>
               <ColorsGlyph />
               Choose a cover

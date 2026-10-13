@@ -6417,3 +6417,70 @@ body,
   white-space: nowrap;
   border: 0;
 }
+
+/* ── October 13: from the independent review of the after captures ─────── */
+
+/* The page leaf leaves the pill its lane, as every scroller does. */
+@media (min-width: 820px) {
+  .redesign-application .desk:has(> .leaf) {
+    padding-bottom: var(--pill-lane);
+  }
+}
+/* Today on a desk: the board is the window when it fits, and never smaller
+   than its rows need, so a short wide window scrolls instead of overlapping. */
+@media (min-width: 1200px) {
+  .redesign-application .today-board {
+    height: calc(100% - 56px);
+    min-height: min-content;
+    /* The shelf row's floor is what the spines need to show every name. */
+    grid-template-rows: max-content minmax(160px, 1.1fr) minmax(172px, 1fr);
+  }
+}
+@media (min-width: 1800px) {
+  .redesign-application .today-board {
+    height: calc(100% - 56px);
+  }
+}
+/* The day's vertical date needs its full height on a tablet. */
+@media (min-width: 820px) and (max-width: 1199px) {
+  .redesign-application .today-board > .board-day {
+    min-height: 280px;
+  }
+}
+/* Calendar: a cell never lets an event spill into the next row. */
+.redesign-application .month-cell {
+  overflow: hidden;
+}
+@media (max-width: 819px) {
+  .redesign-application .month-header {
+    min-height: 0;
+    padding-right: 16px;
+  }
+  .redesign-application .month-screen > * {
+    flex-shrink: 0;
+  }
+}
+/* The desk's list toggle, like the page's: a state, not a stuck focus box. */
+.redesign-application .desk-marks .mark-button.on {
+  background: transparent;
+  color: inherit;
+}
+.redesign-application .desk-marks .mark-button.on:hover {
+  background: var(--frame-hover);
+}
+/* Search: the tags start where the filters start, now the heading is gone. */
+.redesign-application .search-screen .tagpane {
+  max-width: none;
+  margin: 0;
+  padding: 20px 0 0;
+}
+/* A phone page foot keeps its words on their lines. */
+.redesign-application .pagefoot-measure > span {
+  white-space: nowrap;
+}
+.redesign-application .pagefoot-measure .foot-tag {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
