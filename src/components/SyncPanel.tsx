@@ -89,10 +89,6 @@ export function SyncPanel() {
     return (
       <>
         <h2>Sync</h2>
-        <p>
-          This device is paired. Your writing saves here first, then syncs to your other
-          devices. Pair a new device with the code below.
-        </p>
 
         {/* Named, not just styled. The suite used to find this line as "the
             first `.meta` in the panel", which was true right up until another
@@ -204,10 +200,6 @@ export function SyncPanel() {
   return (
     <>
       <h2>Sync</h2>
-      <p>
-        Not set up yet. Your pages stay on this device. Pair it with your existing archive, or
-        set up your first device.
-      </p>
 
       <div className="actions">
         <button

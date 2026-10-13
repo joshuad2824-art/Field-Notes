@@ -4639,35 +4639,48 @@ body,
   border-top: 1px solid #f6f3ec25;
   padding-top: 18px;
 }
-.quick-note-dialog label {
+.quick-note-books {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  font:
-    13px 'Archivo',
-    sans-serif;
+  flex-wrap: wrap;
+  gap: 4px;
 }
-.quick-note-dialog select {
-  max-width: 100%;
-  min-width: 0;
-  background: #142a2b;
-  color: #f6f3ec;
-  border: 0;
-  border-radius: 12px;
-  padding: 12px;
-  font:
-    13px 'Archivo',
-    sans-serif;
+.quick-note-books label {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
 }
-.quick-note-dialog footer p {
-  font:
-    12px/1.5 'Courier Prime',
-    monospace;
-  color: #9cb1b2;
+.quick-note-books input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
 }
+.quick-note-books i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 0 1px #f6f3ec66;
+  transition: box-shadow var(--duration-instant) linear;
+}
+.quick-note-books input:checked + i {
+  box-shadow:
+    0 0 0 2px #0c2223,
+    0 0 0 4px #f6f3ec;
+}
+.quick-note-books input:focus-visible + i {
+  outline: 2px solid #e5d5ba;
+  outline-offset: 5px;
+}
+/* Under the quick note the pill stays in view, dimmed by the sheet's scrim,
+   with + inert — it never sits over the note being written. */
 .redesign-application:has(.quick-note-dialog) .floating-nav.above-quick {
   visibility: visible;
-  z-index: 125;
 }
 .redesign-application:is(.route-calendar, .route-day),
 .redesign-application .month-app,
@@ -5143,9 +5156,6 @@ body,
   }
   .quick-note-dialog {
     padding: 20px;
-  }
-  .quick-note-dialog label {
-    flex-wrap: wrap;
   }
 }
 @media print {
@@ -6164,4 +6174,26 @@ body,
   .redesign-application .list-head-row .sidebar-tab {
     display: none;
   }
+}
+/* A reminder's words open its details; the circle still completes it. */
+.redesign-application .reminder-words {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.redesign-application .reminder-words:hover {
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.redesign-application .reminder-words:focus-visible {
+  outline: 2px solid var(--brass-300);
+  outline-offset: 3px;
+  border-radius: 4px;
 }

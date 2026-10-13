@@ -23,16 +23,6 @@ export function JournalPanel() {
   return (
     <>
       <h2>Journal</h2>
-      <p>
-        Once a week the journal gathers everything written across every notebook into one
-        entry, on the Sunday the week is named by. It is a page like any other page — the
-        button is at the foot of the journal's own list, and collecting the same week twice
-        updates the entry rather than making a second one.
-      </p>
-      <p>
-        What is collected is the writing itself, day by day, with nothing thrown away. Rewriting
-        it as prose is a second, separate step, and it needs a key.
-      </p>
 
       <label className="panel-label" htmlFor="model-key">
         Model key

@@ -42,7 +42,6 @@ const GONE = [
   'Back to list',
   'Back to Workshop',
   'Back to agenda',
-  ' cover\n',
 ]
 const GONE_EXACT_LINES = ['Manage', 'esc', 'Notebook', 'Tags', 'Where', 'Calendar tools', 'Notebook pages']
 
@@ -133,6 +132,7 @@ try {
         ok(!lines.has(s.toLowerCase()), `${width} ${name}: line "${s}" is gone`)
       if (name !== 'settings')
         ok(!lines.has('import markdown'), `${width} ${name}: Import lives only in Settings`)
+      ok(!/· [a-z ]+ cover\b/.test(text), `${width} ${name}: no "<notebook> · <colour> cover" eyebrow`)
       ok(!/\b1 (items|pages|reviews|plans|events)\b/.test(text), `${width} ${name}: singular counts`)
       const dupes = await page.evaluate(() => {
         /* Repeated by nature: one per row, reminder or tag. */

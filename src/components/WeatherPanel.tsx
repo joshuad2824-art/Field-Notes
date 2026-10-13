@@ -59,9 +59,6 @@ export function WeatherPanel() {
   return (
     <>
       <h2>Weather</h2>
-      <p>
-        Forecasts use your saved place. The location control requests this device’s location only when you choose it.
-      </p>
 
       {reading ? (
         <p className="meta" style={{ marginTop: 16 }}>

@@ -63,9 +63,6 @@ export function TrashScreen() {
           </div>
         ) : (
           <div className="rows">
-            <p className="trash-count">
-              {pages.length + events.length} items · Each kept thirty days
-            </p>
             {pages.length ? <div className="section-label">Pages</div> : null}
             {pages.map((page) => (
               <div key={page.id} className="row-page" style={{ cursor: 'default' }}>

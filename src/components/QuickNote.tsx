@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { coverColor } from '../lib/theme'
 import { Sheet } from './Sheet'
 import { Icon } from './Icon'
 import { useNotebooks } from '../lib/notebooks'
@@ -81,27 +82,28 @@ export function QuickNote({ onClose }: { onClose: () => void }) {
               onChange={(e) => change({ ...draft, body: e.target.value })}
             />
             <footer>
-              <label>
-                File in
-                <select
-                  aria-label="File quick note in"
-                  value={draft.notebook}
-                  disabled={busy}
-                  onChange={(e) => change({ ...draft, notebook: e.target.value })}
-                >
-                  <option value="">Keep as a quick note</option>
-                  {books.map((b) => (
-                    <option value={b.id} key={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <p>
-                {draft.notebook
-                  ? 'Filed into this notebook when you close.'
-                  : 'Kept on this device until you choose a notebook.'}
-              </p>
+              {/* A dot per notebook. None chosen and it stays a quick note;
+                  tapping the chosen dot again takes the choice back. Filing
+                  still happens on close, through the same path as before. */}
+              <div className="quick-note-books" role="radiogroup" aria-label="File quick note in">
+                {books.map((b) => (
+                  <label key={b.id} title={b.name} style={{ '--dot': coverColor(b.color) } as CSSProperties}>
+                    <input
+                      type="radio"
+                      name="quick-note-notebook"
+                      value={b.id}
+                      aria-label={b.name}
+                      checked={draft.notebook === b.id}
+                      disabled={busy}
+                      onChange={() => change({ ...draft, notebook: b.id })}
+                      onClick={() => {
+                        if (draft.notebook === b.id) change({ ...draft, notebook: '' })
+                      }}
+                    />
+                    <i aria-hidden="true" />
+                  </label>
+                ))}
+              </div>
             </footer>
           </>
         ) : (

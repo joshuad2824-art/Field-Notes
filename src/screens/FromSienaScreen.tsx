@@ -6,8 +6,7 @@ import { useLive } from '../lib/useLive'
 export function FromSienaScreen() {
   const items = useLive(allSienaItems, [], []),
     [filter, setFilter] = useState('Due')
-  const unseen = items.filter((i) => !i.seenAt).length,
-    notes = items
+  const notes = items
       .filter((i) => i.type === 'note')
       .sort((a, b) => Number(!!a.seenAt) - Number(!!b.seenAt) || b.created - a.created),
     reminders = items.filter((i) => i.type === 'reminder' && !i.completedAt),
@@ -27,9 +26,6 @@ export function FromSienaScreen() {
         <header className="collection-header">
           <div>
             <h1 id="desk-heading">From Siena</h1>
-            <p>
-              {unseen} new · {items.length - unseen} kept
-            </p>
           </div>
           <button className="collection-chip" onClick={() => void markAllSienaItemsSeen()}>
             Mark all seen
@@ -39,7 +35,7 @@ export function FromSienaScreen() {
           <section className="siena-featured">
             <h2>Note</h2>
             {notes[0] ? (
-              <SienaItemCard item={notes[0]} paper />
+              <SienaItemCard item={notes[0]} paper column />
             ) : (
               <div className="empty-state">
                 <h3>All caught up.</h3>
@@ -51,7 +47,7 @@ export function FromSienaScreen() {
               <details>
                 <summary>Earlier notes · {notes.length - 1}</summary>
                 {notes.slice(1).map((i) => (
-                  <SienaItemCard key={i.id} item={i} paper />
+                  <SienaItemCard key={i.id} item={i} paper column />
                 ))}
               </details>
             ) : null}
@@ -86,7 +82,7 @@ export function FromSienaScreen() {
           <section className="siena-updates">
             <h2>Task updates</h2>
             {updates.length ? (
-              updates.map((i) => <SienaItemCard key={i.id} item={i} />)
+              updates.map((i) => <SienaItemCard key={i.id} item={i} column />)
             ) : (
               <p>No updates yet.</p>
             )}
@@ -94,7 +90,7 @@ export function FromSienaScreen() {
           <section className="siena-saved">
             <h2>Saved</h2>
             {saved.length ? (
-              saved.map((i) => <SienaItemCard key={i.id} item={i} />)
+              saved.map((i) => <SienaItemCard key={i.id} item={i} column />)
             ) : (
               <p>Things worth keeping will gather here.</p>
             )}
