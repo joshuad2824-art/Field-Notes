@@ -78,7 +78,7 @@ export function AppleCalendar() {
         </div>
       ) : null}
       <details className="davis-connection-info">
-        <summary>About this connection</summary>
+        <summary>About the Apple Calendar connection</summary>
         <p>
           Your published Apple Calendar is read through your own Supabase project, one way. Nothing
           is written back to Apple Calendar, and its events never become notes.

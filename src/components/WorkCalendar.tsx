@@ -78,7 +78,7 @@ export function WorkCalendar() {
         </div>
       ) : null}
       <details className="davis-connection-info">
-        <summary>About this connection</summary>
+        <summary>About the work calendar connection</summary>
         <p>Your primary Ascension calendar is refreshed by Siena at 7 a.m., 10 a.m., noon, 2 p.m. and 5 p.m. Central each day while Codex can run. Refresh here retrieves the last saved update; it does not query Google.</p>
         <p>Titles and scheduled times only. Changes and cancellations replace the prior snapshot after a complete successful review. Google remains the source; no invitations or calendar edits are sent.</p>
       </details>

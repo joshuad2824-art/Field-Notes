@@ -1,7 +1,7 @@
 import { useWorkCalendar } from '../work-calendar/calendar'
 import { useFrame } from '../components/ApprovedFrame'
 import { useLongPress } from '../lib/long-press'
-import { countdownLabel, nextTimed } from '../lib/countdown'
+import { withoutWork } from '../work-calendar/schedule'
 import { planProgress } from '../lib/plan-progress'
 import { useEffect, useRef, useState } from 'react'
 import { shiftDate } from '../lib/event-recurrence'
@@ -29,13 +29,11 @@ import { allSienaItems, sienaSections } from '../lib/siena-items'
 import { useLive } from '../lib/useLive'
 export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
   const [today, setToday] = useState(isoDay)
-  const [now, setNow] = useState(() => Date.now())
   const frame = useFrame()
-  /* Once a minute: the date can turn over and the countdown moves on. */
+  /* Once a minute: the date can turn over. */
   useEffect(() => {
     const timer = setInterval(() => {
       setToday(isoDay())
-      setNow(Date.now())
     }, 60000)
     return () => clearInterval(timer)
   }, [])
@@ -56,23 +54,27 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
       shiftDate(`${month}-28`, 20),
       apple, work,
     ),
+    /* Work is shown here for today only; the whole work calendar lives on the
+       St. John desk. Everything after today is family, school, church and
+       what Joshua has written himself. */
     events = allEvents.filter((e) => eventOnDay(e, today)),
     siena = sienaSections(items),
-    upcoming = weekAhead(today, allEvents, items).filter((entry) => entry.events.length)
+    lifeEvents = withoutWork(allEvents),
+    upcoming = weekAhead(today, lifeEvents, items).filter((entry) => entry.events.length)
   const written = new Set(pages.filter((p) => p.notebook !== JOURNAL_NOTEBOOK).map(dayOf)),
-    marked = new Set(
-      allEvents.flatMap((e) =>
+    marked = new Set([
+      ...lifeEvents.flatMap((e) =>
         Array.from({ length: 62 }, (_, i) => shiftDate(`${month}-01`, i)).filter((d) =>
           eventOnDay(e, d),
         ),
       ),
-    )
+      ...(events.length ? [today] : []),
+    ])
   const reminders = [...siena.reminders].sort((a, b) => (a.dueAt || 0) - (b.dueAt || 0)),
     familyReminders = (family.snapshot?.entries ?? []).filter((e) => e.kind === 'reminder')
   const plan = projectDesk(pages).plans[0]?.[0],
     { total, done } = planProgress(plan?.body)
   const weekStart = today
-  const next = nextTimed(allEvents, now)
   /* The note's card fades at its foot only when there is more to scroll. */
   const sienaRef = useRef<HTMLAnchorElement>(null)
   const [sienaMore, setSienaMore] = useState(false)
@@ -181,42 +183,13 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               <strong>Quick note</strong>
             </button>
           </section>
-          {next ? (
-            (next.event.externalSource === 'apple' || next.event.externalSource === 'work') ? (
-              <div className="board-tile board-date board-countdown">
-                <strong>{countdownLabel(next.at - now)}</strong>
-                <span>until</span>
-                <em>{next.event.title}</em>
-              </div>
-            ) : next.event.externalSource === 'davis' ? (
-              <a
-                className="board-tile board-date board-countdown"
-                href={DAVIS_SOURCE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <strong>{countdownLabel(next.at - now)}</strong>
-                <span>until</span>
-                <em>{next.event.title}</em>
-              </a>
-            ) : (
-              <RouteLink
-                className="board-tile board-date board-countdown"
-                href={to.event(next.event.seriesId ?? next.event.id, next.event.occurrenceDate)}
-              >
-                <strong>{countdownLabel(next.at - now)}</strong>
-                <span>until</span>
-                <em>{next.event.title}</em>
-              </RouteLink>
-            )
-          ) : (
-            <RouteLink className="board-tile board-date" href={to.calendar(month)}>
-              <strong>{date.toLocaleDateString([], { weekday: 'short' })}</strong>
-              <span>
-                {date.getDate()} {date.toLocaleDateString([], { month: 'short' })}
-              </span>
-            </RouteLink>
-          )}
+          {/* The gold card is the day and the date, and only that. */}
+          <RouteLink className="board-tile board-date" href={to.calendar(month)}>
+            <strong>{date.toLocaleDateString([], { weekday: 'short' })}</strong>
+            <span>
+              {date.getDate()} {date.toLocaleDateString([], { month: 'short' })}
+            </span>
+          </RouteLink>
           <RouteLink
             ref={sienaRef}
             className={`board-tile board-siena${sienaMore ? ' has-more' : ''}`}

@@ -8,7 +8,10 @@ import { useLive } from '../lib/useLive'
 import { useNotebooks } from '../lib/notebooks'
 import { notebookDeskItems, ST_JOHN_NOTEBOOK, hasAccessDetails } from '../lib/notebook-desk'
 import { snippetOf, titleOf, type Page } from '../lib/model'
-import { shortStamp } from '../lib/format'
+import { clock, isoDay, readableDay, shortStamp } from '../lib/format'
+import { shiftDate } from '../lib/event-recurrence'
+import { useWorkCalendar, workEvents, type WorkStatus } from '../work-calendar/calendar'
+import { scheduleDays } from '../work-calendar/schedule'
 import { to } from '../lib/router'
 import { setSettings } from '../lib/settings'
 
@@ -34,6 +37,18 @@ const resources = [
     'https://ascensionesm.service-now.com/now/nav/ui/classic/params/target/kb%3Fid%3Dkb_home',
   ],
 ]
+
+const scheduleNotes: Partial<Record<WorkStatus, string>> = {
+  setup: 'Pair this device under Sync to show your work calendar here.',
+  loading: 'Loading your work calendar…',
+  unavailable: 'The first scheduled work-calendar update has not arrived yet.',
+  denied: 'The server didn’t accept this device’s sync key. Check Sync in Settings.',
+  error: 'Your work calendar could not be refreshed. This does not mean it is empty.',
+  offline: 'You’re offline. These events are from the last time it loaded.',
+  stale: 'These events are from the last time it loaded.',
+}
+
+const SCHEDULE_DAYS = 14
 
 export function NotebookDeskScreen({ notebook }: { notebook: string }) {
   const books = useNotebooks()
@@ -61,6 +76,15 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
     page.body.toLowerCase().includes(query.trim().toLowerCase()),
   )
   const work = notebook === ST_JOHN_NOTEBOOK
+  /* The whole work calendar lives here: today and the next two weeks. Today's
+     board carries only today's share of it. */
+  const today = isoDay(now.getTime())
+  const lastDay = shiftDate(today, SCHEDULE_DAYS - 1)
+  const workState = useWorkCalendar(work ? today : undefined, work ? lastDay : undefined)
+  const schedule = work
+    ? scheduleDays(workEvents(workState, today, lastDay), today, SCHEDULE_DAYS)
+    : []
+  const scheduleNote = scheduleNotes[workState.status]
   const selected =
     filter === 'all' ? sections.active : filter === 'due' ? sections.due : sections.upcoming
   const featured = sections.briefs[0]
@@ -114,6 +138,64 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
               </section>
               <div className="work-grid">
                 <div className="work-main">
+                  {work ? (
+                    <section className="work-schedule work-paper" aria-labelledby="work-schedule-heading">
+                      <span className="work-paper-tab" aria-hidden="true">
+                        Ascension calendar
+                      </span>
+                      <div className="work-section-heading">
+                        <div>
+                          <span className="work-eyebrow">Read only · the next two weeks</span>
+                          <h2 id="work-schedule-heading">Your schedule</h2>
+                        </div>
+                      </div>
+                      {scheduleNote ? (
+                        <p className="work-schedule-note" role="status">
+                          {scheduleNote}
+                        </p>
+                      ) : null}
+                      {workState.snapshot
+                        ? schedule.map((day, index) => (
+                            <div className="work-schedule-day" key={day.iso}>
+                              <h3>
+                                {index === 0 ? 'Today · ' : ''}
+                                {new Date(`${day.iso}T12:00:00`).toLocaleDateString([], {
+                                  weekday: 'long',
+                                  month: 'long',
+                                  day: 'numeric',
+                                })}
+                              </h3>
+                              {day.events.length ? (
+                                <ul>
+                                  {day.events.map((event) => (
+                                    <li key={`${event.id}-${day.iso}`}>
+                                      <span className="work-schedule-time">
+                                        {event.endDate && event.endDate > event.date
+                                          ? 'Multi-day'
+                                          : clock(event.startTime)
+                                            ? `${clock(event.startTime)}${event.endTime ? ` → ${clock(event.endTime)}` : ''}`
+                                            : 'All day'}
+                                      </span>
+                                      <span className="work-schedule-main">
+                                        <strong>{event.title}</strong>
+                                        {event.endDate && event.endDate > event.date ? (
+                                          <small>
+                                            {readableDay(event.date)} – {readableDay(event.endDate)}
+                                          </small>
+                                        ) : null}
+                                        {event.location ? <small>{event.location}</small> : null}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="work-empty">Nothing on your work calendar today.</p>
+                              )}
+                            </div>
+                          ))
+                        : null}
+                    </section>
+                  ) : null}
                   <section
                     className="work-actions work-paper"
                     aria-labelledby="work-actions-heading"

@@ -5,3 +5,16 @@
 @media(prefers-reduced-motion:reduce){.work-note{transition:none}.work-note:hover{transform:none}}
 
 .work-show-more{display:flex;align-items:center;gap:12px;padding:12px 0;min-height:44px;background:none;border:0;color:#234b50;font:14px/1.5 var(--font-ui);cursor:pointer}
+.work-schedule .work-schedule-note{font:15px/1.5 var(--font-body);color:#52605c;margin:0 0 14px}
+.work-schedule-day{border-top:1px solid #142a2b33;padding:14px 0 6px}
+.work-schedule-day:first-of-type{border-top:0;padding-top:0}
+.work-schedule-day h3{font:11px/1.5 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:#52605c;margin:0 0 8px}
+.work-schedule-day ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.work-schedule-day li{display:grid;grid-template-columns:7.5rem minmax(0,1fr);gap:14px;padding:9px 0;border-bottom:1px solid #142a2b1a}
+.work-schedule-day li:last-child{border-bottom:0}
+.work-schedule-time{font:12px/1.5 var(--font-mono);color:#4b5956;font-variant-numeric:tabular-nums}
+.work-schedule-main{display:grid;gap:2px;min-width:0}
+.work-schedule-main strong{font:600 17px/1.4 var(--font-body);color:#142a2b;overflow-wrap:anywhere}
+.work-schedule-main small{font:13px/1.45 var(--font-ui);color:#52605c;overflow-wrap:anywhere}
+.work-schedule-day .work-empty{margin:4px 0 8px;color:#4b5956}
+@media(max-width:480px){.work-schedule-day li{grid-template-columns:1fr;gap:2px}}
