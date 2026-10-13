@@ -72,7 +72,9 @@ async function run(name, options) {
     // its range, proven by applying a mark to exactly the selected words.
     const before = await page.evaluate(() => window.getSelection().toString())
     assert.equal(before, selected)
-    await activate(page.locator('.saved:visible, .phone-page-heading small:visible').first())
+    /* October 13: a saved page no longer shows "Saved"; the toolbar row's
+       empty spacer is the same kind of neutral spot outside the strip. */
+    await activate(page.locator('.leaf .tools .row').first())
     await assertClosed()
     await saved('**Alpha beta**\nSecond line\nThird line')
     await activate(toggle)

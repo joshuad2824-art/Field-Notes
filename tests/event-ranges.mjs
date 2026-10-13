@@ -56,7 +56,9 @@ try {
   await page.locator('.agenda-day').first().waitFor()
   assert.equal(await page.locator('.agenda-day').first().locator('.event-row-title').count(), 0)
   await page.goto(eventURL)
-  await page.locator('main').getByRole('button', { name: 'Delete event' }).click()
+  // October 13: Delete lives in the event's one ⋯ menu, behind the same confirmation.
+  await page.locator('main').getByRole('button', { name: 'More event actions' }).click()
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).click()
   await page.getByRole('button', { name: 'Delete it' }).click()
   await page.waitForURL(/\/day\//)
   await page.goto(`${BASE}/day/2026-12-31`)

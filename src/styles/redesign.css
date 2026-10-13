@@ -6390,9 +6390,12 @@ body,
   box-shadow: none;
 }
 
-/* Repeat's label sits above its fields like every other label. */
+/* Repeat's label sits above its fields like every other label. Floated, a
+   legend leaves the border and becomes the grid's first cell, so it spans
+   the row and the controls keep their two columns. */
 .redesign-application .event-repeat legend {
   float: left;
+  grid-column: 1 / -1;
   width: 100%;
   margin: 0 0 12px;
   padding: 0;
@@ -6401,6 +6404,16 @@ body,
   text-transform: uppercase;
   color: #9cb1b2;
 }
-.redesign-application .event-repeat legend + * {
-  clear: both;
+/* Said to a screen reader, not shown: "optional" on a field the eye can see
+   is optional. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }

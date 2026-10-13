@@ -38,7 +38,8 @@ try {
         assert.ok(Math.abs(square.width - square.height) < 2, JSON.stringify(square))
       }
       if (route === '/workshop') {
-        assert.equal(await p.locator('.floating-nav').count(), 0)
+        // October 13: the Workshop is no longer a dead end; the pill is here too.
+        assert.equal(await p.locator('.floating-nav').count(), 1)
         const count = await p.evaluate(
           async () => (await (await import('/src/lib/db.ts')).livePages()).length,
         )
@@ -65,8 +66,9 @@ try {
           await p.locator('.workshop-reference-plan:not([data-status=active])').count(),
           0,
         )
-        await p.getByRole('button', { name: 'Workshop navigation' }).click()
-        await p.getByRole('button', { name: 'New plan', exact: true }).click()
+        // October 13: the heading's menu is the Workshop's own, without the other rooms.
+        await p.getByRole('button', { name: 'Workshop menu' }).click()
+        await p.locator('.workshop-menu').getByRole('button', { name: 'New plan', exact: true }).click()
         await p.getByRole('dialog').waitFor()
       }
     }

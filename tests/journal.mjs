@@ -297,12 +297,14 @@ const journalPages = () =>
 
   await view.locator(".board-sidebar [href='/n/journal']").click()
   await view.waitForTimeout(400)
+  /* October 13: creating moved from the list foot to the pill's +, which is
+     still the journal's own button — Review last week, never New page. */
   ok(
-    'the journal opens with its own button at the foot, not New page',
-    (await view.locator('.list-foot .plate-button').getAttribute('aria-label')) === 'Review last week',
+    'the journal\'s + is its own button, not New page',
+    (await view.locator('.floating-nav .pill-add').getAttribute('aria-label')) === 'Review last week',
   )
 
-  await view.locator('.list-foot .plate-button').click()
+  await view.locator('.floating-nav .pill-add').click()
   await view.waitForTimeout(1400)
   const first = await journalPages()
   ok('collecting a week makes one page', first.length === 1)
@@ -326,7 +328,7 @@ const journalPages = () =>
   await view.waitForTimeout(1000)
   await view.locator(".board-sidebar [href='/n/journal']").click()
   await view.waitForTimeout(400)
-  await view.locator('.list-foot .plate-button').click()
+  await view.locator('.floating-nav .pill-add').click()
   await view.waitForTimeout(1400)
   const second = await journalPages()
   ok('collecting the same week twice leaves one entry', second.length === 1, `${second.length}`)
@@ -343,7 +345,12 @@ const journalPages = () =>
   await view.goto(`${BASE}/calendar/${month}`, { waitUntil: 'domcontentloaded' })
   await view.waitForTimeout(1000)
 
-  ok('the calendar contains a page marker for the journal',await view.locator('.month-cell-head').getByRole('button',{name:/pages/}).count()>=1)
+  /* October 13: day cells no longer count pages. The calendar still carries
+     the entry: its day lists it among the pages written there. */
+  await view.locator('.month-cell-head').getByRole('button', { name: entry.entryDate, exact: true }).click()
+  await view.waitForURL((url) => url.pathname === `/day/${entry.entryDate}`)
+  await view.waitForTimeout(600)
+  ok('the calendar carries the journal entry on its day', (await view.locator('.agenda-written').getByText(title).count()) >= 1)
 
 }
 

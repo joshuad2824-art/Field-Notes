@@ -69,7 +69,8 @@ try {
   await visit('/day/' + today)
   await shot('02-mac-agenda')
   await visit('/calendar/' + month)
-  await page.getByRole('button', { name: 'Calendar tools', exact: true }).click()
+  // October 13: Colors lives in the app menu; the calendar's own tools retired.
+  await page.getByRole('button', { name: 'App menu', exact: true }).click()
   await page.getByRole('button', { name: 'Colors', exact: true }).click()
   await shot('03-mac-month-color-tray')
   await page.keyboard.press('Escape')
@@ -123,7 +124,9 @@ try {
   await visit('/p/redesign-picture', 390, 844)
   await shot('15-iphone-page-picture')
   await visit('/')
-  await page.getByRole('button', { name: 'Manage', exact: true }).click()
+  // October 13: Today's "Manage" link retired; the app menu opens the manager.
+  await page.getByRole('button', { name: 'App menu', exact: true }).click()
+  await page.getByRole('button', { name: 'Manage notebooks', exact: true }).click()
   await shot('16-mac-notebook-manager')
   await page.keyboard.press('Escape')
   await visit('/p/redesign-page')
@@ -188,7 +191,9 @@ try {
     'Navigation and reading preserve all source records and original images',
   )
   await visit('/p/redesign-page')
-  await page.locator('.board-sidebar button[aria-label="Colors"]').click()
+  // October 13: the sidebar footer retired; Colors is in the app menu.
+  await page.getByRole('button', { name: 'App menu', exact: true }).click()
+  await page.getByRole('button', { name: 'Colors', exact: true }).click()
   await page.getByRole('button', { name: 'Cranberry', exact: true }).click()
   await page.keyboard.press('Escape')
   await visit('/')

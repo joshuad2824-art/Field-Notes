@@ -124,7 +124,16 @@ try {
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         `${width} ${name}: no horizontal overflow`,
       )
-      const text = (await page.evaluate(() => document.body.innerText)).toLowerCase()
+      /* What is on screen: text kept only for a screen reader is not shown. */
+      const text = (
+        await page.evaluate(() => {
+          const hidden = [...document.querySelectorAll('.sr-only')]
+          hidden.forEach((el) => (el.style.display = 'none'))
+          const shown = document.body.innerText
+          hidden.forEach((el) => (el.style.display = ''))
+          return shown
+        })
+      ).toLowerCase()
       for (const s of GONE)
         ok(!text.includes(s.toLowerCase()), `${width} ${name}: "${s.trim()}" is gone`)
       const lines = new Set(text.split('\n').map((l) => l.trim()))

@@ -2,7 +2,7 @@ import { JOURNAL_NOTEBOOK } from '../lib/model'
 import { Shell } from '../components/Shell'
 import { SIDEBAR_DOCKED, useMediaQuery } from '../lib/media'
 import { useLive } from '../lib/useLive'
-import { livePages } from '../lib/db'
+import { createPage, livePages } from '../lib/db'
 import { navigate, to } from '../lib/router'
 export function HomeScreen({ notebook }: { notebook: string }) {
   const journal = notebook === JOURNAL_NOTEBOOK
@@ -25,7 +25,7 @@ export function HomeScreen({ notebook }: { notebook: string }) {
                   className="empty-leaf"
                   aria-label="Start a page here"
                   title="Start a page here"
-                  onClick={() => navigate(to.newPage(notebook))}
+                  onClick={() => void createPage(notebook).then((made) => navigate(to.page(made.id)))}
                 >
                   {!pages.length ? <img src="/redesign/moose-left.webp" alt="" /> : null}
                 </button>

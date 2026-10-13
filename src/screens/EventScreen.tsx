@@ -239,7 +239,7 @@ export function EventScreen({
                 />
               </label>
               <label>
-                End date
+                End date<span className="sr-only"> optional</span>
                 <input
                   type="date"
                   min={draft.date}
@@ -249,7 +249,7 @@ export function EventScreen({
               </label>
               <div className="event-form-times">
                 <label>
-                  Start time
+                  Start time<span className="sr-only"> optional</span>
                   <input
                     type="time"
                     value={draft.startTime ?? ''}
@@ -259,7 +259,7 @@ export function EventScreen({
                   />
                 </label>
                 <label>
-                  End time
+                  End time<span className="sr-only"> optional</span>
                   <input
                     type="time"
                     value={draft.endTime ?? ''}
@@ -271,7 +271,7 @@ export function EventScreen({
               </div>
               <EventRepeat draft={draft} onChange={setDraft} />
               <label>
-                Location
+                Location<span className="sr-only"> optional</span>
                 <input
                   maxLength={500}
                   value={draft.location ?? ''}
@@ -279,7 +279,7 @@ export function EventScreen({
                 />
               </label>
               <label>
-                Note
+                Note<span className="sr-only"> optional</span>
                 <textarea
                   maxLength={10000}
                   rows={5}
@@ -303,7 +303,7 @@ export function EventScreen({
                 </select>
               </label>
               <label>
-                Linked page
+                Linked page<span className="sr-only"> optional</span>
                 <select
                   value={draft.pageId ?? ''}
                   onChange={(e) => setDraft({ ...draft, pageId: e.target.value || undefined })}
@@ -368,7 +368,6 @@ export function EventScreen({
                 <button
                   className="event-title-edit"
                   onClick={() => setEditing(true)}
-                  aria-label={`Edit ${event.title}`}
                   title="Edit event"
                 >
                   {event.title}

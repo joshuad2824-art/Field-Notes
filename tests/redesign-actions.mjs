@@ -33,23 +33,20 @@ try {
         `${width}px fits`,
       )
     await visit('/')
-    await page.getByRole('button', { name: 'Navigation and filters' }).click()
-    for (const name of [
-      'Today',
-      'Notebooks',
-      'Calendar',
-      'Workshop',
-      'From Siena',
-      'Search',
-      'Settings',
-      'Trash',
-    ])
+    /* October 13: the five rooms are in the pill itself and the app menu holds
+       the back rooms, so all eight destinations are still one tap away. */
+    for (const name of ['Today', 'Notebooks', 'Calendar', 'Workshop', 'From Siena'])
+      assert.ok(
+        await page.locator('.floating-nav').getByRole('link', { name, exact: true }).isVisible(),
+      )
+    await page.getByRole('button', { name: 'App menu' }).click()
+    for (const name of ['Search', 'Settings', 'Trash'])
       assert.ok(
         await page.locator('.pill-menu').getByRole('link', { name, exact: true }).isVisible(),
       )
     await page.keyboard.press('Escape')
     assert.equal(await page.locator('.pill-menu').count(), 0)
-    await page.getByRole('button', { name: 'Navigation and filters' }).click()
+    await page.getByRole('button', { name: 'App menu' }).click()
     await page
       .locator('.pill-menu')
       .getByRole('button', { name: 'Manage notebooks', exact: true })
@@ -71,10 +68,9 @@ try {
     await page.locator('.cm-content').waitFor()
     await fit()
     if (width === 1440) {
-      await page
-        .locator('.board-sidebar')
-        .getByRole('button', { name: 'Colors', exact: true })
-        .click()
+      // October 13: the sidebar footer retired; Colors is in the app menu.
+      await page.getByRole('button', { name: 'App menu' }).click()
+      await page.locator('.pill-menu').getByRole('button', { name: 'Colors', exact: true }).click()
       await page.getByRole('button', { name: /^night/ }).click()
       await page.waitForFunction(
         () => document.querySelector('.leaf')?.dataset.stock === 'paper',

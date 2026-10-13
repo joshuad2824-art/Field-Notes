@@ -4,7 +4,7 @@ import { useAllNotebooks, isReserved, firstNotebookId, notebookOf, isWorkshopNot
 import { setSettings, useSettings } from '../lib/settings'
 import { navigate, parentOf, to, up, useRoute, type Route } from '../lib/router'
 import { showCalendarMonth, selectCalendarDate, useCalendarView } from '../lib/calendar-view'
-import { getPage, livePages } from '../lib/db'
+import { createPage, getPage, livePages } from '../lib/db'
 import { getEvent } from '../lib/events'
 import { collectWeek, lastWeekAt } from '../lib/journal'
 import { isoDay } from '../lib/format'
@@ -130,7 +130,12 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
   const latestRooms = useRef(rooms)
   latestRooms.current = rooms
 
-  /* + makes the obvious thing for the room it is in. */
+  /* + makes the obvious thing for the room it is in. A page is made
+     directly, as the list's own button always did: the /new capture route
+     folds two captures inside a second into one, which is right for a
+     Shortcut and wrong for a second deliberate tap. */
+  const newPage = (book: string) =>
+    void createPage(book).then((made) => navigate(to.page(made.id)))
   const reviewLastWeek = async () => {
     try {
       const done = await collectWeek(lastWeekAt())
@@ -149,7 +154,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
         const book = routeBook ?? notebook
         if (book === JOURNAL_NOTEBOOK)
           return { kind: 'run', label: 'Review last week', run: () => void reviewLastWeek() }
-        return { kind: 'run', label: 'New page', run: () => navigate(to.newPage(book)) }
+        return { kind: 'run', label: 'New page', run: () => newPage(book) }
       }
       case 'calendar':
       case 'day':
@@ -422,7 +427,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
                 title="New page"
                 onClick={() => {
                   setChooser(false)
-                  navigate(to.newPage(notebook))
+                  newPage(notebook)
                 }}
               >
                 <Icon name="new-page" />

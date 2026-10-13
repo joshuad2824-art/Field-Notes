@@ -35,7 +35,8 @@ try {
     await p.reload()
     await p.getByRole('button', { name: 'Quick note', exact: true }).click()
     await assert.equal(await area.inputValue(), 'Keep this thought\nUntil I file it.')
-    await p.getByRole('combobox', { name: 'File quick note in' }).selectOption('church')
+    // October 13: the notebook picker is a row of dots; the filing path is the same.
+    await p.getByRole('radio', { name: 'Church', exact: true }).click()
     await p.getByRole('button', { name: 'Close quick note' }).click()
     await p.waitForFunction(async () =>
       (await (await import('/src/lib/db.ts')).livePages('church')).some(
@@ -46,16 +47,24 @@ try {
     assert.equal(await area.inputValue(), '')
     await p.keyboard.press('Escape')
     assert.equal(await p.locator('.week-strip a').count(), 14)
-    assert.equal(await p.locator('.floating-nav [aria-label=Calendar]').count(), 0)
-    await p.getByRole('button', { name: 'Add event', exact: true }).click()
-    assert.ok(p.url().includes('/event/new'))
+    /* October 13: the pill is identical everywhere, Calendar included; Today's
+       + offers page · event · quick note; the month's name switches to the day
+       agenda and the day's heading back to its month; Colors is in the app
+       menu now that the calendar's own tools have retired. */
+    assert.equal(await p.locator('.floating-nav [aria-label=Calendar]').count(), 1)
+    await p.locator('.floating-nav').getByRole('button', { name: 'Add', exact: true }).click()
+    await p.getByRole('menuitem', { name: 'New event', exact: true }).click()
+    await p.waitForURL(/\/event\/new/)
     await visit('/calendar/2026-10')
-    assert.equal(await p.locator('.floating-nav').count(), 0)
-    await p.getByRole('button', { name: 'Day agenda', exact: true }).click()
+    assert.equal(await p.locator('.floating-nav').count(), 1)
+    await p.getByRole('button', { name: /open the day agenda/ }).click()
     await p.waitForURL(/\/day\//)
-    await p.getByRole('button', { name: 'Full calendar', exact: true }).click()
+    // On a phone the heading is in the day sheet, which opens on a tapped day.
+    if (!(await p.locator('.agenda-day-heading').isVisible()))
+      await p.locator('.agenda-date button').first().click()
+    await p.locator('.agenda-day-heading').click()
     await p.waitForURL(/\/calendar\//)
-    await p.getByRole('button', { name: 'Calendar tools' }).click()
+    await p.getByRole('button', { name: 'App menu' }).click()
     await p.getByRole('button', { name: 'Colors', exact: true }).click()
     await p.getByRole('button', { name: 'Heather', exact: true }).waitFor()
     await p.keyboard.press('Escape')

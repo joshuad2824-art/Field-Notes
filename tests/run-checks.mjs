@@ -52,7 +52,8 @@ async function worker() {
       })
       child.stdout.on('data', (d) => (output += d))
       child.stderr.on('data', (d) => (output += d))
-      const timeout = setTimeout(() => child.kill('SIGTERM'), 300000)
+      /* controls-review walks every route at six widths. */
+      const timeout = setTimeout(() => child.kill('SIGTERM'), name === 'controls-review' ? 1200000 : 300000)
       child.on('close', (code) => {
         clearTimeout(timeout)
         writeFileSync(`${out}/${name}.log`, output)
