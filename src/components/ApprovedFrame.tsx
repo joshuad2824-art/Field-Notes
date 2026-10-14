@@ -21,6 +21,7 @@ import { RouteLink } from './DeskHeader'
 import { setEdgeColor } from '../lib/themecolor'
 import { SyncMark } from './SyncMark'
 import { useKeyboardOpen } from '../lib/viewport'
+import { AFTER_SCROLL_MS, HOLD_MS, REACH_PX, SETTLE_MS, travel, type Travel } from '../lib/pill-scroll'
 import { ColorTray, ColorsGlyph } from './ColorTray'
 
 /* What a screen can ask of the frame: the back rooms and the quick note live
@@ -209,17 +210,32 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
      still seconds it dims where it is, and any movement brings it back to
      full (October 13, third pass: on a desk a pill that vanished while you
      read and returned at every twitch read as flicker). It returns from a
-     recede on scroll up, at the end of a scroll, on any pointer movement, or
-     a tap on the bar. */
+     recede on scroll up, at the end of a scroll, on the mouse reaching for
+     it, or a tap on the bar.
+
+     October 14: "scroll up" and "down" are runs, not nudges, and a verdict
+     holds for half a second before a scroll may reverse it. The rules are in
+     lib/pill-scroll.ts, where the reasons are. What is left here is only the
+     wiring: which events count, and what counts as quiet. */
   const held = menu || chooser || expanded || !!shelf
   const heldRef = useRef(held)
   heldRef.current = held
+  const recededRef = useRef(receded)
+  recededRef.current = receded
   useEffect(() => {
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)')
     let idle = 0,
-      settle = 0
+      settle = 0,
+      turned = -Infinity, // when a scroll last changed the pill
+      scrolled = -Infinity, // when anything last scrolled
+      reach: { x: number; y: number } | null = null
+    const put = (value: boolean) => {
+      if (recededRef.current === value) return
+      recededRef.current = value
+      setReceded(value)
+    }
     const recede = () => {
-      if (!heldRef.current) setReceded(true)
+      if (!heldRef.current) put(true)
     }
     const rest = () => {
       if (!heldRef.current) setResting(true)
@@ -229,29 +245,53 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
       if (fine.matches) idle = window.setTimeout(rest, 3000)
     }
     const show = () => {
-      setReceded(false)
+      put(false)
       setResting(false)
       arm()
     }
-    const tops = new WeakMap<EventTarget, number>()
+    const travels = new WeakMap<EventTarget, Travel>()
     const scroll = (e: Event) => {
       const el = (e.target === document ? document.scrollingElement : e.target) as Element | null
       if (!el || !('scrollTop' in el)) return
-      const top = el.scrollTop,
-        before = tops.get(el) ?? 0
-      tops.set(el, top)
-      if (top > before + 2) recede()
-      else if (top < before - 2) show()
+      const now = performance.now()
+      scrolled = now
+      /* Held between the ends: a spring past either is not the reader going up. */
+      const top = Math.max(0, Math.min(el.scrollTop, el.scrollHeight - el.clientHeight))
+      const { next, verdict } = travel(travels.get(el), top)
+      travels.set(el, next)
+      /* Reading is not resting: the dim waits for the scrolling to stop too. */
+      arm()
+      if (verdict && now - turned >= HOLD_MS) {
+        const wanted = verdict === 'down'
+        if (wanted !== recededRef.current && (!wanted || !heldRef.current)) {
+          turned = now
+          if (wanted) recede()
+          else show()
+        }
+      }
       clearTimeout(settle)
-      settle = window.setTimeout(show, 260)
+      settle = window.setTimeout(show, SETTLE_MS)
     }
     const move = (e: PointerEvent) => {
-      if (e.pointerType === 'mouse' || e.pointerType === 'pen') show()
+      if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return
+      /* A mouse move just after a scroll is the browser refreshing what is under
+         the pointer, or a hand on the wheel; the end of the scroll brings the
+         pill back soon enough. */
+      if (performance.now() - scrolled < AFTER_SCROLL_MS) return
+      /* Counted from where the pointer last reached, so a slow drift adds up
+         and a tremor does not. */
+      if (reach && Math.hypot(e.clientX - reach.x, e.clientY - reach.y) < REACH_PX) return
+      reach = { x: e.clientX, y: e.clientY }
+      show()
     }
     const type = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return
-      if ((e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter') && editable(e.target as Element))
+      if ((e.key.length === 1 || e.key === 'Backspace' || e.key === 'Enter') && editable(e.target as Element)) {
+        /* Whatever the page scrolls to keep the caret in view is the typing
+           moving it, and must not bring the pill back mid-sentence. */
+        clearTimeout(settle)
         recede()
+      }
     }
     window.addEventListener('scroll', scroll, { capture: true, passive: true })
     window.addEventListener('pointermove', move, { passive: true })

@@ -34,6 +34,8 @@ const names = [
   'work-schedule',
   'blank-pages',
   'davis-persistence',
+  'pill-scroll',
+  'no-scrollbars',
 ]
 const out = 'work/check-results'
 mkdirSync(out, { recursive: true })

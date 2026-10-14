@@ -2,8 +2,6 @@
    Decorative variation is stable per item; geometry follows content. */
 :root { --paper-ink:#142a2b; --paper-quiet:#615f58; --paper-action:#745b15; --paper-surface:#f6f3ec; --app-gap:24px; --font-pen:'Grape Nuts',cursive; }
 .approved-application { --approved-rail-width:216px; }
-.approved-application :is(.scroll,.manager,.sheet,.cm-scroller) { scrollbar-width:thin; scrollbar-color:#8c817277 transparent; }
-.approved-application :is(.scroll,.manager,.sheet,.cm-scroller)::-webkit-scrollbar { display:block; width:5px; height:5px; }
 .approved-application .fn-rail { width:var(--approved-rail-width); padding:16px; }
 .fn-app .fn-shell { margin:0; width:100%; padding:0 28px 30px; }
 .fn-app .fn-intro { min-height:0; padding:24px 146px 20px 0; align-items:center; gap:16px; }

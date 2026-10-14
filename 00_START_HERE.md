@@ -1,5 +1,16 @@
 # Field Notes — Start Here
 
+Updated October 14, 2026: no scrollbars, a steadier pill, and an offline check.
+
+## October 14 — scrollbars, toolbar flicker, offline
+
+- No scrollbar anywhere in the app: one rule at the base, the two places that drew a bar on purpose removed. The day agenda's bar was `div.agenda-days.scroll` and `aside.agenda-sheet.scroll`.
+- The floating toolbar no longer blinks while a long note scrolls: it leaves once as you read down and returns once when you stop or scroll up (was 24–40 flips in the same scroll). Rules in `src/lib/pill-scroll.ts`.
+- Offline: opens, lists and opens earlier notes, takes a new note, keeps it across a reload — verified in a real browser with the service worker active. Sync, weather and the calendar feeds need a network, as before.
+- New suites: `tests/pill-scroll.mjs`, `tests/no-scrollbars.mjs`. Service worker left at v55 on purpose. Detail: `docs/2026-10-14 - Scrollbars, Toolbar Flicker and Offline.md`.
+
+## Earlier: October 13 quieter controls
+
 Updated October 13, 2026 for the quieter-controls pass.
 
 ## October 13 quieter controls — released
