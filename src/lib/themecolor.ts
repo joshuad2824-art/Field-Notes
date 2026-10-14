@@ -23,10 +23,6 @@
 
 const FALLBACK = '#142A2B'
 
-function tag(): HTMLMetaElement | null {
-  return document.querySelector('meta[name="theme-color"]')
-}
-
 /* What we last asked for, rather than what the element reports — the DOM hands
    back `rgb(20, 42, 43)` for a hex that went in, so comparing against it would
    repaint on every read. */
@@ -56,8 +52,11 @@ export function setEdgeColor(color: string): void {
   const root = document.getElementById('root')
   if (root) root.style.backgroundColor = next
 
-  const meta = tag()
-  if (meta && meta.content !== next) meta.content = next
+  /* The meta is no longer touched (October 13, evening). iOS reads it for the
+     status bar when the app opens and does not reliably read it again, so a
+     colour set on one screen — the Workshop's brown — stayed behind the clock
+     on every screen after. It stays at the room's own near-black, set once in
+     index.html, which is what sits behind the top of almost every screen. */
 }
 
 /* Read a token rather than repeating a hex here — the palette lives in

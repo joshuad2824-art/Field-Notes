@@ -33,6 +33,7 @@ Joshua asked for the whole of the quieter-controls proposal and three calendar c
 - **Aa opens in the toolbar's own row.** Sections as a segmented control, then the tools, undo, redo, and Aa lit to close. Where the tools don't fit (phones, leaves under ~1320px) they take one line under the sections: two bands at most. No × in the strip. Undo and redo don't close it.
 - **A chevron after a title means a menu** (`TitleChevron`): notebook names, St. John, the month, the day heading, the Workshop heading, a plan's title.
 - **A plan's sections are a sticky row of chips; Settings' sections on a phone are one sideways-scrolling row.**
+- **Evening follow-up.** The `theme-color` meta is fixed at the room's #001011 and never changed at runtime: iOS reads it for the status bar when the app opens and doesn't reliably read it again, so the Workshop's brown stuck behind the clock on every screen. The day agenda's side column (month label, day names and numbers) sits on #001011; the bands keep the notebook's colours.
 - **Events carry no source line** ("Work · Read only", "Family calendar"): the bar's colour says it, the row's accessible name keeps it. **The phone calendar's day sheet lists the day's events only**, and sits lower under the month.
 
 ## October 13 controls review

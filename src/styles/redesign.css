@@ -7462,3 +7462,13 @@ body,
     padding-top: 26px;
   }
 }
+
+/* The day agenda's side column — the month written up the edge and each day's
+   name and number — sits on the room's near-black, as Timepage's does; the
+   day bands keep the notebook's colours (October 13, evening). */
+.redesign-application .agenda-layout {
+  background: #001011;
+}
+.redesign-application .agenda-date button:not(.today) {
+  color: #f6f3ec;
+}
