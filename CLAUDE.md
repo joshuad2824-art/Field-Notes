@@ -34,6 +34,7 @@ Joshua asked for the whole of the quieter-controls proposal and three calendar c
 - **A chevron after a title means a menu** (`TitleChevron`): notebook names, St. John, the month, the day heading, the Workshop heading, a plan's title.
 - **A plan's sections are a sticky row of chips; Settings' sections on a phone are one sideways-scrolling row.**
 - **Evening follow-up.** The `theme-color` meta is fixed at the room's #001011 and never changed at runtime: iOS reads it for the status bar when the app opens and doesn't reliably read it again, so the Workshop's brown stuck behind the clock on every screen. The day agenda's side column (month label, day names and numbers) sits on #001011; the bands keep the notebook's colours.
+- **Home's month card lays its weeks out; it doesn't derive them.** On a 1792 × 1109 MacBook window the last week ran past the card. The calendar inside the square card is pinned with absolute insets and each level is a grid whose last row is the remainder, so no percentage height sits in the chain (the old flex-in-aspect-ratio chain resolves differently between engines). Checked at 1200–2560 wide and in a six-week month; `controls-review` asserts every week sits inside the card at each width.
 - **Events carry no source line** ("Work · Read only", "Family calendar"): the bar's colour says it, the row's accessible name keeps it. **The phone calendar's day sheet lists the day's events only**, and sits lower under the month.
 
 ## October 13 controls review

@@ -7472,3 +7472,47 @@ body,
 .redesign-application .agenda-date button:not(.today) {
   color: #f6f3ec;
 }
+
+/* ── October 13, night: the month's height is laid out, not worked out ───
+   On Joshua's MacBook (a 1792 × 1109 window) the last week of October ran
+   past the card. The card is a square, and the calendar inside it found its
+   height as a percentage of that square, through three nested flex boxes —
+   a chain a browser may resolve before the title and the S M T W T F S row
+   have taken their share, so the weeks were sized against the whole card and
+   the fifth overran it. Here the calendar is pinned inside the card's padding
+   with absolute insets, which every engine treats as a definite height, and
+   each level below is a grid whose last row is the remainder. No percentages
+   in the chain, so the weeks can only be what is left. */
+@media (min-width: 820px) {
+  .redesign-application .board-month {
+    position: relative;
+    display: block;
+  }
+  .redesign-application .board-month > div {
+    position: absolute;
+    inset: 22px;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .redesign-application .board-month .cal {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    flex: none;
+    height: auto;
+    min-height: 0;
+  }
+  .redesign-application .board-month .cal-grid {
+    flex: none;
+    height: auto;
+    min-height: 0;
+    grid-auto-rows: minmax(0, 1fr);
+  }
+  .redesign-application .board-month .cal-day {
+    height: auto;
+    min-height: 0;
+    align-self: stretch;
+  }
+}

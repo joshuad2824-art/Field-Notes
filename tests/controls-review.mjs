@@ -583,6 +583,19 @@ try {
       const rows = (await page.locator('.event-row').allTextContents()).join(' ').toLowerCase()
       ok(!rows.includes('read only') && !rows.includes('family calendar'), `${width} ${route}: no "read only" line`)
     }
+    // Home's month card holds every week inside it (the last week once ran
+    // past the card on a 1792-wide MacBook window).
+    await visit('/')
+    {
+      const fit = await page.evaluate(() => {
+        const tile = document.querySelector('.board-month')
+        if (!tile || getComputedStyle(tile).display === 'none') return null
+        const t = tile.getBoundingClientRect()
+        const cells = [...tile.querySelectorAll('.cal-day')].map((c) => c.getBoundingClientRect())
+        return { over: Math.max(...cells.map((c) => c.bottom)) - t.bottom, side: Math.max(...cells.map((c) => c.right)) - t.right }
+      })
+      if (fit) ok(fit.over <= -8 && fit.side <= -8, `${width}: the month card holds all of its weeks (${JSON.stringify(fit)})`)
+    }
     await visit(`/calendar/${month}`)
     eq(await page.locator('.month-written-row').count(), 0, `${width}: the calendar's day sheet lists events, not pages`)
     // A chevron after a title means a menu.
