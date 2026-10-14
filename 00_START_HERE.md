@@ -2,12 +2,12 @@
 
 Updated October 13, 2026 for the quieter-controls pass.
 
-## October 13 quieter controls — candidate on branch `quieter-controls-2026-10-13`
+## October 13 quieter controls — released
 
 - The pill holds still: fixed slots on every route, the room as a sliding well, its name as a caption; a resting mouse dims it instead of hiding it. On a phone the room's mark names the room and raises one sheet with every room and back room. + names Page (and its notebook), Event, Quick note.
 - One fold mark on the leaf cycles 3 → 2 → 1 columns (⌘\ too). Aa opens the strip in the toolbar's own row. A chevron after a title means a menu. Plan sections are chips; Settings' phone tabs scroll. The notebook switcher's shelf is no longer clipped.
 - From Joshua: no "Work · Read only" / "Family calendar" line under events; the phone calendar's day sheet lists events only and sits lower.
-- Details, amendments to decisions 13, 17, 18 and 19, and every moved assertion: `docs/2026-10-13 - Quieter Controls.md`. Not published until Joshua approves.
+- Details, amendments to decisions 13, 17, 18 and 19, and every moved assertion: `docs/2026-10-13 - Quieter Controls.md`. Released on Joshua's go-ahead from `main`, service worker v53.
 
 ## October 13 phone pass — live
 
