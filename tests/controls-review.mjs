@@ -91,7 +91,9 @@ try {
     }
     /* October 13, second pass: a phone's pill is ← · the room you are in · +,
        and the room's mark raises the rooms and the app menu. */
-    const phone = width < 820
+    /* October 14: the phone's pill is the pill at every width, so every room
+       is reached through its sheet, on an iPad and on a desk too. */
+    const phone = true
     const raise = async () => {
       if (!phone) return
       if (await page.getByRole('navigation', { name: 'Rooms' }).isVisible().catch(() => false)) return
@@ -451,7 +453,9 @@ try {
     await visit('/')
     const scrolled = await page.evaluate(async () => {
       const el = document.querySelector('.board-screen')
-      if (el.scrollHeight <= el.clientHeight + 4) return 'no-scroll'
+      /* A board that scrolls by less than a run (64px) cannot send the pill
+         away, and on a tall iPad it now scrolls by only its lane. */
+      if (el.scrollHeight <= el.clientHeight + 64) return 'no-scroll'
       el.scrollTop += 120
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
       return document.querySelector('.floating-nav').classList.contains('receded')

@@ -60,3 +60,4 @@ import './styles/kit.css'
 
 import './styles/redesign-tokens.css'
 import './styles/redesign.css'
+import './styles/home-board.css'

@@ -37,7 +37,9 @@ try {
         const square = await p.locator('.board-month').boundingBox()
         /* October 13, second pass: on a phone the card is as tall as its
            weeks, so the last one is never cut by its edge. */
-        if (width >= 820) assert.ok(Math.abs(square.width - square.height) < 2, JSON.stringify(square))
+        /* October 14: below 1200 the iPad's month card takes the height its
+           row gives it and is no longer square. */
+        if (width >= 1200) assert.ok(Math.abs(square.width - square.height) < 2, JSON.stringify(square))
         const last = await p.locator('.board-month .cal-day').last().boundingBox()
         assert.ok(last.y + last.height <= square.y + square.height + 0.5, 'the last week sits inside the month card')
       }

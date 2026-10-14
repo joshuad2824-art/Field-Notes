@@ -1,8 +1,6 @@
-// October 13, third pass: a phone's pill is ← · the room you are in, by
-// name · +, and the room's mark raises one sheet holding the five rooms and
-// the six back rooms. On a tablet or a desk the pill holds the rooms and ⋯
-// opens the app menu. These helpers reach a room or the back rooms at any
-// width.
+// October 14: the pill is ← · the room you are in, by name · + at every
+// width, and the room's mark raises one sheet holding the five rooms and the
+// six back rooms. These helpers reach a room or the back rooms at any width.
 export async function raiseRooms(page) {
   const mark = page.locator('.floating-nav .pill-room')
   if (!(await mark.isVisible().catch(() => false))) return page.locator('.floating-nav')

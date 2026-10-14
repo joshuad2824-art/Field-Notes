@@ -2,6 +2,12 @@
 
 Updated October 14, 2026: no scrollbars, a steadier pill, and an offline check.
 
+## October 14 (later) — Today by device, one pill
+
+- Phone Today is in Joshua's order: quick note + date, weather, month, schedule, Siena, reminders. The iPad has its own board (upright: two columns; wide: twelve columns, schedule + month + weather on the first screen). Desk unchanged. `src/styles/home-board.css`.
+- The phone's pill (← · room · +) is the pill at every width; the tablet/desk icon row is removed. Rooms are two taps (⌘1–5 still one key).
+- Detail and test changes: `docs/2026-10-14 - Today by Device and One Pill.md`. Not released: awaiting Joshua's go-ahead.
+
 ## October 14 — scrollbars, toolbar flicker, offline
 
 - No scrollbar anywhere in the app: one rule at the base, the two places that drew a bar on purpose removed. The day agenda's bar was `div.agenda-days.scroll` and `aside.agenda-sheet.scroll`.

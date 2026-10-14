@@ -1,0 +1,292 @@
+/* ── October 14: Today's board, laid out for the device in hand ──────────────
+   Joshua set the order on his phone: the tools he reaches for most come first
+   (quick note, the date), then the weather, the month, the day's schedule,
+   Siena's note and the reminders. The iPad keeps that order of importance and
+   spends its width on it, so the first screen holds the schedule, the month and
+   the weather and a second screen finishes the page. The desk (1200 and up) is
+   untouched.
+
+   This file is the last word on the board's grid below 1200px. The rules above
+   it in redesign.css were written one correction at a time, and each of them
+   still describes a layout that no longer exists, so rather than leaving them
+   to fight, every tile is placed here by name.
+
+     phone          under 600     two columns, one tile deep, the order above
+     tablet upright 600 – 999     two columns, the month beside the schedule
+     tablet wide    1000 – 1199   twelve columns, three working rows
+
+   The notebooks and the Workshop are not on a phone. From a tablet up they close
+   the page.
+*/
+
+/* ── Every width below the desk: tiles are placed by name ──────────────── */
+@media (max-width: 1199px) {
+  .redesign-application .board-screen .today-board {
+    grid-template-rows: none;
+    grid-auto-rows: auto;
+    align-items: stretch;
+    height: auto;
+    min-height: 0;
+  }
+  .redesign-application .board-screen .today-board > .board-weather-tile {
+    grid-area: note;
+  }
+  .redesign-application .board-screen .today-board > .board-date {
+    grid-area: date;
+  }
+  .redesign-application .board-screen .today-board > .board-weather-card {
+    grid-area: wx;
+  }
+  .redesign-application .board-screen .today-board > .board-month {
+    grid-area: month;
+  }
+  .redesign-application .board-screen .today-board > .board-day {
+    grid-area: day;
+  }
+  .redesign-application .board-screen .today-board > .board-siena {
+    grid-area: siena;
+  }
+  .redesign-application .board-screen .today-board > .board-coming {
+    grid-area: rem;
+  }
+  .redesign-application .board-screen .today-board > .board-shelf {
+    grid-area: shelf;
+  }
+  .redesign-application .board-screen .today-board > .board-workshop {
+    grid-area: work;
+  }
+  .redesign-application .board-screen .today-board > .board-week {
+    display: none;
+  }
+}
+
+/* ── Phone ─────────────────────────────────────────────────────────────── */
+@media (max-width: 599px) {
+  .redesign-application .board-screen .today-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      'note date'
+      'wx   wx'
+      'month month'
+      'day  day'
+      'siena siena'
+      'rem  rem';
+  }
+  .redesign-application .board-screen .today-board > .board-shelf,
+  .redesign-application .board-screen .today-board > .board-workshop {
+    display: none;
+  }
+}
+
+/* ── Tablet, upright and wide: what they share ─────────────────────────── */
+@media (min-width: 600px) and (max-width: 1199px) {
+  .redesign-application .board-screen {
+    padding: calc(28px + var(--safe-top)) 28px var(--pill-lane);
+  }
+  .redesign-application .board-screen .board-header > div a {
+    background: #f6f3ec14;
+  }
+  .redesign-application .board-screen .board-header > div a:last-child {
+    display: grid;
+  }
+
+  /* The weather lies down: today on the left, the days to come on the right,
+     rather than a tall card with nothing in its corners. */
+  .redesign-application .board-screen .board-weather-card {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 36px;
+    padding: 20px 28px;
+  }
+  .redesign-application .board-screen .board-weather-card .board-current-weather {
+    min-width: 150px;
+  }
+  .redesign-application .board-screen .board-weather-card .weather-inset {
+    margin: 0;
+  }
+  .redesign-application .board-screen .board-weather-card .weather-inset-line {
+    justify-content: flex-start;
+    margin-bottom: 14px;
+  }
+  .redesign-application .board-screen .board-weather-card .weather-phone-range {
+    display: none;
+  }
+
+  /* The quick note and the date are two tiles of the same height. */
+  .redesign-application .board-screen .board-weather-tile,
+  .redesign-application .board-screen .board-date {
+    min-height: 140px;
+    padding: 14px 10px;
+  }
+
+  /* The month fills the card it is given; its weeks are laid out inside the
+     padding, the way the desk's are, so none can run past the edge. */
+  .redesign-application .board-screen .today-board > .board-month {
+    position: relative;
+    display: block;
+    aspect-ratio: auto;
+    height: auto;
+    min-height: 340px;
+    align-self: stretch;
+    padding: 22px;
+  }
+  .redesign-application .board-screen .board-month > div {
+    position: absolute;
+    inset: 22px;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .redesign-application .board-screen .board-month .cal {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    flex: none;
+    height: auto;
+    min-height: 0;
+  }
+  .redesign-application .board-screen .board-month .cal-grid {
+    flex: none;
+    height: auto;
+    min-height: 0;
+    grid-auto-rows: minmax(0, 1fr);
+  }
+  .redesign-application .board-screen .board-month .cal-day {
+    height: auto;
+    min-height: 0;
+    align-self: stretch;
+  }
+
+  /* The day's card keeps its tall date at the side and lets its schedule take
+     the rest. */
+  .redesign-application .board-screen .today-board > .board-day {
+    min-height: 340px;
+    display: flex;
+  }
+  .redesign-application .board-screen .board-day .day-spine {
+    flex-basis: 56px;
+  }
+  .redesign-application .board-screen .board-day .day-spine span {
+    font-size: 20px;
+    letter-spacing: 0.1em;
+  }
+  .redesign-application .board-screen .board-day .day-content {
+    padding: 24px;
+    align-content: start;
+  }
+  /* A quiet day is a line, not a box. */
+  .redesign-application .board-screen .today-board > .board-day.is-quiet {
+    min-height: 0;
+  }
+
+  /* Siena's note says all of it; the page is read, not clipped. */
+  .redesign-application .board-screen .board-siena {
+    min-height: 0;
+  }
+
+  /* The reminders sit in two columns, so six of them are three rows deep and
+     not a long thin strip. The heading and the foot span both. */
+  .redesign-application .board-screen .board-coming {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+    align-content: start;
+  }
+  .redesign-application .board-screen .board-coming > h2,
+  .redesign-application .board-screen .board-coming > .board-more,
+  .redesign-application .board-screen .board-coming > p,
+  .redesign-application .board-screen .board-coming > .calendar-source-status {
+    grid-column: 1 / -1;
+  }
+
+  /* Notebooks and the Workshop close the page, as short as what is in them. */
+  .redesign-application .board-screen .today-board > .board-shelf {
+    display: block;
+    min-height: 0;
+  }
+  .redesign-application .board-screen .today-board > .board-workshop {
+    display: flex;
+    min-height: 0;
+  }
+  .redesign-application .board-screen .board-shelf .board-books {
+    height: 136px;
+    gap: 10px;
+  }
+  .redesign-application .board-screen .board-shelf .board-books > a {
+    flex: 0 1 60px;
+  }
+}
+
+/* ── Tablet upright: the iPad mini's 744, an iPad's 820 ────────────────── */
+@media (min-width: 600px) and (max-width: 999px) {
+  .redesign-application .board-screen .today-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      'note  date'
+      'wx    wx'
+      'month day'
+      'siena siena'
+      'rem   rem'
+      'shelf work';
+    gap: 16px;
+  }
+  /* Beside the month the schedule is one column: the day's events, then what
+     is coming. */
+  .redesign-application .board-screen .board-day .day-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+/* ── Tablet wide: the iPad mini on its side, an iPad's 1024 and 1133 ───── */
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .redesign-application .board-screen .today-board {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-areas:
+      'note  note  note  date  date  date  wx    wx    wx    wx    wx    wx'
+      'month month month month month day   day   day   day   day   day   day'
+      'siena siena siena siena siena rem   rem   rem   rem   rem   rem   rem'
+      'shelf shelf shelf shelf shelf shelf shelf work  work  work  work  work';
+    gap: 20px;
+  }
+  .redesign-application .board-screen .board-day .day-content {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+
+/* ── Tablet upright: a little more room for the month and the schedule ─── */
+@media (min-width: 600px) and (max-width: 999px) {
+  .redesign-application .board-screen .today-board > .board-month,
+  .redesign-application .board-screen .today-board > .board-day {
+    min-height: 390px;
+  }
+}
+
+/* ── One toolbar, at every width ─────────────────────────────────────────
+   The pill Joshua uses on his phone — ← · the room by name · + — is the pill
+   on an iPad and on a desk too. Its size and its place were set by the phone's
+   own media rules, so from 820px up they are set here, and the lane every
+   scroller leaves for it is the same height everywhere. */
+.redesign-application {
+  --pill-lane: calc(60px + max(20px, var(--safe-bottom)) + 16px);
+}
+.redesign-application .floating-nav.compact {
+  height: 60px;
+  bottom: max(20px, var(--safe-bottom));
+}
+.redesign-application .floating-nav.compact .fn-icon {
+  width: 22px;
+  height: 22px;
+}
+.redesign-application .floating-nav.compact .pill-add {
+  min-height: 44px;
+}
+.redesign-application .pill-handle {
+  bottom: calc(max(20px, var(--safe-bottom)) + 8px);
+}

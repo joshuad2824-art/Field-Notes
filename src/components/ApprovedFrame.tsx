@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useMediaQuery } from '../lib/media'
 import { useAllNotebooks, isReserved, firstNotebookId, notebookOf, isWorkshopNotebook } from '../lib/notebooks'
 import { setSettings, useSettings } from '../lib/settings'
@@ -50,7 +50,6 @@ type Plus =
 
 export function ApprovedFrame({ notebook, children }: { notebook: string; children: ReactNode }) {
   const desktop = useMediaQuery('(min-width: 1200px)'),
-    phone = useMediaQuery('(max-width: 819px)'),
     settings = useSettings(),
     keyboard = useKeyboardOpen(),
     route = useRoute(),
@@ -59,7 +58,6 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
   const [asking, setAsking] = useState(false),
     [manage, setManage] = useState<{ focus?: string } | null>(null),
     [colors, setColors] = useState(false),
-    [menu, setMenu] = useState(false),
     [chooser, setChooser] = useState(false),
     [quick, setQuick] = useState(false),
     [receded, setReceded] = useState(false),
@@ -67,11 +65,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     [chooserAt, setChooserAt] = useState<{ left: number; bottom: number } | null>(null),
     [expanded, setExpanded] = useState(false),
     [shelf, setShelf] = useState<{ left: number; bottom: number } | null>(null),
-    [resting, setResting] = useState(false),
-    [wellX, setWellX] = useState<number | null>(null),
-    [peek, setPeek] = useState<{ text: string; x: number } | null>(null),
-    [arrival, setArrival] = useState(false)
-  const lastCaption = useRef<{ text: string; x: number }>({ text: '', x: 0 })
+    [resting, setResting] = useState(false)
   const swipe = useRef<{ y: number; raised: boolean } | null>(null)
   const addRef = useRef<HTMLButtonElement>(null)
   const navRef = useRef<HTMLElement>(null)
@@ -105,7 +99,6 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     )
   }, [activeBook?.color, route.name])
   useEffect(() => {
-    setMenu(false)
     setColors(false)
     setChooser(false)
     setExpanded(false)
@@ -217,7 +210,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
      holds for half a second before a scroll may reverse it. The rules are in
      lib/pill-scroll.ts, where the reasons are. What is left here is only the
      wiring: which events count, and what counts as quiet. */
-  const held = menu || chooser || expanded || !!shelf
+  const held = chooser || expanded || !!shelf
   const heldRef = useRef(held)
   heldRef.current = held
   const recededRef = useRef(receded)
@@ -346,7 +339,6 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     return () => window.removeEventListener('keydown', key)
   }, [])
 
-  useDismiss(menu, () => setMenu(false))
   useDismiss(chooser, () => setChooser(false))
   useDismiss(expanded, () => setExpanded(false))
   useDismiss(!!shelf, () => setShelf(null))
@@ -362,40 +354,14 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     manage: (focus) => setManage({ focus }),
   }
   const shownBook = routeBook ?? notebook
-  const compact = phone
   const here = rooms.find((d) => d.active)
-  /* On a desk or a tablet the pill already holds Today, so a ← that would
-     only go to Today says it twice. A phone's pill doesn't show the rooms. */
-  const showUp = !!parent && (compact || parent !== to.overview())
+  /* ← keeps its slot on every route, and is a mark only where there is
+     somewhere up to go. */
+  const showUp = !!parent
 
-  /* The pill holds still (October 13, third pass). Every mark has a fixed
-     slot on every route — ← keeps its slot even where there is nowhere up to
-     go — and the room you are in is a well that settles from slot to slot
-     rather than a mark that widens to carry its name. The name is a caption
-     above the pill: under the pointer or focus, and for a moment on arrival. */
-  const hereLabel = here?.label
-  useLayoutEffect(() => {
-    if (compact || keyboard) return
-    const active = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
-    setWellX(active ? active.offsetLeft : null)
-  }, [compact, keyboard, hereLabel, desktop])
-  useEffect(() => {
-    if (compact || !hereLabel) return
-    setArrival(true)
-    const timer = window.setTimeout(() => setArrival(false), 1400)
-    return () => clearTimeout(timer)
-  }, [compact, hereLabel])
-  const caption =
-    peek ?? (arrival && hereLabel && wellX !== null ? { text: hereLabel, x: wellX + 24 } : null)
-  if (caption) lastCaption.current = caption
-  const peekAt = (target: EventTarget | null) => {
-    const mark = (target as Element | null)?.closest?.('a[aria-label], button[aria-label]') as HTMLElement | null
-    if (!mark || !navRef.current?.contains(mark)) return setPeek(null)
-    setPeek({ text: mark.getAttribute('aria-label') ?? '', x: mark.offsetLeft + mark.offsetWidth / 2 })
-  }
-
-  /* On a phone the room's mark says where you are and that it opens: the
-     room's name (a notebook's own name inside one) and a small caret. */
+  /* One pill at every width (October 14): ← · the room you are in, by name,
+     with a caret · +. The room's mark says where you are and that it opens:
+     the room's name (a notebook's own name inside one) and a small caret. */
   const roomName =
     here?.label === 'Notebooks' && routeBook
       ? (notebookOf(routeBook)?.name ?? 'Notebooks')
@@ -403,8 +369,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
         ({ search: 'Search', settings: 'Settings', trash: 'Trash', tag: 'Tag' } as Record<string, string>)[route.name] ??
         'Rooms')
 
-  /* The back rooms, drawn in the app menu on a tablet or desk and under the
-     rooms in the phone's one sheet. */
+  /* The back rooms, under the rooms in the pill's one sheet. */
   const backRooms = (close: () => void) => [
     <RouteLink key="search" href={to.search()} onClick={close}>
       <Icon name="search" />
@@ -452,7 +417,6 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
   const chooserBook = notebookOf(notebook)
   const openShelf = () => {
     const r = navRef.current?.getBoundingClientRect()
-    setMenu(false)
     setChooser(false)
     setExpanded(false)
     setShelf(r ? { left: r.left + r.width / 2, bottom: innerHeight - r.top + 12 } : { left: innerWidth / 2, bottom: 96 })
@@ -523,28 +487,21 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
           <>
             <nav
               ref={navRef}
-              className={`floating-nav steady${receded ? ' receded' : ''}${resting ? ' resting' : ''}${quick ? ' above-quick' : ''}${compact ? ' compact' : ''}${expanded ? ' expanded' : ''}`}
+              className={`floating-nav steady${receded ? ' receded' : ''}${resting ? ' resting' : ''}${quick ? ' above-quick' : ''} compact${expanded ? ' expanded' : ''}`}
               aria-label="Primary navigation"
-              onFocus={(e) => {
+              onFocus={() => {
                 setReceded(false)
                 setResting(false)
-                if (!compact) peekAt(e.target)
               }}
-              onBlur={() => setPeek(null)}
-              onPointerOver={(e) => {
-                if (!compact && e.pointerType === 'mouse') peekAt(e.target)
-              }}
-              onPointerLeave={() => setPeek(null)}
-              /* On a phone a short swipe up on the pill raises the sheet, and
-                 the tap that ends it does nothing else. */
+              /* A short swipe up on the pill raises the sheet, and the tap
+                 that ends it does nothing else. */
               onPointerDown={(e) => {
-                if (compact) swipe.current = { y: e.clientY, raised: false }
+                swipe.current = { y: e.clientY, raised: false }
               }}
               onPointerMove={(e) => {
                 const s = swipe.current
-                if (!compact || !s || s.raised || s.y - e.clientY < 24) return
+                if (!s || s.raised || s.y - e.clientY < 24) return
                 s.raised = true
-                setMenu(false)
                 setChooser(false)
                 setShelf(null)
                 setExpanded(true)
@@ -560,22 +517,6 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
                 swipe.current = null
               }}
             >
-              {compact ? null : (
-                <>
-                  <span
-                    className={`pill-well${wellX === null ? ' none' : ''}`}
-                    aria-hidden="true"
-                    style={{ transform: `translateX(${wellX ?? 0}px)` }}
-                  />
-                  <span
-                    className={`pill-caption${caption ? ' shown' : ''}`}
-                    aria-hidden="true"
-                    style={{ left: lastCaption.current.x }}
-                  >
-                    {lastCaption.current.text}
-                  </span>
-                </>
-              )}
               {showUp ? (
                 <button className="pill-up" onClick={goUp} aria-label="Up" title="Up — ⌘↑">
                   <Icon name="back" />
@@ -583,57 +524,25 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
               ) : (
                 <span className="pill-up pill-void" aria-hidden="true" />
               )}
-              {compact ? (
-                /* On a phone the pill is three marks: up, the room you are
-                   in — named, with a caret — and +. The room's mark raises
-                   one sheet holding every room and every back room. */
-                <button
-                  className={`pill-room${here ? ' active' : ''}`}
-                  aria-label={`${roomName} — go to`}
-                  aria-haspopup="dialog"
-                  aria-expanded={expanded}
-                  onClick={() => {
-                    setMenu(false)
-                    setChooser(false)
-                    setShelf(null)
-                    setExpanded(!expanded)
-                  }}
-                >
-                  <span className="pill-room-name">{roomName}</span>
-                  <svg className="pill-room-caret" viewBox="0 0 12 12" aria-hidden="true">
-                    <path d="M3 7.5 6 4.5 9 7.5" />
-                  </svg>
-                </button>
-              ) : (
-                <>
-                  {rooms.map((d) => (
-                    <RouteLink
-                      key={d.label}
-                      className={`${d.active ? 'active ' : ''}pill-${d.label.toLowerCase().replace(' ', '-')}`}
-                      href={d.href}
-                      aria-label={d.label}
-                      aria-current={d.active ? 'page' : undefined}
-                      onClick={(e) => roomTap(e, d)}
-                    >
-                      <Icon name={d.icon} />
-                    </RouteLink>
-                  ))}
-                  <span className="pill-rule" aria-hidden="true" />
-                  <button
-                    className={`pill-more${menu ? ' on' : ''}`}
-                    aria-label="App menu"
-                    aria-haspopup="menu"
-                    aria-expanded={menu}
-                    onClick={() => {
-                      setChooser(false)
-                      setShelf(null)
-                      setMenu(!menu)
-                    }}
-                  >
-                    <Icon name="more" />
-                  </button>
-                </>
-              )}
+              {/* The pill is three marks: up, the room you are in — named, with a
+                  caret — and +. The room's mark raises one sheet holding every
+                  room and every back room. */}
+              <button
+                className={`pill-room${here ? ' active' : ''}`}
+                aria-label={`${roomName} — go to`}
+                aria-haspopup="dialog"
+                aria-expanded={expanded}
+                onClick={() => {
+                  setChooser(false)
+                  setShelf(null)
+                  setExpanded(!expanded)
+                }}
+              >
+                <span className="pill-room-name">{roomName}</span>
+                <svg className="pill-room-caret" viewBox="0 0 12 12" aria-hidden="true">
+                  <path d="M3 7.5 6 4.5 9 7.5" />
+                </svg>
+              </button>
               {plus.kind === 'off' ? (
                 <button className="pill-add" aria-label="Add" aria-disabled="true" onClick={() => {}}>
                   <Icon name="add" />
@@ -650,7 +559,6 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
                   aria-haspopup="menu"
                   aria-expanded={chooser}
                   onClick={() => {
-                    setMenu(false)
                     setShelf(null)
                     setExpanded(false)
                     const r = navRef.current?.getBoundingClientRect()
@@ -764,14 +672,6 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
                 <small>file later</small>
               </button>
             </div>
-          </>
-        ) : null}
-        {menu ? (
-          <>
-            <button className="nav-menu-scrim" aria-label="Close menu" tabIndex={-1} onClick={() => setMenu(false)} />
-            <nav className="pill-menu" aria-label="App menu">
-              {backRooms(() => setMenu(false))}
-            </nav>
           </>
         ) : null}
         {quick ? <QuickNote onClose={() => setQuick(false)} /> : null}

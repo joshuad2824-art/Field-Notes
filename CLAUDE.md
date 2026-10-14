@@ -22,6 +22,16 @@ The app itself is at the root: `src/`, `index.html`, `netlify.toml`. `npm run de
 
 ---
 
+## October 14 (later) — Today by device, and one pill
+
+From Joshua's phone and his iPad mini 6 (a long screenshot and a screen recording). Detail: `docs/2026-10-14 - Today by Device and One Pill.md`.
+
+- **The phone's order is Joshua's.** Quick note and the date, the weather, the month, the day's schedule with what is coming, Siena's note, the reminders. The notebooks, the Workshop and the two-week strip are not on a phone.
+- **The iPad has its own board** (`src/styles/home-board.css`, the last stylesheet, which places every tile by name below 1200px). Upright (600–999): two columns, the month beside the schedule, the weather lying down across the top, the reminders in two columns, the notebooks and the Workshop closing the page. Wide (1000–1199): twelve columns in four rows — quick note, date and weather; the month and the schedule; Siena and the reminders; the notebooks and the Workshop — so the first screen holds the schedule, the month and the weather. The month is no longer square below 1200; it takes the height its row gives it. **The desk (1200+) is unchanged.**
+- **One pill, at every width.** ← · the room by name with a caret · +, and the name raises the one sheet with the five rooms and the six back rooms. The tablet and desk pill (five room icons, ⋯, a sliding well and a caption) is gone, with its `menu`, `wellX`, `peek` and `arrival` state. Measured identical (size, offset, marks) at 390, 744, 1133 and 1440 on five routes. **A room is two taps on a tablet or a desk now, not one**: that was the price of the cleaner pill, and Joshua chose it. ⌘1–5 / ⌃1–5 still open the rooms in one keystroke. `--pill-lane` is one height everywhere.
+- DOM order is unchanged, so on a phone the visual order is not the tab order; the board is placed with named grid areas.
+- This retires the "on a tablet or a desk the pill keeps every room" half of decision 13 and of the October 13 notes below.
+
 ## October 14 — no scrollbars, a steadier pill, and what offline means
 
 From Joshua's own screen: a scrollbar showed down the side of the day agenda, and in a recording of the notebook screen the toolbar blinked in and out while a long note was scrolled. He asked for no scrollbars anywhere and an end to the blinking. Detail, measurements and the offline answer: `docs/2026-10-14 - Scrollbars, Toolbar Flicker and Offline.md`.
