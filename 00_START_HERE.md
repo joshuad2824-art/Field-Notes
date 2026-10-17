@@ -1,6 +1,13 @@
 # Field Notes — Start Here
 
-Updated October 14, 2026: no scrollbars, a steadier pill, and an offline check.
+Updated October 17, 2026: supplied puffin Home Screen icon.
+
+## October 17 — supplied puffin Home Screen icon
+
+- Joshua's supplied artwork is the Apple touch, web-app, and browser icon, with its original black background. Original: `docs/assets/field-notes-puffin-icon-master.png`.
+- Versioned icon links and service worker v56 refresh the install metadata. Build, icon/offline checks, and 32 regression suites pass; the application JavaScript/CSS are byte-identical to existing production. Publication proceeds through main; physical iPhone installation remains a device check.
+- Scope, recovery, and phone handoff: `docs/2026-10-17 - Home Screen Icon.md`.
+
 
 ## October 14 (later) — Today by device, one pill
 
