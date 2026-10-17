@@ -10,7 +10,7 @@ Joshua asked to use his supplied `13.png` as the phone Home Screen icon.
 
 ## Verification and status
 
-Clean dependency installation and production build pass. All application JavaScript and CSS match the existing production files byte for byte after matching the existing public Davis app identifier. Icon metadata, image dimensions, service-worker refresh, and offline icon/shell checks pass. Thirty-two regression suites pass; the optional controls review completed its desktop widths, then was narrowed to the relevant 390px phone pass. Publication proceeds through the existing main-branch deployment. Physical iPhone Home Screen installation requires Joshua's device.
+Clean dependency installation and production build pass. All application JavaScript and CSS match the existing production files byte for byte after matching the existing public Davis app identifier. Icon metadata, image dimensions, service-worker refresh, and offline icon/shell checks pass. All 33 regression suites pass; controls review was scoped to 390px (937 assertions), with additional desktop widths traversed before narrowing. Published from GitHub `f84feeefbd4e976d2121f22b75f1e8989355ea04` to ready Netlify deploy `6ad4035c5e80357abb07cdde`. All 13 checked live shell, icon, and application assets match the build byte for byte. A fresh 390px hosted session picked up worker v56, the 180px puffin icon, and passed offline reload. Physical iPhone Home Screen installation requires Joshua's device.
 
 ## Phone handoff
 
