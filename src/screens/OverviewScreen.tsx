@@ -1,13 +1,15 @@
+import { useSienaItems } from '../lib/useSienaItems'
 import { useWorkCalendar } from '../work-calendar/calendar'
 import { useFrame } from '../components/ApprovedFrame'
 import { useLongPress } from '../lib/long-press'
-import { withoutWork } from '../work-calendar/schedule'
-import { planProgress } from '../lib/plan-progress'
+import { ST_JOHN_NOTEBOOK } from '../lib/notebook-desk'
+import { activeSienaItems } from '../lib/siena-archive'
 import { useEffect, useRef, useState } from 'react'
 import { shiftDate } from '../lib/event-recurrence'
 import { eventOnDay } from '../lib/event-range'
 import { EventRow } from '../components/EventRow'
 import { SienaItemCard } from '../components/SienaItemCard'
+import { SienaBody } from '../components/SienaBody'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
 import { useAppleCalendar } from '../apple/calendar'
 import { DAVIS_SOURCE_URL } from '../davis/wire'
@@ -19,13 +21,11 @@ import { weekAhead } from '../lib/agenda'
 import { liveEvents } from '../lib/events'
 import { livePages } from '../lib/db'
 import { isoDay } from '../lib/format'
-import { dayOf, monthParts, WEEKDAY_LETTERS } from '../lib/calendar'
-import { JOURNAL_NOTEBOOK, titleOf, stripMarkers } from '../lib/model'
+import { dayOf, monthParts } from '../lib/calendar'
+import { JOURNAL_NOTEBOOK } from '../lib/model'
 import { useAllNotebooks } from '../lib/notebooks'
 import { coverColor } from '../lib/theme'
-import { field, projectDesk } from '../lib/project-desk'
 import { navigate, to } from '../lib/router'
-import { allSienaItems, sienaSections } from '../lib/siena-items'
 import { useLive } from '../lib/useLive'
 export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
   const [today, setToday] = useState(isoDay)
@@ -42,7 +42,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
     family = useFamilyAgenda(),
     apple = useAppleCalendar(`${today.slice(0, 7)}-01`, shiftDate(`${today.slice(0, 7)}-28`, 20)),
     work = useWorkCalendar(`${today.slice(0, 7)}-01`, shiftDate(`${today.slice(0, 7)}-28`, 20)),
-    items = useLive(allSienaItems, [], []),
+    items = useSienaItems(),
     books = useAllNotebooks()
   const month = today.slice(0, 7),
     date = new Date(today + 'T12:00:00'),
@@ -54,29 +54,26 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
       shiftDate(`${month}-28`, 20),
       apple, work,
     ),
-    /* Work is shown here for today only; the whole work calendar lives on the
-       St. John desk. Everything after today is family, school, church and
-       what Joshua has written himself. */
+    /* Calendar sources stay together; only Siena messages and reminders are
+       separated by their explicit St. John notebook association. */
     events = allEvents.filter((e) => eventOnDay(e, today)),
-    siena = sienaSections(items),
-    lifeEvents = withoutWork(allEvents),
-    upcoming = weekAhead(today, lifeEvents, items).filter((entry) => entry.events.length)
+    personal = activeSienaItems(items).filter(item => item.notebook !== ST_JOHN_NOTEBOOK),
+    messages = personal.filter(item => item.type !== 'reminder').sort((a,b) => b.created-a.created),
+    unseen = messages.filter(item => !item.seenAt).length,
+    upcoming = weekAhead(today, allEvents, []).filter((entry) => entry.events.length)
   const written = new Set(pages.filter((p) => p.notebook !== JOURNAL_NOTEBOOK).map(dayOf)),
     marked = new Set([
-      ...lifeEvents.flatMap((e) =>
+      ...allEvents.flatMap((e) =>
         Array.from({ length: 62 }, (_, i) => shiftDate(`${month}-01`, i)).filter((d) =>
           eventOnDay(e, d),
         ),
       ),
       ...(events.length ? [today] : []),
     ])
-  const reminders = [...siena.reminders].sort((a, b) => (a.dueAt || 0) - (b.dueAt || 0)),
+  const reminders = personal.filter(item => item.type === 'reminder').sort((a, b) => (a.dueAt ?? Infinity) - (b.dueAt ?? Infinity) || a.created-b.created),
     familyReminders = (family.snapshot?.entries ?? []).filter((e) => e.kind === 'reminder')
-  const plan = projectDesk(pages).plans[0]?.[0],
-    { total, done } = planProgress(plan?.body)
-  const weekStart = today
   /* The note's card fades at its foot only when there is more to scroll. */
-  const sienaRef = useRef<HTMLAnchorElement>(null)
+  const sienaRef = useRef<HTMLElement>(null)
   const [sienaMore, setSienaMore] = useState(false)
   useEffect(() => {
     const el = sienaRef.current
@@ -90,7 +87,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
       observer.disconnect()
       el.removeEventListener('scroll', check)
     }
-  }, [siena.featured?.id, siena.featured?.body])
+  }, [messages.map(item => `${item.id}:${item.updated}`).join('|')])
   return (
     <div className="app board-app">
       <main className="board-screen scroll">
@@ -116,23 +113,18 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
             <div className="day-content">
               {events.length ? (
                 <section className="board-today-schedule">
-                  <h2>Today's Schedule</h2>
-                  {events.slice(0, 3).map((e) => (
+                  <h2>Today</h2>
+                  {events.map((e) => (
                     <EventRow key={e.id} event={e} />
                   ))}
-                  {events.length > 3 ? (
-                    <RouteLink href={to.day(today)} className="board-more">
-                      {events.length - 3} more
-                    </RouteLink>
-                  ) : null}
                 </section>
               ) : null}
               {/* Only dates with events, and no heading over nothing. */}
               {upcoming.length ? (
-              <div className="board-day-coming">
+              <section className="board-day-coming">
                 <h2>Coming up</h2>
                 {upcoming.length
-                  ? upcoming.slice(0, 4).map((entry) => (
+                  ? upcoming.map((entry) => (
                       <div className="board-upcoming-row" key={entry.iso}>
                         <RouteLink href={to.day(entry.iso)}>
                           {new Date(entry.iso + 'T12:00:00').toLocaleDateString([], {
@@ -148,7 +140,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
                       </div>
                     ))
                   : null}
-              </div>
+              </section>
               ) : null}
             </div>
           </section>
@@ -179,68 +171,45 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               onClick={() => frame?.quickNote()}
               aria-label="Quick note"
             >
-              <Icon name="edit" />
               <strong>Quick note</strong>
             </button>
           </section>
-          {/* The gold card is the day and the date, and only that. */}
+          {/* The weekday and date stay above the capture tool on a desk. */}
           <RouteLink className="board-tile board-date" href={to.calendar(month)}>
             <strong>{date.toLocaleDateString([], { weekday: 'short' })}</strong>
             <span>
               {date.getDate()} {date.toLocaleDateString([], { month: 'short' })}
             </span>
           </RouteLink>
-          <RouteLink
+          <section
             ref={sienaRef}
             className={`board-tile board-siena${sienaMore ? ' has-more' : ''}`}
-            href={to.fromSiena()}
+            tabIndex={0}
+            aria-label="From Siena message"
           >
             <div className="board-tile-label">
-              <h2>From Siena</h2>
-              {siena.unseen ? <span className="board-badge">{siena.unseen} new</span> : null}
+              <h2><RouteLink href={to.fromSiena()}>From Siena</RouteLink></h2>
+              {unseen ? <span className="board-badge">{unseen} new</span> : null}
             </div>
-            {siena.featured ? (
-              <>
-                <h3>{siena.featured.title ?? 'A note for today'}</h3>
-                <p>{stripMarkers(siena.featured.body)}</p>
-              </>
-            ) : (
+            {messages.length ? messages.map(item => (
+              <article className="board-message" key={item.id}>
+                <time dateTime={new Date(item.created).toISOString()}>{new Date(item.created).toLocaleDateString([], {month:'short',day:'numeric'})}</time>
+                <h3><RouteLink href={to.fromSiena()}>{item.title ?? 'From Siena'}</RouteLink></h3>
+                <SienaBody text={item.body} />
+              </article>
+            )) : (
               <>
                 <h3>All caught up.</h3>
                 <p>I'll leave anything new here as soon as it comes in.</p>
                 <img className="empty-puffin" src="/redesign/puffin-right.webp" alt="" />
               </>
             )}
-          </RouteLink>
-          <section className="board-tile board-week">
-            <h2>Next two weeks</h2>
-            <div className="week-strip">
-              {Array.from({ length: 14 }, (_, i) => {
-                const letter = WEEKDAY_LETTERS[(date.getDay() + i) % 7]
-                const d = shiftDate(weekStart, i)
-                return (
-                  <RouteLink key={d} href={to.day(d)}>
-                    {i < 7 ? <small>{letter}</small> : null}
-                    <span
-                      className={`${written.has(d) ? 'written ' : ''}${marked.has(d) ? 'has-event ' : ''}${today === d ? 'today' : ''}`}
-                    >
-                      {Number(d.slice(-2))}
-                    </span>
-                  </RouteLink>
-                )
-              })}
-            </div>
           </section>
           <section className="board-tile board-coming">
-            <h2>Remember</h2>
-            {reminders.slice(0, 6).map((item) => (
+            <h2>Reminders</h2>
+            {reminders.map((item) => (
               <SienaItemCard key={item.id} item={item} />
             ))}
-            {reminders.length > 6 ? (
-              <RouteLink className="board-more" href={to.fromSiena()}>
-                All {reminders.length} reminders
-              </RouteLink>
-            ) : null}
             {!reminders.length && !familyReminders.length ? <p>Nothing due today.</p> : null}
             {familyReminders.slice(0, 1).map((e) => (
               <a
@@ -260,43 +229,22 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               </RouteLink>
             ) : null}
           </section>
+          <div className="board-links">
           <section className="board-tile board-shelf">
             <div className="board-tile-label">
               <h2>Notebooks</h2>
+              <button className="board-add-notebook" aria-label="Add notebook" onClick={() => frame?.manage()}><Icon name="add" /></button>
             </div>
             <div className="board-books">
               {books.map((book, i) => (
                 <Spine key={book.id} id={book.id} name={book.name} color={book.color} index={i} />
               ))}
-              <button aria-label="Add notebook" onClick={() => frame?.manage()}>
-                <Icon name="add" />
-              </button>
             </div>
           </section>
-          <RouteLink
-            className="board-tile board-workshop"
-            href={plan ? to.plan(plan.id) : to.workshop()}
-          >
-            <h2>Workshop</h2>
-            <h3>
-              {plan
-                ? field(plan.body, 'Project') || titleOf(plan.body)
-                : 'The next thing to make.'}
-            </h3>
-            <p>
-              {plan
-                ? field(plan.body, 'Next step') || 'Open the plan'
-                : 'Plans, tools, and work in progress.'}
-            </p>
-            {total ? (
-              <>
-                <progress max={total} value={done} />
-                <small>
-                  {done} of {total} steps
-                </small>
-              </>
-            ) : null}
+          <RouteLink className="board-tile board-theology" href={to.theology()}>
+            <h2>Theology</h2>
           </RouteLink>
+          </div>
         </div>
       </main>
     </div>
@@ -315,7 +263,7 @@ function Spine({ id, name, color, index }: { id: string; name: string; color: st
     <RouteLink
       href={to.notebookHome(id)}
       aria-label={`Open ${name} notebook`}
-      style={{ backgroundColor: coverColor(color), height: `${100 - (index % 5) * 7}%` }}
+      style={{ backgroundColor: coverColor(color), height: `${100 - (index % 5) * 7}%`, '--book-color': coverColor(color) } as React.CSSProperties}
       {...hold}
       onClick={(e) => {
         if (fired()) e.preventDefault()

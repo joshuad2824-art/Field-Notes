@@ -1,0 +1,90 @@
+/* October 20: Joshua's approved v7 composition. Desktop cards scroll inside
+   the viewport; phone/tablet retain the established reading order. */
+.redesign-application .board-message + .board-message {border-top:1px solid #142a2b30;padding-top:20px;margin-top:24px}
+.redesign-application .board-message>time {display:block;font:11px/1.5 var(--font-ui);color:#52615c;margin-bottom:8px}
+.redesign-application .board-message>h3 {margin-bottom:10px}
+.redesign-application .board-message h3 a {color:inherit;text-decoration:none}
+.redesign-application .board-message .siena-prose {margin-bottom:0}
+.redesign-application .board-screen .today-board>.board-date,
+.redesign-application .board-screen .today-board>.board-date:hover {background:#b9a590;box-shadow:none;color:#001011!important}
+.redesign-application .board-screen .board-date:focus-visible {outline:3px solid #142a2b;outline-offset:-6px}
+.redesign-application .board-screen .today-board>.board-weather-tile {background:#530a28;color:#f6f3ec}
+.redesign-application .board-screen .quick-note-open {color:#f6f3ec;gap:0}
+.redesign-application .board-screen .quick-note-open:hover {background:#5a0b25;color:#f6f3ec}
+.redesign-application .board-screen .quick-note-open:focus-visible {outline:3px solid #f6f3ec;outline-offset:-6px;background:#530a28;color:#f6f3ec}
+.redesign-application .board-theology {display:flex;align-items:center;justify-content:center;background:#1d4140;color:#f6f3ec;min-height:86px;text-decoration:none;padding:20px}
+.redesign-application .board-theology h2 {margin:0;font:500 20px/1.3 var(--font-sign);letter-spacing:.08em;text-transform:uppercase}
+.redesign-application .board-theology:hover {background:#28504d}
+.redesign-application .board-theology:focus-visible {outline:3px solid #f6f3ec;outline-offset:-6px}
+.redesign-application .board-add-notebook {display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:0;border:0;border-radius:6px;background:transparent;color:inherit}
+.redesign-application .board-add-notebook .fn-icon {width:17px;height:17px}
+.redesign-application .board-shelf .board-tile-label {justify-content:space-between}
+.redesign-application .theology-cover {min-height:180px}
+@media(min-width:1200px){
+ .redesign-application .board-screen {display:flex;flex-direction:column;min-height:0;padding-bottom:var(--pill-lane)}
+ .redesign-application .board-header {flex:0 0 40px}
+ .redesign-application .board-screen .today-board {--home-top:clamp(280px,31vh,340px);height:auto;min-height:0;flex:1;grid-template-columns:repeat(48,minmax(0,1fr));grid-template-rows:calc((var(--home-top) - 18px)/2) calc((var(--home-top) - 18px)/2) minmax(0,1fr);gap:18px;align-items:stretch}
+ .redesign-application .today-board>.board-tile {grid-area:auto;min-height:0;align-self:stretch;overflow:auto}
+ .redesign-application .today-board>.board-date {grid-column:1/6;grid-row:1}
+ .redesign-application .today-board>.board-weather-tile {grid-column:1/6;grid-row:2}
+ .redesign-application .board-date strong {font-size:30px}
+ .redesign-application .board-date span {font-size:16px}
+ .redesign-application .quick-note-open strong {font-size:20px;white-space:nowrap}
+ .redesign-application .board-screen .today-board>.board-day {grid-column:6/24;grid-row:1/3;align-self:stretch;height:auto;max-height:100%}
+ .redesign-application .board-day .day-spine {flex-basis:42px}
+ .redesign-application .board-day .day-spine span {font-size:18px}
+ .redesign-application .board-screen .board-day .day-content {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row;gap:18px;padding:20px 18px;min-height:0;overflow:hidden;min-width:0;flex:1}
+ .redesign-application .board-day .day-content>.board-today-schedule {grid-column:1;grid-row:1}
+ .redesign-application .board-day .day-content>.board-day-coming {grid-column:2;grid-row:1}
+ .redesign-application .board-day .day-content>section {min-width:0;min-height:0;max-height:100%;overflow:auto;overscroll-behavior:contain}
+ .redesign-application .board-day .board-upcoming-row {display:block}
+ .redesign-application .board-day .board-upcoming-row>a {display:block;margin-bottom:7px}
+ .redesign-application .today-board>.board-month {display:block;grid-column:24/36;grid-row:1/3;aspect-ratio:auto;padding:16px;position:relative}
+ .redesign-application .board-screen .board-month h2 {font-size:28px;white-space:nowrap;margin-bottom:8px}
+ .redesign-application .board-screen .board-month>div {position:absolute;inset:16px;height:auto!important;width:auto!important;display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0}
+ .redesign-application .board-screen .board-month .cal {display:grid;height:auto!important;min-height:0!important;grid-template-rows:24px minmax(0,1fr);gap:0}
+ .redesign-application .board-month .cal-weekdays {height:20px;margin:0}
+ .redesign-application .board-month .cal-week {margin:0;gap:2px}
+ .redesign-application .board-screen .board-month .cal-grid {grid-auto-rows:minmax(0,1fr);height:auto!important;min-height:0!important;gap:2px}
+ .redesign-application .board-screen .board-month .cal-day {height:100%;min-height:0!important;padding:0;line-height:1}
+ .redesign-application .board-screen .board-month .cal-day-n {--home-day:clamp(24px,calc((var(--home-top) - 106px)/6),32px);width:var(--home-day)!important;height:var(--home-day)!important;min-height:0;max-width:none;max-height:none;font-size:14px;line-height:1}
+ .redesign-application .today-board>.board-weather-card {grid-column:36/49;grid-row:1/3;display:flex;flex-direction:column;gap:16px;padding:18px 24px}
+ .redesign-application .board-weather-card .board-current-weather {flex:0 0 auto}
+ .redesign-application .board-weather-card .weather-inset {flex:0 0 auto;width:100%;min-width:0}
+ .redesign-application .board-weather-card .weather-inset-line {margin-bottom:12px}
+ .redesign-application .board-weather-card .board-forecast {gap:4px}
+ .redesign-application .today-board>.board-siena {grid-column:1/26;grid-row:3;padding:24px 28px;mask-image:none}
+ .redesign-application .today-board>.board-coming {grid-column:26/43;grid-row:3;padding:20px}
+ .redesign-application .today-board>:is(.board-siena,.board-coming) {align-self:start;height:auto;max-height:100%}
+ .redesign-application .board-coming .siena-item {padding:8px 0}
+ .redesign-application .board-coming .siena-item h3 {margin-bottom:4px}
+ .redesign-application .today-board>.board-links {grid-column:43/49;grid-row:3;min-width:0;min-height:0;max-height:100%;display:flex;flex-direction:column;gap:18px}
+ .redesign-application .board-links>.board-shelf {flex:0 1 300px;min-height:0;overflow:hidden;padding:16px 12px 12px;display:flex;flex-direction:column;gap:0}
+ .redesign-application .board-shelf .board-tile-label {gap:6px;margin-bottom:4px;flex:0 0 44px}
+ .redesign-application .board-shelf .board-tile-label h2 {margin:0}
+ .redesign-application .board-shelf .board-books {display:flex;flex-direction:column;align-items:stretch;gap:0;flex:1;min-height:0;height:auto;overflow:auto;padding:0 2px 0 0;margin:0}
+ .redesign-application .board-shelf .board-books>a {flex:0 0 32px;min-height:32px;height:32px!important;max-width:none;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;padding:0 7px 0 10px;border:0;border-left:4px solid var(--book-color);border-radius:0;box-shadow:none!important;background:none!important;color:#e9e6df}
+ .redesign-application .board-shelf .board-books>a+a {border-top:1px solid #e9e6df12}
+ .redesign-application .board-shelf .board-books strong {writing-mode:horizontal-tb;transform:none;font:500 14px/1.4 var(--font-ui);letter-spacing:0;text-transform:none;max-height:none;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+ .redesign-application .board-links>.board-theology {flex:0 0 104px;min-height:68px}
+}
+@media(min-width:1200px) and (max-height:820px){.redesign-application .board-links>.board-theology {flex-basis:68px}}
+@media(min-width:2200px){
+ .redesign-application .today-board>.board-date,.redesign-application .today-board>.board-weather-tile {grid-column:1/5}
+ .redesign-application .board-screen .today-board>.board-day {grid-column:5/24}
+}
+@media(max-width:1199px){
+ .redesign-application .board-screen .today-board>:is(.board-siena,.board-coming) {align-self:start;height:auto}
+ .redesign-application .today-board>.board-links {grid-area:shelf;min-width:0;display:flex;flex-direction:column;gap:16px}
+ .redesign-application .board-links>.board-shelf {min-width:0}
+}
+@media(min-width:600px) and (max-width:1199px){
+ .redesign-application .board-screen .today-board {grid-template-areas:'note date' 'wx wx' 'month day' 'siena siena' 'rem rem' 'shelf shelf'}
+}
+@media(min-width:1000px) and (max-width:1199px){
+ .redesign-application .board-screen .today-board {grid-template-areas:'note note note date date date wx wx wx wx wx wx' 'month month month month month day day day day day day day' 'siena siena siena siena siena rem rem rem rem rem rem rem' 'shelf shelf shelf shelf shelf shelf shelf shelf shelf shelf shelf shelf'}
+}
+@media(max-width:599px){
+ .redesign-application .board-screen .today-board {grid-template-areas:'note date' 'wx wx' 'month month' 'day day' 'siena siena' 'rem rem' 'shelf shelf'}
+ .redesign-application .board-links>.board-shelf {display:none}
+}

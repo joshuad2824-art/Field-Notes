@@ -70,6 +70,10 @@ export interface SienaItemRow extends Row {
   seen_at: number | null
   notebook: string | null
   completed_at: number | null
+  requires_action?: boolean | null
+  resolved_at?: number | null
+  retained_at?: number | null
+  state_at?: number | null
   created: number
   updated: number
 }
@@ -196,6 +200,7 @@ export function sienaItemToRow(item: SienaItem, vault: string): SienaItemRow {
     source_key: item.sourceKey ?? null,
     due_at: item.dueAt ?? null, seen_at: item.seenAt ?? null,
     notebook: item.notebook ?? null, completed_at: item.completedAt ?? null,
+    requires_action: item.requiresAction ?? null, resolved_at: item.resolvedAt ?? null, retained_at: item.retainedAt ?? null, state_at: item.stateAt ?? null,
     created: item.created, updated: item.updated,
   }
 }
@@ -211,6 +216,10 @@ export function rowToSienaItem(row: SienaItemRow): SienaItem {
     ...(row.seen_at ? { seenAt: Number(row.seen_at) } : {}),
     ...(row.notebook ? { notebook: row.notebook } : {}),
     ...(row.completed_at ? { completedAt: Number(row.completed_at) } : {}),
+    ...(typeof row.requires_action === 'boolean' ? { requiresAction: row.requires_action } : {}),
+    ...(row.resolved_at ? { resolvedAt: Number(row.resolved_at) } : {}),
+    ...(row.retained_at ? { retainedAt: Number(row.retained_at) } : {}),
+    ...(row.state_at ? { stateAt: Number(row.state_at) } : {}),
   }
 }
 
@@ -219,7 +228,9 @@ export function sameSienaItem(a: SienaItem, b: SienaItem): boolean {
     (a.title ?? '') === (b.title ?? '') && (a.sourceUrl ?? '') === (b.sourceUrl ?? '') &&
     (a.sourceKey ?? '') === (b.sourceKey ?? '') && (a.dueAt ?? 0) === (b.dueAt ?? 0) &&
     (a.seenAt ?? 0) === (b.seenAt ?? 0) && (a.notebook ?? '') === (b.notebook ?? '') &&
-    (a.completedAt ?? 0) === (b.completedAt ?? 0) && a.created === b.created && a.updated === b.updated
+    (a.completedAt ?? 0) === (b.completedAt ?? 0) &&
+    a.requiresAction === b.requiresAction && (a.resolvedAt ?? 0) === (b.resolvedAt ?? 0) &&
+    (a.retainedAt ?? 0) === (b.retainedAt ?? 0) && (a.stateAt ?? 0) === (b.stateAt ?? 0) && a.created === b.created && a.updated === b.updated
 }
 
 /* ── pictures ──────────────────────────────────────────────────────────── */

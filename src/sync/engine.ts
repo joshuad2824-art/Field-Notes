@@ -15,6 +15,7 @@ import { isoDay, readableDay } from '../lib/format'
 import { imageIdsIn, isBlank, type FieldEvent, type Notebook, type Page, type SienaItem } from '../lib/model'
 import { reloadNotebooks } from '../lib/notebooks'
 import { conflictBody, decide, samePage } from './reconcile'
+import { mergeSienaItems } from './siena-reconcile'
 import { setStatus } from './status'
 import { EPOCH, SyncError, supabaseTransport, type Transport } from './transport'
 import { getVault, setVault } from './vault'
@@ -319,9 +320,8 @@ async function syncEvents(vault: Vault): Promise<void> {
   }
 }
 
-/* Inbox bodies are immutable after creation. Seen and completed timestamps
-   only move forward, so a completion on one device cannot be undone by a
-   second device that was offline when it happened. */
+/* Inbox bodies are immutable. Seen only moves forward; explicit reversible
+   actions have their own clock so stale offline copies cannot undo them. */
 async function syncSienaItems(vault: Vault): Promise<void> {
   const t = transport!
   const { rows, cursor } = await pull('siena_items')
@@ -345,43 +345,24 @@ async function syncSienaItems(vault: Vault): Promise<void> {
       continue
     }
     if (!local || !remote) continue
-    const seenAt = Math.max(local.seenAt ?? 0, remote.seenAt ?? 0)
-    const completedAt = Math.max(local.completedAt ?? 0, remote.completedAt ?? 0)
-    const merged: SienaItem = {
-      ...remote,
-      ...(seenAt ? { seenAt } : {}),
-      ...(completedAt ? { completedAt } : {}),
-      updated: Math.max(local.updated, remote.updated, seenAt, completedAt),
-    }
-    if (seenAt > (remote.seenAt ?? 0) || completedAt > (remote.completedAt ?? 0)) {
-      push.push(merged)
-      if (!sameSienaItem(merged, local)) apply.push(merged)
-    } else {
-      if (!sameSienaItem(merged, local)) apply.push(merged)
-      agreed.push({ id: markFor.sienaItem(id), at: remote.updated })
-    }
+    const merged = mergeSienaItems(local, remote)
+    if (!sameSienaItem(merged, remote)) push.push(merged)
+    else agreed.push({ id: markFor.sienaItem(id), at: remote.updated })
+    if (!sameSienaItem(merged, local)) apply.push(merged)
   }
 
   if (apply.length) {
     applying = true
     try {
-      /* A tap can complete an item while this pull is in flight. Re-read in
-         the same write transaction before applying, or the old remote row
-         could erase that completion after it already left the screen. */
+      /* Re-read inside the write transaction: a user may complete, restore,
+         resolve or file an item while this pull is in flight. */
       await db.transaction('rw', db.sienaItems, async () => {
         for (const candidate of apply) {
           const current = await db.sienaItems.get(candidate.id)
-          const seenAt = Math.max(current?.seenAt ?? 0, candidate.seenAt ?? 0)
-          const completedAt = Math.max(current?.completedAt ?? 0, candidate.completedAt ?? 0)
-          const next: SienaItem = {
-            ...candidate,
-            ...(seenAt ? { seenAt } : {}),
-            ...(completedAt ? { completedAt } : {}),
-            updated: Math.max(current?.updated ?? 0, candidate.updated, seenAt, completedAt),
-          }
+          const next = current ? mergeSienaItems(current, candidate) : candidate
           await db.sienaItems.put(next)
           const remote = remotes.get(candidate.id)
-          if (remote && (seenAt > (remote.seenAt ?? 0) || completedAt > (remote.completedAt ?? 0))) {
+          if (remote && !sameSienaItem(next, remote)) {
             const at = push.findIndex((item) => item.id === candidate.id)
             if (at >= 0) push[at] = next
             else push.push(next)
@@ -399,14 +380,7 @@ async function syncSienaItems(vault: Vault): Promise<void> {
     const outgoing = batch.map((item, index) => {
       const current = fresh[index]
       if (!current) return item
-      const seenAt = Math.max(item.seenAt ?? 0, current.seenAt ?? 0)
-      const completedAt = Math.max(item.completedAt ?? 0, current.completedAt ?? 0)
-      return {
-        ...item,
-        ...(seenAt ? { seenAt } : {}),
-        ...(completedAt ? { completedAt } : {}),
-        updated: Math.max(item.updated, current.updated, seenAt, completedAt),
-      }
+      return mergeSienaItems(current, item)
     })
     await t.put('siena_items', outgoing.map((item) => sienaItemToRow(item, vault.id)))
     await markMany(outgoing.map((item) => ({ id: markFor.sienaItem(item.id), at: item.updated })))

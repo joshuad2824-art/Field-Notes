@@ -8,7 +8,7 @@ const { chromium } = await import(
 const BASE = process.env.BASE || 'http://127.0.0.1:5188'
 if (!['localhost', '127.0.0.1'].includes(new URL(BASE).hostname))
   throw Error('Local fixtures only')
-const out = 'work/2026-10-12-pdf-adjustments/verified'
+const out = process.env.PDF_OUT || 'work/check-results/pdf-adjustments'
 mkdirSync(out, { recursive: true })
 const b = await chromium.launch()
 try {
@@ -47,7 +47,7 @@ try {
     await p.getByRole('button', { name: 'Quick note', exact: true }).click()
     assert.equal(await area.inputValue(), '')
     await p.keyboard.press('Escape')
-    assert.equal(await p.locator('.week-strip a').count(), 14)
+    assert.equal(await p.locator('.week-strip').count(), 0) // approved removal
     /* October 13: the pill is identical everywhere, Calendar included; Today's
        + offers page · event · quick note; the month's name switches to the day
        agenda and the day's heading back to its month; Colors is in the app
@@ -117,7 +117,8 @@ try {
       await p.evaluate(async () => {
         const { db, changed } = await import('/src/lib/db.ts')
         await db.events.clear()
-        await db.sienaItems.update('redesign-note', {
+        // Today now excludes the St. John brief and includes personal updates.
+        await db.sienaItems.update('redesign-update', {
           body: 'A full message.\n'.repeat(50) + 'End of the complete message.',
         })
         changed()
@@ -133,7 +134,7 @@ try {
         await p.locator('.board-day').getByText('Nothing', { exact: false }).count(),
         0,
       )
-      const note = p.locator('.board-siena p')
+      const note = p.locator('.board-message').filter({has:p.getByRole('heading',{name:'The plan is ready',exact:true})}).locator('.siena-prose p')
       assert.ok((await note.textContent()).endsWith('End of the complete message.'))
       assert.ok(await note.evaluate((e) => e.scrollHeight <= e.clientHeight + 2))
       await p.screenshot({ path: out + '/quiet-day-long-message.png' })

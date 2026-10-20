@@ -9,7 +9,7 @@ const { chromium } = await import(
 const BASE = process.env.BASE || 'http://127.0.0.1:5188'
 if (!['localhost', '127.0.0.1'].includes(new URL(BASE).hostname))
   throw Error('Local unpaired fixtures only')
-const out = 'work/2026-10-13-controls-review/check'
+const out = process.env.CONTROLS_OUT || 'work/check-results/controls-review'
 mkdirSync(out, { recursive: true })
 const WIDTHS = (process.env.WIDTHS || '1920,1440,1180,820,390,320').split(',').map(Number)
 const ST_JOHN = 'd97288df-10bc-451f-8903-82d4e0c74873'
@@ -420,7 +420,8 @@ try {
     const appMenu = page.getByRole('navigation', { name: 'App menu' })
     for (const item of ['Search', 'Colors', 'Manage notebooks', 'Ask Siena', 'Trash', 'Settings'])
       ok(await appMenu.getByText(item, { exact: true }).isVisible(), `${width}: app menu has ${item}`)
-    eq(await appMenu.locator('a, button').count(), 6, `${width}: app menu holds only the back rooms`)
+    eq(await appMenu.locator('a, button').count(), 7, `${width}: app menu holds the back rooms, including Archive`)
+    ok(await appMenu.getByRole('link',{name:'Archive',exact:true}).isVisible(), `${width}: Archive is reachable`)
     await page.keyboard.press('Escape')
     ok(!(await appMenu.isVisible().catch(() => false)), `${width}: Esc closes the app menu`)
     eq(path(), '/', `${width}: and stays`)
@@ -502,19 +503,19 @@ try {
       eq(path(), '/', `${width}: and does not open the notebook`)
       await page.keyboard.press('Escape')
     }
-    await page.evaluate(async () => {
-      const { db, changed } = await import('/src/lib/db.ts')
-      window.__events = await db.events.toArray()
+    const savedEvents = await page.evaluate(async () => {
+      const { db } = await import('/src/lib/db.ts')
+      const events = await db.events.toArray()
       await db.events.clear()
-      changed()
+      return events
     })
-    await page.waitForTimeout(300)
+    // Read persisted fixture changes through the application module instance.
+    await visit('/')
     eq(await page.getByRole('heading', { name: 'Coming up', exact: true }).count(), 0, `${width}: no Coming Up heading over nothing`)
-    await page.evaluate(async () => {
-      const { db, changed } = await import('/src/lib/db.ts')
-      await db.events.bulkPut(window.__events)
-      changed()
-    })
+    await page.evaluate(async events => {
+      const { db } = await import('/src/lib/db.ts')
+      await db.events.bulkPut(events)
+    }, savedEvents)
 
     /* 9. Quick note still files exactly and keeps its draft on failure. */
     if (width === 1440 || width === 390) {

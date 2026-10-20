@@ -123,6 +123,8 @@ function parseBackupData(text: string): BackupData {
         typeof value.created !== 'number' || !Number.isFinite(value.created) ||
         typeof value.updated !== 'number' || !Number.isFinite(value.updated) ||
         !optionalStamp(value.dueAt) || !optionalStamp(value.seenAt) || !optionalStamp(value.completedAt) ||
+        !optionalStamp(value.resolvedAt) || !optionalStamp(value.retainedAt) || !optionalStamp(value.stateAt) ||
+        (value.requiresAction !== undefined && typeof value.requiresAction !== 'boolean') ||
         (value.type === 'reminder' && value.dueAt === undefined)) throw new Error('Invalid Siena item in Field Notes backup')
     return {
       id: value.id, type: value.type as SienaItem['type'], body: value.body,
@@ -134,6 +136,10 @@ function parseBackupData(text: string): BackupData {
       ...(value.seenAt !== undefined ? { seenAt: value.seenAt } : {}),
       ...(value.notebook ? { notebook: value.notebook } : {}),
       ...(value.completedAt !== undefined ? { completedAt: value.completedAt } : {}),
+      ...(typeof value.requiresAction === 'boolean' ? { requiresAction: value.requiresAction } : {}),
+      ...(value.resolvedAt !== undefined ? { resolvedAt: value.resolvedAt } : {}),
+      ...(value.retainedAt !== undefined ? { retainedAt: value.retainedAt } : {}),
+      ...(value.stateAt !== undefined ? { stateAt: value.stateAt } : {}),
     }
   })
   return { events, sienaItems }

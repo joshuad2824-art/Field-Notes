@@ -26,7 +26,7 @@ try {
     await page.getByText('Fixtures ready').waitFor()
     const visit = async (path) => {
       await page.goto(BASE + path)
-      await page.waitForTimeout(250)
+      await page.locator('.floating-nav .pill-room').waitFor()
     }
     const fit = async () =>
       assert.ok(
@@ -97,7 +97,9 @@ try {
           .completedAt,
     )
     await page.reload()
-    await page.getByText(/Completed reminders · 2/).waitFor()
+    await page.getByRole('link', { name: 'Archive', exact: true }).click()
+    await page.waitForURL(/\/archive/)
+    assert.equal(await page.getByRole('button', { name: 'Reopen reminder', exact: true }).count(), 2)
     await fit()
     await visit('/trash')
     await page.getByRole('button', { name: 'Restore', exact: true }).click()
@@ -113,6 +115,8 @@ try {
       const { deletePage } = await import('/src/lib/db.ts')
       await deletePage('redesign-trash')
     })
+    // Re-read persisted fixture state after an out-of-app module write.
+    await visit('/trash')
     await page.getByRole('button', { name: 'Empty trash', exact: true }).click()
     await page.getByRole('button', { name: 'Cancel', exact: true }).click()
     assert.ok(await page.getByText('Old grocery list', { exact: true }).isVisible())

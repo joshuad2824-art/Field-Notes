@@ -33,7 +33,7 @@ for(const kind of ['note','saved','task_update','reminder']) {
  const result=await publish({kind,title:'Fixture',body:'Original words',notebook:'fixture-work',...(kind==='reminder'?{due_at:1000}:{})})
  assert.equal(result.isError,undefined);assert.equal(records.at(-1).notebook,'fixture-work');assert.equal(records.at(-1).kind,kind);assert.equal(records.at(-1).seen_at,null);assert.equal(records.at(-1).completed_at,null)
 }
-await publish({kind:'note',body:'A global note'});assert.equal(records.at(-1).notebook,null)
+await publish({kind:'note',body:'A global note',requires_action:false});assert.equal(records.at(-1).requires_action,false);assert.equal(records.at(-1).notebook,null)
 const count=records.length
 bookExists=false
 assert.equal((await publish({kind:'note',body:'Must not save',notebook:'absent'})).isError,true)

@@ -5,3 +5,13 @@ dist
 .DS_Store
 .netlify
 supabase/.temp/
+# Local verification and Library upload metadata for the approved home release.
+/work/2026-10-19-siena-archive/
+/work/2026-10-20-approved-home/
+/work/check-results/
+/work/*-current.log
+/work/approved-*.log
+/work/home-*.log
+/work/controls-*.log
+/work/2026-10-12-redesign/
+/work/2026-10-12-reference-corrections/

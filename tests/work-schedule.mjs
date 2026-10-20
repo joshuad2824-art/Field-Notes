@@ -5,7 +5,7 @@ import { isWorkEvent, withoutWork, scheduleDays } from '../src/work-calendar/sch
 const work = (id, date, startTime, extra = {}) => ({ id, title: id, date, startTime, externalSource: 'work', ...extra })
 const other = (id, date, source) => ({ id, title: id, date, ...(source ? { externalSource: source } : {}) })
 
-// Only work is held back; family, Apple and native events pass through.
+// The work-only utility remains available; Today now uses the full merged calendar.
 {
   const all = [work('w', '2026-10-14', '09:00'), other('d', '2026-10-14', 'davis'), other('a', '2026-10-14', 'apple'), other('n', '2026-10-14')]
   assert.equal(isWorkEvent(all[0]), true)
@@ -41,4 +41,4 @@ const other = (id, date, source) => ({ id, title: id, date, ...(source ? { exter
   assert.deepEqual(days.map((d) => d.iso), ['2026-10-13', '2026-10-26'])
 }
 
-console.log('PASS work schedule: work held off Coming up, grouped by day on the St. John desk')
+console.log('PASS work schedule: source classification and fortnight grouping')

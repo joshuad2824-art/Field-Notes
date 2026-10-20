@@ -1,4 +1,5 @@
 import type { SienaItem } from './model'
+import { activeSienaItems } from './siena-archive'
 
 // Existing notebook identity, verified in Joshua's archive. Renames retain the desk.
 export const ST_JOHN_NOTEBOOK = 'd97288df-10bc-451f-8903-82d4e0c74873'
@@ -19,6 +20,6 @@ export function notebookDeskItems(items: SienaItem[], notebook: string, now = ne
     due: active.filter(item => item.dueAt !== undefined && item.dueAt < end),
     upcoming: active.filter(item => item.dueAt === undefined || item.dueAt >= end),
     completed: scoped.filter(item => item.type === 'reminder' && item.completedAt).sort((a, b) => b.completedAt! - a.completedAt!),
-    briefs: scoped.filter(item => item.type !== 'reminder').sort((a, b) => b.created - a.created),
+    briefs: activeSienaItems(scoped, now.getTime()).filter(item => item.type !== 'reminder').sort((a, b) => b.created - a.created),
   }
 }

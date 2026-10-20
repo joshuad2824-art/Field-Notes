@@ -1,0 +1,58 @@
+/* Message formatting is shared by Today, From Siena, the notebook desk and
+   Archive. It inherits each paper's ink; it never changes the saved writing. */
+.redesign-application .siena-prose {
+  font: 400 16px/1.6 'Spectral', serif;
+  color: inherit;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.redesign-application .siena-prose :is(p, li, blockquote) {
+  font: inherit;
+  color: inherit;
+  white-space: pre-line;
+}
+.redesign-application .siena-prose p {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  margin: 0 0 .8em;
+}
+.redesign-application .siena-prose h4 {
+  font: 700 15px/1.4 var(--font-ui);
+  color: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+  margin: 1.15em 0 .35em;
+}
+.redesign-application .siena-prose > :first-child { margin-top: 0; }
+.redesign-application .siena-prose > :last-child { margin-bottom: 0; }
+.redesign-application .siena-prose :is(ul, ol) { margin: .5em 0 1em; padding-left: 1.4em; }
+.redesign-application .siena-prose li { margin: .35em 0; }
+.redesign-application .siena-prose li p { margin-bottom: .25em; }
+.redesign-application .siena-prose mark {
+  background: #c39b5030;
+  color: inherit;
+  padding: 0 .12em;
+  border-radius: 2px;
+  box-decoration-break: clone;
+}
+.redesign-application .siena-prose a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.redesign-application .siena-prose blockquote { margin: 1em 0; padding-left: 1em; border-left: 2px solid #b59b6a; }
+.redesign-application .siena-prose pre { max-width: 100%; overflow: auto; padding: 12px; background: #80808015; }
+.redesign-application .siena-prose :is(th, td) { padding: 6px 10px; border: 1px solid #80808040; font: inherit; }
+.redesign-application .siena-prose .reading-check-item { display: flex; gap: .5em; }
+.redesign-application .board-siena :is(h2, h3) a { color: inherit; text-decoration: none; }
+.redesign-application .siena-item .siena-prose { margin: 12px 0; }
+.redesign-application .siena-disposition {display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:14px;font:12px/1.5 var(--font-ui);color:inherit}
+.redesign-application .siena-disposition button {font:600 12px var(--font-ui);border:1px solid currentColor;border-radius:999px;padding:7px 12px;color:inherit;background:transparent;cursor:pointer}
+.redesign-application .siena-disposition button:disabled {opacity:.5;cursor:wait}
+.redesign-application .archive-filters {display:flex;flex-wrap:wrap;gap:16px;margin:24px 0}
+.redesign-application .archive-filters label {display:grid;gap:6px;min-width:180px;font:13px var(--font-ui)}
+.redesign-application .archive-filters label:first-child {flex:1;min-width:220px}
+.redesign-application .archive-filters :is(input,select) {width:100%;min-height:42px;background:#f6f3ec;color:#142a2b;border:1px solid #9cb1b2;border-radius:8px;padding:8px 12px}
+.redesign-application .archive-items {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px;align-items:start}
+.redesign-application .archive-items .siena-item {margin:0;max-width:780px}
+.redesign-application .archive-intro {max-width:65ch}
+.redesign-application .work-archive-link {display:inline-block;margin-top:18px;font:13px var(--font-ui);text-decoration:underline;text-underline-offset:3px;color:inherit}
+.redesign-application .work-active-message {margin-top:24px;padding-top:24px;border-top:1px solid #142a2b33}
+.redesign-application .siena-prose {max-width:72ch}

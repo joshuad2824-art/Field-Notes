@@ -2,6 +2,21 @@
 
 Updated October 17, 2026: supplied puffin Home Screen icon.
 
+## October 20 — Today, Archive and private Theology released
+
+- Live: `https://timber-inkfieldnotes.netlify.app`, production deploy `6ad7ba60357e13e7bcdafbec`, service worker v57. Published from the verified local build. Joshua approved recording the same source in GitHub main with `[skip netlify]`; repository handoff details are in the release record. The original iOS checkout remains untouched.
+- Approved private study migration and exact-byte book import are complete. Full live source and navigation metadata readback match; vault isolation and rollback-only live database tests pass. The book remains private runtime data outside git and public assets.
+- Archive compatibility migration is applied and the authenticated MCP publisher is version 17. All 75 public file hashes match the verified build; hosted UI checks pass at 1440/820/390/320px with neutral device-local fixtures. Actual paired devices and physical iPhone/Safari remain unverified.
+- Current release details and verification limits: `docs/2026-10-20 - Field Notes Private Study Release.md`. The preview history below describes earlier held checkpoints.
+
+## October 20 — approved home and Siena/Archive bundle, pre-release history
+
+- Separate branch/worktree based on current main. Shared safe message typography, reversible searchable Siena Archive, explicit resolution/restore state and additive sync/backup metadata are drafted and locally checked. Notebook pages are excluded.
+- Joshua approved proposal v7 (1440×900) and requested Theology beneath Notebooks. The approved home, personal/St. John Siena separation, full Today/Coming up calendar columns and keyboard-accessible Theology link are implemented in the working branch.
+- Theology now has a private study preview. The supplied Markdown is hash-verified outside the repository: all 260 readings, 52 weeks, nine topics, 675 anchors and 4,523 links are checked, with exact source reconstruction. Separate annotation storage, responsive indexes and local mocked sync/race tests pass. Joshua confirmed the existing Prayer Log; the full-card link resolves that uniquely titled record without creating a page. Details: `docs/2026-10-20 - Private Theology Study Preview.md`.
+- **Not published.** Hold the one bundled release for review. The protected study-table migration and live private import also await specific approval. No production migration, MCP deployment or frontend publication has occurred. Local aggregate verification now passes all 38 suites (full run plus targeted recovery reruns), including desktop/touch contextual highlighting; controls review passed 5,623 assertions. All 11 refreshed screenshot identities were verified in native Library. Earlier bundle details: `docs/2026-10-20 - Approved Home and Theology Shell.md`.
+- Draft behavior, verification, recorded regression failure and release order: `docs/2026-10-19 - Siena Archive Draft.md`.
+
 ## October 17 — supplied puffin Home Screen icon
 
 - Joshua's supplied artwork is the Apple touch, web-app, and browser icon, with its original black background. Original: `docs/assets/field-notes-puffin-icon-master.png`.

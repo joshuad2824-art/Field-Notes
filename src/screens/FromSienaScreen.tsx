@@ -1,18 +1,21 @@
+import { useSienaItems } from '../lib/useSienaItems'
+import { RouteLink } from '../components/DeskHeader'
+import { to } from '../lib/router'
+import { activeSienaItems } from '../lib/siena-archive'
 import { useState } from 'react'
 import { SienaItemCard } from '../components/SienaItemCard'
-import { allSienaItems, markAllSienaItemsSeen } from '../lib/siena-items'
+import { markAllSienaItemsSeen } from '../lib/siena-items'
 import { isoDay } from '../lib/format'
-import { useLive } from '../lib/useLive'
 export function FromSienaScreen() {
-  const items = useLive(allSienaItems, [], []),
+  const items = useSienaItems(),
     [filter, setFilter] = useState('Due')
-  const notes = items
+  const active = activeSienaItems(items)
+  const notes = active
       .filter((i) => i.type === 'note')
       .sort((a, b) => Number(!!a.seenAt) - Number(!!b.seenAt) || b.created - a.created),
-    reminders = items.filter((i) => i.type === 'reminder' && !i.completedAt),
-    updates = items.filter((i) => i.type === 'task_update'),
-    saved = items.filter((i) => i.type === 'saved'),
-    completed = items.filter((i) => i.type === 'reminder' && i.completedAt)
+    reminders = active.filter((i) => i.type === 'reminder' && !i.completedAt),
+    updates = active.filter((i) => i.type === 'task_update'),
+    saved = active.filter((i) => i.type === 'saved')
   const visible = reminders.filter(
     (i) =>
       filter === 'All open' ||
@@ -27,6 +30,7 @@ export function FromSienaScreen() {
           <div>
             <h1 id="desk-heading">From Siena</h1>
           </div>
+          <RouteLink className="collection-chip" href={to.archive()}>Archive</RouteLink>
           <button className="collection-chip" onClick={() => void markAllSienaItemsSeen()}>
             Mark all seen
           </button>
@@ -34,23 +38,7 @@ export function FromSienaScreen() {
         <div className="siena-board">
           <section className="siena-featured">
             <h2>Note</h2>
-            {notes[0] ? (
-              <SienaItemCard item={notes[0]} paper column />
-            ) : (
-              <div className="empty-state">
-                <h3>All caught up.</h3>
-                <p>I'll leave anything new here as soon as it comes in.</p>
-                <img src="/redesign/puffin-right.webp" alt="" />
-              </div>
-            )}
-            {notes.length > 1 ? (
-              <details>
-                <summary>Earlier notes · {notes.length - 1}</summary>
-                {notes.slice(1).map((i) => (
-                  <SienaItemCard key={i.id} item={i} paper column />
-                ))}
-              </details>
-            ) : null}
+            {notes.length ? notes.map(item => <SienaItemCard key={item.id} item={item} paper column />) : <div className="empty-state"><h3>All caught up.</h3><p>I'll leave anything new here as soon as it comes in.</p><img src="/redesign/puffin-right.webp" alt="" /></div>}
           </section>
           <section className="siena-reminders">
             <h2>Reminders</h2>
@@ -66,18 +54,6 @@ export function FromSienaScreen() {
             ) : (
               <p>Nothing here right now.</p>
             )}
-            {completed.length ? (
-              <details
-                id="completed"
-                open={location.hash === '#completed' ? true : undefined}
-                className="siena-history"
-              >
-                <summary>Completed reminders · {completed.length}</summary>
-                {completed.map((i) => (
-                  <SienaItemCard key={i.id} item={i} />
-                ))}
-              </details>
-            ) : null}
           </section>
           <section className="siena-updates">
             <h2>Task updates</h2>

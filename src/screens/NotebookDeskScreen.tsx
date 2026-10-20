@@ -1,8 +1,8 @@
+import { useSienaItems } from '../lib/useSienaItems'
 import { useEffect, useState } from 'react'
 import { DeskHeader, RouteLink } from '../components/DeskHeader'
 import { SienaItemCard } from '../components/SienaItemCard'
 import { Icon } from '../components/Icon'
-import { allSienaItems } from '../lib/siena-items'
 import { livePages } from '../lib/db'
 import { useLive } from '../lib/useLive'
 import { useNotebooks } from '../lib/notebooks'
@@ -54,7 +54,7 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
   const books = useNotebooks()
   const book = books.find((book) => book.id === notebook)
   const pages = useLive<Page[]>(() => livePages(notebook), [notebook], [])
-  const items = useLive(allSienaItems, [], [])
+  const items = useSienaItems()
   const [now, setNow] = useState(() => new Date())
   const [filter, setFilter] = useState<'due' | 'upcoming' | 'all'>('due')
   const [query, setQuery] = useState('')
@@ -76,8 +76,8 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
     page.body.toLowerCase().includes(query.trim().toLowerCase()),
   )
   const work = notebook === ST_JOHN_NOTEBOOK
-  /* The whole work calendar lives here: today and the next two weeks. Today's
-     board carries only today's share of it. */
+  /* The work desk adds a full fortnight; Today also includes work appointments
+     in both of its calendar columns. */
   const today = isoDay(now.getTime())
   const lastDay = shiftDate(today, SCHEDULE_DAYS - 1)
   const workState = useWorkCalendar(work ? today : undefined, work ? lastDay : undefined)
@@ -314,16 +314,8 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                         can be filed from From Siena.
                       </p>
                     )}
-                    {sections.briefs.length > 1 ? (
-                      <details className="work-earlier">
-                        <summary>
-                          Earlier notes & updates · {sections.briefs.length - 1}
-                        </summary>
-                        {sections.briefs.slice(1).map((item) => (
-                          <SienaItemCard key={item.id} item={item} />
-                        ))}
-                      </details>
-                    ) : null}
+                    {sections.briefs.slice(1).map(item => <div className="work-active-message" key={item.id}><SienaItemCard item={item} paper column /></div>)}
+                    <RouteLink className="work-archive-link" href={to.archive(notebook)}>Archive</RouteLink>
                   </section>
                   <section className="work-notes" aria-labelledby="work-notes-heading">
                     <div className="work-section-heading">
@@ -401,24 +393,7 @@ export function NotebookDeskScreen({ notebook }: { notebook: string }) {
                       </div>
                     </section>
                   ) : null}
-                  <section className="work-done">
-                    <h2>Done lately</h2>
-                    {sections.completed.length ? (
-                      sections.completed
-                        .slice(0, 6)
-                        .map((item) => <SienaItemCard key={item.id} item={item} />)
-                    ) : (
-                      <p>Completed reminders will appear here.</p>
-                    )}
-                    {sections.completed.length > 6 ? (
-                      <details>
-                        <summary>Earlier completions · {sections.completed.length - 6}</summary>
-                        {sections.completed.slice(6).map((item) => (
-                          <SienaItemCard key={item.id} item={item} />
-                        ))}
-                      </details>
-                    ) : null}
-                  </section>
+
                 </aside>
               </div>
             </>

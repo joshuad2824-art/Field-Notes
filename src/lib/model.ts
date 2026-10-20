@@ -85,6 +85,10 @@ export interface SienaItem {
   seenAt?: number // set only by an explicit user action
   notebook?: NotebookId // groups all Siena item kinds; reminders also appear on its Reminders page
   completedAt?: number // completion is separate from having seen an item
+  requiresAction?: boolean // unknown legacy messages remain open until explicitly resolved
+  resolvedAt?: number // explicit resolution, never inferred from reading
+  retainedAt?: number // restoring a message keeps it active until released again
+  stateAt?: number // clock for reversible completion, disposition and notebook filing
 }
 
 /* What the shelf is seeded with on first run. After that it's whatever is in

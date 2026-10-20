@@ -1,3 +1,4 @@
+import { SienaBody } from '../components/SienaBody'
 import { DueLabel } from '../components/DueLabel'
 import { Icon } from '../components/Icon'
 import { useState, type FormEvent } from 'react'
@@ -62,7 +63,7 @@ export function RemindersPageScreen({ page }: { page: Page }) {
                       </button>
                       <div>
                         <strong>{item.title ?? item.body}</strong>
-                        {item.title && item.body !== item.title ? <p>{item.body}</p> : null}
+                        {item.title && item.body !== item.title ? <SienaBody text={item.body} /> : null}
                         {item.dueAt ? <small><DueLabel at={item.dueAt} /></small> : null}
                       </div>
                     </div>
@@ -77,7 +78,7 @@ export function RemindersPageScreen({ page }: { page: Page }) {
                   <button type="submit" aria-label="Add reminder" title="Add reminder"><Icon name="add" /></button>
                 </form></details>
 
-                <button className="reminder-page-history icon-control" aria-label={`Completed history${completed.length ? ` · ${completed.length}` : ''}`} title="Completed history" onClick={() => navigate(`${to.fromSiena()}#completed`)}>
+                <button className="reminder-page-history icon-control" aria-label={`Completed history${completed.length ? ` · ${completed.length}` : ''}`} title="Completed history" onClick={() => navigate(to.archive(page.notebook))}>
                   <Icon name="restore" />
                 </button>
               </div>

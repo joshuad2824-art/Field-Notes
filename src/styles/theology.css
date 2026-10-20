@@ -1,0 +1,161 @@
+/* Private study views: navigation has texture; the source keeps a calm measure. */
+.redesign-application .theology-app {height:100%;min-height:0;min-width:0;overflow:hidden}
+.redesign-application .theology-screen,.redesign-application .study-screen {height:100%;min-width:0;overflow:auto;overscroll-behavior:contain;padding:34px clamp(22px,4vw,64px) calc(var(--pill-lane,100px) + var(--safe-bottom));color:var(--cream-100)}
+.study-eyebrow {display:block;font:500 11px/1.5 var(--font-sign);letter-spacing:.15em;text-transform:uppercase;color:var(--teal-300)}
+.theology-heading,.study-topbar {display:flex;gap:18px;align-items:center;max-width:1320px;margin:0 auto 30px}
+.theology-heading {justify-content:space-between}
+.theology-heading h1,.study-topbar h1 {margin:2px 0 0;font:500 28px/1.2 var(--font-sign);letter-spacing:.025em}
+.theology-heading>a,.study-topbar>a,.study-menu-button,.study-breadcrumb button {display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border:1px solid var(--frame-hairline);border-radius:50%;background:transparent;color:inherit}
+.theology-intro {max-width:1320px;margin:40px auto 42px;display:grid;grid-template-columns:1fr 1fr;column-gap:48px;align-items:end}
+.theology-intro>.study-eyebrow {grid-column:1/-1;margin:0 0 16px;color:var(--brass-300)}
+.theology-intro h2 {grid-column:1;grid-row:2/4;font:400 clamp(38px,4.4vw,66px)/1.08 var(--font-editorial);letter-spacing:-.035em;margin:0}
+.theology-intro em,.theology-card em,.study-empty em,.study-exploration-heading em {font-weight:400;color:var(--brass-300)}
+.theology-rule {height:1px;width:80px;background:var(--brass-500);margin-bottom:18px}
+.theology-intro>p:last-child {grid-column:2;max-width:340px;margin:0;font:400 19px/1.5 var(--font-body);color:var(--teal-200)}
+.theology-grid {display:grid;grid-template-columns:1.1fr .95fr 1.15fr;gap:20px;max-width:1320px;margin:auto;align-items:start}
+.theology-card {padding:28px;border-radius:18px;min-width:0;text-decoration:none;color:var(--cream-100);overflow-wrap:anywhere}
+.theology-card h2 {font:400 33px/1.12 var(--font-editorial);margin:18px 0 20px;letter-spacing:-.02em}
+.theology-card>p,.theology-card>div>p {font:400 16px/1.65 var(--font-body);margin:12px 0 24px}
+.theology-card footer {display:flex;justify-content:space-between;align-items:center;gap:16px;font:12px/1.5 var(--font-ui);margin-top:32px}
+.theology-doctrine {background:linear-gradient(140deg,#294d48,#12312f);min-height:346px;display:flex;flex-direction:column;justify-content:space-between;grid-row:1/3}
+.theology-doctrine h2 {font-size:51px}
+.theology-doctrine:hover {background:linear-gradient(140deg,#325b55,#183d39)}
+.theology-devotional {background:#292b32;min-height:346px;grid-row:1/3}
+.theology-devotional-date {font:13px/1.6 var(--font-mono);border-top:1px solid #f6f3ec26;padding-top:22px;margin:27px 0 10px;color:var(--cream-200)}
+.study-text-link {display:inline-flex;gap:14px;align-items:center;color:var(--cream-100);text-decoration:none;font:13px/1.5 var(--font-ui);min-height:44px}
+.theology-reminders {background:var(--tile-recess);grid-column:3;grid-row:1}
+.theology-reminders .study-section-heading {display:flex;align-items:center;justify-content:space-between;gap:16px}
+.theology-reminders .study-section-heading h2 {font:500 20px/1.4 var(--font-sign);margin:0}
+.study-section-heading>a {display:grid;place-items:center;width:44px;height:44px;color:inherit}
+.theology-reminders .work-filters {margin:10px 0 18px;flex-wrap:wrap}
+.theology-reminders .siena-item {padding:14px 0;border-top:1px solid var(--frame-hairline)}
+.theology-muted {color:var(--teal-200)}
+.theology-prayer {background:#3a292d;grid-column:3;grid-row:2}
+.theology-prayer h2 {font-size:29px;margin:10px 0}
+.theology-prayer footer {margin-top:24px}
+.theology-prayer:hover:is(a) {background:#49323a}
+.study-topbar {max-width:1320px;margin-bottom:28px}
+.study-topbar>div {flex:1;min-width:0}
+.study-menu-button {margin-left:auto}
+.study-actions {max-width:1320px;margin:0 auto 24px;display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.study-actions button,.study-more,.study-primary {border:1px solid var(--frame-hairline);border-radius:8px;background:var(--tile-recess);color:var(--cream-100);padding:14px 18px;min-height:44px;font:13px/1.3 var(--font-ui)}
+.study-primary {background:var(--cream-100);color:var(--teal-900);margin-top:18px}
+.study-empty {max-width:900px;margin:70px auto;text-align:center;background:var(--tile-recess);padding:64px 30px;border-radius:20px}
+.study-empty h2 {font:400 clamp(30px,4vw,48px)/1.18 var(--font-editorial);margin:22px 0}
+.study-empty>p {font:17px/1.65 var(--font-body);color:var(--teal-200);max-width:470px;margin:16px auto}
+.study-empty .study-caption {font:12px/1.5 var(--font-ui);margin-top:18px}
+.study-workspace {max-width:1320px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;margin:auto;align-items:start}
+.study-navigation {position:sticky;top:0;min-width:0}
+.study-tabs {display:flex;gap:10px;margin-bottom:34px}
+.study-tabs>button {display:grid;place-items:center;width:48px;height:48px;background:transparent;border:1px solid var(--frame-hairline);border-radius:50%;color:var(--teal-200)}
+.study-tabs>button[aria-pressed=true] {background:var(--cream-100);color:var(--teal-900)}
+.study-navigation-intro h2 {font:400 25px/1.2 var(--font-editorial);margin:12px 0 22px}
+.study-return {display:flex;align-items:center;gap:10px;font:13px/1.5 var(--font-ui);min-height:44px;color:var(--cream-100);text-decoration:none;margin:20px 0}
+.study-continue {display:block;position:relative;color:var(--cream-100);text-decoration:none;padding:20px 38px 20px 18px;background:var(--tile-recess);border-radius:10px;margin:28px 0}
+.study-continue>span {display:block;font:11px/1.4 var(--font-ui);color:var(--teal-300);margin-bottom:8px}
+.study-continue>strong {font:400 17px/1.4 var(--font-body)}
+.study-continue>.fn-icon {position:absolute;right:14px;top:50%}
+.study-save-state {font:11px/1.7 var(--font-ui);color:var(--teal-300);border-top:1px solid var(--frame-hairline);padding-top:18px;margin-top:30px;overflow-wrap:anywhere}
+.study-find label {display:block;font:400 22px/1.3 var(--font-editorial);margin-bottom:20px}
+.study-find input {width:100%;min-width:0;background:var(--tile-recess);color:var(--cream-100);border:1px solid var(--frame-hairline);border-radius:8px;min-height:48px;padding:12px;font:14px/1.5 var(--font-ui)}
+.study-find p {font:12px/1.7 var(--font-ui);color:var(--teal-300)}
+.study-exploration-heading {padding:10px 0 36px;border-bottom:1px solid var(--frame-hairline);margin-bottom:26px}
+.study-exploration-heading h2 {font:400 clamp(34px,4vw,54px)/1.1 var(--font-editorial);letter-spacing:-.03em;margin:20px 0}
+.study-exploration-heading p {font:17px/1.6 var(--font-body);max-width:440px;color:var(--teal-200)}
+.study-topic-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.study-collection-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.study-collection {min-width:0;min-height:235px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:24px;border:0;border-radius:14px;color:var(--cream-100);background:#14322e}
+.study-collection:nth-child(3n+2){background:#292b32}.study-collection:nth-child(3n){background:#3a292d}
+.study-collection h3 {font:400 23px/1.25 var(--font-editorial);margin:20px 0 24px;overflow-wrap:anywhere}
+.study-collection footer {display:flex;width:100%;justify-content:space-between;gap:12px;align-items:center;margin-top:auto;font:11px/1.5 var(--font-ui);color:var(--teal-200)}
+.study-source-collections {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:28px 0}
+.study-source-collections>button,.study-collection-back {display:flex;align-items:center;gap:14px;text-align:left;min-height:48px;padding:12px 0;background:transparent;border:0;color:var(--cream-100);font:13px/1.5 var(--font-ui)}
+.study-source-collections>button {justify-content:space-between;border-bottom:1px solid var(--frame-hairline)}
+.study-collection-back {margin-bottom:18px}
+.study-collection:hover {filter:brightness(1.14)}
+.study-topic {display:flex;align-items:center;gap:16px;padding:24px 20px;border-radius:12px;min-width:0;min-height:124px;text-decoration:none;color:var(--cream-100);background:#14322e}
+.study-topic.reference {background:#292b32}.study-topic.aid {background:#2a2622}
+.study-topic:hover {filter:brightness(1.16)}
+.study-topic>div {flex:1;min-width:0}.study-topic>.fn-icon {flex-shrink:0}
+.study-topic-number {font:400 32px/1 var(--font-sign);color:var(--brass-300);min-width:32px}
+.study-topic h3 {margin:8px 0 0;font:400 21px/1.25 var(--font-editorial);overflow-wrap:anywhere}
+.study-results>a {display:block;position:relative;color:var(--cream-100);text-decoration:none;padding:24px 44px 24px 0;border-bottom:1px solid var(--frame-hairline)}
+.study-results h3 {font:400 24px/1.3 var(--font-editorial);margin:10px 0}
+.study-results p {font:18px/1.6 var(--font-body);margin:10px 0;overflow-wrap:anywhere}
+.study-results>a>.fn-icon {position:absolute;right:5px;top:32px}
+.study-results mark {color:inherit}
+.study-no-results {color:var(--teal-200);font:17px/1.7 var(--font-body)}
+.study-more {margin:24px 0}
+.study-reading-wrap {min-width:0}
+.study-breadcrumb {display:flex;align-items:center;gap:14px;margin-bottom:18px;color:var(--teal-200);font:12px/1.5 var(--font-ui);overflow-wrap:anywhere}
+.study-breadcrumb button {display:none}
+.study-paper {--hl-blend:multiply;--hl-oxblood:rgba(229,84,93,.32);--hl-forest:rgba(41,163,86,.32);--hl-navy:rgba(31,140,255,.32);--hl-brass:rgba(155,127,12,.32);background:var(--cream-100);color:var(--teal-800);border-radius:14px;padding:38px clamp(24px,4vw,64px) 52px;min-width:0;max-width:900px;margin:0 auto}
+.study-source-boundary {font:10px/1.6 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:#52615c;border-bottom:1px solid #142a2b26;padding-bottom:18px;margin:0 0 22px;overflow-wrap:anywhere}
+.study-mark-bar {display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #142a2b26;margin-bottom:30px;padding-bottom:14px}
+.study-mark-bar>span {flex:1;min-width:160px;font:11px/1.5 var(--font-ui);color:#52615c}
+.study-swatch {width:38px;height:38px;display:grid;place-items:center;border:1px solid #142a2b26;border-radius:50%;background:transparent}
+.study-swatch>span {display:block;width:20px;height:12px;transform:rotate(-5deg);border-radius:3px}
+.study-swatch.brass>span {background:#b7a25c}.study-swatch.forest>span {background:#7daf82}.study-swatch.oxblood>span {background:#c98e8c}.study-swatch.navy>span {background:#8baed2}
+.study-swatch:disabled {opacity:.55}
+.study-source-text {max-width:64ch;margin:auto;font:400 19px/1.8 var(--font-body);overflow-wrap:anywhere;user-select:text}
+.study-source-text h2 {font:500 32px/1.3 var(--font-editorial);letter-spacing:-.025em;margin:28px 0}
+.study-source-text h3,.study-source-text h4,.study-source-text h5,.study-source-text h6 {font:500 24px/1.4 var(--font-editorial);margin:26px 0 14px}
+.study-source-text .study-day-number {font:500 12px/1.5 var(--font-sign);letter-spacing:.12em;color:#52615c;margin:24px 0 12px}
+.study-source-text .study-reading-title {font:500 32px/1.3 var(--font-editorial);margin:12px 0 28px}
+.study-source-table {max-width:100%;margin:22px 0}
+.study-source-table table {width:100%;table-layout:fixed;border-collapse:collapse;font:16px/1.65 var(--font-body)}
+.study-source-table th,.study-source-table td {text-align:left;vertical-align:top;padding:12px 10px;border-bottom:1px solid #142a2b26;overflow-wrap:anywhere}
+.study-source-table th {font:500 11px/1.6 var(--font-ui);color:#52615c}
+.study-conversion-location {font:11px/1.7 var(--font-mono);color:#52615c;margin:0 0 22px}
+.study-source-text p {margin:0 0 22px;white-space:pre-line}
+.study-source-text a {color:var(--brass-700);text-decoration:underline;text-underline-offset:3px}
+.study-source-text code {font:14px/1.6 var(--font-mono);white-space:pre-wrap}
+.study-source-text pre {max-width:100%;white-space:pre-wrap;background:#142a2b0c;padding:16px;border-radius:6px}
+.study-source-text blockquote {border-left:2px solid #ae9546;padding-left:22px;margin:22px 0;font-style:italic}
+.study-list-line {display:flex;gap:14px}.study-list-marker {flex-shrink:0;min-width:16px}
+.study-source-text hr {border:0;border-top:1px solid #142a2b26;margin:32px 0}
+.study-source-text .md-hl {color:inherit;background-color:transparent}
+.study-source-text ::selection {background:#c5ae6780}
+.study-arrival {animation:study-arrival 1.8s ease-out}
+@keyframes study-arrival {0%,35%{background:#dac89155}100%{background:transparent}}
+.study-highlight-list {margin-top:36px;border-top:1px solid #142a2b26;padding-top:16px;font:12px/1.6 var(--font-ui)}
+.study-highlight-list summary {cursor:pointer;min-height:32px}
+.study-highlight-list>div {display:flex;align-items:center;border-top:1px solid #142a2b15}
+.study-highlight-list button {border:0;background:transparent;min-height:44px;color:inherit;padding:10px;text-align:left;font:13px/1.6 var(--font-body)}
+.study-highlight-list button:first-child {flex:1}
+.study-reading-pagination {display:flex;gap:24px;justify-content:space-between;max-width:900px;margin:26px auto}
+.study-reading-pagination>a {display:flex;align-items:center;gap:10px;color:var(--teal-200);font:13px/1.6 var(--font-ui);max-width:48%;text-decoration:none;overflow-wrap:anywhere}
+.study-reading-pagination .fn-icon {flex-shrink:0}
+.study-problem {max-width:1320px;margin:16px auto 24px;padding:16px;border:1px solid #ac735f;color:var(--cream-100);border-radius:8px;font:13px/1.6 var(--font-ui)}
+.study-paper .study-problem {color:#723e2e}
+.study-location {font:12px/1.5 var(--font-mono);color:#52615c}
+.devotional-paper {max-width:790px}
+.devotional-history {display:flex;max-width:790px;flex-wrap:wrap;gap:12px;margin:28px auto}
+.devotional-history>a {font:12px/1.5 var(--font-mono);padding:12px;color:var(--teal-200);border:1px solid var(--frame-hairline);border-radius:6px;text-decoration:none}
+.devotional-history>a[aria-current=page] {background:var(--cream-100);color:var(--teal-900)}
+.theology-app :is(a,button,input):focus-visible {outline:3px solid var(--brass-400);outline-offset:4px}
+@media(min-width:1600px){.theology-intro{margin-top:60px;margin-bottom:58px}.theology-card{padding:34px}.theology-doctrine,.theology-devotional{min-height:390px}}
+@media(max-width:1100px){.theology-grid{grid-template-columns:1fr 1fr}.theology-doctrine,.theology-devotional{grid-row:auto;min-height:330px}.theology-reminders,.theology-prayer{grid-column:auto;grid-row:auto}.study-workspace{grid-template-columns:190px minmax(0,1fr);gap:24px}.study-topic-grid{grid-template-columns:1fr}.study-topic{min-height:100px}.study-paper{padding:28px}.study-source-text{font-size:18px}}
+@media(max-width:650px){.redesign-application .theology-screen,.redesign-application .study-screen{padding:22px 20px calc(var(--pill-lane,100px) + var(--safe-bottom))}.theology-heading,.study-topbar{margin-bottom:24px}.theology-heading h1,.study-topbar h1{font-size:25px}.study-topbar .study-eyebrow{font-size:10px}.theology-intro{display:block;margin:30px 0}.theology-intro>.study-eyebrow{margin-bottom:18px}.theology-intro h2{font-size:43px}.theology-rule{margin:25px 0 18px}.theology-intro>p:last-child{font-size:17px}.theology-grid{grid-template-columns:1fr;gap:16px}.theology-card{padding:26px}.theology-doctrine{min-height:300px}.theology-devotional{min-height:290px}.theology-card h2{font-size:34px}.theology-doctrine h2{font-size:47px}.study-workspace{display:block}.study-navigation{position:static}.study-tabs{margin-bottom:24px}.study-navigation-intro{display:none}.study-save-state{margin-top:18px;margin-bottom:26px;padding-top:12px}.study-find label{font-size:24px}.study-find input{font-size:16px}.study-exploration-heading{padding-top:6px}.study-exploration-heading h2{font-size:39px}.study-exploration-heading p{font-size:16px}.study-topic{padding:22px 18px}.study-topic h3{font-size:21px}.study-topic-number{font-size:30px}.study-paper{border-radius:10px;padding:24px 22px 32px}.study-source-text{font-size:18px;line-height:1.8}.study-source-text h2{font-size:29px}.study-source-text h3{font-size:23px}.study-mark-bar>span{flex-basis:100%}.study-mark-bar{gap:10px}.study-swatch{width:42px;height:42px}.is-reading .study-navigation .study-save-state{display:none}.is-reading .study-navigation-intro,.is-reading .study-find,.is-reading .study-return{display:none}.is-reading .study-tabs{margin-bottom:20px}.study-breadcrumb button{display:grid;width:38px;height:38px}.study-breadcrumb{margin-bottom:14px}.study-reading-pagination{gap:12px}.study-reading-pagination>a{font-size:12px}.study-empty{margin:30px auto;padding:36px 22px}.study-empty h2{font-size:30px}.study-actions{justify-content:flex-start}.study-menu-button{width:40px;height:40px}.study-topbar{gap:12px}.study-topbar h1{overflow-wrap:anywhere}.study-source-boundary{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.study-arrival{animation:none;outline:2px solid #ae9546}}
+@media(max-width:1100px){.study-collection-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.study-collection{min-height:230px;padding:22px}.study-collection h3{font-size:21px}}
+@media(max-width:650px){.study-collection-grid{grid-template-columns:1fr}.study-collection{min-height:210px;padding:26px}.study-collection h3{font-size:25px}.study-source-collections{grid-template-columns:1fr}}
+@media(max-width:650px){.study-exploration-heading{padding:6px 0 20px;margin-bottom:22px}.study-exploration-heading h2,.study-exploration-heading p{display:none}.study-continue{padding:16px 38px 16px 18px;margin:18px 0}.study-continue>strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.study-save-state{margin:12px 0 20px;padding-top:10px;font-size:10px}}
+/* October 20 refinement: cards are the navigation, with no explanatory copy. */
+.theology-doctrine,.theology-devotional {min-height:280px}
+.theology-devotional:is(a):hover {background:#32343d}
+.theology-reminders {position:relative}
+.theology-reminders .study-section-heading>.theology-card-link {display:block;position:static;width:auto;height:auto;color:inherit;text-decoration:none}
+.theology-card-link::after {content:'';position:absolute;inset:0;border-radius:18px}
+.theology-reminders :is(.work-filters,.siena-item,.study-text-link) {position:relative;z-index:1}
+.theology-reminders:has(.theology-card-link:focus-visible) {outline:3px solid var(--brass-400);outline-offset:4px}
+.theology-reminders .theology-card-link:focus-visible {outline:none}
+.theology-prayer h2 {margin:0}
+.study-results>a {padding-right:0}
+.study-continue {padding-right:18px}
+.study-topic {gap:18px}
+.study-selection-toolbar {position:fixed;z-index:500;display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #142a2b33;border-radius:12px;background:var(--cream-100);color:var(--teal-900);box-shadow:0 6px 24px #00101133;width:220px;max-width:calc(100vw - 24px)}
+.study-selection-toolbar .study-swatch {flex:0 0 44px;width:44px;height:44px;touch-action:manipulation}
+.study-selection-toolbar .study-swatch:focus-visible {outline:3px solid var(--brass-700);outline-offset:1px}
+@media(max-width:650px){.theology-doctrine,.theology-devotional{min-height:240px}.study-tabs{margin-bottom:24px}.study-continue{margin-bottom:26px}}
+@media(max-width:650px){.study-source-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.study-source-table tr{display:block;padding:12px 0;border-bottom:1px solid #142a2b26}.study-source-table td{display:block;width:100%;border:0;padding:5px 0}.study-source-table td::before{content:attr(data-label);display:block;font:500 10px/1.5 var(--font-ui);color:#52615c;margin-bottom:4px}.study-source-text .study-reading-title{font-size:29px}}

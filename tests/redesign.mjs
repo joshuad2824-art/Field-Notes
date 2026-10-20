@@ -66,7 +66,7 @@ try {
   }
   await visit('/')
   await shot('01-mac-today')
-  assert.equal(await page.locator('.today-board .board-tile').count(), 10)
+  assert.equal(await page.locator('.today-board .board-tile').count(), 9)
   await visit('/day/' + today)
   await shot('02-mac-agenda')
   await visit('/calendar/' + month)

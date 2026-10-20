@@ -5,21 +5,22 @@ mkdirSync('work/2026-10-12-reference-corrections', { recursive: true })
 const { chromium } = await import(
   `${execSync('npm root -g', { encoding: 'utf8' }).trim()}/playwright/index.mjs`
 )
+const BASE = process.env.BASE || 'http://127.0.0.1:5188'
 const b = await chromium.launch()
 try {
   for (const width of [1440, 820, 390, 320]) {
     const c = await b.newContext({ viewport: { width, height: 900 } })
     await c.route('**/*', (r) =>
-      new URL(r.request().url()).origin === 'http://127.0.0.1:5188' ? r.continue() : r.abort(),
+      new URL(r.request().url()).origin === new URL(BASE).origin ? r.continue() : r.abort(),
     )
     const p = await c.newPage()
     const errors = []
     p.on('pageerror', (e) => errors.push(e.message))
-    await p.goto('http://127.0.0.1:5188/tests/redesign-check.html')
+    await p.goto(BASE + '/tests/redesign-check.html')
     await p.getByRole('button', { name: 'Load redesign fixtures' }).click()
     await p.getByText('Fixtures ready').waitFor()
     for (const route of ['/', '/workshop', '/calendar/2026-10']) {
-      await p.goto('http://127.0.0.1:5188' + route)
+      await p.goto(BASE + route)
       await p.evaluate(() => document.fonts.ready)
       await p.waitForTimeout(300)
       await p.screenshot({
@@ -31,7 +32,7 @@ try {
         route + ' overflow',
       )
       if (route === '/') {
-        assert.equal(await p.locator('.week-strip small').count(), 7)
+        assert.equal(await p.locator('.week-strip').count(), 0)
         assert.equal(await p.locator('.board-books small').count(), 0)
         assert.equal(await p.locator('.quiet-day').count(), 0)
         const square = await p.locator('.board-month').boundingBox()
@@ -39,7 +40,7 @@ try {
            weeks, so the last one is never cut by its edge. */
         /* October 14: below 1200 the iPad's month card takes the height its
            row gives it and is no longer square. */
-        if (width >= 1200) assert.ok(Math.abs(square.width - square.height) < 2, JSON.stringify(square))
+        // October 20: approved desktop month is rectangular; all weeks must fit.
         const last = await p.locator('.board-month .cal-day').last().boundingBox()
         assert.ok(last.y + last.height <= square.y + square.height + 0.5, 'the last week sits inside the month card')
       }
@@ -57,7 +58,7 @@ try {
           ),
           count + 1,
         )
-        await p.goto('http://127.0.0.1:5188/workshop')
+        await p.goto(BASE + '/workshop')
         await p.getByRole('button', { name: 'Edit shop routine' }).click()
         await p.waitForURL(/\/p\//)
         assert.equal(
@@ -66,7 +67,7 @@ try {
           ),
           count + 1,
         )
-        await p.goto('http://127.0.0.1:5188/workshop')
+        await p.goto(BASE + '/workshop')
         await p.getByRole('button', { name: 'Active', exact: true }).click()
         assert.equal(
           await p.locator('.workshop-reference-plan:not([data-status=active])').count(),

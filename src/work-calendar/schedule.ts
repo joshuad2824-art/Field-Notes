@@ -2,9 +2,8 @@ import { eventOnDay } from '../lib/event-range.ts'
 import { shiftDate } from '../lib/event-recurrence.ts'
 import type { FieldEvent } from '../lib/model.ts'
 
-/* Where work events show. The St. John desk carries the whole work schedule;
-   Today carries only what is happening today, and its "Coming up" is for the
-   rest of life: family, school, church. Pure, so node can check it. */
+/* Source classification and the St. John desk's fortnight grouping. Today
+   independently uses all calendar sources for both today and coming up. */
 
 type Sourced = Pick<FieldEvent, 'date' | 'endDate'> & { externalSource?: string }
 

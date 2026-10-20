@@ -759,7 +759,7 @@ if (eventWire) {
     vault: eventWire.vault, id: inboxId, kind: 'note', title: 'A synced letter',
     body: 'A complete message arrives from Siena.', source_url: null,
     source_key: 'sync-test-letter', due_at: null, seen_at: null,
-    created: inboxAt, updated: inboxAt, server_at: stamp(),
+    created: inboxAt - 4 * 86400000, updated: inboxAt, server_at: stamp(),
   })
 }
 await syncNow(b)
@@ -788,19 +788,53 @@ if (eventWire) {
 await syncNow(b)
 await b.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
 await b.view.locator('.siena-item').filter({ hasText: 'Take the folder' }).getByRole('button', { name: 'Mark done' }).click()
-await b.view.locator('.siena-history>summary').click()
-await b.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).waitFor()
+await b.view.getByRole('link', { name: 'Archive', exact: true }).click()
+await b.view.locator('.archive-items').getByRole('heading', { name: 'Take the folder' }).waitFor()
 for (let attempt = 0; attempt < 3 && !store.get(`siena_items|${eventWire?.vault}|${reminderId}`)?.completed_at; attempt++) {
   await syncNow(b)
 }
 await syncNow(a)
 await a.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
-await a.view.locator('.siena-history>summary').click()
-await a.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).waitFor()
+await a.view.getByRole('link', { name: 'Archive', exact: true }).click()
+await a.view.locator('.archive-items').getByRole('heading', { name: 'Take the folder' }).waitFor()
 ok('completion reaches the first device and the mirror',
-  (await a.view.locator('.siena-history').getByRole('heading', { name: 'Take the folder' }).count()) === 1 &&
+  (await a.view.locator('.archive-items').getByRole('heading', { name: 'Take the folder' }).count()) === 1 &&
   !!store.get(`siena_items|${eventWire?.vault}|${reminderId}`)?.completed_at,
   JSON.stringify({ mirrorCompleted: store.get(`siena_items|${eventWire?.vault}|${reminderId}`)?.completed_at ?? null }))
+
+// An old seen action stays active until resolved; disposition crosses both ways.
+const archivedReminder = a.view.locator('.archive-items .siena-item').filter({has:a.view.getByRole('heading',{name:'Take the folder',exact:true})})
+await archivedReminder.getByRole('button',{name:'Reopen reminder',exact:true}).click()
+// A real person sees the card leave Archive after the local transaction commits.
+// A hard navigation before that confirmation can abort the pending transaction.
+await archivedReminder.waitFor({state:'detached'})
+await syncNow(a)
+await syncNow(b)
+await b.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
+await b.view.locator('.siena-reminders').getByRole('heading',{name:'Take the folder',exact:true}).waitFor()
+ok('reopening a completed reminder crosses to the other device', !store.get(`siena_items|${eventWire?.vault}|${reminderId}`)?.completed_at)
+const letter = b.view.locator('.siena-item').filter({ has: b.view.getByRole('heading', { name: 'A synced letter', exact: true }) })
+await letter.getByRole('button', { name: 'Resolve', exact: true }).click()
+await letter.waitFor({ state: 'detached' })
+await syncNow(b)
+await syncNow(a)
+await a.view.goto(`${BASE}/archive`, { waitUntil: 'domcontentloaded' })
+const archivedLetter = a.view.locator('.archive-items .siena-item').filter({ has: a.view.getByRole('heading', { name: 'A synced letter', exact: true }) })
+await archivedLetter.waitFor()
+ok('explicit resolution crosses to Archive on the other device', !!store.get(`siena_items|${eventWire?.vault}|${inboxId}`)?.resolved_at)
+await archivedLetter.getByRole('button', { name: 'Restore to active', exact: true }).click()
+await archivedLetter.waitFor({ state: 'detached' })
+await syncNow(a)
+await syncNow(b)
+await b.view.goto(`${BASE}/from-siena`, { waitUntil: 'domcontentloaded' })
+await letter.waitFor()
+ok('restoring the original message crosses back and retains seen state', !!store.get(`siena_items|${eventWire?.vault}|${inboxId}`)?.retained_at && !!store.get(`siena_items|${eventWire?.vault}|${inboxId}`)?.seen_at)
+await letter.getByRole('button', { name: 'Reopen', exact: true }).click()
+await letter.getByRole('button', { name: 'Reopen', exact: true }).waitFor({state:'detached'})
+await syncNow(b)
+await syncNow(a)
+const reopenedWire = store.get(`siena_items|${eventWire?.vault}|${inboxId}`)
+ok('reopening crosses explicit action state without losing the body', reopenedWire?.requires_action === true && !reopenedWire.resolved_at && reopenedWire.body === 'A complete message arrives from Siena.')
 
 /* ── unpairing keeps the writing ────────────────────────────────────────── */
 

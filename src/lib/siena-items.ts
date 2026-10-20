@@ -1,5 +1,30 @@
 import { db, changed } from './db'
 import type { SienaItem } from './model'
+import { activeSienaItems } from './siena-archive'
+
+const editAt = (item: SienaItem) => Math.max(Date.now(), item.updated + 1,
+  (item.stateAt ?? 0) + 1, (item.completedAt ?? 0) + 1,
+  (item.resolvedAt ?? 0) + 1, (item.retainedAt ?? 0) + 1)
+
+export async function setSienaDisposition(id: string, expectedUpdated: number, action: 'resolve' | 'reopen' | 'restore' | 'release'): Promise<void> {
+  await db.transaction('rw', db.sienaItems, async () => {
+    const item = await db.sienaItems.get(id)
+    if (!item || item.updated !== expectedUpdated) throw new Error('This item changed. Try again with its latest version.')
+    const at = editAt(item)
+    const next = { ...item, updated: at, stateAt: at }
+    if (action === 'restore') {
+      if (item.type === 'reminder') delete next.completedAt
+      else next.retainedAt = at
+    } else {
+      if (item.type === 'reminder') throw new Error('Use reminder completion for this item.')
+      if (action === 'resolve') { next.resolvedAt = at; delete next.retainedAt }
+      if (action === 'reopen') { delete next.resolvedAt; next.requiresAction = true }
+      if (action === 'release') delete next.retainedAt
+    }
+    await db.sienaItems.put(next)
+  })
+  changed()
+}
 
 export async function fileSienaItem(id: string, notebook: string | undefined, expectedUpdated: number): Promise<void> {
   await db.transaction('rw', db.sienaItems, db.notebooks, async () => {
@@ -11,7 +36,8 @@ export async function fileSienaItem(id: string, notebook: string | undefined, ex
       if (!book || book.deleted) throw new Error('That notebook is no longer available.')
     }
     if (item.notebook === notebook) return
-    await db.sienaItems.put({ ...item, notebook, updated: Math.max(Date.now(), item.updated + 1) })
+    const at = editAt(item)
+    await db.sienaItems.put({ ...item, notebook, updated: at, stateAt: at })
   })
   changed()
 }
@@ -29,7 +55,7 @@ export async function markSienaItemSeen(id: string): Promise<void> {
 }
 
 export async function markAllSienaItemsSeen(): Promise<void> {
-  const items = (await db.sienaItems.toArray()).filter((item) => !item.seenAt)
+  const items = activeSienaItems(await db.sienaItems.toArray()).filter((item) => !item.seenAt)
   if (!items.length) return
   const at = Date.now()
   await db.sienaItems.bulkPut(items.map((item) => ({
@@ -45,8 +71,8 @@ export async function completeReminder(id: string): Promise<void> {
   await db.transaction('rw', db.sienaItems, async () => {
     const item = await db.sienaItems.get(id)
     if (!item || item.type !== 'reminder' || item.completedAt) return
-    const at = Math.max(Date.now(), item.updated + 1)
-    await db.sienaItems.put({ ...item, completedAt: at, seenAt: Math.max(item.seenAt ?? 0, at), updated: at })
+    const at = editAt(item)
+    await db.sienaItems.put({ ...item, completedAt: at, seenAt: Math.max(item.seenAt ?? 0, at), updated: at, stateAt: at })
     completed = true
   })
   if (completed) changed()
@@ -80,12 +106,13 @@ export interface SienaSections {
    completed. Reading one does not take it off the desk. */
 export function sienaSections(items: SienaItem[], today = new Date()): SienaSections {
   const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getTime()
-  const sorted = [...items].sort((a, b) => b.created - a.created)
+  const active = activeSienaItems(items, today.getTime())
+  const sorted = [...active].sort((a, b) => b.created - a.created)
   return {
     featured: sorted.find((item) => item.type === 'note'),
     reminders: sorted.filter((item) => item.type === 'reminder' && item.dueAt !== undefined &&
       item.dueAt < end && !item.completedAt),
     updates: sorted.filter((item) => item.type === 'task_update' && !item.seenAt).slice(0, 4),
-    unseen: items.filter((item) => !item.seenAt).length,
+    unseen: active.filter((item) => !item.seenAt).length,
   }
 }

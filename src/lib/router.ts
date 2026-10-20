@@ -11,6 +11,10 @@ export type Route =
   | { name: 'plans' }
   | { name: 'workshop' }
   | { name: 'from-siena' }
+  | { name: 'archive' }
+  | { name: 'theology' }
+  | { name: 'doctrine'; section?: string; position?: string }
+  | { name: 'devotional'; id: string }
   | { name: 'event-new'; date?: string }
   | { name: 'event'; id: string; occurrence?: string }
   | { name: 'notebook'; notebook: string; list?: boolean }
@@ -47,7 +51,7 @@ if (history.state?.fn !== index) history.replaceState({ ...(history.state ?? {})
 
 /* The last room that is not itself a back room, so Search, Settings, Trash
    and From Siena can return to wherever they were opened from. */
-const SHEETS = new Set<Route['name']>(['search', 'settings', 'trash', 'from-siena'])
+const SHEETS = new Set<Route['name']>(['search', 'settings', 'trash', 'from-siena', 'archive'])
 const PASSING = new Set<Route['name']>(['new', 'today', 'oauth-consent', 'davis-callback', 'kit'])
 let lastRoom: string | null = null
 function remember(path: string) {
@@ -110,6 +114,10 @@ export function parentOf(route: Route, ctx: UpContext = {}): string | null {
       return route.list ? to.workshop() : to.overview()
     case 'notebook-desk':
       return to.overview()
+    case 'doctrine':
+      return route.section ? to.study() : to.theology()
+    case 'devotional':
+      return to.theology()
     case 'day':
       return to.calendar(route.iso.slice(0, 7))
     case 'calendar':
@@ -127,6 +135,8 @@ export function parentOf(route: Route, ctx: UpContext = {}): string | null {
       return to.overview()
     case 'tag':
       return to.search()
+    case 'archive':
+      return to.fromSiena()
     case 'search':
     case 'settings':
     case 'trash':
@@ -162,6 +172,10 @@ export function parse(path: string): Route {
   if (parts[0] === 'plans') return { name: 'workshop' }
   if (parts[0] === 'workshop') return { name: 'workshop' }
   if (parts[0] === 'overview') return { name: 'overview' }
+  if (parts[0] === 'archive') return { name: 'archive' }
+  if (parts[0] === 'theology' && parts[1] === 'doctrine') return {name:'doctrine',section:parts[2],position:parts[3]}
+  if (parts[0] === 'theology' && parts[1] === 'devotional' && parts[2]) return {name:'devotional',id:parts[2]}
+  if (parts[0] === 'theology') return { name: 'theology' }
   if (parts[0] === 'from-siena') return { name: 'from-siena' }
   if (parts[0] === 'event' && parts[1] === 'new') return { name: 'event-new', date: parts[2] }
   if (parts[0] === 'event' && parts[1]) return { name: 'event', id: parts[1], ...(parts[2] ? { occurrence: parts[2] } : {}) }
@@ -197,6 +211,10 @@ export const to = {
   plans: () => '/workshop',
   workshop: () => '/workshop',
   fromSiena: () => '/from-siena',
+  archive: (notebook?: string) => '/archive' + (notebook ? `?notebook=${encodeURIComponent(notebook)}` : ''),
+  theology: () => '/theology',
+  study: (section?:string,position?:string) => '/theology/doctrine'+(section?`/${encodeURIComponent(section)}`:'')+(section&&position?`/${encodeURIComponent(position)}`:''),
+  devotional: (id:string) => `/theology/devotional/${encodeURIComponent(id)}`,
   event: (id: string, occurrence?: string) => `/event/${id}${occurrence ? `/${occurrence}` : ''}`,
   newEvent: (date?: string) => date ? `/event/new/${date}` : '/event/new',
   notebook: (id: string) => `/n/${id}`,

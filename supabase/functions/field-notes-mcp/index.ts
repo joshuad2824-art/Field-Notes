@@ -345,7 +345,7 @@ Deno.serve(
           const vault = await vaultForUser()
           if (!vault) return failure('Link a Field Notes archive in Settings first.')
           const { data, error } = await supabase.from('siena_items')
-            .select('id,kind,title,body,source_url,source_key,due_at,seen_at,notebook,completed_at,created,updated')
+            .select('id,kind,title,body,source_url,source_key,due_at,seen_at,notebook,completed_at,requires_action,resolved_at,retained_at,state_at,created,updated')
             .eq('vault', vault).order('created', { ascending: false }).limit(limit)
           if (error) return failure(error.message)
           return result(data ?? [])
@@ -353,9 +353,10 @@ Deno.serve(
 
         server.registerTool('create_siena_item', {
           title: 'Publish a From Siena item',
-          description: 'Save a meaningful note, due reminder, completed-task update, or useful link. Pass the appropriate existing notebook ID for any notebook-specific item, including work briefs and task updates. Reminders require a notebook and create or reuse its pinned Reminders page. Do not create a separate checklist page. A source_key makes retries idempotent. Seen and completed state belong to the user.',
+          description: 'Save a meaningful note, due reminder, completed-task update, or useful link. Pass the appropriate existing notebook ID for any notebook-specific item, including work briefs and task updates. Reminders require a notebook and create or reuse its pinned Reminders page. Do not create a separate checklist page. A source_key makes retries idempotent. Set requires_action to false only for information with no unresolved action or decision. Unknown messages stay active until explicitly resolved. Messages remain at least three days; seen, completion, resolution and restore state belong to the user.',
           inputSchema: z.object({
             kind: z.enum(['note', 'reminder', 'task_update', 'saved']),
+            requires_action: z.boolean().optional(),
             title: z.string().trim().min(1).max(240).optional(),
             body: z.string().trim().min(1).max(100000),
             due_at: z.number().int().positive().optional(),
@@ -364,7 +365,7 @@ Deno.serve(
             source_key: z.string().trim().min(1).max(200).optional(),
           }),
           annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
-        }, async ({ kind, title, body, due_at, notebook, source_url, source_key }) => {
+        }, async ({ kind, title, body, due_at, notebook, source_url, source_key, requires_action }) => {
           const vault = await vaultForUser()
           if (!vault) return failure('Link a Field Notes archive in Settings first.')
           if (kind === 'reminder' && !due_at) return failure('A reminder needs due_at in milliseconds since the Unix epoch.')
@@ -391,6 +392,7 @@ Deno.serve(
             vault, id: crypto.randomUUID(), kind, title: title ?? null, body,
             due_at: due_at ?? null, source_url: source_url ?? (reminderPage ? `/p/${reminderPage}` : null),
             source_key: source_key ?? null, seen_at: null, notebook: notebook ?? null, completed_at: null,
+            requires_action: kind === 'reminder' ? null : requires_action ?? null,
             created: now, updated: now,
           }).select('id,kind,created,notebook').single()
           if (error) {

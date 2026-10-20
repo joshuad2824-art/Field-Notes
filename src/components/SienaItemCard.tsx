@@ -1,4 +1,6 @@
 import { DueLabel } from './DueLabel'
+import { SienaBody } from './SienaBody'
+import { SienaDisposition } from './SienaDisposition'
 import { Icon } from './Icon'
 import { useState } from 'react'
 import { useNotebooks } from '../lib/notebooks'
@@ -15,7 +17,7 @@ const labels: Record<SienaItem['type'], string> = {
 
 /* `column`: the card sits under a heading that already names its kind, so
    the card keeps one eyebrow — its date — and drops the doubled label. */
-export function SienaItemCard({ item, paper = false, journal = false, column = false }: { item: SienaItem; paper?: boolean; journal?: boolean; column?: boolean }) {
+export function SienaItemCard({ item, paper = false, journal = false, column = false, archived = false }: { item: SienaItem; paper?: boolean; journal?: boolean; column?: boolean; archived?: boolean }) {
   const books = useNotebooks()
   const [open, setOpen] = useState(false)
   const [filing, setFiling] = useState(false)
@@ -54,9 +56,10 @@ export function SienaItemCard({ item, paper = false, journal = false, column = f
           </div>
         </div>
         {details && open ? <div className="reminder-details">
-          {extra ? <p className="siena-item-body">{item.body}</p> : null}
+          {extra ? <SienaBody text={item.body} /> : null}
           <div className="siena-item-foot">{sourceLink}<span className="grow" />{!item.completedAt ? seenControl : null}</div>
         </div> : null}
+        {archived ? <SienaDisposition item={item} archived /> : null}
       </article>
     )
   }
@@ -68,7 +71,7 @@ export function SienaItemCard({ item, paper = false, journal = false, column = f
       </div>
       : null}
       {item.title ? <h3>{item.title}</h3> : null}
-      <p className="siena-item-body">{item.body}</p>
+      <SienaBody text={item.body} />
       {item.dueAt ? <p className="siena-item-due"><DueLabel at={item.dueAt} completed={Boolean(item.completedAt)} /></p> : null}
       <div className="siena-item-foot">
         {journal ? <time dateTime={new Date(item.created).toISOString()}>{date}</time> : null}
@@ -82,6 +85,7 @@ export function SienaItemCard({ item, paper = false, journal = false, column = f
         )}
       </div>
       {filingError ? <p className="siena-filing-error" role="alert">{filingError}</p> : null}
+      <SienaDisposition item={item} archived={archived} />
     </article>
   )
 }

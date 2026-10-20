@@ -21,6 +21,9 @@ import { DayScreen } from './screens/DayScreen'
 import { OAuthConsentScreen } from './screens/OAuthConsentScreen'
 import { OverviewScreen } from './screens/OverviewScreen'
 import { FromSienaScreen } from './screens/FromSienaScreen'
+import { ArchiveScreen } from './screens/ArchiveScreen'
+import { TheologyScreen, DevotionalStudyScreen } from './screens/TheologyScreen'
+import { DoctrineStudyScreen } from './screens/DoctrineStudyScreen'
 import { EventScreen } from './screens/EventScreen'
 import { ReviewScreen } from './screens/ReviewScreen'
 import { PlanScreen } from './screens/PlanScreen'
@@ -93,6 +96,14 @@ function Screen({ route, remembered }: { route: Route; remembered: string }) {
       return <OverviewScreen notebook={remembered} />
     case 'from-siena':
       return <FromSienaScreen />
+    case 'archive':
+      return <ArchiveScreen />
+    case 'theology':
+      return <TheologyScreen />
+    case 'doctrine':
+      return <DoctrineStudyScreen section={route.section} position={route.position} />
+    case 'devotional':
+      return <DevotionalStudyScreen id={route.id} />
     case 'event-new':
       return <EventScreen date={route.date} notebook={remembered} />
     case 'event':
