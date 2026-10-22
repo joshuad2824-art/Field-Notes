@@ -19,6 +19,8 @@ const names = [
   'theology-study',
   'theology-selection',
   'theology-reader-controls',
+  'theology-highlight-removal',
+  'theology-highlight-sync',
   'theology-long-reading',
   'theology-references',
   'theology-reference-sync',

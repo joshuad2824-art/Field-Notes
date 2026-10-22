@@ -37,7 +37,20 @@ export async function saveHighlight(edition:StudyEdition,section:string,text:str
 }
 export async function removeHighlight(id:string){
   const scope=studyScope()
-  await studyDB.transaction('rw',studyDB.annotations,async()=>{const a=await studyDB.annotations.get([scope,id]);if(a&&scope===studyScope())await studyDB.annotations.put({...a,deleted:Math.max(Date.now(),a.updated+1),updated:Math.max(Date.now(),a.updated+1)})});changed()
+  const removed=await studyDB.transaction('rw',studyDB.annotations,async()=>{
+    const guard=()=>{if(scope!==studyScope())throw Error('The paired vault changed. Open the highlight again in the intended vault.')}
+    const a=await studyDB.annotations.get([scope,id]);guard()
+    if(!a||a.deleted)return []
+    // Repeated highlighting can leave several ids for one visible passage.
+    // Delete only coincident anchors; distinct overlapping ranges stay intact.
+    const rows=(await studyDB.annotations.where('[scope+edition+section]').equals([scope,a.edition,a.section]).toArray()).filter(row=>!row.deleted&&row.start===a.start&&row.end===a.end&&row.quote===a.quote)
+    guard()
+    const at=rows.reduce((clock,row)=>Math.max(clock,row.updated+1),Date.now())
+    await studyDB.annotations.bulkPut(rows.map(row=>({...row,deleted:at,updated:at})));guard()
+    return rows
+  })
+  changed()
+  return removed
 }
 export async function rememberPlace(edition:string,section:string,offset=0){const scope=studyScope();await studyDB.transaction('rw',studyDB.places,async()=>{const current=await studyDB.places.get([scope,edition]);if(scope===studyScope())await studyDB.places.put({scope,id:edition,section,offset,updated:Math.max(Date.now(),(current?.updated??0)+1)})});changed()}
 export async function exportStudyMarks(edition:string){

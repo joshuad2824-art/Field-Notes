@@ -27,7 +27,7 @@ export function StudyText({reading,edition,section,position,onLink}:{reading:Stu
   async function remove(id:string){
     const annotation=marks.find(a=>a.id===id);if(!annotation||busy)return
     setBusy(true);setProblem('')
-    try{await removeHighlight(id);setRemoved(annotation);setActive(null);root.current?.focus({preventScroll:true});void syncStudy()}
+    try{const deleted=await removeHighlight(id);if(!deleted.length)throw Error('This highlight is no longer available on this device.');setRemoved(deleted.find(a=>a.id===id)??annotation);setActive(null);root.current?.focus({preventScroll:true});void syncStudy()}
     catch(e){setProblem(e instanceof Error?e.message:'The highlight could not be removed.')}finally{setBusy(false)}
   }
   async function undo(){
