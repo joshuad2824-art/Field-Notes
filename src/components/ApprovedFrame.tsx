@@ -366,7 +366,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     here?.label === 'Notebooks' && routeBook
       ? (notebookOf(routeBook)?.name ?? 'Notebooks')
       : (here?.label ??
-        ({ search: 'Search', settings: 'Settings', trash: 'Trash', archive: 'Archive', theology: 'Theology', doctrine: 'Daily Doctrine', devotional: 'Devotional', tag: 'Tag' } as Record<string, string>)[route.name] ??
+        ({ search: 'Search', settings: 'Settings', trash: 'Trash', archive: 'Archive', theology: 'Theology', 'theology-reference': 'Theology', doctrine: 'Daily Doctrine', devotional: 'Devotional', tag: 'Tag' } as Record<string, string>)[route.name] ??
         'Rooms')
 
   /* The back rooms, under the rooms in the pill's one sheet. */

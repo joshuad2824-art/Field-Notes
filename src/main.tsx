@@ -64,3 +64,6 @@ import './styles/home-board.css'
 import './styles/siena.css'
 import './styles/home-approved.css'
 import './styles/theology.css'
+import './styles/room-heading.css'
+
+import './styles/theology-reference.css'

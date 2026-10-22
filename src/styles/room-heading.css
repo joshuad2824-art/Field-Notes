@@ -1,0 +1,11 @@
+/* Today's existing FIELD NOTES typography is the shared room heading. */
+:root {
+  --room-heading-font:500 15px var(--font-sign);
+  --room-heading-spacing:.24em;
+}
+.redesign-application .room-heading {
+  font:var(--room-heading-font);
+  letter-spacing:var(--room-heading-spacing);
+  text-transform:uppercase;
+  color:#f6f3ec;
+}

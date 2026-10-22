@@ -159,3 +159,35 @@
 .study-selection-toolbar .study-swatch:focus-visible {outline:3px solid var(--brass-700);outline-offset:1px}
 @media(max-width:650px){.theology-doctrine,.theology-devotional{min-height:240px}.study-tabs{margin-bottom:24px}.study-continue{margin-bottom:26px}}
 @media(max-width:650px){.study-source-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.study-source-table tr{display:block;padding:12px 0;border-bottom:1px solid #142a2b26}.study-source-table td{display:block;width:100%;border:0;padding:5px 0}.study-source-table td::before{content:attr(data-label);display:block;font:500 10px/1.5 var(--font-ui);color:#52615c;margin-bottom:4px}.study-source-text .study-reading-title{font-size:29px}}
+/* Topic lists carry the same color as their unchanged topic card. */
+[data-study-tone=forest] {--study-topic:#14322e;--study-night:#0e2421}
+[data-study-tone=slate] {--study-topic:#292b32;--study-night:#1c1e25}
+[data-study-tone=oxblood] {--study-topic:#3a292d;--study-night:#281b20}
+.study-exploration[data-study-tone] .study-topic {background:var(--study-topic)}
+.study-breadcrumb>span {flex:1}
+.study-breadcrumb .study-reading-mode {display:grid;width:44px;height:44px;font:400 18px/1 var(--font-editorial);color:var(--cream-100)}
+.study-reading-mode[aria-pressed=true] {background:var(--cream-100);color:var(--teal-900)}
+.study-reading-pagination>a {min-height:48px;padding:8px 0;align-items:flex-start}
+.study-reading-pagination>a[rel=next] {margin-left:auto;text-align:right}
+.study-reading-pagination small {display:block;font:500 11px/1.8 var(--font-ui);letter-spacing:.06em;color:var(--cream-100)}
+.study-highlight-actions button,.study-highlight-undo button {min-height:44px;border:0;border-radius:6px;padding:10px 12px;background:transparent;color:inherit;font:13px/1.5 var(--font-ui)}
+.study-highlight-actions button:first-child {flex:1;text-align:left}
+.study-highlight-actions button:last-child {display:grid;place-items:center;padding:10px}
+.study-highlight-undo {display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;border-top:1px solid #142a2b26;font:13px/1.6 var(--font-ui)}
+.study-source-text mark[role=button] {cursor:pointer}
+.theology-app mark[role=button]:focus-visible {outline:2px solid currentColor;outline-offset:3px}
+.study-reading-wrap[data-reading-mode=dark] {--study-muted:#c4c7bd;--study-rule:#f6f3ec33}
+.study-reading-wrap[data-reading-mode=dark] .study-paper {background:var(--study-night,#0e2421);color:#f6f3ec;--hl-blend:normal;--hl-brass:rgba(183,162,92,.24);--hl-forest:rgba(125,175,130,.24);--hl-oxblood:rgba(201,142,140,.24);--hl-navy:rgba(139,174,210,.24);color-scheme:dark}
+.study-reading-wrap[data-reading-mode=dark] .study-selection-toolbar {background:var(--study-topic,#14322e);color:#f6f3ec;border-color:var(--study-rule)}
+.study-reading-wrap[data-reading-mode=dark] :is(.study-source-boundary,.study-day-number,.study-conversion-location,.study-source-table th,.study-location) {color:var(--study-muted)}
+.study-reading-wrap[data-reading-mode=dark] .study-source-table td::before {color:var(--study-muted)}
+.study-reading-wrap[data-reading-mode=dark] :is(.study-highlight-list,.study-highlight-list>div,.study-highlight-undo,.study-source-text hr,.study-source-table td,.study-source-table th,.study-source-boundary,.study-swatch) {border-color:var(--study-rule)}
+.study-reading-wrap[data-reading-mode=dark] .study-source-text a {color:#dfca8f}
+.study-reading-wrap[data-reading-mode=dark] .study-paper .study-problem {color:#f0bba5}
+.study-reading-wrap[data-reading-mode=dark] .study-source-text pre {background:#ffffff0c}
+.study-reading-wrap[data-reading-mode=dark] :is(button,a):focus-visible {outline-color:#dfca8f}
+/* Programmatic reading focus anchors keyboard navigation without framing the prose. */
+.study-source-text:focus {outline:none;box-shadow:none}
+/* Undo remains reachable where the passage was removed, even in a long day. */
+.study-highlight-undo {position:fixed;z-index:510;left:50%;bottom:calc(var(--pill-lane,100px) + var(--safe-bottom,0px) + 12px);transform:translateX(-50%);width:max-content;max-width:calc(100vw - 40px);margin:0;padding:8px 16px;border:1px solid #142a2b33;border-radius:12px;background:var(--cream-100);color:var(--teal-800);box-shadow:0 6px 24px #00101133;gap:24px}
+.study-reading-wrap[data-reading-mode=dark] .study-highlight-undo {background:var(--study-topic,#14322e);color:#f6f3ec}

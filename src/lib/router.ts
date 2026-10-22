@@ -13,6 +13,7 @@ export type Route =
   | { name: 'from-siena' }
   | { name: 'archive' }
   | { name: 'theology' }
+  | { name: 'theology-reference'; document: string; anchor?: string }
   | { name: 'doctrine'; section?: string; position?: string }
   | { name: 'devotional'; id: string }
   | { name: 'event-new'; date?: string }
@@ -114,6 +115,8 @@ export function parentOf(route: Route, ctx: UpContext = {}): string | null {
       return route.list ? to.workshop() : to.overview()
     case 'notebook-desk':
       return to.overview()
+    case 'theology-reference':
+      return route.anchor ? to.reference(route.document) : to.theology()
     case 'doctrine':
       return route.section ? to.study() : to.theology()
     case 'devotional':
@@ -173,6 +176,7 @@ export function parse(path: string): Route {
   if (parts[0] === 'workshop') return { name: 'workshop' }
   if (parts[0] === 'overview') return { name: 'overview' }
   if (parts[0] === 'archive') return { name: 'archive' }
+  if (parts[0] === 'theology' && parts[1] === 'reference' && parts[2]) return {name:'theology-reference',document:parts[2],anchor:parts[3]}
   if (parts[0] === 'theology' && parts[1] === 'doctrine') return {name:'doctrine',section:parts[2],position:parts[3]}
   if (parts[0] === 'theology' && parts[1] === 'devotional' && parts[2]) return {name:'devotional',id:parts[2]}
   if (parts[0] === 'theology') return { name: 'theology' }
@@ -213,6 +217,7 @@ export const to = {
   fromSiena: () => '/from-siena',
   archive: (notebook?: string) => '/archive' + (notebook ? `?notebook=${encodeURIComponent(notebook)}` : ''),
   theology: () => '/theology',
+  reference: (document:string,anchor?:string) => '/theology/reference/'+encodeURIComponent(document)+(anchor?'/'+encodeURIComponent(anchor):''),
   study: (section?:string,position?:string) => '/theology/doctrine'+(section?`/${encodeURIComponent(section)}`:'')+(section&&position?`/${encodeURIComponent(position)}`:''),
   devotional: (id:string) => `/theology/devotional/${encodeURIComponent(id)}`,
   event: (id: string, occurrence?: string) => `/event/${id}${occurrence ? `/${occurrence}` : ''}`,

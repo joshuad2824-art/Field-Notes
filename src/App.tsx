@@ -1,3 +1,4 @@
+import { TheologyReferenceScreen } from './screens/TheologyReferenceScreen'
 import { useBlankSweep } from './lib/blank-sweep'
 import { useWorkRefresh } from './work-calendar/calendar'
 import { lazy, Suspense, useEffect } from 'react'
@@ -100,6 +101,8 @@ function Screen({ route, remembered }: { route: Route; remembered: string }) {
       return <ArchiveScreen />
     case 'theology':
       return <TheologyScreen />
+    case 'theology-reference':
+      return <TheologyReferenceScreen document={route.document} anchor={route.anchor} />
     case 'doctrine':
       return <DoctrineStudyScreen section={route.section} position={route.position} />
     case 'devotional':

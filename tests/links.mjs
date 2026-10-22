@@ -24,6 +24,7 @@ async function savedBody(page, id) {
 
 async function run(name, options) {
   const context = await browser.newContext(options)
+  await context.route('https://example.com/**', route => route.fulfill({ contentType: 'text/html', body: '<title>Synthetic link target</title>' }))
   const page = await context.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -68,6 +69,7 @@ async function run(name, options) {
   const popup = await popupPromise.catch(async () => {
     throw new Error(`${name}: link click did not open; clicks=${await page.evaluate(() => window.__linkClickCount)}, pages=${context.pages().length}`)
   })
+  await popup.waitForURL('https://example.com/**')
   await popup.waitForLoadState('domcontentloaded')
   if (!popup.url().startsWith('https://example.com/a/very/long/path')) throw new Error(`${name}: tap did not open URL`)
   await popup.close()
@@ -119,6 +121,7 @@ async function run(name, options) {
   if (options.isMobile) await oldLink.tap()
   else await oldLink.click()
   const oldPopup = await oldPopupPromise
+  await oldPopup.waitForURL('https://example.com/**')
   await oldPopup.waitForLoadState('domcontentloaded')
   if (!oldPopup.url().startsWith('https://example.com/notebook')) throw new Error(`${name}: existing note link did not open`)
   await oldPopup.close()

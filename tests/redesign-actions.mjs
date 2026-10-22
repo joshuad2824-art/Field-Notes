@@ -99,6 +99,7 @@ try {
     await page.reload()
     await page.getByRole('link', { name: 'Archive', exact: true }).click()
     await page.waitForURL(/\/archive/)
+    await page.getByRole('button', { name: 'Reopen reminder', exact: true }).first().waitFor()
     assert.equal(await page.getByRole('button', { name: 'Reopen reminder', exact: true }).count(), 2)
     await fit()
     await visit('/trash')

@@ -13,6 +13,7 @@ import { to } from '../lib/router'
 import { activeEdition } from '../theology/store'
 import { studyReading } from '../theology/reading'
 import { useStudySync } from '../theology/sync'
+import { REFERENCES } from '../theology/references'
 import { useVault } from '../sync/vault'
 
 export function TheologyScreen(){
@@ -25,12 +26,13 @@ export function TheologyScreen(){
   const reminderPage=pages.find(p=>p.notebook==='church'&&p.purpose==='reminders')
   const devotionContent=<><h2>Morning<br/><em>& Evening</em></h2><p>Charles H. Spurgeon</p>{devotional?<div className="theology-devotional-date">{devotional.entryDate===isoDay()?'Today':devotional.entryDate}</div>:null}</>
   return <div className="app theology-app"><main className="theology-screen scroll">
-    <header className="theology-heading"><h1 id="desk-heading">Theology</h1><RouteLink href={to.overview()} aria-label="Return to Today" title="Today"><Icon name="overview"/></RouteLink></header>
+    <header className="theology-heading"><h1 id="desk-heading" className="room-heading">Theology</h1><RouteLink href={to.overview()} aria-label="Return to Today" title="Today"><Icon name="overview"/></RouteLink></header>
     <div className="theology-grid">
       <RouteLink className="theology-doctrine theology-card" href={to.study()} aria-label="Daily Doctrine"><h2>Daily<br/><em>Doctrine</em></h2>{edition?<footer>{edition.sections.filter(s=>s.reading).length} readings</footer>:null}</RouteLink>
       {devotional?<RouteLink className="theology-devotional theology-card" href={to.devotional(devotional.id)} aria-label="Morning & Evening">{devotionContent}</RouteLink>:<section className="theology-devotional theology-card">{devotionContent}</section>}
       <section className="theology-reminders theology-card"><div className="study-section-heading">{reminderPage?<RouteLink className="theology-card-link" href={to.page(reminderPage.id)} aria-label="Church reminders"><h2>Church reminders</h2></RouteLink>:<h2>Church reminders</h2>}</div><div className="work-filters">{(['due','upcoming','all'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='due'?'Due':f==='upcoming'?'Ahead':'All open'} <span>{(f==='due'?sections.due:f==='upcoming'?sections.upcoming:sections.active).length}</span></button>)}</div>{shown.length?shown.map(item=><SienaItemCard key={item.id} item={item}/>):<p className="theology-muted">{filter==='due'?'Nothing due today.':'No open reminders.'}</p>}<RouteLink className="study-text-link" href={to.archive('church')}>Archive</RouteLink></section>
       {prayer?<RouteLink className="theology-prayer theology-card" href={to.page(prayer.id)} aria-label="Prayer Log"><h2>Prayer<br/><em>Log</em></h2></RouteLink>:<section className="theology-prayer theology-card"><h2>Prayer<br/><em>Log</em></h2></section>}
+      {(['bfm','mbc'] as const).map(key=><RouteLink key={key} className={`theology-reference theology-reference-${key} theology-card`} href={to.reference(key)} aria-label={REFERENCES[key].title}><h2>{REFERENCES[key].title}</h2></RouteLink>)}
     </div>
   </main></div>
 }

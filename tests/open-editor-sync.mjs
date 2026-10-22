@@ -84,12 +84,21 @@ async function waitFor(check, label) {
   for (let i = 0; i < 100; i++) { if (await check()) return; await new Promise(r => setTimeout(r, 30)) }
   assert.fail(`Timed out: ${label}`)
 }
+// Network/IndexedDB completion may queue another real debounce after a clock jump.
+async function waitForUpload(page, check, label) {
+  for (let i = 0; i < 100; i++) {
+    if (await check()) return
+    await page.clock.fastForward(250)
+    await new Promise(resolve => setTimeout(resolve, 30))
+  }
+  assert.fail(`Timed out: ${label}`)
+}
 async function write(d, text) {
   await d.page.locator('.cm-content').fill(text)
   await d.page.clock.fastForward(300)
   await waitFor(async () => (await stored(d)).body === text, 'local save')
   await d.page.clock.fastForward(4000)
-  await waitFor(() => store.get(`pages|${id}`).body === text, 'mock upload')
+  await waitForUpload(d.page, () => store.get(`pages|${id}`).body === text, 'mock upload')
 }
 async function pullInPlace(d) {
   await d.page.clock.fastForward(5 * 60 * 1000 + 1000)
@@ -170,7 +179,7 @@ try {
       await waitFor(async () => (await stored(mac)).body === draft, 'guarded local draft save')
       await mac.page.clock.resume()
       await mac.page.clock.fastForward(4500)
-      await waitFor(() => [...store.values()].some(r => r.body?.includes('#conflict') && r.body.includes('Phone edit one')), 'conflicting writing preserved and uploaded')
+      await waitForUpload(mac.page, () => [...store.values()].some(r => r.body?.includes('#conflict') && r.body.includes('Phone edit one')), 'conflicting writing preserved and uploaded')
       const pages = (await rows(mac)).filter(r => !r.deleted)
       assert.equal(pages.filter(r => r.body.includes('#conflict')).length, 1)
       assert.ok(pages.some(r => r.body === draft))
@@ -212,7 +221,7 @@ try {
     await undoMac.page.clock.fastForward(300)
     await waitFor(async () => (await stored(undoMac)).body === S0 + ' — Mac addition', 'local undoable edit saved')
     await undoMac.page.clock.fastForward(4500)
-    await waitFor(() => store.get(`pages|${id}`).body === S0 + ' — Mac addition', 'local edit uploaded')
+    await waitForUpload(undoMac.page, () => store.get(`pages|${id}`).body === S0 + ' — Mac addition', 'local edit uploaded')
     await pullInPlace(undoPhone)
     await waitFor(async () => (await stored(undoPhone)).body === S0 + ' — Mac addition', 'phone receives local edit')
     await write(undoPhone, S0 + ' — Mac addition\nPhone append')

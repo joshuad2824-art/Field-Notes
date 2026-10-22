@@ -75,6 +75,7 @@ try{for(const [width,height] of [[1440,900],[1366,768],[1280,720],[1200,800],[19
  await card.focus();await p.keyboard.press('Enter');await p.waitForURL(/\/theology$/)
  await p.getByRole('heading',{name:'Theology',exact:true,level:1}).waitFor()
  assert.equal(await p.locator('.work-note,.work-brief').count(),0,'work content stays in its own notebook')
+ await p.locator('.theology-reminders .siena-item').waitFor()
  assert.equal(await p.locator('.theology-reminders .siena-item').count(),1,'Theology reuses the existing Church reminder')
  assert.equal(await p.locator('.theology-reminders').getByText('Confirm Sunday dinner',{exact:true}).count(),1)
  await p.reload();await p.getByRole('heading',{name:'Theology',exact:true,level:1}).waitFor()

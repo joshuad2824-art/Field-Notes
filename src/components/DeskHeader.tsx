@@ -1,6 +1,7 @@
 import { forwardRef } from 'react'
 import { navigate } from '../lib/router'
 import { NotebookSwitcher } from './NotebookSwitcher'
+import { ST_JOHN_NOTEBOOK } from '../lib/notebook-desk'
 
 export const RouteLink = forwardRef<HTMLAnchorElement, React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }>(function RouteLink({ href, children, onClick, ...props }, ref) {
   return <a {...props} ref={ref} href={href} onClick={event => {
@@ -17,7 +18,7 @@ export const RouteLink = forwardRef<HTMLAnchorElement, React.AnchorHTMLAttribute
 export function DeskHeader({ title, notebook }: { title: string; notebook: string }) {
   return (
     <header className="redesign-desk-header">
-      <h1 id="desk-heading" tabIndex={-1}>
+      <h1 id="desk-heading" tabIndex={-1} className={notebook===ST_JOHN_NOTEBOOK?'room-heading':undefined}>
         <NotebookSwitcher notebook={notebook}>{title}</NotebookSwitcher>
       </h1>
     </header>

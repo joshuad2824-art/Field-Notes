@@ -92,7 +92,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
     <div className="app board-app">
       <main className="board-screen scroll">
         <header className="board-header">
-          <h1 id="desk-heading">Field Notes</h1>
+          <h1 id="desk-heading" className="room-heading">Field Notes</h1>
           <div>
             <RouteLink href={to.search()} aria-label="Search" title="Search">
               <Icon name="search" />

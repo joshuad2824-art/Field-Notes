@@ -1,0 +1,37 @@
+.theology-reference {display:flex;align-items:center;min-height:180px;background:#292b32}
+.theology-reference-mbc {background:#3a342e;grid-column:2/-1}
+.theology-reference h2 {font-size:30px;max-width:24ch;margin:0}
+.theology-reference:hover {filter:brightness(1.12)}
+.reference-edition {margin:10px 0 0;color:var(--teal-200);font:11px/1.6 var(--font-ui)}
+.reference-tools,.reference-contents,.reference-results {max-width:900px;margin:0 auto 24px}
+.reference-tools {display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.reference-tools>a {color:var(--cream-100);font:13px/1.5 var(--font-ui);min-height:44px;display:flex;align-items:center}
+.reference-search {display:flex;align-items:center;gap:12px;flex:1;min-width:220px;border:1px solid var(--frame-hairline);border-radius:8px;padding:0 14px;background:var(--tile-recess)}
+.reference-search input {width:100%;min-width:0;min-height:48px;border:0;background:transparent;color:var(--cream-100);font:16px/1.5 var(--font-body)}
+.reference-search input:focus-visible {outline-offset:0}
+.reference-contents {font:13px/1.6 var(--font-ui);border-bottom:1px solid var(--frame-hairline);padding-bottom:18px}
+.reference-contents summary {cursor:pointer;min-height:44px;display:list-item;padding:10px 0}
+.reference-contents nav {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;max-height:50vh;overflow:auto}
+.reference-contents a {color:var(--cream-100);text-decoration:none;padding:12px 0;overflow-wrap:anywhere}
+.reference-paper {font:400 19px/1.8 var(--font-body);overflow-wrap:anywhere}
+.reference-paper h2,.reference-paper h3,.reference-paper h4 {font:500 28px/1.35 var(--font-editorial);margin:36px 0 20px;white-space:pre-wrap}
+.reference-paper h3 {font-size:23px}.reference-paper h4 {font-size:21px}
+.reference-paper p {margin:0 0 22px;white-space:pre-wrap;tab-size:4}
+.reference-paper :is(p,h2,h3,h4,h5,h6) {max-width:64ch;margin-left:auto;margin-right:auto;scroll-margin-top:26px}
+.reference-paper [data-reference-block]:focus {outline:2px solid #8d701e;outline-offset:5px;box-shadow:none}
+.reference-paper figure {margin:24px auto;text-align:center}.reference-paper img {max-width:100%;height:auto}
+.reference-paper .source-header,.reference-paper .source-footer {font:13px/1.7 var(--font-ui);color:#52615c;border-bottom:1px solid #142a2b26;padding-bottom:12px}
+.reference-list-marker {display:inline-block;min-width:2em;font-variant-numeric:tabular-nums}
+.reference-table {max-width:100%;margin:28px 0;overflow:auto}
+.reference-table table {width:100%;border-collapse:collapse;font:16px/1.65 var(--font-body)}
+.reference-table td,.reference-table th {min-width:110px;vertical-align:top;border:1px solid #142a2b33;padding:12px;text-align:left}
+.reference-table th {font-weight:600}.reference-table p:last-child {margin-bottom:0}
+.reference-results>a {display:block;color:var(--cream-100);text-decoration:none;border-bottom:1px solid var(--frame-hairline);padding:24px 0}
+.reference-results h2 {font:400 24px/1.35 var(--font-editorial);margin:0 0 16px}
+.reference-results p {font:18px/1.7 var(--font-body);white-space:pre-wrap;overflow-wrap:anywhere}
+.reference-results>p {font:13px/1.6 var(--font-ui);color:var(--teal-200)}
+.reference-results mark {background:#dfca8f;color:#142a2b;border-radius:2px}
+@media(max-width:650px){.theology-reference-mbc{grid-column:auto}.theology-reference{min-height:180px}.theology-reference h2{font-size:28px}.reference-paper{font-size:18px}.reference-contents nav{grid-template-columns:1fr}.reference-paper h2{font-size:26px}.reference-tools{gap:4px}.reference-search{flex-basis:100%}.reference-table td,.reference-table th{min-width:100px;padding:10px}}
+.reference-label {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.reference-local-state {max-width:900px;margin:0 auto 16px;color:var(--teal-200);font:11px/1.6 var(--font-ui)}
+.reference-original-contents {margin:24px 0;font:13px/1.7 var(--font-ui)}.reference-original-contents summary {cursor:pointer;min-height:44px;padding:10px 0}.reference-original-contents p {margin-top:16px}
