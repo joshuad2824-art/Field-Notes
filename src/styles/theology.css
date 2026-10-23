@@ -154,9 +154,15 @@
 .study-results>a {padding-right:0}
 .study-continue {padding-right:18px}
 .study-topic {gap:18px}
-.study-selection-toolbar {position:fixed;z-index:500;display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #142a2b33;border-radius:12px;background:var(--cream-100);color:var(--teal-900);box-shadow:0 6px 24px #00101133;width:220px;max-width:calc(100vw - 24px)}
+.study-selection-toolbar {position:fixed;z-index:500;display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #142a2b33;border-radius:12px;background:var(--cream-100);color:var(--teal-900);box-shadow:0 6px 24px #00101133;width:max-content;max-width:calc(100vw - 24px);flex-wrap:wrap;overflow:auto;overscroll-behavior:contain;touch-action:pinch-zoom}
 .study-selection-toolbar .study-swatch {flex:0 0 44px;width:44px;height:44px;touch-action:manipulation}
 .study-selection-toolbar .study-swatch:focus-visible {outline:3px solid var(--brass-700);outline-offset:1px}
+/* Placement is measured, so the row may wrap; a press on it never pans the
+   reading underneath (pinch zoom still passes through). A popover too tall for
+   its room scrolls itself instead, and contains that scroll. */
+.study-selection-toolbar .study-remove {color:inherit}
+.study-selection-toolbar[data-overflow] {touch-action:pan-y pinch-zoom}
+.study-popover-note {flex:1 1 180px;margin:0;padding:4px 6px;font:13px/1.5 var(--font-ui)}
 @media(max-width:650px){.theology-doctrine,.theology-devotional{min-height:240px}.study-tabs{margin-bottom:24px}.study-continue{margin-bottom:26px}}
 @media(max-width:650px){.study-source-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.study-source-table tr{display:block;padding:12px 0;border-bottom:1px solid #142a2b26}.study-source-table td{display:block;width:100%;border:0;padding:5px 0}.study-source-table td::before{content:attr(data-label);display:block;font:500 10px/1.5 var(--font-ui);color:#52615c;margin-bottom:4px}.study-source-text .study-reading-title{font-size:29px}}
 /* Topic lists carry the same color as their unchanged topic card. */

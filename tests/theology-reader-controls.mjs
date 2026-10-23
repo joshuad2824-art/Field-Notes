@@ -47,12 +47,12 @@ try{for(const touch of [false,true]){
  const mark=()=>page.locator('[data-study-highlight]').first()
  if(touch)await mark().tap();else{await mark().focus();await page.keyboard.press('Enter')}
  const dialog=()=>page.getByRole('dialog',{name:'Highlight actions',exact:true})
- await dialog().waitFor();assert.equal(await page.evaluate(()=>document.activeElement.textContent),'Remove highlight')
+ await dialog().waitFor();assert.equal(await page.evaluate(()=>document.activeElement.textContent),'Remove saved highlight')
  await screenshot('highlight-actions')
  await page.keyboard.press('Escape');await dialog().waitFor({state:'detached'})
  assert.equal(await page.evaluate(()=>document.activeElement.hasAttribute('data-study-highlight')),true)
  if(touch)await mark().tap();else await page.keyboard.press('Space')
- await dialog().waitFor();await activate(dialog().getByRole('button',{name:'Remove highlight',exact:true}))
+ await dialog().waitFor();await activate(dialog().getByRole('button',{name:'Remove saved highlight',exact:true}))
  await page.getByRole('status').filter({hasText:'Highlight removed.'}).waitFor()
  await screenshot('highlight-undo')
  assert.equal(await page.locator('[data-study-highlight]').count(),0)
@@ -71,7 +71,7 @@ try{for(const touch of [false,true]){
  const restored=undone.find(a=>!a.deleted);assert.notEqual(restored.id,saved.id);assert.equal(restored.quote,saved.quote)
  await page.reload();await mark().waitFor()
  // The existing folded list remains an accessible fallback, including marks inside links.
- await activate(page.locator('.study-highlight-list summary'));await activate(page.locator('.study-highlight-list').getByRole('button',{name:'Remove highlight',exact:true}))
+ await activate(page.locator('.study-highlight-list summary'));await activate(page.locator('.study-highlight-list').getByRole('button',{name:'Remove saved highlight',exact:true}))
  await page.getByRole('button',{name:'Undo',exact:true}).waitFor();await page.reload();await page.locator('.study-source-text').waitFor();assert.equal(await page.locator('[data-study-highlight]').count(),0)
  // Put all four colors on the page for contrast verification in both modes.
  await page.evaluate(async id=>{const {activeEdition,saveHighlight}=await import('/src/theology/store.ts'),{readingFor}=await import('/src/theology/reading.ts'),e=await activeEdition(),r=readingFor(e,id),start=r.blocks.find(b=>b.kind==='paragraph').from;for(const [i,color] of ['brass','forest','oxblood','navy'].entries())await saveHighlight(e,id,r.text,start+i*12,start+i*12+10,color)},first.id)
