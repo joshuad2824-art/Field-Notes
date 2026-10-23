@@ -26,7 +26,7 @@ try{for(const [width,height] of [[1440,900],[820,1180],[390,844],[320,740],[2560
  assert.equal(await page.locator('.theology-intro').count(),0)
  assert.equal(await page.locator('.theology-doctrine .fn-icon,.theology-devotional .fn-icon,.theology-prayer .fn-icon').count(),0)
  const devotion=page.getByRole('link',{name:'Morning & Evening',exact:true});await devotion.focus();await page.keyboard.press('Enter');await page.waitForURL(/\/theology\/devotional\/synthetic-devotional$/);await page.goto(BASE+'/theology')
- const church=page.locator('.theology-reminders'),churchBox=await church.boundingBox();await page.mouse.click(churchBox.x+6,churchBox.y+6);await page.waitForURL(/\/p\/synthetic-church-reminders$/);await page.goto(BASE+'/theology')
+ const church=page.locator('.theology-reminders');await church.scrollIntoViewIfNeeded();const churchBox=await church.boundingBox();await page.mouse.click(churchBox.x+6,churchBox.y+6);await page.waitForURL(/\/p\/synthetic-church-reminders$/);await page.goto(BASE+'/theology')
  await page.screenshot({path:`${out}/${width}-dashboard.png`,fullPage:true})
  await page.locator('.theology-prayer').click();await page.waitForURL(/\/p\/synthetic-prayer/);await page.goto(BASE+'/theology')
  await page.locator('.theology-doctrine').click();await page.waitForURL(/\/theology\/doctrine$/);await page.locator('.study-topic').first().waitFor()

@@ -29,10 +29,10 @@ try{for(const touch of [false,true].filter(t=>!process.env.TOUCH_ONLY||t))for(co
   const mark=page.locator('[data-study-highlight="legacy-future"]').first()
   if(touch)await mark.tap();else{await mark.focus();await page.keyboard.press('Enter')}
   await page.getByRole('dialog',{name:'Highlight actions'}).waitFor()
-  await activate(page.getByRole('dialog',{name:'Highlight actions'}).getByRole('button',{name:'Remove highlight',exact:true}))
+  await activate(page.getByRole('dialog',{name:'Highlight actions'}).getByRole('button',{name:'Remove saved highlight',exact:true}))
  }else{
   await page.locator('.study-highlight-list summary').click()
-  await activate(page.locator('.study-highlight-list>div').filter({hasText:ids.quote.slice(0,30)}).first().getByRole('button',{name:'Remove highlight',exact:true}))
+  await activate(page.locator('.study-highlight-list>div').filter({hasText:ids.quote.slice(0,30)}).first().getByRole('button',{name:'Remove saved highlight',exact:true}))
  }
  await page.getByRole('status').filter({hasText:'Highlight removed.'}).waitFor()
  const state=await page.evaluate(async()=>{const {studyDB}=await import('/src/theology/store.ts');const rows=await studyDB.annotations.toArray();return {liveLegacy:rows.filter(r=>r.scope==='local-device'&&r.id.startsWith('legacy-')&&!r.deleted).length,deleted:rows.filter(r=>r.id.startsWith('legacy-')&&r.deleted).length}})
@@ -60,8 +60,8 @@ try{for(const touch of [false,true].filter(t=>!process.env.TOUCH_ONLY||t))for(co
  await page.evaluate(async id=>{const {studyDB}=await import('/src/theology/store.ts');await studyDB.annotations.delete(['local-device',id])},fresh.id)
  const staleMark=page.locator(`[data-study-highlight="${fresh.id}"]`).first()
  if(touch)await staleMark.tap();else{await staleMark.focus();await page.keyboard.press('Enter')}
- await activate(page.getByRole('dialog',{name:'Highlight actions'}).getByRole('button',{name:'Remove highlight',exact:true}))
- await page.getByRole('alert').filter({hasText:'no longer available'}).waitFor()
+ await activate(page.getByRole('dialog',{name:'Highlight actions'}).getByRole('button',{name:'Remove saved highlight',exact:true}))
+ await page.getByRole('dialog',{name:'Highlight actions'}).getByRole('status').filter({hasText:'no longer on this device'}).waitFor()
  assert.equal(await page.getByRole('button',{name:'Undo',exact:true}).count(),0)
  await page.locator(`[data-study-highlight="${fresh.id}"]`).waitFor({state:'detached'})
  await page.screenshot({path:`${out}/${touch?'390':'1440'}-${path}.png`})

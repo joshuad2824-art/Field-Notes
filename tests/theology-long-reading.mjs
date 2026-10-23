@@ -15,7 +15,7 @@ try{for(const width of [1440,390]){
  const installed=await page.evaluate(async source=>{const {installStudySource,saveHighlight}=await import('/src/theology/store.ts'),{readingFor}=await import('/src/theology/reading.ts'),e=await installStudySource(new TextEncoder().encode(source),{title:'Synthetic long reading',filename:'long-synthetic.md'}),section=e.sections.find(s=>s.reading===1),r=readingFor(e,section.id),paragraph=r.blocks.find(b=>b.kind==='paragraph');const mark=await saveHighlight(e,section.id,r.text,paragraph.from,paragraph.from+35,'brass');return {edition:e.id,section:section.id,mark:mark.id}},source)
  await page.goto(BASE+'/theology/doctrine/'+installed.section);const mark=page.locator('[data-study-highlight]').first();await mark.waitFor()
  assert.ok(await page.locator('.study-screen').evaluate(el=>el.scrollHeight>el.clientHeight*8))
- await mark.focus();await page.keyboard.press('Enter');await page.getByRole('dialog',{name:'Highlight actions',exact:true}).waitFor();await page.getByRole('button',{name:'Remove highlight',exact:true}).click()
+ await mark.focus();await page.keyboard.press('Enter');await page.getByRole('dialog',{name:'Highlight actions',exact:true}).waitFor();await page.getByRole('button',{name:'Remove saved highlight',exact:true}).click()
  const undo=page.getByRole('button',{name:'Undo',exact:true});await undo.waitFor();await page.waitForFunction(()=>document.activeElement?.textContent==='Undo')
  const box=await undo.boundingBox();assert.ok(box.y>=0&&box.y+box.height<800,'Undo is visible above the floating navigation in a multi-screen reading')
  assert.equal(await page.locator('.study-source-text').evaluate(el=>getComputedStyle(el).boxShadow),'none')

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent, type RefObject } from 'react'
+import type { AnchorRect } from './placement'
 
-type PassageSelection={start:number;end:number;left:number;top:number}
+// A session runs from the first non-collapsed range to the selection ending, so a
+// choice made inside one selection can never carry over into the next.
+export type PassageSelection={start:number;end:number;rect:AnchorRect;session:number}
 export function useStudySelection(root:RefObject<HTMLDivElement|null>,enabled:boolean,editionSection:string){
-  const toolbar=useRef<HTMLDivElement>(null),saved=useRef<Range|null>(null),bounds=useRef<{start:number;end:number}|null>(null),engaged=useRef(false),entered=useRef(false)
+  const toolbar=useRef<HTMLDivElement>(null),saved=useRef<Range|null>(null),bounds=useRef<{start:number;end:number}|null>(null),engaged=useRef(false),entered=useRef(false),session=useRef(0)
   const [selection,setSelection]=useState<PassageSelection|null>(null)
   const clear=useCallback((native=false,focus=false)=>{saved.current=null;bounds.current=null;engaged.current=false;entered.current=false;setSelection(null);if(native)window.getSelection()?.removeAllRanges();if(focus)root.current?.focus({preventScroll:true})},[root])
   const restore=useCallback(()=>{const range=saved.current;if(range&&document.contains(range.commonAncestorContainer)){const current=window.getSelection();current?.removeAllRanges();current?.addRange(range.cloneRange())}},[])
@@ -28,11 +31,12 @@ export function useStudySelection(root:RefObject<HTMLDivElement|null>,enabled:bo
       const a=point(current.anchorNode,current.anchorOffset),b=point(current.focusNode,current.focusOffset)
       if(a===null||b===null||a===b){if(engaged.current&&saved.current)return;clear();return}
       const start=Math.min(a,b),end=Math.max(a,b),range=current.getRangeAt(0)
+      if(!bounds.current)session.current++
       if(bounds.current?.start!==start||bounds.current?.end!==end)entered.current=false
       bounds.current={start,end};saved.current=range.cloneRange()
       const visible=[...range.getClientRects()].filter(r=>r.width>0&&r.height>0&&r.bottom>0&&r.top<innerHeight),rect=visible[visible.length-1]??range.getBoundingClientRect()
       if(rect.bottom<0||rect.top>innerHeight){setSelection(null);return}
-      setSelection({start,end,left:Math.max(12,Math.min(innerWidth-232,rect.left+rect.width/2-110)),top:Math.max(12,Math.min(innerHeight-68,rect.top>72?rect.top-60:rect.bottom+10))})
+      setSelection({start,end,rect:{left:rect.left,top:rect.top,right:rect.right,bottom:rect.bottom,width:rect.width,height:rect.height},session:session.current})
     }
     const pointer=(e:globalThis.PointerEvent)=>{if(toolbar.current?.contains(e.target as Node)){engaged.current=true;return};engaged.current=false;if(!root.current?.contains(e.target as Node))clear()}
     const focus=(e:FocusEvent)=>{engaged.current=!!toolbar.current?.contains(e.target as Node)}
