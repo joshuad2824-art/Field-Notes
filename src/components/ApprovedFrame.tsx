@@ -67,6 +67,11 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     [shelf, setShelf] = useState<{ left: number; bottom: number } | null>(null),
     [resting, setResting] = useState(false)
   const swipe = useRef<{ y: number; raised: boolean } | null>(null)
+  useEffect(() => {
+    if (route.name !== 'quick-note') return
+    setQuick(true)
+    navigate(to.overview(), { replace: true })
+  }, [route.name])
   const addRef = useRef<HTMLButtonElement>(null)
   const navRef = useRef<HTMLElement>(null)
   const pageId = route.name === 'page' || route.name === 'plan' || route.name === 'review' ? route.id : ''

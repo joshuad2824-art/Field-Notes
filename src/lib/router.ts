@@ -8,6 +8,8 @@ export type Route =
   | { name: 'kit' }
   | { name: 'shelf' }
   | { name: 'overview' }
+  | { name: 'quick-note' }
+  | { name: 'weather' }
   | { name: 'plans' }
   | { name: 'workshop' }
   | { name: 'from-siena' }
@@ -175,6 +177,8 @@ export function parse(path: string): Route {
   if (parts[0] === 'plans') return { name: 'workshop' }
   if (parts[0] === 'workshop') return { name: 'workshop' }
   if (parts[0] === 'overview') return { name: 'overview' }
+  if (parts[0] === 'quick-note') return { name: 'quick-note' }
+  if (parts[0] === 'weather') return { name: 'weather' }
   if (parts[0] === 'archive') return { name: 'archive' }
   if (parts[0] === 'theology' && parts[1] === 'reference' && parts[2]) return {name:'theology-reference',document:parts[2],anchor:parts[3]}
   if (parts[0] === 'theology' && parts[1] === 'doctrine') return {name:'doctrine',section:parts[2],position:parts[3]}
@@ -212,6 +216,8 @@ export function useRoute(): Route {
 export const to = {
   shelf: () => '/',
   overview: () => '/overview',
+  quickNote: () => '/quick-note',
+  weather: () => '/weather',
   plans: () => '/workshop',
   workshop: () => '/workshop',
   fromSiena: () => '/from-siena',
