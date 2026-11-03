@@ -1,4 +1,5 @@
 import { WorkCalendar } from '../components/WorkCalendar'
+import { WidgetPanel } from '../widgets/WidgetPanel'
 import { ColorTray, ColorsGlyph } from '../components/ColorTray'
 import { Icon } from '../components/Icon'
 import { useEffect, useRef, useState } from 'react'
@@ -153,6 +154,10 @@ export function SettingsScreen() {
             <Icon name="circle" />
             Weather
           </a>
+          <a href="#settings-widgets">
+            <Icon name="overview" />
+            Widgets
+          </a>
           <a href="#settings-appearance">
             <Icon name="edit" />
             New pages
@@ -180,6 +185,9 @@ export function SettingsScreen() {
           </section>
           <section id="settings-weather" className="settings-card">
             <WeatherPanel />
+          </section>
+          <section id="settings-widgets" className="settings-card">
+            <WidgetPanel />
           </section>
           <section id="settings-appearance" className="settings-card">
             <h2>New pages</h2>

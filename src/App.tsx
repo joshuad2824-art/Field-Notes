@@ -1,4 +1,7 @@
 import { TheologyReferenceScreen } from './screens/TheologyReferenceScreen'
+import { WidgetPublisher } from './widgets/usePublisher'
+import { WeatherScreen } from './screens/WeatherScreen'
+import { useVault } from './sync/vault'
 import { useBlankSweep } from './lib/blank-sweep'
 import { useWorkRefresh } from './work-calendar/calendar'
 import { lazy, Suspense, useEffect } from 'react'
@@ -42,6 +45,7 @@ export function App() {
   useWorkRefresh()
   useBlankSweep()
   const route = useRoute()
+  const vault = useVault()
   const settings = useSettings()
   const books = useNotebooks()
 
@@ -78,11 +82,20 @@ export function App() {
   if (route.name === 'kit' && KitScreen) return <Suspense fallback={<p>Opening the kit…</p>}><KitScreen /></Suspense>
   if (route.name === 'oauth-consent') return <OAuthConsentScreen />
   if (route.name === 'davis-callback') return <DavisCallbackScreen />
-  return <ApprovedFrame notebook={remembered}><Screen route={route} remembered={remembered} /></ApprovedFrame>
+  if (new URLSearchParams(location.search).get('source') === 'scriptable' && !vault && ['quick-note','calendar','day'].includes(route.name)) {
+    return <div className="app board-app"><main className="board-screen scroll">
+      <h1 className="room-heading">Connect this browser</h1>
+      <p>Your widget opened a browser that isn’t paired with your Field Notes archive. Pair it in Sync to use your existing notes and calendar here.</p>
+      <button className="btn" onClick={() => navigate(to.settings() + '#settings-sync')}>Open Sync settings</button>
+    </main></div>
+  }
+  return <><WidgetPublisher /><ApprovedFrame notebook={remembered}><Screen route={route} remembered={remembered} /></ApprovedFrame></>
 }
 
 function Screen({ route, remembered }: { route: Route; remembered: string }) {
   switch (route.name) {
+    case 'weather':
+      return <WeatherScreen />
     case 'oauth-consent':
       return <OAuthConsentScreen />
     case 'davis-callback':

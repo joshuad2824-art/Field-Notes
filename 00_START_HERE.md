@@ -2,6 +2,22 @@
 
 Updated October 17, 2026: supplied puffin Home Screen icon.
 
+## November 3 — Scriptable widgets, development only
+
+Separate Calendar, Weather, Quick Note and optional Date scripts are prepared on
+`codex/scriptable-widgets`, based on remote main `7e757e2`. The existing Quick Note
+window has a deep link; unpaired widget links stop at a pairing notice. Calendar
+markers use the existing page/event projection and an opt-in date-only snapshot,
+not the archive key. The proposed migration adds one restricted snapshot table
+and three narrowly scoped RPCs. Service worker v60 is prepared, not released.
+
+**Not published or activated.** No production migration, new real credential,
+calendar permission change, note write, Git push, merge or deployment occurred.
+Publication and credential/access activation need action-time approval through
+the parent conversation. Local tests and exact limits are in
+`docs/2026-11-03 - Scriptable Widgets.md`; novice setup instructions and standalone
+installers are in `widgets/scriptable/`. Physical iPhone/iPad checks are pending.
+
 ## October 20 — Today, Archive and private Theology released
 
 - Live: `https://timber-inkfieldnotes.netlify.app`, production deploy `6ad7ba60357e13e7bcdafbec`, service worker v57. Published from the verified local build. Joshua approved recording the same source in GitHub main with `[skip netlify]`; repository handoff details are in the release record. The original iOS checkout remains untouched.

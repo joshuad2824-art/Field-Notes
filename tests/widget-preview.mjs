@@ -1,0 +1,5 @@
+import {execSync} from 'node:child_process'
+import {readFileSync} from 'node:fs'
+const {chromium}=await import(`${execSync('npm root -g',{encoding:'utf8'}).trim()}/playwright/index.mjs`)
+const b=await chromium.launch()
+try {const p=await b.newPage({viewport:{width:760,height:420},deviceScaleFactor:2});const image=(name,w)=>`<img width="${w}" src="data:image/svg+xml;base64,${readFileSync('work/check-results/widgets/'+name+'.svg').toString('base64')}">`;await p.setContent(`<body style="margin:0;padding:28px;background:#001011;color:#cbd1ca;font:13px system-ui"><p>Scriptable drawing simulation · native iPhone rendering still to verify</p><div style="display:flex;gap:24px;align-items:start"><div style="padding:14px;border-radius:24px;background:#14322e">${image('calendar-large',300)}</div><div><div style="padding:12px;border-radius:20px;background:#14322e">${image('calendar-small',134)}</div><p>Large calendar recommended</p></div></div></body>`);await p.screenshot({path:'work/check-results/widgets/calendar-simulation.png'})}finally{await b.close()}

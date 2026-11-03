@@ -18,7 +18,10 @@
     "check:mobile-tablet": "node tests/mobile-tablet.mjs",
     "check:kit": "node tests/phase1-kit.mjs",
     "check:previous-layout": "node tests/overview.mjs && node tests/editor.mjs && node tests/format-join.mjs && node tests/spreadsheet.mjs && node tests/sync.mjs && node tests/weather.mjs && node tests/journal.mjs && node tests/roundtrip.mjs && node tests/experience.mjs && node tests/dashboard.mjs && node tests/event-ranges.mjs && node tests/links.mjs && node tests/tray-dismiss.mjs && node tests/link-writing.mjs && node tests/weather-location.mjs && node tests/open-editor-sync.mjs && node tests/desk.mjs && node tests/davis-consumer.mjs && node tests/desk-details.mjs && node tests/approved-navigation.mjs",
-    "check:redesign": "node tests/redesign-theme.mjs && node tests/redesign.mjs && node tests/redesign-actions.mjs"
+    "check:redesign": "node tests/redesign-theme.mjs && node tests/redesign.mjs && node tests/redesign-actions.mjs",
+    "widgets:build": "node scripts/build-scriptable.mjs",
+    "check:widgets": "node tests/widget-projection.mjs && node tests/scriptable-widgets.mjs && node tests/widget-browser.mjs",
+    "check:widgets:sql": "node tests/widget-sql.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",
