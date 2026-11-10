@@ -17,7 +17,7 @@ export function RemindersPageScreen({ page }: { page: Page }) {
   const book = notebookForPage(page.notebook)
   const reminders = useLive<SienaItem[]>(() => remindersForNotebook(page.notebook), [page.notebook], [])
   const active = reminders.filter((item) => !item.completedAt)
-  const completed = reminders.filter((item) => item.completedAt)
+  const completed = reminders.filter((item) => item.completedAt && !item.resolvedAt)
   const [title, setTitle] = useState('')
   const [due, setDue] = useState('')
   const [error, setError] = useState('')

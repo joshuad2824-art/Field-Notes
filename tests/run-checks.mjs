@@ -50,6 +50,8 @@ const names = [
   'davis-persistence',
   'pill-scroll',
   'no-scrollbars',
+  'daily-use',
+  'live-sync',
 ]
 const out = 'work/check-results'
 mkdirSync(out, { recursive: true })

@@ -4,7 +4,7 @@ import { notebookCounts } from '../lib/db'
 import { countLabel } from '../lib/format'
 import { colorName, coverColor } from '../lib/theme'
 import { COVER_COLORS } from '../lib/model'
-import { addNotebook, deleteNotebook, recolorNotebook, renameNotebook, useNotebooks } from '../lib/notebooks'
+import { addNotebook, deleteNotebook, isKept, recolorNotebook, renameNotebook, useNotebooks } from '../lib/notebooks'
 import { useLive } from '../lib/useLive'
 import { useDismiss } from '../lib/dismiss'
 
@@ -98,8 +98,8 @@ export function NotebookManager({ focus, onClose, onAdded, onDeleted }: Props) {
                   className="mark-button danger"
                   onClick={() => setConfirm(book.id)}
                   aria-label={`Delete ${book.name}`}
-                  disabled={books.length === 1}
-                  title={books.length === 1 ? 'The last notebook stays' : 'Delete'}
+                  disabled={books.length === 1 || isKept(book.id)}
+                  title={isKept(book.id) ? 'Quick notes file here, so it stays' : books.length === 1 ? 'The last notebook stays' : 'Delete'}
                 >
                   <Icon name="trash" />
                 </button>

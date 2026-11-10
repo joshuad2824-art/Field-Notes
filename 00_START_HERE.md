@@ -2,6 +2,15 @@
 
 Updated October 17, 2026: supplied puffin Home Screen icon.
 
+## November 10 — daily use pass, on a branch
+
+Quick Notes notebook, a Reminders room (St. John kept apart), overdue marks,
+going back to where the app was put down, near-instant sync (push on hide plus
+a Realtime doorbell), a shorter From Siena tile and a Today board that holds up
+with little or a lot in it. Branch `claude/youthful-cerf-tmme2q`; **not
+released** — merging to `main` publishes. Detail: `docs/2026-11-10 - Daily
+Use Pass.md`; the review it answers: `docs/2026-11-10 - Daily Use Review.md`.
+
 ## November 3 — Scriptable widgets, development only
 
 Separate Calendar, Weather, Quick Note and optional Date scripts are prepared on

@@ -13,6 +13,11 @@ export function isSienaArchived(item: SienaItem, now = Date.now()): boolean {
   return !item.retainedAt && now - item.created >= SIENA_RETENTION_MS && !needsResolution(item)
 }
 
+/* An edited reminder's old copy (reminders.ts): closed, and shown nowhere. */
+export function isReplacedReminder(item: SienaItem): boolean {
+  return item.type === 'reminder' && !!item.completedAt && !!item.resolvedAt && item.requiresAction === false
+}
+
 export function activeSienaItems(items: SienaItem[], now = Date.now()): SienaItem[] {
   return items.filter(item => !isSienaArchived(item, now))
 }

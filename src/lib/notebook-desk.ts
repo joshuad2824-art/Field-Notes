@@ -19,7 +19,8 @@ export function notebookDeskItems(items: SienaItem[], notebook: string, now = ne
     active,
     due: active.filter(item => item.dueAt !== undefined && item.dueAt < end),
     upcoming: active.filter(item => item.dueAt === undefined || item.dueAt >= end),
-    completed: scoped.filter(item => item.type === 'reminder' && item.completedAt).sort((a, b) => b.completedAt! - a.completedAt!),
+    /* Done, not removed or replaced by an edit (reminders.ts). */
+    completed: scoped.filter(item => item.type === 'reminder' && item.completedAt && !item.resolvedAt).sort((a, b) => b.completedAt! - a.completedAt!),
     briefs: activeSienaItems(scoped, now.getTime()).filter(item => item.type !== 'reminder').sort((a, b) => b.created - a.created),
   }
 }

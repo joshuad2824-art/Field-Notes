@@ -1,3 +1,6 @@
+/* First: a fresh launch may go back to where the app was put down, and that
+   has to happen before the router reads the address. */
+import './lib/resume-boot'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles/tokens.css'
@@ -9,6 +12,7 @@ import './styles/desk.css'
 import { App } from './App'
 import { purgeExpiredTombstones, requestPersistence, seedIfEmpty } from './lib/db'
 import { loadNotebooks } from './lib/notebooks'
+import { fileLeftoverQuickNote } from './lib/quick-note'
 import { resetEdgeColor } from './lib/themecolor'
 import { trackViewport } from './lib/viewport'
 import { startSync } from './sync/engine'
@@ -36,6 +40,7 @@ createRoot(document.getElementById('root')!).render(
    race. None of it blocks the paint above. */
 void (async () => {
   await loadNotebooks()
+  await fileLeftoverQuickNote().catch(() => false)
   await seedIfEmpty()
   await purgeExpiredTombstones()
   startSync()
@@ -67,3 +72,7 @@ import './styles/theology.css'
 import './styles/room-heading.css'
 
 import './styles/theology-reference.css'
+
+/* November 2026 daily-use pass. Last, so it is read after everything it
+   adjusts. */
+import './styles/daily.css'

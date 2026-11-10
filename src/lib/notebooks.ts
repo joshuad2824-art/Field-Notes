@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { db, changed, subscribe } from './db'
-import { DEFAULT_NOTEBOOKS, JOURNAL_BOOK, JOURNAL_NOTEBOOK, type Notebook } from './model'
+import { DEFAULT_NOTEBOOKS, JOURNAL_BOOK, JOURNAL_NOTEBOOK, QUICK_NOTES_BOOK, QUICK_NOTES_NOTEBOOK, type Notebook } from './model'
 
 /* Notebooks used to be a constant. They're data now — any notebook can be
    added, coloured from the palette, and deleted — but they're still read
@@ -34,7 +34,7 @@ function hold(rows: Notebook[]): Notebook[] {
   return cache
 }
 
-hold([...DEFAULT_NOTEBOOKS, JOURNAL_BOOK])
+hold([...DEFAULT_NOTEBOOKS, QUICK_NOTES_BOOK, JOURNAL_BOOK])
 
 // Workshop has existed with both a seeded ID and imported/custom IDs.
 // Hide only its duplicate navigation destination; retain every stored row.
@@ -54,6 +54,12 @@ export function shelfNotebooks(): Notebook[] {
 /* Reserved: ordinary in the file, refused in the interface. */
 export function isReserved(id: string): boolean {
   return id === JOURNAL_NOTEBOOK
+}
+
+/* Kept: can be renamed and recoloured, never deleted. Quick note files into
+   it by id. */
+export function isKept(id: string): boolean {
+  return id === JOURNAL_NOTEBOOK || id === QUICK_NOTES_NOTEBOOK
 }
 
 export function journalBook(): Notebook {
@@ -85,7 +91,7 @@ function sort(rows: Notebook[]): Notebook[] {
 export async function loadNotebooks(): Promise<Notebook[]> {
   const rows = await db.notebooks.toArray()
   if (rows.length === 0) {
-    const seed = [...DEFAULT_NOTEBOOKS, JOURNAL_BOOK]
+    const seed = [...DEFAULT_NOTEBOOKS, QUICK_NOTES_BOOK, JOURNAL_BOOK]
     await db.notebooks.bulkPut(seed)
     hold(sort(seed))
   } else {
@@ -99,6 +105,17 @@ export async function loadNotebooks(): Promise<Notebook[]> {
     if (!rows.some((n) => n.id === JOURNAL_NOTEBOOK)) {
       await db.notebooks.put(JOURNAL_BOOK)
       rows.push(JOURNAL_BOOK)
+    }
+    /* The same for Quick Notes. A tombstoned row is put back too: it can't be
+       deleted from this app, so a tombstone can only have come from an older
+       build, and quick note needs somewhere to file. */
+    const quick = rows.find((n) => n.id === QUICK_NOTES_NOTEBOOK)
+    if (!quick || quick.deleted) {
+      const { deleted: _deleted, ...kept } = quick ?? QUICK_NOTES_BOOK
+      const book: Notebook = quick ? { ...kept, updated: Date.now() } : QUICK_NOTES_BOOK
+      await db.notebooks.put(book)
+      if (quick) rows.splice(rows.indexOf(quick), 1, book)
+      else rows.push(book)
     }
     hold(sort(rows))
   }
@@ -172,7 +189,7 @@ export async function recolorNotebook(id: string, color: string): Promise<void> 
    too. A row that simply vanished would be handed straight back by the next
    device to sync, which had no way of telling "deleted" from "not yet seen". */
 export async function deleteNotebook(id: string): Promise<number> {
-  if (isReserved(id)) return 0
+  if (isKept(id)) return 0
   const pages = await db.pages.where('notebook').equals(id).toArray()
   const now = Date.now()
   const doomed = pages.filter((p) => !p.deleted)

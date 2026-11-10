@@ -22,6 +22,18 @@ The app itself is at the root: `src/`, `index.html`, `netlify.toml`. `npm run de
 
 ---
 
+## November 10 — daily use: Quick Notes, Reminders, live sync
+
+Joshua's answers to the decisions in `docs/2026-11-10 - Daily Use Review.md`, and three requests of his own. Detail and verification: `docs/2026-11-10 - Daily Use Pass.md`.
+
+- **Quick Notes is a notebook** (`quick-notes`), seeded on boot at `updated: 0` like Journal. A quick note with no notebook picked files there on ✓ and is an ordinary page from then on. It can be renamed and recoloured but not deleted (`isKept`). The quick note's dots are named chips.
+- **Reminders have a room**, `/reminders`, the sixth in the pill's sheet (⌘6). Add, edit, complete, remove, and Undo for the last two. **St. John's reminders stay on the St. John desk**; this room only counts them. An edit is a *replacement* — a new reminder, the old one closed — because Siena's merge takes words and time from the mirror (`siena-reconcile.ts`). *Removed* is `completedAt` + `resolvedAt`; *replaced* adds `requiresAction === false`. No schema change. See `src/lib/reminders.ts`.
+- **Overdue** is a small dot before the due time, named for screen readers. Not a colour on the words.
+- **The app goes back to where it was put down** if an installed launch lands on Today within two hours (`src/lib/resume.ts`, imported first in `main.tsx`).
+- **Sync is near-instant.** A write made as the app is put down is pushed at once, pages first, with keepalive (3,018 ms → 13 ms). A device that pushes rings a Realtime **broadcast** channel (`src/sync/realtime.ts`), and the others pull at once. It carries no data and does not use row-change subscriptions, because the row policy reads request headers and a socket has none. The heartbeat is one minute while the doorbell is down and five while it is up. **The network rule below gains a fourth leaf:** `realtime.ts` holds a socket and calls no `fetch`.
+- **From Siena on Today** shows the newest unread note in full, every other unread note as a headline, and a count of read ones. Each headline goes to `/from-siena#siena-<id>`.
+- **Today on a desk:** the lower row is one level band, tiles that hold more fade at the foot (`useOverflow`, `has-more`), and the day card uses its whole width for whichever section it has. The iPad upright's Notebooks tile is restored. New styles are `src/styles/daily.css`, loaded last.
+
 ## October 14 (later) — Today by device, and one pill
 
 From Joshua's phone and his iPad mini 6 (a long screenshot and a screen recording). Detail: `docs/2026-10-14 - Today by Device and One Pill.md`.

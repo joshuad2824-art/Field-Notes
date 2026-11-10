@@ -13,7 +13,12 @@ export async function setSienaDisposition(id: string, expectedUpdated: number, a
     const at = editAt(item)
     const next = { ...item, updated: at, stateAt: at }
     if (action === 'restore') {
-      if (item.type === 'reminder') delete next.completedAt
+      if (item.type === 'reminder') {
+        /* Done or removed, back to open (reminders.ts). */
+        delete next.completedAt
+        delete next.resolvedAt
+        delete next.requiresAction
+      }
       else next.retainedAt = at
     } else {
       if (item.type === 'reminder') throw new Error('Use reminder completion for this item.')

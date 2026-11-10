@@ -2,7 +2,7 @@ import { useSienaItems } from '../lib/useSienaItems'
 import { RouteLink } from '../components/DeskHeader'
 import { to } from '../lib/router'
 import { activeSienaItems } from '../lib/siena-archive'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SienaItemCard } from '../components/SienaItemCard'
 import { markAllSienaItemsSeen } from '../lib/siena-items'
 import { isoDay } from '../lib/format'
@@ -10,6 +10,16 @@ export function FromSienaScreen() {
   const items = useSienaItems(),
     [filter, setFilter] = useState('Due')
   const active = activeSienaItems(items)
+  /* Opened from a headline on Today: go to that note, once, when it is here. */
+  const went = useRef(false)
+  useEffect(() => {
+    if (went.current || !location.hash.startsWith('#siena-')) return
+    const el = document.getElementById(location.hash.slice(1))
+    if (!el) return
+    went.current = true
+    el.scrollIntoView({ block: 'start' })
+    el.classList.add('is-pointed')
+  }, [items])
   const notes = active
       .filter((i) => i.type === 'note')
       .sort((a, b) => Number(!!a.seenAt) - Number(!!b.seenAt) || b.created - a.created),
