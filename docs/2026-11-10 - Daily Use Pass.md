@@ -137,7 +137,7 @@ released: merging to `main` publishes, and that is Joshua's call.
   a fake mirror and a fake Realtime socket. Both are in `npm run check`.
 - Today checked with an empty, a light and a heavy archive at 1440×900,
   1792×1109, 1133×744, 744×1133 and 390×844.
-- The full `npm run check` result is recorded below.
+- **`npm run check`: all 49 suites pass** (controls-review: 5,625 assertions at six widths). The first full run had four failures, listed above; each was fixed and the four were rerun with `--retry-failed`.
 
 ## Not done here, from the review
 
