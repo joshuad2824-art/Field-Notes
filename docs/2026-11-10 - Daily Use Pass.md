@@ -99,7 +99,8 @@ released: merging to `main` publishes, and that is Joshua's call.
   band. Tiles holding more than they show **fade at the foot** instead of
   cutting a line in half; the fade goes once scrolled to the end. The
   day card's *Today* and *Coming up* each take the whole width when the other
-  is empty, and an empty week says so in a line.
+  is empty. An empty week stays a quiet card with no words, as October 13
+  decided.
 - **Reminders tile:** every personal reminder, as before, scrolling behind its
   fade on a desk, with "All reminders" at its foot.
 - **iPad on its side:** From Siena and Reminders stand the same height.

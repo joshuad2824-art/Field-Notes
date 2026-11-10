@@ -111,9 +111,6 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               </span>
             </RouteLink>
             <div className={`day-content${single ? ' is-single' : ''}`}>
-              {!events.length && !upcoming.length ? (
-                <p className="board-day-quiet">Nothing on the calendar this week.</p>
-              ) : null}
               {events.length ? (
                 <section ref={todayRef} className={`board-today-schedule${todayMore ? ' has-more' : ''}`}>
                   <h2>Today</h2>

@@ -32,16 +32,24 @@ try {
     await p.getByRole('button', { name: 'Quick note', exact: true }).click()
     const area = p.getByRole('textbox', { name: 'Quick note', exact: true })
     await area.fill('Keep this thought\nUntil I file it.')
+    /* November 10: a quick note closed with no notebook picked is filed into
+       Quick Notes, which syncs, rather than kept as a draft on this device. */
     await p.getByRole('button', { name: 'Done', exact: true }).click()
+    await p.waitForFunction(async () =>
+      (await (await import('/src/lib/db.ts')).livePages('quick-notes')).some(
+        (p) => p.body === 'Keep this thought\nUntil I file it.',
+      ),
+    )
     await p.reload()
     await p.getByRole('button', { name: 'Quick note', exact: true }).click()
-    await assert.equal(await area.inputValue(), 'Keep this thought\nUntil I file it.')
-    // October 13: the notebook picker is a row of dots; the filing path is the same.
+    assert.equal(await area.inputValue(), '')
+    // A picked notebook is where it goes; the picker names each one.
+    await area.fill('File this one at church')
     await p.getByRole('radio', { name: 'Church', exact: true }).click()
     await p.getByRole('button', { name: 'Done', exact: true }).click()
     await p.waitForFunction(async () =>
       (await (await import('/src/lib/db.ts')).livePages('church')).some(
-        (p) => p.body === 'Keep this thought\nUntil I file it.',
+        (p) => p.body === 'File this one at church',
       ),
     )
     await p.getByRole('button', { name: 'Quick note', exact: true }).click()
@@ -104,7 +112,7 @@ try {
         .getByRole('textbox', { name: 'Quick note', exact: true })
         .fill('Still here if filing fails')
       await p.screenshot({ path: out + '/quick-note-dialog.png' })
-      await p.keyboard.press('Escape')
+      await p.waitForTimeout(200)
       const result = await p.evaluate(async () => {
         const q = await import('/src/lib/quick-note.ts')
         const draft = await q.readQuickNote()
@@ -114,6 +122,13 @@ try {
         return (await q.readQuickNote()).body
       })
       assert.equal(result, 'Still here if filing fails')
+      /* November 10: closing files it into Quick Notes, Escape included. */
+      await p.keyboard.press('Escape')
+      await p.waitForFunction(async () =>
+        (await (await import('/src/lib/db.ts')).livePages('quick-notes')).some(
+          (p) => p.body === 'Still here if filing fails',
+        ),
+      )
       await p.evaluate(async () => {
         const { db, changed } = await import('/src/lib/db.ts')
         await db.events.clear()

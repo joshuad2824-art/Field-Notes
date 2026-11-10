@@ -32,7 +32,7 @@ Joshua's answers to the decisions in `docs/2026-11-10 - Daily Use Review.md`, an
 - **The app goes back to where it was put down** if an installed launch lands on Today within two hours (`src/lib/resume.ts`, imported first in `main.tsx`).
 - **Sync is near-instant.** A write made as the app is put down is pushed at once, pages first, with keepalive (3,018 ms → 13 ms). A device that pushes rings a Realtime **broadcast** channel (`src/sync/realtime.ts`), and the others pull at once. It carries no data and does not use row-change subscriptions, because the row policy reads request headers and a socket has none. The heartbeat is one minute while the doorbell is down and five while it is up. **The network rule below gains a fourth leaf:** `realtime.ts` holds a socket and calls no `fetch`.
 - **From Siena on Today** shows the newest unread note in full and every other open note as a headline (unread first, then read-but-open, quieter). Each headline goes to `/from-siena#siena-<id>`.
-- **Today on a desk:** the lower row is one level band, tiles that hold more fade at the foot (`useOverflow`, `has-more`), and the day card uses its whole width for whichever section it has. The iPad upright's Notebooks tile is restored. New styles are `src/styles/daily.css`, loaded last.
+- **Today on a desk:** the lower row is one level band, tiles that hold more fade at the foot (`useOverflow`, `has-more`), and the day card uses its whole width for whichever section it has (a quiet week is still a card with no words). The iPad upright's Notebooks tile is restored. New styles are `src/styles/daily.css`, loaded last.
 
 ## October 14 (later) — Today by device, and one pill
 

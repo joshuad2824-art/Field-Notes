@@ -401,8 +401,8 @@
   mask-image: linear-gradient(#000 calc(100% - 36px), transparent);
 }
 
-/* The day card: one section takes the whole width when it is alone, and a
-   week with nothing on it says so in a line. */
+/* The day card: one section takes the whole width when it is alone. A week
+   with nothing on it stays a quiet card with no words (October 13). */
 .redesign-application .board-screen .board-day .day-content.is-single > section {
   grid-column: 1 / -1;
 }
@@ -415,13 +415,6 @@
 }
 .redesign-application .board-screen .board-day .day-content.is-single .board-upcoming-row {
   break-inside: avoid;
-}
-.board-day-quiet {
-  grid-column: 1 / -1;
-  margin: 0;
-  align-self: center;
-  font: 17px/1.5 var(--font-body);
-  color: #cbd1ca;
 }
 
 /* From Siena: the newest unread note, the rest as headlines. */
