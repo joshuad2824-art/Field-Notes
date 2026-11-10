@@ -121,9 +121,18 @@ released: merging to `main` publishes, and that is Joshua's call.
 
 ## Verification
 
-- `tests/home-approved.mjs` changed one assertion, on purpose: three
-  `.board-message` cards became one card plus two headlines, which is this
-  request. Every other assertion in it stands.
+- Four existing suites changed, each only where this request changed the
+  behaviour they assert, and each says so beside the change:
+  - `home-approved`: three `.board-message` cards became one card plus
+    headlines.
+  - `pdf-adjustments` and `controls-review`: an unfiled quick note files into
+    Quick Notes, Escape included, instead of staying a draft. Both still prove
+    that a failed filing keeps the draft.
+  - `weather-location` changed nothing, and it caught a real bug. The resume
+    place was first stored under `field-notes.place`, which is the weather's
+    saved location, so putting the app down overwrote it. It is
+    `field-notes.resume` now, and `daily-use` asserts the weather place
+    survives.
 - `tests/daily-use.mjs`: 37 assertions on node and in a browser. `tests/live-sync.mjs`: 5, two browsers,
   a fake mirror and a fake Realtime socket. Both are in `npm run check`.
 - Today checked with an empty, a light and a heavy archive at 1440×900,
