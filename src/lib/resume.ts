@@ -15,7 +15,8 @@
    the rule can be checked on node. */
 
 export const RESUME_WINDOW = 2 * 60 * 60 * 1000
-const KEY = 'field-notes.place'
+/* Not 'field-notes.place': that one is the weather's saved location. */
+const KEY = 'field-notes.resume'
 
 /* Places that create or hand off rather than show: going back to one would
    do it again. */

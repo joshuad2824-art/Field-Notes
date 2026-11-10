@@ -176,7 +176,11 @@ await resumed.addInitScript(() => Object.defineProperty(navigator, 'standalone',
 const app = await resumed.newPage()
 await app.goto(BASE + '/reminders')
 await app.waitForTimeout(800)
+const weather = JSON.stringify({ name: 'Tulsa', lat: 36.15, lon: -95.99, chosen: true })
+await app.evaluate((w) => localStorage.setItem('field-notes.place', w), weather)
 await app.evaluate(() => window.dispatchEvent(new Event('pagehide')))
+ok('putting the app down leaves the weather’s saved place alone',
+  (await app.evaluate(() => localStorage.getItem('field-notes.place'))) === weather)
 await app.goto(BASE + '/')
 await app.waitForTimeout(800)
 ok('an installed app launched soon after is back where it was put down', new URL(app.url()).pathname === '/reminders')
@@ -184,7 +188,7 @@ ok('an installed app launched soon after is back where it was put down', new URL
    start of the next load, before the app reads it. */
 await resumed.addInitScript(() => {
   if (sessionStorage.getItem('plant-old-place'))
-    localStorage.setItem('field-notes.place', JSON.stringify({ path: '/reminders', at: Date.now() - 3 * 3600_000 }))
+    localStorage.setItem('field-notes.resume', JSON.stringify({ path: '/reminders', at: Date.now() - 3 * 3600_000 }))
 })
 await app.evaluate(() => sessionStorage.setItem('plant-old-place', '1'))
 await app.goto(BASE + '/')
