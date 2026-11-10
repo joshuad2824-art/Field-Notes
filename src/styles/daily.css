@@ -465,6 +465,10 @@
 .board-headlines a:hover span {
   text-decoration: underline;
 }
+.board-headlines li.is-read span {
+  font-weight: 400;
+  color: #3d4f4c;
+}
 .board-headlines time {
   font: 11px/1.5 var(--font-ui);
   color: #52615c;

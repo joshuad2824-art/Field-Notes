@@ -80,11 +80,9 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
      unread is ever out of sight. Seen is still only ever an explicit act. */
   const unread = messages.filter((item) => !item.seenAt)
   const featured = unread[0]
-  const headlines = unread.slice(1)
-  const earlier = messages.length - unread.length
-  /* Today shows the first few reminders; the room holds all of them. */
-  const shownReminders = reminders.slice(0, REMINDERS_ON_TODAY)
-  const moreReminders = reminders.length - shownReminders.length
+  /* Every other open note, unread first, one line each. A read note that is
+     still open is a decision not yet made, so it stays here too. */
+  const headlines = [...unread.slice(1), ...messages.filter((item) => item.seenAt)]
   const single = Boolean(events.length) !== Boolean(upcoming.length)
   const [sienaRef, sienaMore] = useOverflow<HTMLElement>(unread.map((item) => item.id).join('|'))
   const [remRef, remMore] = useOverflow<HTMLElement>(reminders.map((item) => `${item.id}:${item.updated}`).join('|'))
@@ -220,9 +218,9 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               </div>
             )}
             {headlines.length ? (
-              <ul className="board-headlines" aria-label="Also new">
+              <ul className="board-headlines" aria-label="More from Siena">
                 {headlines.map((item) => (
-                  <li key={item.id}>
+                  <li key={item.id} className={item.seenAt ? 'is-read' : undefined}>
                     <RouteLink href={sienaHref(item)}>
                       <time dateTime={new Date(item.created).toISOString()}>{shortDay(item.created)}</time>
                       <span>{item.title ?? firstWords(item.body)}</span>
@@ -231,15 +229,10 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
                 ))}
               </ul>
             ) : null}
-            {earlier ? (
-              <RouteLink className="board-more" href={to.fromSiena()}>
-                {earlier} earlier {earlier === 1 ? 'note' : 'notes'} in From Siena <Icon name="forward" />
-              </RouteLink>
-            ) : null}
           </section>
           <section ref={remRef} className={`board-tile board-coming${remMore ? ' has-more' : ''}`}>
             <h2><RouteLink href={to.reminders()}>Reminders</RouteLink></h2>
-            {shownReminders.map((item) => (
+            {reminders.map((item) => (
               <SienaItemCard key={item.id} item={item} />
             ))}
             {!reminders.length && !familyReminders.length ? <p>Nothing to remember right now.</p> : null}
@@ -261,7 +254,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               </RouteLink>
             ) : null}
             <RouteLink className="board-more" href={to.reminders()}>
-              {moreReminders > 0 ? `${moreReminders} more · ` : ''}All reminders <Icon name="forward" />
+              All reminders <Icon name="forward" />
             </RouteLink>
           </section>
           <div className="board-links">
@@ -285,8 +278,6 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
     </div>
   )
 }
-
-const REMINDERS_ON_TODAY = 6
 
 const shortDay = (at: number) => new Date(at).toLocaleDateString([], { month: 'short', day: 'numeric' })
 

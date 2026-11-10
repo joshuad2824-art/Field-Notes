@@ -64,10 +64,11 @@ released: merging to `main` publishes, and that is Joshua's call.
   one-minute heartbeat.
 
 ### From Siena on Today — "I don't want to miss any important notes"
-- The tile shows the **newest unread note in full**, then **every other
-  unread note as a one-line headline** (date and title), then a line saying
-  how many read-but-open notes are in From Siena. Nothing unread is ever out of
-  sight; the tile just stops growing with the inbox.
+- The tile shows the **newest unread note in full**, then **every other open
+  note as a one-line headline** (date and title): unread first, then any read
+  note that is still open, set quieter. Every note the October 20 board kept on
+  Today is still there; after the first, each costs one line instead of its
+  whole text, so the tile stops growing with the inbox.
 - A **Mark seen** eye sits on the featured note, so working down the inbox
   from Today is one tap per note. Seen is still only ever an explicit act.
 - A headline opens From Siena **at that note** (`/from-siena#siena-<id>`).
@@ -99,7 +100,8 @@ released: merging to `main` publishes, and that is Joshua's call.
   cutting a line in half; the fade goes once scrolled to the end. The
   day card's *Today* and *Coming up* each take the whole width when the other
   is empty, and an empty week says so in a line.
-- **Reminders tile:** the first six, then "N more · All reminders".
+- **Reminders tile:** every personal reminder, as before, scrolling behind its
+  fade on a desk, with "All reminders" at its foot.
 - **iPad on its side:** From Siena and Reminders stand the same height.
 - **iPad upright:** the Notebooks tile is back. It had been hidden since
   October 20, when it moved inside `.board-links` and the rule that showed it
@@ -118,6 +120,9 @@ released: merging to `main` publishes, and that is Joshua's call.
 
 ## Verification
 
+- `tests/home-approved.mjs` changed one assertion, on purpose: three
+  `.board-message` cards became one card plus two headlines, which is this
+  request. Every other assertion in it stands.
 - `tests/daily-use.mjs`: 37 assertions on node and in a browser. `tests/live-sync.mjs`: 5, two browsers,
   a fake mirror and a fake Realtime socket. Both are in `npm run check`.
 - Today checked with an empty, a light and a heavy archive at 1440×900,
