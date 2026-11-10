@@ -1,0 +1,107 @@
+/* Native iOS only: safe edges and one keyboard accessory, without changing
+   the existing browser/PWA composition or the editor's formatting commands. */
+.native-calendar-statusband { display: none; }
+.native-ios { --safe-left: env(safe-area-inset-left, 0px); --safe-right: env(safe-area-inset-right, 0px); }
+.native-ios #root { left: var(--safe-left); right: var(--safe-right); }
+.native-ios .native-calendar-statusband { display: block; flex: 0 0 var(--safe-top); background: #001011; }
+.native-ios:has(.keyboard-open) { --raw-inset-bottom: 0px; }
+.native-ios .keyboard-open .floating-nav { display: none; }
+.keyboard-format-dock { flex: 0 0 auto; min-width: 0; padding: 0 8px max(4px, var(--safe-bottom)); background: var(--surface-page); color: var(--text-heading); }
+.keyboard-format-bar { display: flex; gap: 4px; align-items: center; min-height: 52px; padding: 4px; border: 1px solid color-mix(in srgb, var(--text-quiet) 25%, transparent); border-radius: 28px; background: color-mix(in srgb, var(--surface-page) 88%, var(--text-quiet)); }
+.keyboard-format-actions { display: flex; flex: 1; min-width: 0; gap: 2px; overflow-x: auto; overscroll-behavior-x: contain; }
+.keyboard-format-bar button { display: grid; place-items: center; flex: 1 0 44px; min-width: 44px; height: 44px; padding: 0; border: 0; border-radius: 22px; background: transparent; color: inherit; touch-action: manipulation; }
+.keyboard-format-bar button:active, .keyboard-format-bar button[aria-expanded='true'] { background: color-mix(in srgb, var(--text-quiet) 24%, transparent); }
+.keyboard-format-bar :is(.keyboard-format-back, .keyboard-format-done) { flex: 0 0 44px; }
+.keyboard-aa { font: 500 22px var(--font-ui); }
+/* Keep one StyleTray instance. Reposition it without remounting so link
+   dialogs and photo selection survive keyboard/focus changes. */
+.native-ios .leaf.native-formatting .tools.tray-wrap .row { flex-wrap: nowrap; height: 44px; padding-bottom: 0; }
+.native-ios .leaf.native-formatting .tools.tray-open .tools-switcher { display: flex; }
+.native-ios .leaf.native-formatting .tools .row > .tray {
+  position: fixed; z-index: 200; left: var(--native-format-left, calc(var(--safe-left) + 8px)); right: var(--native-format-right, calc(var(--safe-right) + 8px));
+  bottom: calc(100dvh - var(--app-top, 0px) - var(--app-height, 100dvh) + 54px + max(4px, var(--safe-bottom)));
+  display: flex; flex-direction: column; gap: 4px; min-width: 0; max-height: 160px;
+  margin: 0; padding: 8px; border: 1px solid var(--frame-hairline); border-radius: 20px 20px 0 0;
+  background: var(--surface-page); color: var(--text-heading); overflow: auto;
+}
+.native-ios .leaf.native-formatting .tools .row > .tray .tray-sections { display: flex; width: 100%; margin: 0; padding: 0; }
+.native-ios .leaf.native-formatting .tools .row > .tray .tray-sections > button { flex: 1; min-height: 44px; }
+.native-ios .leaf.native-formatting .tools .row > .tray .tray-strip { display: flex; order: initial; flex: 0 0 auto; width: 100%; min-width: 0; padding: 0; border: 0; }
+.native-ios .leaf.native-formatting .tools .row > .tray .tray-strip button { min-width: 44px; min-height: 44px; }
+.native-format-space { flex: 0 0 var(--native-format-height, 110px); pointer-events: none; }
+.keyboard-picture-problem { margin: 0; padding: 8px 16px; font: 14px/1.4 var(--font-ui); }
+.native-ios .leaf.native-formatting .tools { opacity: 1; }
+@media (max-height: 500px) and (pointer: coarse) {
+  .native-ios .leaf.native-formatting .tools, .native-ios .leaf.native-formatting .tools .row { min-height: 44px; height: 44px; }
+}
+
+.native-ios .month-controls button, .native-ios .month-toggle { min-width: 44px; min-height: 44px; }
+
+/* The broader screen review found the same missing top clearance in these
+   rooms. Keep each room's existing spacing below the system status area. */
+.native-ios .redesign-application .workshop-reference { padding-top: calc(32px + var(--safe-top)); }
+.native-ios .redesign-application :is(.theology-screen, .study-screen) { padding-top: calc(34px + var(--safe-top)); }
+@media (max-width: 819px) {
+  .native-ios .redesign-application .workshop-reference { padding-top: calc(28px + var(--safe-top)); }
+}
+@media (max-width: 650px) {
+  .native-ios .redesign-application :is(.theology-screen, .study-screen) { padding-top: calc(22px + var(--safe-top)); }
+}
+
+/* Native reading keeps the writing viewport, rather than reserving a second
+   footer above navigation. Metadata stays available in Page options. */
+.native-page-info { display: none; }
+.native-ios .leaf.native-formatting .pagefoot { display: none; }
+.native-ios .redesign-application:has(.leaf.native-formatting) .floating-nav { display: none; }
+@media (max-width: 819px), (max-height: 500px) and (pointer: coarse) {
+  .native-ios .redesign-application .leaf .pagefoot { display: none; }
+  .native-ios .redesign-application .leaf .tools,
+  .native-ios .redesign-application .leaf .tools .row { min-height: 44px; height: 44px; }
+  .native-ios .redesign-application .leaf .tools { padding-inline: 16px; }
+  .native-ios .redesign-application .leaf .tools .mark-button { min-height: 44px; min-width: 44px; }
+  .native-ios .redesign-application .leaf .cm-content { padding-top: 12px; }
+  .native-ios .redesign-application .leaf:not(.native-formatting) .cm-content { padding-bottom: calc(var(--pill-lane, 110px) + 16px); }
+  .native-ios .redesign-application .leaf .cm-scroller { scroll-padding-bottom: var(--pill-lane, 110px); }
+  .native-ios .redesign-application .leaf.native-formatting .cm-scroller { scroll-padding-bottom: 12px; }
+  .native-ios .native-page-info { display: flex; flex-wrap: wrap; gap: 4px 8px; padding: 12px 18px; color: #aebfbb; }
+  .native-ios .native-page-info p { width: 100%; margin: 0; font: 13px/1.5 var(--font-ui); }
+  .native-ios .native-page-info button { min-height: 44px; border: 0; background: transparent; color: inherit; padding: 4px 8px; }
+
+  /* One continuous black agenda reaches the home-indicator edge. Content,
+     rather than an empty band outside the sheet, clears the navigation. */
+  .native-ios .redesign-application .month-app { background: #001011; }
+  .native-ios .redesign-application .month-screen { flex: 1 1 auto; height: auto; min-height: 0; padding: 0; gap: 0; }
+  .native-ios .redesign-application .month-header { flex: none; min-height: 64px; padding: 10px 12px; }
+  .native-ios .redesign-application .month-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .native-ios .redesign-application .month-header h1 { margin: 0; font-size: clamp(22px, 6vw, 28px); }
+  .native-ios .redesign-application .month-controls { flex: none; margin: 0 0 0 auto; gap: 4px; }
+  .native-ios .redesign-application .month-controls button { padding-inline: 8px; }
+  .native-ios .redesign-application .month-mobile { flex: none; display: block; padding: 12px 6px clamp(20px, 3.3dvh, 32px); }
+  .native-ios .redesign-application .month-desktop { display: none; }
+  .native-ios .redesign-application .month-mobile .cal-grid { row-gap: clamp(2px, .8dvh, 8px); }
+  .native-ios .redesign-application .month-mobile .cal-day { min-width: 44px; height: clamp(44px, 6dvh, 56px); }
+  .native-ios .redesign-application .month-mobile .cal-day-n { width: clamp(38px, 10vw, 44px); height: clamp(38px, 10vw, 44px); }
+  .native-ios .redesign-application .month-selected { display: block; flex: 1 0 auto; max-width: none; margin: 0; min-height: 180px; padding: 18px 16px calc(var(--pill-lane, 110px) + 16px); border-radius: 22px 22px 0 0; background: #001011; }
+  .native-ios .redesign-application .month-selected h2 { margin: 0 0 18px; font-size: 22px; }
+  /* Other rooms already reserve the pill lane; avoid adding the home inset
+     to that lane a second time at the foot of the study rooms. */
+  .native-ios .redesign-application :is(.theology-screen, .study-screen) { padding-bottom: var(--pill-lane, 110px); }
+}
+@media (min-width: 360px) and (max-width: 819px) {
+  .native-ios .redesign-application .month-mobile { padding-inline: 12px; }
+}
+@media (min-width: 700px) and (max-height: 500px) and (pointer: coarse) {
+  .native-ios .redesign-application .month-screen { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+  .native-ios .redesign-application .month-header { grid-column: 1 / -1; }
+  .native-ios .redesign-application .month-mobile { min-height: 0; overflow: auto; padding-bottom: 8px; }
+  .native-ios .redesign-application .month-selected { min-height: 0; border-radius: 18px 0 0; overflow: auto; }
+}
+
+@media (max-width: 819px), (max-height: 500px) and (pointer: coarse) {
+  .native-ios .redesign-application .desk:has(> .leaf) { padding: 0; }
+}
+@media (max-height: 500px) and (pointer: coarse) {
+  .native-ios .keyboard-open .leaf.native-formatting:not(:has(.saved)) .tools,
+  .native-ios .keyboard-open .leaf.native-formatting:not(:has(.saved)) .tools .row { height: 0; min-height: 0; padding: 0; }
+  .native-ios .keyboard-open .leaf.native-formatting:not(:has(.saved)) .tools .row > :not(.tray) { visibility: hidden; }
+}

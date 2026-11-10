@@ -6546,8 +6546,7 @@ body,
 /* ── October 13, second pass: from Joshua's phone ────────────────────────
    One section, grouped by component, in this sheet rather than a new one. */
 
-/* The notebook's name carries a small, quiet chevron: the only sign that it
-   opens the shelf. */
+/* The notebook name opens the shelf without a decorative expansion mark. */
 .notebook-switcher-name {
   display: inline-flex;
   align-items: center;
@@ -6558,21 +6557,6 @@ body,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.notebook-switcher-chevron {
-  flex: none;
-  width: max(10px, 0.46em);
-  height: max(10px, 0.46em);
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.5;
-  transition: transform var(--duration-instant) linear;
-}
-.notebook-switcher.open .notebook-switcher-chevron {
-  transform: rotate(180deg);
 }
 /* The same shelf, raised above the pill when Notebooks is tapped from
    inside a notebook. */
@@ -6991,8 +6975,8 @@ body,
 
 /* ── October 13, third pass: quieter controls ────────────────────────────
    docs/2026-10-13 - Quieter Controls.md. The pill holds still; the phone
-   raises one sheet; + names what it makes; one fold mark; Aa opens in the
-   toolbar's own row; a chevron after a title means a menu. */
+   raises one sheet; + names what it makes; Aa opens in the toolbar's own row.
+   November 4: decorative expansion marks are removed at Joshua's request. */
 
 /* P1 · The switcher's shelf hangs below the name. The list head's title kept
    `overflow: hidden` for its ellipsis, which clipped the shelf to the height
@@ -7119,21 +7103,6 @@ body,
   font: 500 13px var(--font-sign);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-}
-.pill-room-caret {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.7;
-  transition: transform var(--duration-base) var(--ease-standard);
-}
-.pill-room[aria-expanded='true'] .pill-room-caret {
-  transform: rotate(180deg);
 }
 /* One sheet: the five rooms by name, a rule, the six back rooms. */
 .nav-menu-scrim.pill-sheet-scrim {
@@ -7375,16 +7344,6 @@ body,
 .redesign-application .leaf .tools .row > .tray .tray-strip {
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
   mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-}
-
-/* P8 · A chevron after a title means the title is a menu. */
-.title-chevron {
-  display: inline-block;
-  margin-left: 0.32em;
-  vertical-align: 0.12em;
-}
-.redesign-application :is(.plan-title-button, .workshop-heading h1 > button)[aria-expanded='true'] .title-chevron {
-  transform: rotate(180deg);
 }
 
 /* P9 · Two controls brought home. A plan's sections are a sticky row of the

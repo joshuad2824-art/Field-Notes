@@ -144,7 +144,7 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               ) : null}
             </div>
           </section>
-          <section className="board-tile board-month">
+          <section className="board-tile board-month" role="region" aria-label="Month overview">
             <div>
               <RouteLink className="board-calendar-link" href={to.calendar(month)}>
                 <h2>

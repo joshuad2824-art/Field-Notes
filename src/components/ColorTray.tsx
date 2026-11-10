@@ -70,7 +70,7 @@ export function ColorTray({
               else setSettings({ stock })
             }}
           >
-            {page?.stock ?? settings.stock} ▾
+            {page?.stock ?? settings.stock}
           </button>
           <div className="color-swatches">
             {COVER_COLORS.map((color, i) => (

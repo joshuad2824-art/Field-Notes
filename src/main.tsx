@@ -11,10 +11,12 @@ import { purgeExpiredTombstones, requestPersistence, seedIfEmpty } from './lib/d
 import { loadNotebooks } from './lib/notebooks'
 import { resetEdgeColor } from './lib/themecolor'
 import { trackViewport } from './lib/viewport'
+import { configureNativeWidgetLinks } from './lib/native-widget-links'
 import { startSync } from './sync/engine'
 import { startWeather } from './weather/store'
 
 trackViewport()
+void configureNativeWidgetLinks()
 
 /* The colour in index.html is there for whatever the system reads before any
    of this runs — on iOS, the strip it keeps below the app in portrait, which
@@ -67,3 +69,7 @@ import './styles/theology.css'
 import './styles/room-heading.css'
 
 import './styles/theology-reference.css'
+
+import './styles/native-ios.css'
+
+import './styles/tablet.css'

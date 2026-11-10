@@ -1,6 +1,7 @@
 // Original Field Notes artwork, shared by navigation and item controls.
 const artwork = {
   list: <path d="M8 6h12M8 12h12M8 18h12M3 6h1M3 12h1M3 18h1" />,
+  checklist: <><circle cx="5" cy="6" r="2.5" /><path d="m3.6 6 1 1L6.8 4.8M10 6h10M10 17h10" /><circle cx="5" cy="17" r="2.5" /></>,
   filter: <path d="M4 7h16M7 12h10M10 17h4" />,
   edit: (
     <>
@@ -14,6 +15,7 @@ const artwork = {
       <circle cx="15.8" cy="8.5" r="1.2" />
     </>
   ),
+  'hide-keyboard': <><rect x="3" y="3" width="18" height="12" rx="2" /><path d="M6 6h1m3 0h1m3 0h1m3 0h.1M6 9h1m3 0h1m3 0h1m3 0h.1M7 12h10m-9 7 4 3 4-3" /></>,
   close: <path d="m6 6 12 12M18 6 6 18" />,
   menu: (
     <>

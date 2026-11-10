@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:ios": "tsc -b && vite build --mode ios --outDir dist-ios",
+    "ios:sync": "npm run build:ios && cap sync ios",
+    "ios:open": "cap open ios",
+    "ios:test": "npm run ios:sync && node scripts/ios-simulator-test.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "check": "node tests/run-checks.mjs",
@@ -21,9 +25,17 @@
     "check:redesign": "node tests/redesign-theme.mjs && node tests/redesign.mjs && node tests/redesign-actions.mjs",
     "widgets:build": "node scripts/build-scriptable.mjs",
     "check:widgets": "node tests/widget-projection.mjs && node tests/scriptable-widgets.mjs && node tests/widget-browser.mjs",
-    "check:widgets:sql": "node tests/widget-sql.mjs"
+    "check:widgets:sql": "node tests/widget-sql.mjs",
+    "check:ios-spacing": "node tests/ios-spacing.mjs",
+    "check:ipad": "node tests/ipad-layout.mjs",
+    "check:native-widget-links": "node tests/native-widget-links.mjs",
+    "check:native-widgets": "node tests/native-widget-links.mjs && node tests/native-widget-browser.mjs"
   },
   "dependencies": {
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
+    "@capacitor/keyboard": "8.0.6",
     "@codemirror/commands": "6.11.1",
     "@codemirror/state": "6.7.6",
     "@codemirror/view": "6.43.13",
@@ -35,6 +47,7 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "^5.0.0",

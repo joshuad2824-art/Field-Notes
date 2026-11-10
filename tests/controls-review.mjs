@@ -603,7 +603,7 @@ try {
     }
     await visit(`/calendar/${month}`)
     eq(await page.locator('.month-written-row').count(), 0, `${width}: the calendar's day sheet lists events, not pages`)
-    // A chevron after a title means a menu.
+    // Menu titles remain semantic controls without decorative expansion marks.
     for (const [route, sel] of [
       [`/calendar/${month}`, '.month-toggle'],
       [`/day/${today}`, '.agenda-day-heading'],
@@ -611,7 +611,7 @@ try {
       ['/plan/redesign-plan', '.plan-title-button'],
     ]) {
       await visit(route)
-      ok(await page.locator(`${sel} .title-chevron`).count() >= 1, `${width} ${route}: its title wears the chevron`)
+      eq(await page.locator(`${sel} .title-chevron`).count(), 0, `${width} ${route}: title has no decorative chevron`)
     }
     eq(await page.locator('.plan-index select').count(), 0, `${width}: a plan's sections are chips, not a select`)
     // Aa opens in the toolbar's own row, with no × of its own.

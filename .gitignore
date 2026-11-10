@@ -1,10 +1,16 @@
 node_modules
 dist
+dist-ios
 .vite
 *.tsbuildinfo
 .DS_Store
 .netlify
 supabase/.temp/
+ios/App/DerivedData/
+ios/App/**/xcuserdata/
+work/ios-derived-data/
+work/ios-tests/
+work/2026-10-17-ios-pilot/
 # Local verification and Library upload metadata for the approved home release.
 /work/2026-10-19-siena-archive/
 /work/2026-10-20-approved-home/

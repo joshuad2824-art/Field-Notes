@@ -12,7 +12,7 @@ export function Menu({ label, value, options, onChange }: { label: string; value
   function show() { setActive(Math.max(0, options.findIndex(option => option.value === value))); dialog.current?.showModal(); setOpen(true); list.current?.focus() }
   function choose(index: number) { if (!options[index]) return; onChange(options[index].value); close() }
   useEffect(() => { if (open) document.getElementById(`${id}-${active}`)?.scrollIntoView({ block: 'nearest' }) }, [active, open, id])
-  return <div className="kit-menu"><button ref={trigger} className="kit-menu-trigger" aria-label={label} aria-haspopup="listbox" aria-expanded={open} aria-controls={id} disabled={!options.length} onClick={show}>{selected?.label || label}<span aria-hidden="true">▾</span></button>
+  return <div className="kit-menu"><button ref={trigger} className="kit-menu-trigger" aria-label={label} aria-haspopup="listbox" aria-expanded={open} aria-controls={id} disabled={!options.length} onClick={show}>{selected?.label || label}</button>
     <dialog ref={dialog} className="kit-menu-dialog" aria-label={label} onCancel={event => { event.preventDefault(); close() }} onClose={() => setOpen(false)} onClick={event => { if (event.target === dialog.current) { const r = dialog.current.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) close() } }}>
       <div className="kit-menu-heading"><span>{label}</span><button aria-label={`Close ${label}`} onClick={close}>Close</button></div>
       <div id={id} ref={list} role="listbox" aria-label={label} aria-activedescendant={`${id}-${active}`} tabIndex={0} onKeyDown={event => {
@@ -28,7 +28,7 @@ export function Menu({ label, value, options, onChange }: { label: string; value
 }
 export function Fold({ label, count, children }: { label: string; count?: number; children: ReactNode }) {
   const id = useId(), [open, setOpen] = useState(false), button = useRef<HTMLButtonElement>(null)
-  return <section className="kit-fold" onKeyDown={event => { if (event.key === 'Escape' && open) { event.preventDefault(); setOpen(false); button.current?.focus() } }}><button ref={button} aria-expanded={open} aria-controls={id} onClick={() => setOpen(value => !value)}><span>{label}{count !== undefined ? ` · ${count}` : ''}</span><span aria-hidden="true">{open ? '▴' : '▾'}</span></button><div id={id} className="kit-fold-body" hidden={!open}>{children}</div></section>
+  return <section className="kit-fold" onKeyDown={event => { if (event.key === 'Escape' && open) { event.preventDefault(); setOpen(false); button.current?.focus() } }}><button ref={button} aria-expanded={open} aria-controls={id} onClick={() => setOpen(value => !value)}><span>{label}{count !== undefined ? ` · ${count}` : ''}</span></button><div id={id} className="kit-fold-body" hidden={!open}>{children}</div></section>
 }
 export function Row({ kind, title, meta, trailing, late, onToggle, details, time, cover, completed = false }: { kind: 'reminder' | 'event' | 'page'; title: string; meta?: ReactNode; trailing?: ReactNode; late?: string; onToggle?: () => void | Promise<void>; details?: ReactNode; time?: string; cover?: string; completed?: boolean }) {
   const id = useId(), [open, setOpen] = useState(false), [done, setDone] = useState(completed), [collapsed, setCollapsed] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('')

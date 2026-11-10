@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import type { EditorView } from '@codemirror/view'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { EditorView } from '@codemirror/view'
 import { redo, undo } from '@codemirror/commands'
+import { KeyboardFormatBar } from '../components/KeyboardFormatBar'
+import { nativeIOS, hideNativeKeyboard } from '../lib/native-ios'
+import { useNativeKeyboardDismissGesture } from '../lib/useNativeKeyboardDismissGesture'
 import { Editor } from '../editor/Editor'
 import { insertPicture } from '../editor/commands'
 import { Icon } from '../components/Icon'
@@ -40,13 +43,13 @@ import {
   tagsOf,
   wordCount,
 } from '../lib/model'
-import { firstNotebookId, isReserved, notebookForPage, useNotebooks } from '../lib/notebooks'
+import { firstNotebookId, isReserved, isWorkshopNotebook, notebookForPage, useNotebooks } from '../lib/notebooks'
 import { hasConsented, hasModelKey } from '../writeup/key'
 import { WriteupError, writeUp } from '../writeup/anthropic'
 import { getSettings, setSettings, stepZoom, useSettings } from '../lib/settings'
 import { useKeyboardOpen } from '../lib/viewport'
 import { resetEdgeColor, setEdgeColor, tokenColor } from '../lib/themecolor'
-import { navigate, to } from '../lib/router'
+import { navigate, to, up } from '../lib/router'
 import { NotebookSwitcher } from '../components/NotebookSwitcher'
 import { useLive } from '../lib/useLive'
 
@@ -64,7 +67,10 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
   const [view, setView] = useState<EditorView | null>(null)
   const viewRef = useRef<EditorView | null>(null)
   const [tray, setTray] = useState(false)
+  const keyboardDock = nativeIOS && (keyboardOpen || tray)
   const trayToggle = useRef<HTMLButtonElement>(null)
+  const pictureInput = useRef<HTMLInputElement>(null)
+  const [pictureProblem, setPictureProblem] = useState('')
   /* The strip shares the toolbar's row only where the whole Text section
      fits beside the row's own marks; on a narrower leaf its tools take a
      second line under the sections — two bands at most, never three. */
@@ -79,6 +85,44 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
     watch.observe(el)
     return () => watch.disconnect()
   }, [tray])
+  // The fixed formatting panel owns a measured flex spacer. CodeMirror's
+  // scroll viewport then ends above the tools instead of behind them.
+  useLayoutEffect(() => {
+    if (!nativeIOS || !view || !toolsRef.current) return
+    const tools = toolsRef.current
+    const leaf = tools.parentElement!
+    const panel = tray ? tools.querySelector<HTMLElement>('.tray') : null
+    let frame = 0
+    const resize = () => {
+      const bounds = leaf.getBoundingClientRect()
+      leaf.style.setProperty('--native-format-left', `${Math.max(0, bounds.left) + 8}px`)
+      leaf.style.setProperty('--native-format-right', `${Math.max(0, innerWidth - bounds.right) + 8}px`)
+      leaf.style.setProperty('--native-format-height', `${Math.ceil(panel?.getBoundingClientRect().height ?? 0)}px`)
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const active = document.activeElement
+        if (active instanceof HTMLElement && active !== view.contentDOM && active.isContentEditable && leaf.querySelector('.editor')?.contains(active)) {
+          // Table cells keep a DOM selection separate from CodeMirror's range.
+          const selection = document.getSelection()
+          const caret = selection?.rangeCount ? selection.getRangeAt(0).getBoundingClientRect() : null
+          const rect = caret && caret.height > 0 ? caret : active.getBoundingClientRect()
+          const visible = view.scrollDOM.getBoundingClientRect()
+          if (rect.bottom > visible.bottom - 12) view.scrollDOM.scrollTop += rect.bottom - visible.bottom + 12
+          else if (rect.top < visible.top + 12) view.scrollDOM.scrollTop -= visible.top - rect.top + 12
+        } else if (view.hasFocus) {
+          view.requestMeasure()
+          view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main, { y: 'nearest', yMargin: 12 }) })
+        }
+      })
+    }
+    const observer = new ResizeObserver(resize)
+    if (panel) observer.observe(panel)
+    observer.observe(view.scrollDOM)
+    observer.observe(leaf)
+    resize()
+    return () => { observer.disconnect(); cancelAnimationFrame(frame) }
+  }, [view, tray, keyboardDock, keyboardOpen])
+
   const [menu, setMenu] = useState(false)
   /* The prose pass, which is the only thing in this app that can be busy or
      can fail out loud. Both states live here rather than in the sheet, because
@@ -200,6 +244,19 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
     )
     saves.current = save.catch(() => {})
     return save
+  }
+
+  const finishEditing = () => {
+    void flush.current().catch(() => {}) // The save failure remains visible on the page.
+    setTray(false)
+    hideNativeKeyboard()
+  }
+  const dismissGesture = useNativeKeyboardDismissGesture(nativeIOS && keyboardOpen, finishEditing)
+  const leavePage = () => {
+    if (!page) return
+    const parent = isWorkshopNotebook(page.notebook) ? to.workshop() : to.notebookHome(page.notebook)
+    finishEditing()
+    void flush.current().then(() => up(parent)).catch(() => {})
   }
 
   /* While this page is open here, the blank-page sweep leaves it alone. */
@@ -347,7 +404,8 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
         {({ toggle, hidden }) => (
           <main className="desk" key="desk">
             <article
-              className="leaf"
+              {...dismissGesture}
+              className={`leaf${keyboardDock ? ' native-formatting' : ''}`}
               data-stock={stock}
               data-pen={pen}
               style={{ '--zoom': settings.zoom } as CSSProperties}
@@ -418,7 +476,7 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                   >
                     <Icon name="redo" />
                   </button>
-                  <button
+                  {!keyboardDock ? <button
                     ref={trayToggle}
                     className={`mark-button wide tools-aa${tray ? ' on' : ''}`}
                     /* Opening the tray must not take the focus off what the
@@ -432,7 +490,7 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                     title={tray ? 'Close the strip — Esc' : 'Style'}
                   >
                     Aa
-                  </button>
+                  </button> : null}
                   {tray ? null : (
                     <button
                       className="mark-button"
@@ -460,6 +518,23 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                 autofocus={caretAtEndFor(id) ? 'end' : isBlank(page.body)}
               />
 
+              {keyboardDock && tray ? <div className="native-format-space" aria-hidden="true" /> : null}
+
+              {/* The picker belongs to the page, so the native keyboard can
+                  close for Photos without unmounting the pending file input. */}
+              <input ref={pictureInput} type="file" accept="image/*" hidden onChange={event => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) {
+                  setPictureProblem('')
+                  void onDropFile(file).catch(() => setPictureProblem('Could not add that picture. Try again.'))
+                }
+              }} />
+              {pictureProblem ? <p role="alert" className="keyboard-picture-problem">{pictureProblem}</p> : null}
+              {keyboardDock ? <KeyboardFormatBar view={view} expanded={tray} keyboardOpen={keyboardOpen} toggleRef={trayToggle}
+                onToggle={() => setTray(open => !open)} onPicture={() => pictureInput.current?.click()}
+                onDone={finishEditing} onBack={leavePage} backLabel={isWorkshopNotebook(page.notebook) ? 'Back to Workshop' : 'Back to notebook'} /> : null}
+
               {keyboardOpen ? null : (
                 <div className="pagefoot">
                   <div className="pagefoot-measure">
@@ -486,6 +561,10 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
 
       {menu ? (
         <Sheet onClose={() => setMenu(false)}>
+          <div className="native-page-info">
+            <p>{countLabel(words, 'word')} · {editedStamp(page.updated)}</p>
+            {tags.slice(0, 3).map(tag => <button key={tag} onClick={() => { setMenu(false); navigate(to.tag(tag)) }}>#{tag}</button>)}
+          </div>
           {/* Below 1120 the list isn't on screen, so this is the only way to
               start a page without leaving the one in hand. ⌘⇧N does it from
               anywhere on a desktop. */}

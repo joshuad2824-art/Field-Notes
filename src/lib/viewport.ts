@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { configureNativeKeyboard } from './native-ios'
 
 /* iOS moves the app out from under itself when the keyboard opens, and it has
    two ways of doing it.
@@ -46,6 +47,7 @@ function emit() {
 export function trackViewport(): void {
   const root = document.documentElement
   const vv = window.visualViewport
+  let nativeKeyboardHeight: number | null = null
 
   /* `apply` runs on scroll, so writing a property that hasn't changed would
      be a style recalculation for nothing, on the one event that can least
@@ -59,9 +61,16 @@ export function trackViewport(): void {
   }
 
   const apply = () => {
-    const height = vv ? vv.height : window.innerHeight
+    const visualHeight = vv ? vv.height : window.innerHeight
     const top = vv ? vv.offsetTop : 0
-    const open = window.innerHeight - height > KEYBOARD_THRESHOLD
+    const open = nativeKeyboardHeight === null
+      ? window.innerHeight - visualHeight > KEYBOARD_THRESHOLD
+      : nativeKeyboardHeight > KEYBOARD_THRESHOLD
+    // With native resize disabled, some WebKit versions keep a full-height
+    // visual viewport. UIKit's actual keyboard height still anchors the dock.
+    const height = open && nativeKeyboardHeight !== null
+      ? Math.min(visualHeight, Math.max(0, window.innerHeight - nativeKeyboardHeight - top))
+      : visualHeight
 
     /* With no keyboard to duck, don't measure at all — hand the height back
        to CSS, where `#root` is pinned to the bottom of a body that is already
@@ -83,6 +92,8 @@ export function trackViewport(): void {
 
     }
 
+    root.classList.toggle('short-keyboard', open && height < 420)
+
     if (open !== keyboardOpen) {
       keyboardOpen = open
       emit()
@@ -92,6 +103,7 @@ export function trackViewport(): void {
     if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0)
   }
 
+  configureNativeKeyboard(height => { nativeKeyboardHeight = height; apply() })
   apply()
 
   if (vv) {

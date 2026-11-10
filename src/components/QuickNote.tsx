@@ -3,6 +3,8 @@ import { coverColor } from '../lib/theme'
 import { Sheet } from './Sheet'
 import { Icon } from './Icon'
 import { useNotebooks } from '../lib/notebooks'
+import { navigate } from '../lib/router'
+import { NATIVE_WIDGET_ROUTE_EVENT, nativeWidgetRoute, type NativeWidgetNavigation } from '../lib/native-widget-route'
 import {
   readQuickNote,
   saveQuickNote,
@@ -16,12 +18,13 @@ export function QuickNote({ onClose }: { onClose: () => void }) {
   const books = useNotebooks(),
     pending = useRef(Promise.resolve()),
     closing = useRef(false),
-    input = useRef<HTMLTextAreaElement>(null)
+    input = useRef<HTMLTextAreaElement>(null),
+    currentDraft = useRef<QuickDraft | null>(null)
   useEffect(() => {
     let active = true
     void readQuickNote()
       .then((d) => {
-        if (active) setDraft(d)
+        if (active) { currentDraft.current = d; setDraft(d) }
       })
       .catch((e) => setError(String(e)))
     return () => {
@@ -32,31 +35,46 @@ export function QuickNote({ onClose }: { onClose: () => void }) {
     if (draft) input.current?.focus()
   }, [Boolean(draft)])
   function change(next: QuickDraft) {
+    currentDraft.current = next
     setDraft(next)
     pending.current = pending.current.catch(() => {}).then(() => saveQuickNote(next))
     void pending.current.catch(() =>
       setError('Your draft could not be saved. Keep this window open and try again.'),
     )
   }
-  async function close() {
-    if (closing.current) return
-    if (!draft) {
+  async function close(): Promise<boolean> {
+    if (closing.current) return false
+    const latest = currentDraft.current
+    if (!latest) {
       onClose()
-      return
+      return true
     }
     closing.current = true
     setBusy(true)
     setError('')
     try {
       await pending.current.catch(() => {})
-      await closeQuickNote(draft)
+      await closeQuickNote(latest)
       onClose()
+      return true
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save this note.')
       closing.current = false
       setBusy(false)
+      return false
     }
   }
+  useEffect(() => {
+    const open = (event: Event) => {
+      const request = (event as CustomEvent<NativeWidgetNavigation>).detail
+      if (!request || typeof request.path !== 'string' || nativeWidgetRoute('fieldnotes://' + request.path.slice(1)) !== request.path) return
+      event.preventDefault()
+      if (request.path === '/quick-note') { input.current?.focus(); return }
+      void close().then(saved => { if (saved) navigate(request.path, { replace: request.replace }) })
+    }
+    window.addEventListener(NATIVE_WIDGET_ROUTE_EVENT, open)
+    return () => window.removeEventListener(NATIVE_WIDGET_ROUTE_EVENT, open)
+  }, [onClose])
   return (
     <Sheet onClose={() => void close()}>
       <section className="quick-note-dialog" aria-labelledby="quick-note-title">

@@ -1,5 +1,4 @@
 import { useWorkCalendar } from '../work-calendar/calendar'
-import { TitleChevron } from '../components/NotebookSwitcher'
 import { DAVIS_SOURCE_URL } from '../davis/wire'
 import { mergeCalendarEvents, useFamilyAgenda } from '../davis/calendar'
 import { useAppleCalendar } from '../apple/calendar'
@@ -37,6 +36,7 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
   }
   return (
     <div className="app month-app">
+      <div className="statusband native-calendar-statusband" aria-hidden="true" />
       <main className="month-screen scroll">
         <header className="month-header">
           <div className="month-title">
@@ -49,7 +49,6 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
                 aria-label={`${parts.month} ${parts.year} — open the day agenda`}
               >
                 {parts.month} <span>{parts.year}</span>
-                <TitleChevron />
               </button>
             </h1>
             <div className="month-controls">
@@ -150,7 +149,7 @@ export function CalendarScreen({ notebook: _notebook }: { month?: string; notebo
             onPick={choose}
           />
         </div>
-        <section className="month-selected">
+        <section className="month-selected" role="region" aria-label="Selected day agenda">
           <h2>
             {readableDay(selected)}
             {selected === isoDay() ? ' · Today' : ''}

@@ -21,6 +21,7 @@ import { RouteLink } from './DeskHeader'
 import { setEdgeColor } from '../lib/themecolor'
 import { SyncMark } from './SyncMark'
 import { useKeyboardOpen } from '../lib/viewport'
+import { nativeIOS } from '../lib/native-ios'
 import { AFTER_SCROLL_MS, HOLD_MS, REACH_PX, SETTLE_MS, travel, type Travel } from '../lib/pill-scroll'
 import { ColorTray, ColorsGlyph } from './ColorTray'
 
@@ -66,6 +67,9 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     [expanded, setExpanded] = useState(false),
     [shelf, setShelf] = useState<{ left: number; bottom: number } | null>(null),
     [resting, setResting] = useState(false)
+  useEffect(() => {
+    if (nativeIOS && !keyboard) { setReceded(false); setResting(false) }
+  }, [keyboard])
   const swipe = useRef<{ y: number; raised: boolean } | null>(null)
   useEffect(() => {
     if (route.name !== 'quick-note') return
@@ -365,8 +369,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
   const showUp = !!parent
 
   /* One pill at every width (October 14): ← · the room you are in, by name,
-     with a caret · +. The room's mark says where you are and that it opens:
-     the room's name (a notebook's own name inside one) and a small caret. */
+     and +. The room name opens navigation, without an expansion ornament. */
   const roomName =
     here?.label === 'Notebooks' && routeBook
       ? (notebookOf(routeBook)?.name ?? 'Notebooks')
@@ -530,8 +533,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
               ) : (
                 <span className="pill-up pill-void" aria-hidden="true" />
               )}
-              {/* The pill is three marks: up, the room you are in — named, with a
-                  caret — and +. The room's mark raises one sheet holding every
+              {/* The pill has back, the current room name, and +. The room button raises one sheet holding every
                   room and every back room. */}
               <button
                 className={`pill-room${here ? ' active' : ''}`}
@@ -545,9 +547,6 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
                 }}
               >
                 <span className="pill-room-name">{roomName}</span>
-                <svg className="pill-room-caret" viewBox="0 0 12 12" aria-hidden="true">
-                  <path d="M3 7.5 6 4.5 9 7.5" />
-                </svg>
               </button>
               {plus.kind === 'off' ? (
                 <button className="pill-add" aria-label="Add" aria-disabled="true" onClick={() => {}}>
