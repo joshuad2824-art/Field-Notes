@@ -2,7 +2,14 @@
 
 Updated October 17, 2026: supplied puffin Home Screen icon.
 
-## November 10 — daily use pass, on a branch
+## November 11 — share, find in page, undo delete, search
+
+⋯ → Share (readable text and pictures through the iOS share sheet), find in
+page (⌘F), Undo after deleting a page, and the search fixes from the review.
+Branch `claude/youthful-cerf-tmme2q`; merging to `main` publishes. Detail:
+`docs/2026-11-11 - Share, Find and Search.md`.
+
+## November 10 — daily use pass (merged as PR 49)
 
 Quick Notes notebook, a Reminders room (St. John kept apart), overdue marks,
 going back to where the app was put down, near-instant sync (push on hide plus

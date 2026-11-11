@@ -52,6 +52,7 @@ const names = [
   'no-scrollbars',
   'daily-use',
   'live-sync',
+  'share-find',
 ]
 const out = 'work/check-results'
 mkdirSync(out, { recursive: true })
