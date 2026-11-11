@@ -4,6 +4,7 @@ import { EditorView, keymap } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { liveMarkdown } from './markdown'
 import { linkTyping } from './links'
+import { find } from './find'
 import {
   applyBlock,
   applyHighlight,
@@ -105,6 +106,7 @@ export function Editor({
           keymap.of([...historyKeymap, ...defaultKeymap]),
           liveMarkdown(),
           linkTyping,
+          find(),
           EditorView.contentAttributes.of({
             spellcheck: 'true',
             autocorrect: 'on',

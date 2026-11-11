@@ -62,6 +62,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     [quick, setQuick] = useState(false),
     [receded, setReceded] = useState(false),
     [notice, setNotice] = useState(''),
+    [undoable, setUndoable] = useState<{ text: string; undo: () => void } | null>(null),
     [chooserAt, setChooserAt] = useState<{ left: number; bottom: number } | null>(null),
     [expanded, setExpanded] = useState(false),
     [shelf, setShelf] = useState<{ left: number; bottom: number } | null>(null),
@@ -362,6 +363,20 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     return () => clearTimeout(timer)
   }, [notice])
 
+  /* Something just done that can be taken back — a page deleted, for one.
+     Said once near the pill for six seconds, with Undo; it survives the
+     navigation that usually follows (November 2026). */
+  useEffect(() => {
+    const said = (e: Event) => setUndoable((e as CustomEvent<{ text: string; undo: () => void }>).detail)
+    window.addEventListener('field-notes:undoable', said)
+    return () => window.removeEventListener('field-notes:undoable', said)
+  }, [])
+  useEffect(() => {
+    if (!undoable) return
+    const timer = window.setTimeout(() => setUndoable(null), 6000)
+    return () => clearTimeout(timer)
+  }, [undoable])
+
   const api: FrameApi = {
     quickNote: () => setQuick(true),
     manage: (focus) => setManage({ focus }),
@@ -629,6 +644,19 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
               <span />
             </button>
           </>
+        ) : null}
+        {undoable && !notice ? (
+          <p className="pill-notice pill-undoable" role="status">
+            <span>{undoable.text}</span>
+            <button
+              onClick={() => {
+                undoable.undo()
+                setUndoable(null)
+              }}
+            >
+              Undo
+            </button>
+          </p>
         ) : null}
         {notice ? (
           <p className="pill-notice" role="alert">

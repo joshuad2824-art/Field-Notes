@@ -11,6 +11,7 @@ import {
   clearOverrides,
   createPage,
   deletePage,
+  restorePage,
   holdOpen,
   getPage,
   moveTo,
@@ -23,6 +24,7 @@ import {
 } from '../lib/db'
 import { caretAtEndFor } from '../lib/capture'
 import { exportPage } from '../lib/export'
+import { canShare, copyText, preparePage, prepareText, share, type SharePayload } from '../lib/share'
 import { eventsForPage } from '../lib/events'
 import { addImage, isImage, pruneImages } from '../lib/images'
 import { editedStamp, countLabel, todayLine } from '../lib/format'
@@ -38,6 +40,7 @@ import {
   imageMarkdown,
   isBlank,
   tagsOf,
+  titleOf,
   wordCount,
 } from '../lib/model'
 import { firstNotebookId, isReserved, notebookForPage, useNotebooks } from '../lib/notebooks'
@@ -48,6 +51,7 @@ import { useKeyboardOpen } from '../lib/viewport'
 import { resetEdgeColor, setEdgeColor, tokenColor } from '../lib/themecolor'
 import { navigate, to } from '../lib/router'
 import { NotebookSwitcher } from '../components/NotebookSwitcher'
+import { FindBar } from '../components/FindBar'
 import { useLive } from '../lib/useLive'
 
 const SAVE_DELAY = 250
@@ -80,6 +84,12 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
     return () => watch.disconnect()
   }, [tray])
   const [menu, setMenu] = useState(false)
+  /* Find in page: open, and what it opened with (a selected word, if any). */
+  const [finding, setFinding] = useState<{ initial: string } | null>(null)
+  /* What ⋯ → Share hands over, made ready when the menu opens (share.ts). */
+  const [shareWhole, setShareWhole] = useState<SharePayload | null>(null)
+  const [shareSome, setShareSome] = useState<SharePayload | null>(null)
+  const [shareSaid, setShareSaid] = useState('')
   /* The prose pass, which is the only thing in this app that can be busy or
      can fail out loud. Both states live here rather than in the sheet, because
      the sheet closes and the request does not. */
@@ -110,6 +120,51 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
   const typingTimer = useRef<number | null>(null)
 
   bodyRef.current = body
+
+  /* ⌘F finds in this page — the browser's own find can't see the lines
+     CodeMirror hasn't drawn. Starts from the selected words, if any. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== 'f') return
+      const v = viewRef.current
+      if (!v) return
+      e.preventDefault()
+      const sel = v.state.selection.main
+      const picked = sel.empty ? '' : v.state.sliceDoc(sel.from, sel.to)
+      setFinding({ initial: picked.includes('\n') ? '' : picked.slice(0, 80) })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  useEffect(() => {
+    if (!menu) {
+      setShareWhole(null)
+      setShareSome(null)
+      setShareSaid('')
+      return
+    }
+    let live = true
+    const writing = bodyRef.current
+    const picked = view?.state.selection.main
+    let chosen = ''
+    if (view && picked && !picked.empty) {
+      /* A selection that starts inside a line's hidden marker — a checklist's
+         "- [ ]", a heading's "#" — starts at the line, so what is shared reads
+         as the line does rather than carrying half a marker. */
+      const line = view.state.doc.lineAt(picked.from)
+      const before = view.state.sliceDoc(line.from, picked.from)
+      const from = /^ *(\{(?:center|right)\})?(?:[-*] ?(?:\[[ xX]?\]? ?)?|\d+\. ?|#{1,3} ?|> ?)?$/.test(before) ? line.from : picked.from
+      chosen = view.state.sliceDoc(from, picked.to)
+    }
+    setShareSome(chosen.trim() ? prepareText(chosen, titleOf(writing)) : null)
+    void preparePage(writing).then((ready) => {
+      if (live) setShareWhole(ready)
+    })
+    return () => {
+      live = false
+    }
+  }, [menu])
 
   useEffect(() => {
     let live = true
@@ -445,6 +500,15 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                 </div>
               </div>
 
+              {finding && view ? (
+                <FindBar
+                  key={finding.initial}
+                  view={view}
+                  initial={finding.initial}
+                  onClose={() => setFinding(null)}
+                />
+              ) : null}
+
               <Editor
                 key={page.id}
                 initialBody={page.body}
@@ -499,6 +563,57 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                  written into by hand, so a new page goes to the shelf. */
               const into = isReserved(page.notebook) ? firstNotebookId() : page.notebook
               void createPage(into).then((next) => navigate(to.page(next.id)))
+            }}
+          />
+
+          <div className="sheet-rule" />
+          {canShare() ? (
+            <SheetItem
+              named
+              icon="share"
+              label={shareWhole?.files.length ? `Share with ${countLabel(shareWhole.files.length, 'picture')}` : 'Share'}
+              state={shareSaid || undefined}
+              onClick={() => {
+                if (!shareWhole) return
+                void share(shareWhole).then((result) => {
+                  if (result === 'shared') setMenu(false)
+                  else if (result === 'failed') setShareSaid('Could not open sharing')
+                })
+              }}
+            />
+          ) : null}
+          {canShare() && shareSome ? (
+            <SheetItem
+              named
+              icon="share"
+              label="Share selection"
+              onClick={() => {
+                void share(shareSome).then((result) => {
+                  if (result === 'shared') setMenu(false)
+                  else if (result === 'failed') setShareSaid('Could not open sharing')
+                })
+              }}
+            />
+          ) : null}
+          <SheetItem
+            named
+            icon="search"
+            label="Find in page"
+            state="⌘F"
+            onClick={() => {
+              setMenu(false)
+              setFinding({ initial: '' })
+            }}
+          />
+          <SheetItem
+            named
+            icon="copy"
+            label={shareSome ? 'Copy selection as text' : 'Copy text'}
+            state={shareSaid === 'Copied' ? 'Copied' : undefined}
+            onClick={() => {
+              const text = shareSome?.text ?? shareWhole?.text
+              if (!text) return
+              void copyText(text).then((ok) => setShareSaid(ok ? 'Copied' : 'Could not copy'))
             }}
           />
 
@@ -642,6 +757,15 @@ export function PageScreen({ id, workshop = false }: { id: string; workshop?: bo
                 await flush.current()
                 await deletePage(page.id)
                 navigate(to.notebook(book.id), { replace: true })
+                /* It is in Trash for thirty days either way; Undo is the
+                   quicker road back. */
+                const id = page.id
+                window.dispatchEvent(new CustomEvent('field-notes:undoable', {
+                  detail: {
+                    text: 'Page deleted',
+                    undo: () => void restorePage(id).then(() => navigate(to.page(id))),
+                  },
+                }))
               })()
             }}
           />

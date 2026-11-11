@@ -19,14 +19,26 @@ export function SheetItem({
   icon,
   state,
   danger,
+  named,
   onClick,
 }: {
   label: string
   icon?: ComponentProps<typeof Icon>['name']
   state?: string
   danger?: boolean
+  /* An icon and its name, for the action reached for most. */
+  named?: boolean
   onClick: () => void
 }) {
+  if (named && icon)
+    return (
+      <button className="sheet-item sheet-named-action" onClick={onClick}>
+        {/* Wrapped, so the app-wide rule for icon-only buttons stays off it. */}
+        <span className="sheet-named-icon" aria-hidden="true"><Icon name={icon} /></span>
+        <span className="grow">{label}</span>
+        {state ? <span className="state">{state}</span> : null}
+      </button>
+    )
   return (
     <button className={`sheet-item${danger ? ' danger' : ''}${icon ? ' sheet-icon-action' : ''}`} aria-label={icon ? label : undefined} title={icon ? [label, state].filter(Boolean).join(' · ') : undefined} onClick={onClick}>
       <span className="grow">{icon ? <Icon name={icon} /> : label}</span>
