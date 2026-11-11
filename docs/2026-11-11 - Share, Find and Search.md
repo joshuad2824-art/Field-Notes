@@ -91,13 +91,13 @@ Joshua's call.
 
 ## Verification
 
-- `tests/share-find.mjs`: 34 assertions.
+- `tests/share-find.mjs`: 27 assertions.
   - On node: the share text and where find looks.
   - In a browser: a phone with the share sheet replaced by a recorder. It
     checks what Share, Share selection and Copy text hand over; Undo; find on
     a long page, including the grid; and the search counts, filter, AND and
     marks.
-- The full `npm run check` result is recorded below.
+- **`npm run check`: all 50 suites pass**, `share-find` included, on the first full run.
 - **Unverified on a real iPhone:** that iOS opens the share sheet from the
   installed app, and which apps keep both the text and the pictures. Mail and
   Messages do on recent iOS; some apps keep only one.
