@@ -53,7 +53,10 @@ try{for(const [width,height] of [[1440,900],[1366,768],[1280,720],[1200,800],[19
  await p.locator('.board-today-schedule').getByText('Training practice',{exact:true}).waitFor()
  await p.locator('.board-day-coming').getByText('Training session',{exact:true}).waitFor()
  assert.equal(await p.locator('.board-day-coming').getByText('Work planning review',{exact:true}).count(),1,'canonical work occurrence is deduplicated')
- assert.equal(await p.locator('.board-message').count(),3,'all active personal message kinds remain visible')
+ /* November 10: the newest unread note in full, every other active note as a
+    headline — still all of them on Today, one line each after the first. */
+ assert.equal(await p.locator('.board-message').count(),1,'the newest unread note is shown in full')
+ assert.equal(await p.locator('.board-headlines li').count(),2,'all other active personal message kinds remain visible as headlines')
  assert.equal(await p.locator('.board-coming .siena-item').count(),7,'future personal reminder remains visible')
  assert.equal(await p.locator('.board-coming').getByText('Review the workshop reference',{exact:true}).count(),1)
  assert.equal(await p.locator('.board-coming,.board-siena').getByText('St. John · planning brief',{exact:true}).count(),0)

@@ -517,26 +517,32 @@ try {
       await db.events.bulkPut(events)
     }, savedEvents)
 
-    /* 9. Quick note still files exactly and keeps its draft on failure. */
+    /* 9. Quick note still files exactly and keeps its draft on failure.
+       November 10: closed with no notebook picked, it files into Quick Notes. */
     if (width === 1440 || width === 390) {
       await visit('/')
       await page.getByRole('button', { name: 'Quick note', exact: true }).click()
       const area = page.getByRole('textbox', { name: 'Quick note', exact: true })
       await area.fill('Keep this thought\nUntil I file it.')
       await page.getByRole('button', { name: 'Done', exact: true }).click()
+      await page.waitForFunction(async () =>
+        (await (await import('/src/lib/db.ts')).livePages('quick-notes')).some((p) => p.body === 'Keep this thought\nUntil I file it.'),
+      )
+      checks++
       await page.reload()
       await page.getByRole('button', { name: 'Quick note', exact: true }).click()
-      eq(await area.inputValue(), 'Keep this thought\nUntil I file it.', `${width}: quick note draft survives reload`)
+      eq(await area.inputValue(), '', `${width}: a filed quick note leaves the next one empty`)
+      await area.fill('For the church notebook')
       await page.getByRole('radio', { name: 'Church' }).click()
       await page.getByRole('button', { name: 'Done', exact: true }).click()
       await page.waitForFunction(async () =>
-        (await (await import('/src/lib/db.ts')).livePages('church')).some((p) => p.body === 'Keep this thought\nUntil I file it.'),
+        (await (await import('/src/lib/db.ts')).livePages('church')).some((p) => p.body === 'For the church notebook'),
       )
       checks++
       await page.getByRole('button', { name: 'Quick note', exact: true }).click()
       eq(await area.inputValue(), '', `${width}: filed draft clears`)
       await area.fill('Still here if filing fails')
-      await page.keyboard.press('Escape')
+      await page.waitForTimeout(200)
       const kept = await page.evaluate(async () => {
         const q = await import('/src/lib/quick-note.ts')
         const draft = await q.readQuickNote()
@@ -546,6 +552,7 @@ try {
         return (await q.readQuickNote()).body
       })
       eq(kept, 'Still here if filing fails', `${width}: a failed filing keeps the draft`)
+      await page.keyboard.press('Escape')
     }
 
     /* 10. October 13, third pass. */

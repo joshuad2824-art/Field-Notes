@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { coverColor } from '../lib/theme'
 import { Sheet } from './Sheet'
 import { Icon } from './Icon'
-import { useNotebooks } from '../lib/notebooks'
+import { notebookOf, useNotebooks } from '../lib/notebooks'
+import { QUICK_NOTES_BOOK, QUICK_NOTES_NOTEBOOK } from '../lib/model'
 import {
   readQuickNote,
   saveQuickNote,
@@ -14,6 +15,7 @@ export function QuickNote({ onClose }: { onClose: () => void }) {
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false)
   const books = useNotebooks(),
+    quickBook = notebookOf(QUICK_NOTES_NOTEBOOK) ?? QUICK_NOTES_BOOK,
     pending = useRef(Promise.resolve()),
     closing = useRef(false),
     input = useRef<HTMLTextAreaElement>(null)
@@ -62,8 +64,8 @@ export function QuickNote({ onClose }: { onClose: () => void }) {
       <section className="quick-note-dialog" aria-labelledby="quick-note-title">
         <header>
           <h2 id="quick-note-title">Quick note</h2>
-          {/* Closing files the note when a notebook is chosen and keeps it
-              as a quick note when not — so the mark is ✓, not ×. */}
+          {/* Closing files the note — in the chosen notebook, or in Quick
+              Notes — so the mark is ✓, not ×. */}
           <button
             className="icon-control quick-note-done"
             aria-label="Done"
@@ -85,33 +87,31 @@ export function QuickNote({ onClose }: { onClose: () => void }) {
               onChange={(e) => change({ ...draft, body: e.target.value })}
             />
             <footer>
-              {/* A dot per notebook. None chosen and it stays a quick note;
-                  tapping the chosen dot again takes the choice back. Filing
-                  still happens on close, through the same path as before. */}
+              {/* Where it will go, by name. Quick Notes unless another is
+                  picked; tapping the picked one again goes back to Quick
+                  Notes. Filing happens on ✓, through the same path as before. */}
               <div className="quick-note-books" role="radiogroup" aria-label="File quick note in">
-                {books.map((b) => (
-                  <label key={b.id} title={b.name} style={{ '--dot': coverColor(b.color) } as CSSProperties}>
-                    <input
-                      type="radio"
-                      name="quick-note-notebook"
-                      value={b.id}
-                      aria-label={b.name}
-                      checked={draft.notebook === b.id}
-                      disabled={busy}
-                      onChange={() => change({ ...draft, notebook: b.id })}
-                      onClick={() => {
-                        if (draft.notebook === b.id) change({ ...draft, notebook: '' })
-                      }}
-                    />
-                    <i aria-hidden="true" />
-                  </label>
-                ))}
+                {[quickBook, ...books.filter((b) => b.id !== QUICK_NOTES_NOTEBOOK)].map((b) => {
+                  const value = b.id === QUICK_NOTES_NOTEBOOK ? '' : b.id
+                  return (
+                    <label key={b.id} style={{ '--dot': coverColor(b.color) } as CSSProperties}>
+                      <input
+                        type="radio"
+                        name="quick-note-notebook"
+                        value={b.id}
+                        checked={draft.notebook === value}
+                        disabled={busy}
+                        onChange={() => change({ ...draft, notebook: value })}
+                        onClick={() => {
+                          if (value && draft.notebook === value) change({ ...draft, notebook: '' })
+                        }}
+                      />
+                      <i aria-hidden="true" />
+                      <span>{b.name}</span>
+                    </label>
+                  )
+                })}
               </div>
-              {/* The chosen notebook says its name; nothing is chosen, nothing
-                  is said. */}
-              <span className="quick-note-book" aria-hidden="true">
-                {books.find((b) => b.id === draft.notebook)?.name ?? ''}
-              </span>
             </footer>
           </>
         ) : (

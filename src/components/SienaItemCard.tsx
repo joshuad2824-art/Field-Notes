@@ -44,7 +44,7 @@ export function SienaItemCard({ item, paper = false, journal = false, column = f
     /* The words are the way in to the details; completion stays on the circle. */
     const details = Boolean(extra || sourceLink || !item.completedAt)
     return (
-      <article className={`siena-item reminder-compact${paper ? ' paper' : ''}${open ? ' open' : ''}`}>
+      <article id={`siena-${item.id}`} className={`siena-item reminder-compact${paper ? ' paper' : ''}${open ? ' open' : ''}`}>
         <div className="reminder-line">
           {item.completedAt
             ? <span className="icon-control" role="img" aria-label="Completed" title="Completed"><Icon name="done" /></span>
@@ -52,7 +52,7 @@ export function SienaItemCard({ item, paper = false, journal = false, column = f
           <div className="reminder-copy">
             <h3>{details ? <button className="reminder-words" aria-expanded={open} onClick={() => setOpen(!open)}>{summary}</button> : summary}</h3>
             {item.dueAt ? <p className="siena-item-due"><DueLabel at={item.dueAt} completed={Boolean(item.completedAt)} /></p> : null}
-            {item.completedAt ? <p className="siena-seen">Completed {new Intl.DateTimeFormat([], { dateStyle: 'medium' }).format(new Date(item.completedAt))}</p> : null}
+            {item.completedAt ? <p className="siena-seen">{item.resolvedAt ? 'Removed' : 'Completed'} {new Intl.DateTimeFormat([], { dateStyle: 'medium' }).format(new Date(item.completedAt))}</p> : null}
           </div>
         </div>
         {details && open ? <div className="reminder-details">
@@ -64,7 +64,7 @@ export function SienaItemCard({ item, paper = false, journal = false, column = f
     )
   }
   return (
-    <article className={`siena-item${paper ? ' paper' : ''}`}>
+    <article id={`siena-${item.id}`} className={`siena-item${paper ? ' paper' : ''}`}>
       {!journal ? <div className="siena-item-top">
         {column ? null : <span className="section-label">{labels[item.type]}</span>}
         <time dateTime={new Date(item.created).toISOString()}>{date}</time>

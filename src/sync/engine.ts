@@ -19,6 +19,7 @@ import { mergeSienaItems } from './siena-reconcile'
 import { setStatus } from './status'
 import { EPOCH, SyncError, supabaseTransport, type Transport } from './transport'
 import { getVault, setVault } from './vault'
+import { doorbellLive, ring, startDoorbell, stopDoorbell } from './realtime'
 import type { Vault } from './pairing'
 import {
   imageToRow,
@@ -58,6 +59,10 @@ const BATCH = 200
    this is where widening stops and we say so instead. */
 const WIDEST = 6400
 const DEBOUNCE = 3000
+/* How often an open device checks without being asked. Once a minute while
+   the doorbell is down; every five while it is up, because then the other
+   devices ring when they have something. */
+const TICK = 60 * 1000
 const EVERY = 5 * 60 * 1000
 
 let transport: Transport | null = null
@@ -69,6 +74,15 @@ let queued = false
 /* Applying pulled rows fires the store's change bus, which is what tells the
    screens to re-read. It must not also be what tells us to sync again. */
 let applying = false
+/* Whether this run sent anything, so the doorbell is rung only when there is
+   something for the other devices to come and get. */
+let pushed = 0
+let lastRun = 0
+
+/* The app has gone to the background. On iOS that means the next few seconds
+   may be the last this page gets before it is frozen, so a write made now is
+   pushed now, writing first, rather than after the usual pause. */
+const putDown = () => typeof document !== 'undefined' && document.visibilityState === 'hidden'
 
 function uuid(): string {
   if (crypto.randomUUID) return crypto.randomUUID()
@@ -446,16 +460,33 @@ export async function syncNow(): Promise<void> {
   }
 
   running = true
-  transport = supabaseTransport(vault)
+  lastRun = Date.now()
+  pushed = 0
+  const t = supabaseTransport(vault, { keepalive: putDown })
+  transport = {
+    ...t,
+    put: async (table, rows) => {
+      await t.put(table, rows)
+      pushed += rows.length
+    },
+  }
   setStatus({ state: 'syncing', error: null })
 
   try {
-    await syncNotebooks(vault)
-    await syncPages(vault)
+    if (putDown()) {
+      /* Writing first: if the page is frozen part way through, what it got
+         across should be the words. */
+      await syncPages(vault)
+      await syncNotebooks(vault)
+    } else {
+      await syncNotebooks(vault)
+      await syncPages(vault)
+    }
     await syncEvents(vault)
     await syncSienaItems(vault)
     await syncImages(vault)
     setStatus({ state: 'idle', lastSyncedAt: Date.now(), error: null })
+    if (pushed) ring()
   } catch (error) {
     /* Unpairing mid-run pulls the transport out from under this. That isn't a
        failure to report — the device asked for it, and the status it wants is
@@ -487,7 +518,8 @@ export async function syncNow(): Promise<void> {
 
   if (queued) {
     queued = false
-    soon(DEBOUNCE)
+    if (putDown()) void syncNow()
+    else soon(DEBOUNCE)
   }
 }
 
@@ -502,11 +534,28 @@ function onChanged(): void {
     queued = true
     return
   }
+  /* A save made while the app is going away — the editor flushes on the way
+     out — is sent now, not in three seconds the page may not be given. */
+  if (putDown()) {
+    clearTimeout(timer)
+    void syncNow()
+    return
+  }
   soon(DEBOUNCE)
 }
 
 function onVisible(): void {
   if (document.visibilityState === 'visible') soon(400)
+  else {
+    clearTimeout(timer)
+    void syncNow()
+  }
+}
+
+/* Another device rang: it has just pushed something. */
+function onRung(): void {
+  if (document.visibilityState !== 'visible') return
+  soon(250)
 }
 
 function onOnline(): void {
@@ -526,13 +575,17 @@ export function startSync(): void {
   document.addEventListener('visibilitychange', onVisible)
   window.addEventListener('online', onOnline)
   heartbeat = setInterval(() => {
-    if (document.visibilityState === 'visible') void syncNow()
-  }, EVERY)
+    if (document.visibilityState !== 'visible') return
+    if (doorbellLive() && Date.now() - lastRun < EVERY - TICK / 2) return
+    void syncNow()
+  }, TICK)
+  void startDoorbell(getVault()!, onRung)
   /* After the first paint, never before it. */
   soon(600)
 }
 
 export function stopSync(): void {
+  stopDoorbell()
   unsubscribe?.()
   unsubscribe = null
   document.removeEventListener('visibilitychange', onVisible)

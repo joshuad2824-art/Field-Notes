@@ -13,6 +13,7 @@ export type Route =
   | { name: 'plans' }
   | { name: 'workshop' }
   | { name: 'from-siena' }
+  | { name: 'reminders' }
   | { name: 'archive' }
   | { name: 'theology' }
   | { name: 'theology-reference'; document: string; anchor?: string }
@@ -185,6 +186,7 @@ export function parse(path: string): Route {
   if (parts[0] === 'theology' && parts[1] === 'devotional' && parts[2]) return {name:'devotional',id:parts[2]}
   if (parts[0] === 'theology') return { name: 'theology' }
   if (parts[0] === 'from-siena') return { name: 'from-siena' }
+  if (parts[0] === 'reminders') return { name: 'reminders' }
   if (parts[0] === 'event' && parts[1] === 'new') return { name: 'event-new', date: parts[2] }
   if (parts[0] === 'event' && parts[1]) return { name: 'event', id: parts[1], ...(parts[2] ? { occurrence: parts[2] } : {}) }
   if (parts[0] === 'n' && parts[1] === 'workshop') return { name: 'workshop' }
@@ -221,6 +223,7 @@ export const to = {
   plans: () => '/workshop',
   workshop: () => '/workshop',
   fromSiena: () => '/from-siena',
+  reminders: () => '/reminders',
   archive: (notebook?: string) => '/archive' + (notebook ? `?notebook=${encodeURIComponent(notebook)}` : ''),
   theology: () => '/theology',
   reference: (document:string,anchor?:string) => '/theology/reference/'+encodeURIComponent(document)+(anchor?'/'+encodeURIComponent(anchor):''),

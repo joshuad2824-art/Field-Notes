@@ -134,6 +134,28 @@ export const JOURNAL_BOOK: Notebook = {
   updated: 0,
 }
 
+/* ── quick notes ───────────────────────────────────────────────────────
+   Where a quick note goes when no other notebook was picked for it (November
+   2026). It used to stay behind as an unfiled draft on the one device that
+   wrote it — never synced, never searched, never exported — so a thought
+   jotted on the phone could not be found on the iPad. Now it is an ordinary
+   notebook on the shelf: every quick note becomes an ordinary page, and from
+   there it is moved to its proper notebook or deleted like any other page.
+
+   It can be renamed and recoloured, but not deleted: quick note files into it
+   by id, and a notebook that came back on the next boot after being deleted
+   would be a notebook that ignores you. Stamped 0 and seeded on boot for the
+   same reason the journal is. */
+export const QUICK_NOTES_NOTEBOOK: NotebookId = 'quick-notes'
+
+export const QUICK_NOTES_BOOK: Notebook = {
+  id: QUICK_NOTES_NOTEBOOK,
+  name: 'Quick Notes',
+  color: '#7A3118',
+  order: 50,
+  updated: 0,
+}
+
 /* Pages linger for thirty days after deletion so a bug can't take them. */
 export const TOMBSTONE_DAYS = 30
 

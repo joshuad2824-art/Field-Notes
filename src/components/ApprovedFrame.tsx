@@ -139,6 +139,8 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
     { label: 'Calendar', icon: 'calendar' as const, href: to.calendar(calendar.month), active: calendarView },
     { label: 'Workshop', icon: 'workshop' as const, href: to.workshop(), active: workshop },
     { label: 'From Siena', icon: 'from-siena' as const, href: to.fromSiena(), active: route.name === 'from-siena' },
+    /* Sixth, so ⌘1–5 keep the rooms they always opened; ⌘6 is Reminders. */
+    { label: 'Reminders', icon: 'reminders' as const, href: to.reminders(), active: route.name === 'reminders' },
   ]
   const latestRooms = useRef(rooms)
   latestRooms.current = rooms
@@ -190,6 +192,12 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
       }
       case 'event-new':
         return { kind: 'save', label: eventForm || 'Save event', run: saveEvent }
+      case 'reminders':
+        return {
+          kind: 'run',
+          label: 'New reminder',
+          run: () => window.dispatchEvent(new Event('field-notes:new-reminder')),
+        }
       case 'workshop':
       case 'plans':
       case 'plan':
@@ -335,7 +343,7 @@ export function ApprovedFrame({ notebook, children }: { notebook: string; childr
         latestUp.current()
         return
       }
-      if (/^[1-5]$/.test(e.key)) {
+      if (/^[1-6]$/.test(e.key)) {
         e.preventDefault()
         navigate(latestRooms.current[Number(e.key) - 1].href)
       }

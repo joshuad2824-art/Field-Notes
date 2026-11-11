@@ -51,7 +51,14 @@ export interface Diagnosis {
 
 export const EPOCH = '1970-01-01T00:00:00Z'
 
-export function supabaseTransport(vault: Vault): Transport {
+export interface TransportOptions {
+  /* Asked at the moment of a push: is the app being put down? Then the
+     request is sent with keepalive, so the browser may finish it after the
+     page stops running — as long as it is under the 64 KB keepalive allows. */
+  keepalive?: () => boolean
+}
+
+export function supabaseTransport(vault: Vault, options: TransportOptions = {}): Transport {
   const base = `${vault.url}/rest/v1`
 
   const headers = (extra: Record<string, string> = {}) => ({
@@ -179,13 +186,15 @@ export function supabaseTransport(vault: Vault): Transport {
 
     async put(table, rows) {
       if (!rows.length) return
+      const body = JSON.stringify(rows)
       await call(`/${table}?on_conflict=vault,id`, {
         method: 'POST',
         headers: headers({
           'Content-Type': 'application/json',
           Prefer: 'resolution=merge-duplicates,return=minimal',
         }),
-        body: JSON.stringify(rows),
+        body,
+        ...(options.keepalive?.() && body.length < 60_000 ? { keepalive: true } : {}),
       })
     },
   }

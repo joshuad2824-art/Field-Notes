@@ -1,0 +1,574 @@
+/* The November 2026 daily-use pass: Quick Notes, overdue reminders, the
+   Reminders room, From Siena and the Today board. Loaded last. */
+
+/* ── overdue ──────────────────────────────────────────────────────────── */
+.due-late {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 6px 1px 0;
+  border-radius: 50%;
+  background: #d9604f;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #d9604f 28%, transparent);
+  vertical-align: middle;
+}
+
+/* ── quick note: the notebook it files into, by name ─────────────────── */
+.quick-note-books {
+  gap: 6px;
+}
+.quick-note-books label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  height: auto;
+  min-height: 36px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 18px;
+  border: 1px solid #f6f3ec2e;
+  font: 500 13px/1.2 var(--font-ui);
+  color: #e9e6df;
+}
+.quick-note-books i {
+  width: 10px;
+  height: 10px;
+  flex: none;
+}
+.quick-note-books input:checked + i {
+  box-shadow: 0 0 0 1px #f6f3ec;
+}
+.quick-note-books label:has(input:checked) {
+  background: #f6f3ec;
+  border-color: #f6f3ec;
+  color: #0c2223;
+}
+.quick-note-books label:has(input:focus-visible) {
+  outline: 2px solid #e5d5ba;
+  outline-offset: 2px;
+}
+.quick-note-books input:focus-visible + i {
+  outline: none;
+}
+
+/* ── the Reminders room ──────────────────────────────────────────────── */
+.reminders-room {
+  padding-bottom: var(--pill-lane, 112px);
+}
+.reminders-room > * {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.reminders-head {
+  align-items: baseline;
+  justify-content: flex-start;
+  margin-bottom: 22px;
+}
+.reminders-count {
+  font: 400 12px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--th-soft, #cbd1ca);
+}
+.reminder-add {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: #082744;
+  margin-bottom: 26px;
+}
+.reminder-add-title {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid #f6f3ec33;
+  border-radius: 12px;
+  background: #f6f3ec10;
+  color: #f6f3ec;
+  font: 500 17px/1.3 var(--font-ui);
+}
+.reminder-add-title::placeholder {
+  color: #f6f3ecaa;
+}
+.reminder-add-when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.reminder-add-when > button[aria-pressed],
+.reminder-add-when select,
+.reminder-add-when input,
+.reminder-editor input,
+.reminder-editor select,
+.reminder-editor textarea {
+  min-height: 38px;
+  padding: 6px 12px;
+  border-radius: 19px;
+  border: 1px solid #f6f3ec2e;
+  background: transparent;
+  color: #f6f3ec;
+  font: 500 13px/1.2 var(--font-ui);
+  color-scheme: dark;
+}
+.reminder-add-when > button[aria-pressed='true'] {
+  background: #f6f3ec;
+  border-color: #f6f3ec;
+  color: #082744;
+}
+.reminder-add-when select option,
+.reminder-editor select option {
+  background: #082744;
+  color: #f6f3ec;
+}
+.reminder-add-go {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 0;
+  background: #f6f3ec;
+  color: #082744;
+  cursor: pointer;
+}
+.reminder-add-go:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.reminder-problem {
+  margin: 0;
+  font: 13px/1.4 var(--font-ui);
+  color: #f2c3b9;
+}
+.reminder-notice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  background: #f6f3ec;
+  color: #0c2223;
+  font: 500 14px/1.35 var(--font-ui);
+}
+.reminder-notice span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reminder-notice button {
+  border: 0;
+  background: none;
+  color: #082744;
+  font: 700 14px var(--font-ui);
+  text-decoration: underline;
+  min-height: 36px;
+  cursor: pointer;
+}
+.reminder-group {
+  margin-bottom: 22px;
+}
+.reminder-group h2,
+.reminder-closed summary {
+  font: 500 12px var(--font-sign);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #cbd1ca;
+  margin: 0 0 8px;
+}
+.reminder-group-late h2 {
+  color: #f2c3b9;
+}
+.reminder-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  border-bottom: 1px solid #f6f3ec1c;
+}
+.reminder-row-check {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 52px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.reminder-row-check > span {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid #f6f3ec;
+}
+.reminder-row-check:hover > span {
+  background: #f6f3ec33;
+}
+.reminder-row-words {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 14px 6px 13px 0;
+  border: 0;
+  background: none;
+  color: #f6f3ec;
+  text-align: left;
+  cursor: pointer;
+}
+.reminder-row-words strong {
+  font: 600 16px/1.35 var(--font-ui);
+  overflow-wrap: anywhere;
+}
+.reminder-row-note {
+  font: 15px/1.4 var(--font-body);
+  color: #dfe3dc;
+  overflow-wrap: anywhere;
+}
+.reminder-row-words small {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font: 400 12px var(--font-ui);
+  color: #cbd1ca;
+}
+.reminder-row-book::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 0 1px #f6f3ec66;
+}
+.reminder-row.is-closed .reminder-row-words {
+  cursor: default;
+  color: #cbd1ca;
+}
+.reminder-row.is-closed .reminder-row-check > span {
+  border-color: #cbd1ca88;
+  background: #cbd1ca33;
+}
+.reminder-row.is-closed strong {
+  font-weight: 500;
+  text-decoration: line-through;
+  text-decoration-color: #cbd1ca88;
+}
+.reminder-reopen {
+  align-self: center;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 18px;
+  border: 1px solid #f6f3ec2e;
+  background: none;
+  color: #f6f3ec;
+  font: 500 12px var(--font-ui);
+  cursor: pointer;
+}
+.reminder-editor {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  margin: 6px 0 10px;
+  border-radius: 16px;
+  background: #082744;
+}
+.reminder-editor input:first-child {
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+.reminder-editor textarea {
+  border-radius: 10px;
+  font: 15px/1.4 var(--font-body);
+  resize: vertical;
+}
+.reminder-editor-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.reminder-editor-row .grow {
+  flex: 1;
+}
+.reminder-editor .icon-control {
+  color: #f6f3ec;
+}
+.reminder-editor .reminder-save {
+  background: #f6f3ec;
+  color: #082744;
+  border-radius: 50%;
+}
+.reminder-closed {
+  margin: 8px 0 24px;
+}
+.reminder-closed summary {
+  cursor: pointer;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+.reminders-empty {
+  font: 18px/1.5 var(--font-body);
+  color: #dfe3dc;
+  margin: 8px 0 28px;
+}
+.reminders-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  border-top: 1px solid #f6f3ec1c;
+  padding-top: 14px;
+}
+.reminders-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: #cbd1ca;
+  font: 500 13px var(--font-ui);
+  text-decoration: none;
+}
+.reminders-foot a:hover {
+  color: #f6f3ec;
+}
+.reminders-foot .fn-icon {
+  width: 18px;
+  height: 18px;
+}
+@media (max-width: 599px) {
+  .reminders-room {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .reminder-add {
+    padding: 14px;
+  }
+}
+
+/* The pill's sheet has six rooms now: three across on a phone. */
+.pill-sheet-rooms {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+@media (max-width: 479px) {
+  .pill-sheet-rooms {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ── Today: tiles that hold up with a lot or a little in them ─────────── */
+
+/* A tile with more below than it shows fades at its foot instead of cutting
+   a line in half. Tiles carry their own colour, so the fade is a band of that
+   colour pinned to the bottom of the scroll, not a mask that would thin the
+   tile's own paint. A column inside the day card has no paint of its own, so
+   that one is masked. */
+.redesign-application .board-screen .board-tile.has-more::after {
+  content: '';
+  position: sticky;
+  /* Sticky honours the tile's padding, so it is pulled down through it to
+     sit on the tile's edge. */
+  bottom: calc(-1px - var(--tile-pad-bottom, 20px));
+  display: block;
+  height: 44px;
+  margin-top: -44px;
+  background: linear-gradient(to bottom, transparent, var(--tile-paint, #082744));
+  pointer-events: none;
+  z-index: 3;
+}
+.redesign-application .board-screen .board-siena {
+  --tile-paint: #f6f3ec;
+  --tile-pad-bottom: 24px;
+}
+.redesign-application .board-screen .board-coming {
+  --tile-paint: #082744;
+}
+.redesign-application .board-screen .board-siena.has-more {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.redesign-application .board-day .day-content > section.has-more {
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 36px), transparent);
+  mask-image: linear-gradient(#000 calc(100% - 36px), transparent);
+}
+
+/* The day card: one section takes the whole width when it is alone. A week
+   with nothing on it stays a quiet card with no words (October 13). */
+.redesign-application .board-screen .board-day .day-content.is-single > section {
+  grid-column: 1 / -1;
+}
+.redesign-application .board-screen .board-day .day-content.is-single .board-day-coming {
+  column-width: 210px;
+  column-gap: 28px;
+}
+.redesign-application .board-screen .board-day .day-content.is-single .board-day-coming > h2 {
+  column-span: all;
+}
+.redesign-application .board-screen .board-day .day-content.is-single .board-upcoming-row {
+  break-inside: avoid;
+}
+
+/* From Siena: the newest unread note, the rest as headlines. */
+.redesign-application .board-message-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.redesign-application .board-message-top time {
+  font: 11px/1.5 var(--font-ui);
+  color: #52615c;
+}
+.redesign-application .board-message-seen {
+  color: #52615c;
+  margin: -8px -10px -8px 0;
+}
+.redesign-application .board-message-seen:hover {
+  color: #142a2b;
+}
+.board-headlines {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  border-top: 1px solid #142a2b30;
+}
+.board-headlines li {
+  border-bottom: 1px solid #142a2b18;
+}
+.board-headlines a {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+  min-height: 44px;
+  padding: 11px 0;
+  color: #142a2b;
+  text-decoration: none;
+}
+.board-headlines a:hover span {
+  text-decoration: underline;
+}
+.board-headlines li.is-read span {
+  font-weight: 400;
+  color: #3d4f4c;
+}
+.board-headlines time {
+  font: 11px/1.5 var(--font-ui);
+  color: #52615c;
+}
+.board-headlines span {
+  font: 600 16px/1.35 var(--font-header);
+  overflow-wrap: anywhere;
+}
+.redesign-application .board-tile .board-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 8px;
+  font: 500 13px var(--font-ui);
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.8;
+}
+.redesign-application .board-tile .board-more:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+.redesign-application .board-tile .board-more .fn-icon {
+  width: 15px;
+  height: 15px;
+}
+.redesign-application .board-siena .board-more {
+  color: #142a2b;
+}
+.board-caught-up {
+  position: relative;
+  min-height: 120px;
+}
+.redesign-application .board-tile h2 > a {
+  color: inherit;
+  text-decoration: none;
+}
+.redesign-application .board-tile h2 > a:hover {
+  text-decoration: underline;
+}
+
+/* A desk: the lower row is one band. Siena, Reminders and the notebooks stand
+   the same height whatever is in them; each holds what fits and scrolls the
+   rest behind its fade. */
+@media (min-width: 1200px) {
+  /* The lower row is as tall as its tallest tile, up to the room the screen
+     has left — not always the whole of it, so a quiet day is not three big
+     empty panels. */
+  .redesign-application .board-screen .today-board {
+    grid-template-rows:
+      calc((var(--home-top) - 18px) / 2) calc((var(--home-top) - 18px) / 2)
+      fit-content(calc(100% - var(--home-top) - 18px));
+    align-content: start;
+  }
+  .redesign-application .board-screen .today-board > :is(.board-siena, .board-coming) {
+    align-self: stretch;
+    height: auto;
+    max-height: none;
+  }
+  .redesign-application .board-screen .today-board > .board-links {
+    align-self: stretch;
+    max-height: none;
+  }
+  .redesign-application .board-screen .board-links > .board-shelf {
+    flex: 1 1 auto;
+  }
+  .redesign-application .board-screen .board-siena.is-caught-up {
+    display: flex;
+    flex-direction: column;
+  }
+  .redesign-application .board-screen .board-siena.is-caught-up .board-caught-up {
+    flex: 1;
+  }
+  .redesign-application .board-screen .board-siena .empty-puffin {
+    bottom: -24px;
+  }
+}
+
+/* A phone and a tablet: tiles are as tall as what is in them, so nothing is
+   hidden — From Siena and Reminders are kept short by what they show, not by
+   a height. */
+@media (max-width: 1199px) {
+  .redesign-application .board-screen .today-board > :is(.board-siena, .board-coming) {
+    overflow: visible;
+    max-height: none;
+  }
+  .redesign-application .board-screen .board-tile.has-more::after {
+    display: none;
+  }
+}
+
+/* The iPad upright had lost its notebooks: the October 14 board shows them
+   closing the page, but they moved inside .board-links on October 20 and the
+   rule that showed them still asked for a direct child, so an older phone
+   rule (≤819px) hid them. */
+@media (min-width: 600px) and (max-width: 1199px) {
+  .redesign-application .board-screen .board-links > .board-shelf {
+    display: block;
+  }
+}
+
+/* An iPad on its side puts From Siena and Reminders side by side: they stand
+   the same height, as the desk's do, rather than one ending halfway down the
+   other. */
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .redesign-application .board-screen .today-board > :is(.board-siena, .board-coming) {
+    align-self: stretch;
+  }
+}
