@@ -22,6 +22,15 @@ The app itself is at the root: `src/`, `index.html`, `netlify.toml`. `npm run de
 
 ---
 
+## November 11 — share, find in page, undo delete, search
+
+The review's second pass, Joshua asking for sharing first. Detail: `docs/2026-11-11 - Share, Find and Search.md`.
+
+- **⋯ → Share** hands a page to the system share sheet as *readable text*, never markdown (`src/lib/share-text.ts`: ☐/☑, •, tables as `a  ·  b`, links as words then address), with its pictures when the system takes files. **Share selection** shares only the picked words, widened to the line when they start inside a hidden marker; **Copy text** for a desk. The payload is prepared when the menu opens, because iOS only opens the sheet inside the tap. It is the first thing in ⋯ and named, not an icon: a `SheetItem` with `named`.
+- **Find in page** — ⌘F or ⋯ → Find in page — is a bar under the tools (`src/editor/find.ts`, `FindBar.tsx`). The browser's find can't see lines CodeMirror hasn't drawn. Matches are background-only marks (the grid holds), never inside hidden text (`find-ranges.ts`), and Escape closes the bar without going up.
+- **Deleting a page offers Undo** for six seconds beside the pill (`field-notes:undoable`, any action can raise it).
+- **Search:** the notebook filter runs inside the index before anything is cut; counts are true; words are ANDed (OR only as a fallback); events and Siena items match word by word; every matched word is marked; groups are ordered by best hit; one search per 90 ms pause.
+
 ## November 10 — daily use: Quick Notes, Reminders, live sync
 
 Joshua's answers to the decisions in `docs/2026-11-10 - Daily Use Review.md`, and three requests of his own. Detail and verification: `docs/2026-11-10 - Daily Use Pass.md`.

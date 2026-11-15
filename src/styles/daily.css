@@ -572,3 +572,112 @@
     align-self: stretch;
   }
 }
+
+/* ── the page menu: Share and Copy, by name ───────────────────────────── */
+button.sheet-item.sheet-named-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 20px;
+  width: 100%;
+}
+.sheet-named-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.sheet-named-action .fn-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+/* ── Undo, beside the pill ───────────────────────────────────────────── */
+.pill-notice.pill-undoable {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 8px 6px 16px;
+}
+.pill-notice.pill-undoable button {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #f6f3ec;
+  color: #0c2223;
+  font: 600 13px var(--font-ui);
+  cursor: pointer;
+}
+
+/* ── search ─────────────────────────────────────────────────────────── */
+.search-more {
+  margin: 4px 0 20px;
+  font: 400 12px var(--font-mono);
+  letter-spacing: 0.06em;
+  color: #9cb1b2;
+}
+
+/* ── find in page ─────────────────────────────────────────────────────── */
+/* A band of its own between the tools and the writing, so it stays put while
+   the page scrolls from match to match. */
+.find-bar {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 16px;
+  background: var(--surface-page);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  color: inherit;
+}
+.find-bar > .fn-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.6;
+  flex: none;
+}
+.find-bar input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: 500 16px var(--font-ui);
+  outline: none;
+}
+.find-count {
+  font: 400 12px var(--font-mono);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+.find-bar .icon-control {
+  color: inherit;
+}
+.find-bar .icon-control:disabled {
+  opacity: 0.3;
+}
+/* ← and → turned to point up and down: the match before, the match after. */
+.find-bar .find-step .fn-icon {
+  transform: rotate(90deg);
+}
+/* Background only: a mark adds no height, so the grid stays put. */
+.cm-find-match {
+  background: var(--hl-brass);
+  border-radius: 2px;
+}
+.cm-find-current {
+  box-shadow: 0 0 0 1.5px currentColor;
+}
+/* The bar says it has the keyboard with its own rule, not a ring that would
+   sit over the count. */
+.find-bar input:focus-visible {
+  outline: none;
+}
+.find-bar:focus-within {
+  border-bottom-color: currentColor;
+}

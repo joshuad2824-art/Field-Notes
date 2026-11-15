@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { allTags } from '../lib/db'
-import { search, type Hit } from '../lib/search'
+import { matchesWords, search, type Found } from '../lib/search'
 import { navigate, parentOf, to, up } from '../lib/router'
 import { useLive } from '../lib/useLive'
 import { liveEvents } from '../lib/events'
@@ -10,21 +10,31 @@ import { titleOf } from '../lib/model'
 import { useAllNotebooks } from '../lib/notebooks'
 import { coverColor } from '../lib/theme'
 import { countLabel, shortStamp, readableDay } from '../lib/format'
-function Match({ text, query }: { text: string; query: string }) {
-  const at = text.toLowerCase().indexOf(query.toLowerCase())
-  return at < 0 ? (
-    <>{text}</>
-  ) : (
+/* Every word that matched is marked, wherever it falls — not only the whole
+   query as one phrase, which a two-word or a misspelled search never is. */
+function Match({ text, words }: { text: string; words: string[] }) {
+  const wanted = [...new Set(words.map((w) => w.toLowerCase()).filter((w) => w.length > 1))]
+    .sort((a, b) => b.length - a.length)
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  if (!wanted.length) return <>{text}</>
+  const parts = text.split(new RegExp(`(${wanted.join('|')})`, 'gi'))
+  return (
     <>
-      {text.slice(0, at)}
-      <mark className="md-hl md-hl-brass">{text.slice(at, at + query.length)}</mark>
-      {text.slice(at + query.length)}
+      {parts.map((part, i) =>
+        i % 2 ? (
+          <mark key={i} className="md-hl md-hl-brass">
+            {part}
+          </mark>
+        ) : (
+          part
+        ),
+      )}
     </>
   )
 }
 export function SearchScreen() {
   const [query, setQuery] = useState(''),
-    [hits, setHits] = useState<Hit[]>([]),
+    [found, setFound] = useState<Found>({ hits: [], total: 0 }),
     [kind, setKind] = useState('Everything'),
     [notebook, setNotebook] = useState(''),
     input = useRef<HTMLInputElement>(null),
@@ -37,35 +47,40 @@ export function SearchScreen() {
   }, [])
   useEffect(() => {
     let live = true
-    void search(query).then((found) => {
-      if (live) setHits(found)
-    })
+    /* A breath after the last keystroke, so a word typed quickly is one
+       search rather than one per letter, each over the whole archive. */
+    const timer = window.setTimeout(() => {
+      void search(query, { notebook: notebook || undefined }).then((next) => {
+        if (live) setFound(next)
+      })
+    }, query.trim() ? 90 : 0)
     return () => {
       live = false
+      clearTimeout(timer)
     }
-  }, [query])
+  }, [query, notebook])
   const q = query.trim(),
-    pageHits =
-      kind === 'Everything' || kind === 'Pages'
-        ? hits.filter((h) => !notebook || h.page.notebook === notebook)
-        : [],
+    pages = kind === 'Everything' || kind === 'Pages',
+    pageHits = pages ? found.hits : [],
+    pageTotal = pages ? found.total : 0,
+    words = q.split(/\s+/).filter(Boolean),
     eventHits =
       q && !notebook && (kind === 'Everything' || kind === 'Events')
-        ? events.filter((e) =>
-            `${e.title} ${e.note ?? ''} ${e.location ?? ''}`
-              .toLowerCase()
-              .includes(q.toLowerCase()),
-          )
+        ? events.filter((e) => matchesWords(`${e.title} ${e.note ?? ''} ${e.location ?? ''}`, q))
         : [],
     itemHits =
       q && (kind === 'Everything' || kind === 'From Siena')
         ? items.filter(
             (i) =>
               (!notebook || i.notebook === notebook) &&
-              `${i.title ?? ''} ${i.body}`.toLowerCase().includes(q.toLowerCase()),
+              matchesWords(`${i.title ?? ''} ${i.body}`, q),
           )
         : [],
-    count = pageHits.length + eventHits.length + itemHits.length
+    count = pageTotal + eventHits.length + itemHits.length,
+    /* Notebooks in the order of their best page, so the best match is at the top. */
+    groups = [...new Set(pageHits.map((h) => h.page.notebook))]
+      .map((id) => books.find((b) => b.id === id))
+      .filter((b): b is (typeof books)[number] => !!b)
   return (
     <div className="app">
       <main className="search-screen scroll">
@@ -108,7 +123,7 @@ export function SearchScreen() {
         {q ? (
           count ? (
             <div className="search-groups">
-              {books.map((b) => {
+              {groups.map((b) => {
                 const group = pageHits.filter((h) => h.page.notebook === b.id)
                 return group.length ? (
                   <section key={b.id}>
@@ -125,10 +140,10 @@ export function SearchScreen() {
                       >
                         <div>
                           <strong>
-                            <Match text={titleOf(h.page.body)} query={q} />
+                            <Match text={titleOf(h.page.body)} words={[...words, ...h.terms]} />
                           </strong>
                           <p>
-                            <Match text={h.excerpt} query={q} />
+                            <Match text={h.excerpt} words={[...words, ...h.terms]} />
                           </p>
                         </div>
                         <small>{shortStamp(h.page.updated)}</small>
@@ -137,6 +152,11 @@ export function SearchScreen() {
                   </section>
                 ) : null
               })}
+              {pageTotal > pageHits.length ? (
+                <p className="search-more">
+                  First {pageHits.length} of {pageTotal} pages
+                </p>
+              ) : null}
               {eventHits.length ? (
                 <section>
                   <h2>Events</h2>
@@ -147,7 +167,7 @@ export function SearchScreen() {
                       onClick={() => navigate(to.event(e.id))}
                     >
                       <strong>
-                        <Match text={e.title} query={q} />
+                        <Match text={e.title} words={words} />
                       </strong>
                       <small>{readableDay(e.date)}</small>
                     </button>
@@ -161,14 +181,14 @@ export function SearchScreen() {
                     <button
                       key={i.id}
                       className="search-hit"
-                      onClick={() => navigate(to.fromSiena())}
+                      onClick={() => navigate(`${to.fromSiena()}#siena-${i.id}`)}
                     >
                       <div>
                         <strong>
-                          <Match text={i.title ?? i.type.replace('_', ' ')} query={q} />
+                          <Match text={i.title ?? i.type.replace('_', ' ')} words={words} />
                         </strong>
                         <p>
-                          <Match text={i.body.slice(0, 200)} query={q} />
+                          <Match text={i.body.slice(0, 200)} words={words} />
                         </p>
                       </div>
                       <small>{shortStamp(i.created)}</small>

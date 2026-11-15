@@ -37,7 +37,7 @@ async function ensureIndex(): Promise<MiniSearch<Doc>> {
   const pages = (await db.pages.toArray()).filter((p) => !p.deleted)
   const next = new MiniSearch<Doc>({
     fields: ['title', 'text', 'tags'],
-    storeFields: ['id'],
+    storeFields: ['id', 'notebook'],
     searchOptions: {
       prefix: true,
       fuzzy: 0.2,
@@ -56,21 +56,50 @@ export interface Hit {
   terms: string[]
 }
 
-export async function search(query: string, limit = 60): Promise<Hit[]> {
+export interface Found {
+  hits: Hit[]
+  /* Every page that matched, not just the ones returned. */
+  total: number
+}
+
+/* November 2026. Two things were wrong here, both found in the daily-use
+   review. The notebook filter was applied by the screen *after* the top 60
+   had been kept across every notebook, so Church showed 13 of 368 matching
+   pages — so the filter goes into the index's own search, before anything is
+   cut. And words were joined with OR, so a second word widened the results;
+   they are joined with AND now, falling back to OR only when every word
+   together finds nothing. */
+export async function search(query: string, options: { notebook?: string; limit?: number } = {}): Promise<Found> {
   const q = query.trim()
-  if (!q) return []
+  if (!q) return { hits: [], total: 0 }
   const idx = await ensureIndex()
-  const results = idx.search(q).slice(0, limit)
-  const pages = await db.pages.bulkGet(results.map((r) => r.id as string))
+  const filter = options.notebook
+    ? (result: { [key: string]: unknown }) => result.notebook === options.notebook
+    : undefined
+  let results = idx.search(q, { combineWith: 'AND', filter })
+  if (!results.length && /\s/.test(q)) results = idx.search(q, { combineWith: 'OR', filter })
+  const kept = results.slice(0, options.limit ?? 200)
+  const pages = await db.pages.bulkGet(kept.map((r) => r.id as string))
 
   const hits: Hit[] = []
-  results.forEach((result, i) => {
+  kept.forEach((result, i) => {
     const page = pages[i]
     if (!page || page.deleted) return
     const terms = result.terms
     hits.push({ page, excerpt: excerptFor(page.body, terms), terms })
   })
-  return hits
+  return { hits, total: results.length }
+}
+
+/* What a person typed, as the words the other two kinds of result are matched
+   on: every word has to be there, in any order. */
+export function matchesWords(text: string, query: string): boolean {
+  const hay = text.toLowerCase()
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((word) => hay.includes(word))
 }
 
 /* A window of plain text around the first match, so the result shows the
