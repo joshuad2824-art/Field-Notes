@@ -681,3 +681,106 @@ button.sheet-item.sheet-named-action {
 .find-bar:focus-within {
   border-bottom-color: currentColor;
 }
+
+/* ── November 23: the iPad board, from Joshua's recordings ──────────────
+   On his iPad mini, upright and on its side, the month card had been
+   stretched to the height of the schedule beside it — the whole week's
+   events — so its weeks stood a hand's width apart, and on its side
+   Reminders was stretched to the height of Siena's note and was mostly empty
+   navy. On a tablet the month now sets the row: fixed weeks, as tall as a
+   month is, and the schedule card matches it and scrolls inside itself with
+   the same soft fade the desk uses, so the first screen holds the weather,
+   the month and the schedule (October 14). */
+@media (min-width: 600px) and (max-width: 1199px) {
+  .redesign-application .board-screen .today-board > .board-month {
+    align-self: start;
+    height: auto;
+    min-height: 0;
+  }
+  .redesign-application .board-screen .board-month > div {
+    position: static;
+    inset: auto;
+    display: block;
+    height: auto;
+  }
+  .redesign-application .board-screen .board-month .cal {
+    display: block;
+    height: auto;
+  }
+  .redesign-application .board-screen .board-month .cal-grid {
+    grid-auto-rows: 44px;
+    height: auto;
+  }
+  .redesign-application .board-screen .board-month .cal-day {
+    height: 44px;
+  }
+  .redesign-application .board-screen .board-month .cal .cal-day .cal-day-n {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* The schedule takes the month's height and no more: it asks the row for
+     nothing (`contain: size`), stretches to it, and scrolls inside. */
+  .redesign-application .board-screen .today-board > .board-day {
+    contain: size;
+    align-self: stretch;
+    min-height: 0;
+  }
+  .redesign-application .board-screen .board-day .day-content {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .redesign-application .board-screen .board-day .day-content > section {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* A quiet week is still a short card, not one held open to the month's
+     height. */
+  .redesign-application .board-screen .today-board > .board-day.is-quiet {
+    contain: none;
+    align-self: start;
+  }
+}
+
+/* Upright the schedule is one column: today's events keep their height, and
+   what is coming takes the rest and scrolls. */
+@media (min-width: 600px) and (max-width: 999px) {
+  .redesign-application .board-screen .today-board > .board-month,
+  .redesign-application .board-screen .today-board > .board-day {
+    min-height: 0;
+  }
+  .redesign-application .board-screen .board-day .day-content > .board-today-schedule {
+    flex: 0 1 auto;
+  }
+  .redesign-application .board-screen .board-day .day-content > .board-day-coming {
+    flex: 1 1 0;
+  }
+}
+
+/* On its side the schedule's two columns each scroll on their own. From
+   Siena keeps the left column; Reminders, then the notebooks and Theology,
+   stack in the right one, each as tall as what it holds, rather than
+   Reminders standing as tall as Siena's note. */
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .redesign-application .board-screen .board-day .day-content {
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .redesign-application .board-screen .board-day .day-content > section {
+    align-self: stretch;
+    height: auto;
+    max-height: 100%;
+  }
+  .redesign-application .board-screen .today-board {
+    grid-template-areas:
+      'note  note  note  date  date  date  wx    wx    wx    wx    wx    wx'
+      'month month month month month day   day   day   day   day   day   day'
+      'siena siena siena siena siena rem   rem   rem   rem   rem   rem   rem'
+      'siena siena siena siena siena shelf shelf shelf shelf shelf shelf shelf';
+    grid-template-rows: auto auto auto 1fr;
+  }
+  .redesign-application .board-screen .today-board > :is(.board-siena, .board-coming, .board-links) {
+    align-self: start;
+  }
+}
