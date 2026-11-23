@@ -51,6 +51,7 @@ const names = [
   'pill-scroll',
   'no-scrollbars',
   'daily-use',
+  'ipad-board',
   'live-sync',
   'share-find',
 ]
