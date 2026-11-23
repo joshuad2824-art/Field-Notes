@@ -784,3 +784,9 @@ button.sheet-item.sheet-named-action {
     align-self: start;
   }
 }
+
+/* The quick note card pairs a heavy word with a light one, as the month
+   ("NOVEMBER 2026") and the date card do (November 23, Joshua). */
+.redesign-application .quick-note-open strong span {
+  font-weight: 300;
+}
