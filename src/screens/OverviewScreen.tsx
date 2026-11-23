@@ -171,7 +171,9 @@ export function OverviewScreen({ notebook: _notebook }: { notebook: string }) {
               onClick={() => frame?.quickNote()}
               aria-label="Quick note"
             >
-              <strong>Quick note</strong>
+              <strong>
+                Quick <span>note</span>
+              </strong>
             </button>
           </section>
           {/* The weekday and date stay above the capture tool on a desk. */}
